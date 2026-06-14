@@ -27,6 +27,39 @@ function initSquelette() {
     b.addEventListener("click", () => { etat.vue = b.dataset.vue; ecrireCache(); rendre(); }));
 }
 
+// Panneau d'administration : liste de toutes les familles.
+function blocAdmin() {
+  const sec = el("section", "carte");
+  sec.innerHTML = `<h2>🛡️ Administration</h2>
+    <p class="note">Accès à toutes les familles. À utiliser avec précaution.</p>`;
+  const b = el("button", "btn-secondaire", "📋 Charger toutes les familles");
+  const liste = el("div", "admin-liste");
+  b.onclick = async () => {
+    b.disabled = true; b.textContent = "Chargement…";
+    const familles = await adminListerFamilles();
+    b.disabled = false; b.textContent = "🔄 Recharger les familles";
+    liste.innerHTML = "";
+    liste.appendChild(el("p", "note", `${familles.length} famille(s).`));
+    familles.forEach(f => {
+      const maj = f.updated_at ? new Date(f.updated_at).toLocaleDateString("fr-BE") : "—";
+      const ligne = el("div", "admin-item");
+      ligne.innerHTML = `<div class="adm-info"><strong>${echapper(f.name)}</strong>
+        <small>${echapper(f.owner_email || "?")} · ${f.members} membre(s) · ${f.plan} · maj ${maj}</small></div>`;
+      const open = el("button", "mini-btn ok", "Ouvrir");
+      open.onclick = () => adminOuvrirFamille(f);
+      const plan = el("button", "mini-btn", f.plan === "premium" ? "→ free" : "→ premium");
+      plan.onclick = async () => {
+        await adminMajPlan(f.id, f.plan === "premium" ? "free" : "premium");
+        b.onclick();
+      };
+      ligne.appendChild(plan); ligne.appendChild(open);
+      liste.appendChild(ligne);
+    });
+  };
+  sec.appendChild(b); sec.appendChild(liste);
+  return sec;
+}
+
 // Affiche un lien d'invitation copiable.
 function montrerLienInvitation(conteneur, lien) {
   let box = conteneur.querySelector(".invite-box");
@@ -495,6 +528,9 @@ function vueReglages(c) {
   bAbo.disabled = true;
   abo.appendChild(bAbo);
   c.appendChild(abo);
+
+  // ----- Administration (réservé aux admins) -----
+  if (typeof estAdmin !== "undefined" && estAdmin) c.appendChild(blocAdmin());
 
   // ----- Compte -----
   const cpt = el("section", "carte");

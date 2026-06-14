@@ -47,10 +47,23 @@ create table if not exists public.invites (
   accepted_at timestamptz
 );
 
--- ---------- Fonction d'appartenance (évite la récursion RLS) ----------
+-- Administrateurs de l'application (accès à toutes les familles).
+create table if not exists public.app_admins (
+  email text primary key,
+  created_at timestamptz default now()
+);
+insert into public.app_admins(email) values ('cedric.dierckx@gmail.com')
+  on conflict (email) do nothing;
+
+-- ---------- Fonctions d'accès (évitent la récursion RLS) ----------
 create or replace function public.is_family_member(fid uuid)
 returns boolean language sql security definer set search_path = public as $$
   select exists(select 1 from family_members where family_id = fid and user_id = auth.uid());
+$$;
+
+create or replace function public.is_admin()
+returns boolean language sql security definer set search_path = public as $$
+  select exists(select 1 from app_admins where lower(email) = lower(coalesce(auth.email(), '')));
 $$;
 
 -- ---------- RLS ----------
@@ -58,32 +71,38 @@ alter table public.families        enable row level security;
 alter table public.family_members  enable row level security;
 alter table public.family_state    enable row level security;
 alter table public.invites         enable row level security;
+alter table public.app_admins      enable row level security;
 
 drop policy if exists "read my families" on public.families;
 create policy "read my families" on public.families
-  for select using (is_family_member(id) or owner_id = auth.uid());
+  for select using (is_family_member(id) or owner_id = auth.uid() or is_admin());
 drop policy if exists "owner update family" on public.families;
 create policy "owner update family" on public.families
-  for update using (owner_id = auth.uid());
+  for update using (owner_id = auth.uid() or is_admin());
 drop policy if exists "owner delete family" on public.families;
 create policy "owner delete family" on public.families
-  for delete using (owner_id = auth.uid());
+  for delete using (owner_id = auth.uid() or is_admin());
 
 drop policy if exists "read members" on public.family_members;
 create policy "read members" on public.family_members
-  for select using (is_family_member(family_id));
+  for select using (is_family_member(family_id) or is_admin());
 drop policy if exists "owner manage members" on public.family_members;
 create policy "owner manage members" on public.family_members
-  for all using (exists(select 1 from families f where f.id = family_id and f.owner_id = auth.uid()))
-          with check (exists(select 1 from families f where f.id = family_id and f.owner_id = auth.uid()));
+  for all using (is_admin() or exists(select 1 from families f where f.id = family_id and f.owner_id = auth.uid()))
+          with check (is_admin() or exists(select 1 from families f where f.id = family_id and f.owner_id = auth.uid()));
 
 drop policy if exists "members rw state" on public.family_state;
 create policy "members rw state" on public.family_state
-  for all using (is_family_member(family_id)) with check (is_family_member(family_id));
+  for all using (is_family_member(family_id) or is_admin())
+          with check (is_family_member(family_id) or is_admin());
 
 drop policy if exists "members read invites" on public.invites;
 create policy "members read invites" on public.invites
-  for select using (is_family_member(family_id));
+  for select using (is_family_member(family_id) or is_admin());
+
+drop policy if exists "admins read admins" on public.app_admins;
+create policy "admins read admins" on public.app_admins
+  for select using (is_admin());
 
 -- ---------- RPC : créer une famille (+ membre owner + état vide) ----------
 create or replace function public.create_family(p_name text)
@@ -139,11 +158,38 @@ begin
   return i.family_id;
 end; $$;
 
+-- ---------- RPC admin : lister toutes les familles ----------
+create or replace function public.admin_list_families()
+returns table(id uuid, name text, plan text, plan_status text,
+              members bigint, owner_email text, updated_at timestamptz)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  return query
+    select f.id, f.name, f.plan, f.plan_status,
+      (select count(*) from family_members m where m.family_id = f.id),
+      (select u.email from auth.users u where u.id = f.owner_id),
+      (select s.updated_at from family_state s where s.family_id = f.id)
+    from families f
+    order by f.created_at;
+end; $$;
+
+-- ---------- RPC admin : changer le plan d'une famille ----------
+create or replace function public.admin_set_plan(p_family uuid, p_plan text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  update families set plan = coalesce(nullif(p_plan, ''), 'free') where id = p_family;
+end; $$;
+
 -- ---------- Droits d'exécution ----------
 grant execute on function public.create_family(text)            to authenticated;
 grant execute on function public.create_invite(uuid, text)      to authenticated;
 grant execute on function public.invite_info(uuid)              to authenticated;
 grant execute on function public.accept_invite(uuid)            to authenticated;
+grant execute on function public.is_admin()                     to authenticated;
+grant execute on function public.admin_list_families()          to authenticated;
+grant execute on function public.admin_set_plan(uuid, text)     to authenticated;
 
 -- ---------- Temps réel sur l'état de jeu (tolérant si déjà activé) ----------
 do $$ begin

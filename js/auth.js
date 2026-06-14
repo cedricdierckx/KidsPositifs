@@ -15,6 +15,7 @@ let sb = null;                 // client Supabase
 let session = null, utilisateur = null;
 let mesFamilles = [];          // familles de l'utilisateur
 let familleActive = null;      // { id, name, plan, plan_status, role }
+let estAdmin = false;          // l'utilisateur est-il administrateur de l'app ?
 let cloudTimer = null;         // anti-rebond sauvegarde
 let canalRealtime = null;      // abonnement temps réel
 
@@ -51,6 +52,8 @@ function utilisateurCourant() { return utilisateur; }
 
 /* ---------- Après connexion : invitation, familles ---------- */
 async function apresConnexion() {
+  try { const { data } = await sb.rpc("is_admin"); estAdmin = !!data; } catch { estAdmin = false; }
+
   const inv = localStorage.getItem(INVITE_KEY);
   if (inv) { localStorage.removeItem(INVITE_KEY); return ecranInvitation(inv); }
 
@@ -194,6 +197,21 @@ async function accepterInvitation(token) {
   await chargerFamilles();
   const f = mesFamilles.find(x => x.id === data);
   if (f) await ouvrirFamille(f); else ecranFamilles({});
+}
+
+/* ---------- Administration ---------- */
+async function adminListerFamilles() {
+  const { data, error } = await sb.rpc("admin_list_families");
+  if (error) { toast("Erreur admin : " + error.message, "info"); return []; }
+  return data || [];
+}
+async function adminOuvrirFamille(row) {
+  await ouvrirFamille({ id: row.id, name: row.name, plan: row.plan,
+                        plan_status: row.plan_status, owner_id: null });
+}
+async function adminMajPlan(familyId, plan) {
+  const { error } = await sb.rpc("admin_set_plan", { p_family: familyId, p_plan: plan });
+  if (error) toast("Erreur : " + error.message, "info");
 }
 
 function planLibelle() {
