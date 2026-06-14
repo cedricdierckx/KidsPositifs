@@ -129,26 +129,63 @@ const AVATAR_OPTIONS = {
 };
 
 /* =====================================================================
- *  RÉCOMPENSE PLANÈTE — Écosystème évolutif
- *  Chaque palier de Gouttes débloque un élément vivant.
- *  La graine devient pousse, arbre… puis tout un écosystème.
+ *  RÉCOMPENSE PLANÈTE — Écosystème éducatif (chaîne alimentaire)
+ * ---------------------------------------------------------------------
+ *  L'enfant CONSTRUIT son écosystème dans l'ordre de la nature :
+ *   1) Les PLANTES (les producteurs : elles captent la lumière du soleil)
+ *   2) Les HERBIVORES — débloqués seulement quand il y a assez de plantes
+ *      (les plantes les nourrissent)
+ *   3) Les CARNIVORES — débloqués seulement quand il y a assez d'herbivores
+ *      (les herbivores les nourrissent)
+ *  À chaque étape l'enfant a plusieurs CHOIX d'espèces à créer.
+ *  Chaque création coûte des Gouttes 💧 (monnaie dépensable).
+ *
+ *  TIERS_ECO est ORDONNÉ : chaque niveau exige une quantité minimale
+ *  d'êtres vivants du niveau précédent (champ `requis`).
  * ===================================================================== */
-const ECOSYSTEME_PALIERS = [
-  { seuil: 0,   emoji: "🌱", nom: "Une petite graine germe" },
-  { seuil: 5,   emoji: "🌿", nom: "Une jeune pousse" },
-  { seuil: 12,  emoji: "🍀", nom: "Un trèfle porte-bonheur" },
-  { seuil: 20,  emoji: "🌳", nom: "Un bel arbre" },
-  { seuil: 30,  emoji: "🌷", nom: "Des fleurs apparaissent" },
-  { seuil: 42,  emoji: "🐝", nom: "Les abeilles butinent" },
-  { seuil: 55,  emoji: "🦋", nom: "Les papillons dansent" },
-  { seuil: 70,  emoji: "🐞", nom: "Une coccinelle arrive" },
-  { seuil: 88,  emoji: "🐦", nom: "Un oiseau fait son nid" },
-  { seuil: 108, emoji: "🦔", nom: "Un hérisson se promène" },
-  { seuil: 130, emoji: "🌲", nom: "La forêt s'agrandit" },
-  { seuil: 155, emoji: "🦊", nom: "Un renard s'installe" },
-  { seuil: 185, emoji: "🍄", nom: "Des champignons poussent" },
-  { seuil: 220, emoji: "🦌", nom: "Un cerf majestueux" },
-  { seuil: 260, emoji: "🏞️", nom: "Un écosystème complet !" }
+const TIERS_ECO = [
+  {
+    id: "plantes",
+    nom: "Plantes",
+    emoji: "🌱",
+    requis: 0,            // toujours disponible
+    lecon: "Tout commence par les plantes 🌱 : grâce au soleil, elles fabriquent leur propre nourriture. Ce sont elles qui nourrissent tout l'écosystème.",
+    especes: [
+      { id: "herbe",  emoji: "🌿", nom: "Herbe",   cout: 3 },
+      { id: "trefle", emoji: "🍀", nom: "Trèfle",  cout: 3 },
+      { id: "fleur",  emoji: "🌷", nom: "Fleur",   cout: 4 },
+      { id: "ble",    emoji: "🌾", nom: "Blé",     cout: 4 },
+      { id: "arbre",  emoji: "🌳", nom: "Arbre",   cout: 6 }
+    ]
+  },
+  {
+    id: "herbivores",
+    nom: "Herbivores",
+    emoji: "🐰",
+    requis: 4,            // il faut au moins 4 plantes
+    lecon: "Les herbivores 🐰 mangent les plantes. Il faut donc assez de plantes pour les nourrir avant qu'ils arrivent !",
+    especes: [
+      { id: "escargot", emoji: "🐌", nom: "Escargot", cout: 4 },
+      { id: "abeille",  emoji: "🐝", nom: "Abeille",  cout: 5 },
+      { id: "papillon", emoji: "🦋", nom: "Papillon", cout: 5 },
+      { id: "lapin",    emoji: "🐰", nom: "Lapin",    cout: 7 },
+      { id: "cerf",     emoji: "🦌", nom: "Cerf",     cout: 9 }
+    ]
+  },
+  {
+    id: "carnivores",
+    nom: "Carnivores",
+    emoji: "🦊",
+    requis: 4,            // il faut au moins 4 herbivores
+    lecon: "Les carnivores 🦊 mangent les herbivores. Une fois qu'ils sont là, la chaîne alimentaire est complète : plantes → herbivores → carnivores !",
+    especes: [
+      { id: "herisson", emoji: "🦔", nom: "Hérisson", cout: 7 },
+      { id: "serpent",  emoji: "🐍", nom: "Serpent",  cout: 8 },
+      { id: "hibou",    emoji: "🦉", nom: "Hibou",    cout: 9 },
+      { id: "renard",   emoji: "🦊", nom: "Renard",   cout: 10 },
+      { id: "aigle",    emoji: "🦅", nom: "Aigle",    cout: 12 }
+    ]
+  }
 ];
 
 /* ---- Phrases d'encouragement (pédagogie positive) ----------------- */

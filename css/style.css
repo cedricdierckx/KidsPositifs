@@ -100,6 +100,21 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .progress{background:#e3edf5; border-radius:20px; height:16px; overflow:hidden; margin:10px 0 6px}
 .progress-bar{background:var(--planete); height:100%; border-radius:20px; transition:width .5s}
 .eco-next{font-weight:700; color:var(--texte)!important}
+.eco-vide{color:var(--doux); font-size:15px}
+
+/* Chaîne alimentaire : niveaux (tiers) */
+.eco-tier{background:#fff; border-radius:16px; padding:12px; margin-top:12px;
+  border:2px solid #e6eef5}
+.eco-tier.verrouille{opacity:.7; background:#f6f8fb}
+.eco-tier-tete{display:flex; align-items:center; gap:8px}
+.eco-tier-tete .t-emoji{font-size:26px}
+.eco-tier-tete .t-nom{font-size:17px; font-weight:800; flex:1}
+.eco-tier-tete .t-compte{background:var(--planete); color:#fff; font-weight:800;
+  border-radius:12px; padding:2px 10px; min-width:30px; text-align:center}
+.t-lecon{font-size:13px!important; margin:6px 0 10px!important}
+.t-verrou{font-size:13px!important; background:#fff4e6; color:#a86b00!important;
+  padding:8px 10px; border-radius:10px; font-weight:600}
+.eco-tier .o-cout{color:var(--planete)!important; font-weight:800}
 
 /* ---- Avatar ---- */
 .avatar-scene{position:relative; width:150px; height:150px; margin:0 auto;

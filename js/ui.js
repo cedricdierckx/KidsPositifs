@@ -58,8 +58,6 @@ function rendreSelecteur() {
 /* ---------- Vue Accueil ---------- */
 function vueAccueil(c) {
   const enf = enfantActif();
-  const eco = paliersAtteints(enf.gouttes);
-  const dernier = eco[eco.length - 1];
 
   const carte = el("section", "carte-accueil");
   carte.style.setProperty("--c", enf.couleur);
@@ -74,9 +72,10 @@ function vueAccueil(c) {
 
   // Aperçu écosystème
   const ecoCarte = el("section", "carte");
+  const apercu = renduSceneEco(enf);
   ecoCarte.innerHTML = `<h2>🌍 Mon écosystème</h2>
-    <div class="eco-mini">${eco.map(p => `<span title="${p.nom}">${p.emoji}</span>`).join("")}</div>
-    <p class="eco-statut">${dernier ? dernier.nom : ""}</p>`;
+    <div class="eco-mini">${apercu || "🌱 Ta nature attend tes premières plantes…"}</div>
+    <p class="eco-statut">${nbTotalEspeces(enf)} êtres vivants</p>`;
   c.appendChild(ecoCarte);
 
   // Badges
@@ -146,27 +145,60 @@ function vueMissions(c, catId) {
   }
 }
 
-/* ---------- Écosystème détaillé ---------- */
+/* ---------- Scène : tous les êtres vivants créés ---------- */
+function renduSceneEco(enf) {
+  let html = "";
+  TIERS_ECO.forEach(t => {
+    t.especes.forEach(sp => {
+      const n = (enf.ecosysteme[t.id] || {})[sp.id] || 0;
+      for (let i = 0; i < n; i++)
+        html += `<span class="eco-item" title="${sp.nom}">${sp.emoji}</span>`;
+    });
+  });
+  return html;
+}
+
+/* ---------- Écosystème détaillé (chaîne alimentaire) ---------- */
 function vueEcosysteme(enf) {
-  const atteints = paliersAtteints(enf.gouttes);
-  const suivant = prochainPalier(enf.gouttes);
-  const dernier = atteints[atteints.length - 1];
-
   const sec = el("section", "carte eco-carte");
-  let barre = "";
-  if (suivant) {
-    const debut = dernier ? dernier.seuil : 0;
-    const pct = Math.round(((enf.gouttes - debut) / (suivant.seuil - debut)) * 100);
-    barre = `
-      <div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div>
-      <p class="eco-next">Encore <strong>${suivant.seuil - enf.gouttes}</strong> 💧 pour : ${suivant.emoji} ${suivant.nom}</p>`;
-  } else {
-    barre = `<p class="eco-next">🎉 Écosystème complet, bravo !</p>`;
-  }
+  const scene = renduSceneEco(enf);
+  sec.innerHTML = `<h2>🌱 Mon écosystème vivant</h2>
+    <p class="note">Construis la nature dans le bon ordre : d'abord les 🌱 plantes, puis les 🐰 herbivores qui les mangent, puis les 🦊 carnivores. <strong>Choisis</strong> ce que tu veux créer !</p>
+    <div class="eco-scene">${scene || "<span class='eco-vide'>Crée ta première plante 🌱</span>"}</div>`;
 
-  sec.innerHTML = `<h2>🌱 Ma graine grandit</h2>
-    <div class="eco-scene">${atteints.map(p => `<span class="eco-item" title="${p.nom}">${p.emoji}</span>`).join("")}</div>
-    ${barre}`;
+  TIERS_ECO.forEach(tier => {
+    const bloc = el("div", "eco-tier");
+    const debloque = tierDebloque(enf, tier);
+    const compte = nbTier(enf, tier.id);
+
+    let entete = `<div class="eco-tier-tete"><span class="t-emoji">${tier.emoji}</span>
+      <span class="t-nom">${tier.nom}</span><span class="t-compte">${compte}</span></div>
+      <p class="t-lecon">${tier.lecon}</p>`;
+
+    if (!debloque) {
+      const manque = manqueePourDebloquer(enf, tier);
+      const prec = TIERS_ECO[TIERS_ECO.findIndex(t => t.id === tier.id) - 1];
+      bloc.className = "eco-tier verrouille";
+      bloc.innerHTML = entete +
+        `<p class="t-verrou">🔒 Crée encore <strong>${manque}</strong> ${prec.nom.toLowerCase()} ${prec.emoji} pour nourrir les ${tier.nom.toLowerCase()} et les débloquer.</p>`;
+    } else {
+      bloc.innerHTML = entete;
+      const grille = el("div", "options");
+      tier.especes.forEach(sp => {
+        const possede = (enf.ecosysteme[tier.id] || {})[sp.id] || 0;
+        const o = el("button", "option" + (enf.gouttes < sp.cout ? " verrou" : ""));
+        o.innerHTML = `
+          <span class="o-emoji">${sp.emoji}</span>
+          <span class="o-nom">${sp.nom}${possede ? ` ×${possede}` : ""}</span>
+          <span class="o-cout">${sp.cout} 💧</span>`;
+        o.onclick = () => creerEspece(tier, sp);
+        grille.appendChild(o);
+      });
+      bloc.appendChild(grille);
+    }
+    sec.appendChild(bloc);
+  });
+
   return sec;
 }
 
@@ -256,7 +288,7 @@ function vueReglages(c) {
     iCouleur.oninput = () => majEnfant(enf.id, "couleur", iCouleur.value);
     lCouleur.appendChild(iCouleur);
 
-    const stats = el("p", "note", `Total cumulé : 💛 ${enf.coeursTotal} Cœurs · 💧 ${enf.gouttes} Gouttes · 🏆 ${enf.badges.length} badges`);
+    const stats = el("p", "note", `Total cumulé : 💛 ${enf.coeursTotal} Cœurs · 💧 ${enf.gouttesTotal} Gouttes · 🌍 ${nbTotalEspeces(enf)} êtres vivants · 🏆 ${enf.badges.length} badges`);
 
     [lPrenom, lAnnee, lEmoji, lCouleur, stats].forEach(x => sec.appendChild(x));
     c.appendChild(sec);

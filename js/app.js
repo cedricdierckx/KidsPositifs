@@ -16,7 +16,9 @@ function etatVierge() {
       ...e,
       coeurs: 0,            // monnaie famille (dépensable pour avatar)
       coeursTotal: 0,       // total cumulé (statistiques)
-      gouttes: 0,           // monnaie planète (cumul = écosystème)
+      gouttes: 0,           // monnaie planète (dépensable pour l'écosystème)
+      gouttesTotal: 0,      // total cumulé (statistiques)
+      ecosysteme: { plantes: {}, herbivores: {}, carnivores: {} }, // tier -> {especeId: nb}
       avatar: { base: e.id === "e2023" ? "bebe" : "garcon", chapeau: "rien",
                 accessoire: "rien", compagnon: "rien", fond: "ciel" },
       debloque: [],         // ids d'options d'avatar débloquées
@@ -34,6 +36,12 @@ function chargerEtat() {
     const e = JSON.parse(brut);
     // garde-fou : compléter les champs manquants
     if (!e.enfants) return etatVierge();
+    // migration : s'assurer que chaque enfant a un écosystème structuré
+    Object.values(e.enfants).forEach(enf => {
+      if (!enf.ecosysteme) enf.ecosysteme = { plantes: {}, herbivores: {}, carnivores: {} };
+      TIERS_ECO.forEach(t => { if (!enf.ecosysteme[t.id]) enf.ecosysteme[t.id] = {}; });
+      if (enf.gouttesTotal === undefined) enf.gouttesTotal = enf.gouttes || 0;
+    });
     return e;
   } catch (err) {
     console.warn("Sauvegarde illisible, réinitialisation.", err);
@@ -81,6 +89,7 @@ function validerMission(mission) {
     enf.coeursTotal += mission.points;
   } else {
     enf.gouttes += mission.points;
+    enf.gouttesTotal += mission.points;
   }
 
   feterGain(mission);
@@ -120,12 +129,53 @@ function estDebloque(enf, categorie, option) {
   return option.cout === 0 || enf.debloque.includes(`${categorie}:${option.id}`);
 }
 
-/* ---------- Écosystème ---------- */
-function paliersAtteints(gouttes) {
-  return ECOSYSTEME_PALIERS.filter(p => gouttes >= p.seuil);
+/* ---------- Écosystème (chaîne alimentaire) ---------- */
+
+// Nombre total d'êtres vivants créés dans un niveau (tier).
+function nbTier(enf, tierId) {
+  const c = enf.ecosysteme[tierId] || {};
+  return Object.values(c).reduce((s, n) => s + n, 0);
 }
-function prochainPalier(gouttes) {
-  return ECOSYSTEME_PALIERS.find(p => gouttes < p.seuil) || null;
+// Nombre total d'êtres vivants dans tout l'écosystème.
+function nbTotalEspeces(enf) {
+  return TIERS_ECO.reduce((s, t) => s + nbTier(enf, t.id), 0);
+}
+// Un niveau est-il débloqué ? (assez d'êtres vivants au niveau précédent)
+function tierDebloque(enf, tier) {
+  const idx = TIERS_ECO.findIndex(t => t.id === tier.id);
+  if (idx === 0) return true;
+  const precedent = TIERS_ECO[idx - 1];
+  return nbTier(enf, precedent.id) >= tier.requis;
+}
+// Manque combien d'êtres du niveau précédent pour débloquer ce niveau.
+function manqueePourDebloquer(enf, tier) {
+  const idx = TIERS_ECO.findIndex(t => t.id === tier.id);
+  if (idx === 0) return 0;
+  const precedent = TIERS_ECO[idx - 1];
+  return Math.max(0, tier.requis - nbTier(enf, precedent.id));
+}
+
+// Créer un être vivant : dépense des Gouttes et l'ajoute à l'écosystème.
+function creerEspece(tier, espece) {
+  const enf = enfantActif();
+  if (!tierDebloque(enf, tier)) {
+    const manque = manqueePourDebloquer(enf, tier);
+    const prec = TIERS_ECO[TIERS_ECO.findIndex(t => t.id === tier.id) - 1];
+    toast(`Crée encore ${manque} ${prec.nom.toLowerCase()} ${prec.emoji} d'abord — ils nourrissent les ${tier.nom.toLowerCase()} !`, "info");
+    return;
+  }
+  if (enf.gouttes < espece.cout) {
+    toast("Pas encore assez de Gouttes 💧 — continue tes gestes pour la planète !", "info");
+    return;
+  }
+  enf.gouttes -= espece.cout;
+  const coll = enf.ecosysteme[tier.id];
+  coll[espece.id] = (coll[espece.id] || 0) + 1;
+  toast(`${espece.emoji} Un(e) ${espece.nom} rejoint ton écosystème ! 🌍`, "succes");
+  confettis();
+  verifierBadges(enf);
+  sauver();
+  rendre();
 }
 
 /* ---------- Badges ---------- */
@@ -138,8 +188,11 @@ function verifierBadges(enf) {
   };
   if (enf.coeursTotal >= 10) ajoute("coeur10", "Cœur d'or", "💛");
   if (enf.coeursTotal >= 50) ajoute("coeur50", "Super entraide", "🏅");
-  if (enf.gouttes >= 20) ajoute("eco20", "Ami des arbres", "🌳");
-  if (enf.gouttes >= 70) ajoute("eco70", "Gardien de la nature", "🦋");
+  if (nbTier(enf, "plantes") >= 1)    ajoute("eco_p", "Jardinier en herbe", "🌱");
+  if (nbTier(enf, "herbivores") >= 1) ajoute("eco_h", "Ami des herbivores", "🐰");
+  if (nbTier(enf, "carnivores") >= 1) ajoute("eco_c", "Protecteur des prédateurs", "🦊");
+  if (nbTier(enf, "plantes") >= 1 && nbTier(enf, "herbivores") >= 1 && nbTier(enf, "carnivores") >= 1)
+    ajoute("eco_chaine", "Chaîne alimentaire complète", "🔗");
   // série de jours actifs
   const jours = Object.keys(enf.journal).length;
   if (jours >= 7) ajoute("semaine", "Une semaine d'efforts", "📅");

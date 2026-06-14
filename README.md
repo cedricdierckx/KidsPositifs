@@ -38,10 +38,26 @@ Deux catégories, deux monnaies, deux récompenses qui **évoluent dans le temps
 | Catégorie | Monnaie | Récompense évolutive |
 |-----------|---------|----------------------|
 | 🏡 **Famille** (entraide, mettre/débarrasser la table, manger proprement, ranger sa chambre, dire merci…) | 💛 Cœurs | **Avatar personnalisable** : personnage, chapeau, accessoire, compagnon, décor à débloquer |
-| 🌍 **Planète** (éteindre la lumière, fermer le robinet, ne pas gaspiller, trier, arroser…) | 💧 Gouttes | **Écosystème** : une graine 🌱 devient pousse, arbre 🌳, fleurs, abeilles, oiseaux… jusqu'à une forêt entière 🏞️ |
+| 🌍 **Planète** (éteindre la lumière, fermer le robinet, ne pas gaspiller, trier, arroser…) | 💧 Gouttes | **Écosystème éducatif** : l'enfant dépense ses Gouttes pour bâtir une **chaîne alimentaire** |
 
 Chaque mission validée déclenche encouragements et confettis. Des **badges**
 récompensent les efforts dans la durée.
+
+### 🌍 L'écosystème éducatif (chaîne alimentaire)
+
+Côté Planète, l'enfant **construit la nature dans le bon ordre**, comme dans la
+réalité :
+
+1. 🌱 **Les plantes** d'abord (elles captent l'énergie du soleil).
+2. 🐰 **Les herbivores** ensuite — débloqués seulement quand il y a **assez de
+   plantes** pour les nourrir.
+3. 🦊 **Les carnivores** enfin — débloqués seulement quand il y a **assez
+   d'herbivores**.
+
+À chaque niveau, l'enfant **choisit** parmi plusieurs espèces ce qu'il veut
+créer, en dépensant ses Gouttes 💧. Il comprend ainsi, en jouant, que chaque
+maillon dépend du précédent. La configuration (niveaux, espèces, quantités
+requises) se règle dans `TIERS_ECO` (`js/data.js`).
 
 ## 🌈 L'esprit « Papa Positive »
 
