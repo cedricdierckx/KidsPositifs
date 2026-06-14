@@ -245,7 +245,8 @@ function vueEcosysteme(enf) {
 /* ---------- Vue Avatar ---------- */
 const AVATAR_LIBELLES = {
   peau: "Couleur de peau", coiffure: "Coiffure", cheveux: "Couleur des cheveux",
-  yeux: "Yeux", lunettes: "Lunettes", chapeau: "Chapeau",
+  yeux: "Yeux", lunettes: "Lunettes", taches: "Taches de rousseur",
+  pilosite: "Moustache / barbe", boucles: "Boucles d'oreilles", chapeau: "Chapeau",
   accessoire: "Accessoire", compagnon: "Compagnon", fond: "Décor"
 };
 
@@ -337,6 +338,30 @@ function blocCorrections(enf) {
     sec.appendChild(ligne);
   });
 
+  // -- Badges --
+  const hBadges = el("h2", null, "🏆 Badges"); hBadges.style.marginTop = "12px";
+  sec.appendChild(hBadges);
+  if (!enf.badges.length) {
+    sec.appendChild(el("p", "note", "Aucun badge pour le moment."));
+  } else {
+    enf.badges.forEach(b => {
+      const ligne = el("div", "hist-ligne");
+      ligne.innerHTML = `<span class="h-info">${b.emoji} ${b.nom}</span>`;
+      const x = el("button", "mini-btn non", "Retirer");
+      x.onclick = () => retirerBadge(enf, b.id);
+      ligne.appendChild(x);
+      sec.appendChild(ligne);
+    });
+  }
+  if (enf.badgesRetires && enf.badgesRetires.length) {
+    const r = el("button", "btn-secondaire", `↩️ Réautoriser ${enf.badgesRetires.length} badge(s) retiré(s)`);
+    r.onclick = () => reactiverBadges(enf);
+    sec.appendChild(r);
+  }
+  const eff = el("button", "btn-secondaire", "🧹 Effacer tous les badges");
+  eff.onclick = () => effacerBadges(enf);
+  sec.appendChild(eff);
+
   return sec;
 }
 
@@ -397,9 +422,11 @@ function vueReglages(c) {
   lVal.appendChild(iVal);
   lVal.appendChild(el("span", null, "Validation parentale requise (les actions des enfants attendent votre confirmation)"));
   prog.appendChild(lVal);
-  const bCp = el("button", "btn-secondaire", etat.reglages.codeParent ? "🔑 Changer le code parent" : "🔑 Définir un code parent");
+  const bCp = el("button", "btn-secondaire", etat.reglages.codeParent ? "🔑 Changer le code PIN parent" : "🔑 Définir un code PIN parent");
   bCp.onclick = definirCodeParent;
   prog.appendChild(bCp);
+  if (!etat.reglages.codeParent)
+    prog.appendChild(el("p", "note", "💡 Astuce : définissez un code PIN pour protéger l'accès au mode parents."));
   c.appendChild(prog);
 
   // ----- Corrections pour l'enfant sélectionné -----

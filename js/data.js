@@ -134,6 +134,22 @@ const AVATAR_OPTIONS = {
     { id: "soleil",  nom: "Lunettes soleil",  cout: 12 },
     { id: "etoile",  nom: "Lunettes étoiles", cout: 25 }
   ],
+  taches: [
+    { id: "rien",   nom: "Aucune",            cout: 0 },
+    { id: "taches", nom: "Taches de rousseur", cout: 8 }
+  ],
+  pilosite: [
+    { id: "rien",      nom: "Aucune",     cout: 0 },
+    { id: "moustache", nom: "Moustache",  cout: 15 },
+    { id: "barbe",     nom: "Barbe",      cout: 20 }
+  ],
+  boucles: [
+    { id: "rien",    nom: "Aucune",           cout: 0 },
+    { id: "perles",  nom: "Perles",           cout: 12 },
+    { id: "anneaux", nom: "Anneaux dorés",    cout: 12 },
+    { id: "etoiles", nom: "Étoiles",          cout: 18 },
+    { id: "coeurs",  nom: "Cœurs",            cout: 18 }
+  ],
   chapeau: [
     { id: "rien",      nom: "Aucun",          cout: 0 },
     { id: "noeud",     nom: "Nœud",           cout: 8,  hex: "#ff6f91" },
@@ -167,6 +183,9 @@ const AVATAR_OPTIONS = {
     { id: "foret",     nom: "Forêt",     cout: 15, hex: "#cdeccf", motif: "🌳" },
     { id: "plage",     nom: "Plage",     cout: 20, hex: "#ffe7ad", motif: "🏖️" },
     { id: "arcenciel", nom: "Arc-en-ciel", cout: 35, hex: "#ffd6ec", motif: "🌈" },
+    { id: "ocean",     nom: "Océan",     cout: 20, hex: "#9fe3e8", motif: "🐠" },
+    { id: "bonbon",    nom: "Bonbons",   cout: 30, hex: "#ffd1e8", motif: "🍭" },
+    { id: "ferme",     nom: "Ferme",     cout: 18, hex: "#bfe6a0", motif: "🐮" },
     { id: "espace",    nom: "Espace",    cout: 40, hex: "#241a52", motif: "⭐" }
   ]
 };

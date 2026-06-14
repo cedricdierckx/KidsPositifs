@@ -29,7 +29,8 @@ function etatVierge() {
       debloque: [],         // ids d'options d'avatar débloquées
       journal: {},          // { "2026-06-14": { missionId: count } }
       enAttente: [],        // actions en attente de validation parentale
-      badges: []            // récompenses symboliques
+      badges: [],           // récompenses symboliques
+      badgesRetires: []     // badges retirés par les parents (non re-attribués)
     };
   });
   return {
@@ -44,7 +45,8 @@ function coiffureDefaut(e) { return e.sexe === "fille" ? "couettes" : "court"; }
 function avatarParDefaut(e) {
   return {
     peau: "clair", coiffure: coiffureDefaut(e), cheveux: "brun", yeux: "ronds",
-    lunettes: "rien", chapeau: "rien", accessoire: "rien", compagnon: "rien", fond: "ciel"
+    lunettes: "rien", taches: "rien", pilosite: "rien", boucles: "rien",
+    chapeau: "rien", accessoire: "rien", compagnon: "rien", fond: "ciel"
   };
 }
 // Emoji par défaut (sélecteur) selon l'âge et le sexe.
@@ -77,6 +79,10 @@ function normaliser(e) {
       enf.avatar = avatarParDefaut(enf);
       enf.debloque = []; // les anciens déblocages ne correspondent plus
     }
+    // champs d'avatar ajoutés ultérieurement -> valeur par défaut
+    ["taches", "pilosite", "boucles"].forEach(k => { if (enf.avatar[k] === undefined) enf.avatar[k] = "rien"; });
+    if (!Array.isArray(enf.badgesRetires)) enf.badgesRetires = [];
+    if (!Array.isArray(enf.badges)) enf.badges = [];
   });
   if (e.maj === undefined) e.maj = 0;
   if (!e.reglages) e.reglages = { validationParentale: false, codeParent: "" };
@@ -357,7 +363,9 @@ function creerEspece(tier, espece) {
 
 /* ---------- Badges ---------- */
 function verifierBadges(enf) {
+  if (!Array.isArray(enf.badgesRetires)) enf.badgesRetires = [];
   const ajoute = (id, nom, emoji) => {
+    if (enf.badgesRetires.includes(id)) return; // retiré par un parent : on ne le redonne pas
     if (!enf.badges.find(b => b.id === id)) {
       enf.badges.push({ id, nom, emoji });
       toast(`Nouveau badge : ${emoji} ${nom} !`, "succes");
@@ -408,9 +416,9 @@ function confettis() {
 function activerModeParents() {
   const code = etat.reglages.codeParent;
   if (code) {
-    const saisi = prompt("Code parent :");
+    const saisi = prompt("🔒 Code PIN parent :");
     if (saisi === null) return;
-    if (saisi !== code) { toast("Code incorrect 🔒", "info"); return; }
+    if (saisi.trim() !== code) { toast("Code PIN incorrect 🔒", "info"); return; }
   }
   modeParents = true;
   rendre();
@@ -419,11 +427,12 @@ function quitterModeParents() { modeParents = false; rendre(); }
 
 function definirCodeParent() {
   const actuel = etat.reglages.codeParent;
-  const v = prompt(actuel ? "Nouveau code parent (vide pour supprimer) :" : "Choisir un code parent (chiffres conseillés) :", "");
+  const v = prompt(actuel ? "Nouveau code PIN (laisser vide pour le supprimer) :"
+                          : "Choisir un code PIN parent (ex. 4 chiffres) :", "");
   if (v === null) return;
   etat.reglages.codeParent = v.trim();
   sauver();
-  toast(etat.reglages.codeParent ? "Code parent enregistré 🔒" : "Code parent supprimé", "succes");
+  toast(etat.reglages.codeParent ? "Code PIN enregistré 🔒" : "Code PIN supprimé", "succes");
   rendre();
 }
 
@@ -474,6 +483,31 @@ function modifierHistorique(enf, jour, mission, sens) {
   }
   if (Object.keys(enf.journal[jour]).length === 0) delete enf.journal[jour];
   sauver();
+  rendre();
+}
+
+/* ---------- Gestion des badges (mode parents) ---------- */
+// Retire un badge ; il ne sera pas ré-attribué automatiquement.
+function retirerBadge(enf, badgeId) {
+  enf.badges = enf.badges.filter(b => b.id !== badgeId);
+  if (!enf.badgesRetires.includes(badgeId)) enf.badgesRetires.push(badgeId);
+  sauver();
+  rendre();
+}
+// Réautorise les badges retirés (ils pourront se regagner selon les critères).
+function reactiverBadges(enf) {
+  enf.badgesRetires = [];
+  verifierBadges(enf);
+  sauver();
+  rendre();
+}
+// Efface tous les badges d'un enfant (et les autorise à nouveau).
+function effacerBadges(enf) {
+  if (!confirm(`Effacer tous les badges de ${enf.prenom} ?`)) return;
+  enf.badges = [];
+  enf.badgesRetires = [];
+  sauver();
+  toast("Badges effacés.", "info");
   rendre();
 }
 

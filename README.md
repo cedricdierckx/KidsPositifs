@@ -109,9 +109,12 @@ L'onglet **⚙️ Parents** est verrouillé par défaut. En l'activant (avec un
 - **Validation des actions** : si l'option « validation parentale requise » est
   activée, chaque action d'un enfant attend la **confirmation d'un parent** avant
   de créditer les points (une pastille indique le nombre d'actions en attente).
+- **Code PIN** : on peut protéger l'accès au mode parents par un code PIN.
 - **Ajustement manuel** des Cœurs 💛 et Gouttes 💧 (boutons −/+ ou saisie directe).
 - **Correction rétroactive** : choisir une date et ajouter/retirer des missions
   validées ce jour-là ; les soldes sont recalculés automatiquement.
+- **Gestion des badges** : retirer un badge (il ne sera pas ré-attribué),
+  réautoriser les badges retirés, ou tout effacer.
 - Modification des profils, réglages de synchro et données.
 
 > L'avatar et l'emoji de chaque enfant **suivent automatiquement le sexe** (et

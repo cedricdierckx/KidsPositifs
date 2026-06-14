@@ -86,36 +86,59 @@ function svgLunettes(id) {
   }
 }
 
-/* Cheveux : la couleur vient de la catégorie "cheveux", le style de "coiffure". */
-function svgCheveux(coiffure, couleurId) {
-  if (coiffure === "chauve") return "";
+/* Cheveux : couleur de "cheveux", style de "coiffure".
+ * Deux couches : svgCheveuxArriere (volume DERRIÈRE la tête, dessiné avant le
+ * visage) et svgCheveuxDevant (racine + mèches, dessiné après le visage mais
+ * au-dessus du front, donc sans cacher les yeux). */
+function svgCheveuxArriere(coiffure, couleurId) {
+  if (!coiffure || coiffure === "chauve") return "";
   const c = hexAvatar("cheveux", couleurId, "#5b3a23");
-  const cFonce = assombrir(c, 0.85);
+  const cF = assombrir(c, 0.88);
   switch (coiffure) {
-    case "couettes":
-      return `<circle cx="22" cy="44" r="9" fill="${cFonce}"/><circle cx="78" cy="44" r="9" fill="${cFonce}"/>
-              <path d="M24 40 Q50 12 76 40 Q72 28 50 26 Q28 28 24 40Z" fill="${c}"/>`;
-    case "frange":
-      return `<path d="M23 46 Q50 14 77 46 L77 40 Q50 18 23 40Z" fill="${c}"/>
-              <path d="M27 36 Q50 22 73 36 Q73 47 70 47 Q66 38 60 44 Q54 36 50 44 Q46 36 40 44 Q34 38 30 47 Q27 47 27 36Z" fill="${c}"/>`;
-    case "chignon":
-      return `<circle cx="50" cy="22" r="8" fill="${c}"/>
-              <path d="M24 42 Q50 14 76 42 Q70 30 50 29 Q30 30 24 42Z" fill="${c}"/>`;
     case "long":
-      return `<path d="M20 44 Q22 78 30 82 L30 50 Q40 40 50 40 Q60 40 70 50 L70 82 Q78 78 80 44 Q50 12 20 44Z" fill="${c}"/>
-              <path d="M24 42 Q50 14 76 42 Q70 28 50 27 Q30 28 24 42Z" fill="${cFonce}"/>`;
+      return `<path d="M18 54 Q14 85 27 89 L29 56 Q31 47 36 45 L64 45 Q69 47 71 56 L73 89 Q86 85 82 54 Q81 21 50 18 Q19 21 18 54Z" fill="${cF}"/>`;
+    case "couettes":
+      return `<g fill="${cF}"><ellipse cx="15" cy="60" rx="8" ry="12"/><ellipse cx="85" cy="60" rx="8" ry="12"/></g>`;
+    default:
+      return "";
+  }
+}
+
+function svgCheveuxDevant(coiffure, couleurId) {
+  if (!coiffure || coiffure === "chauve") return "";
+  const c = hexAvatar("cheveux", couleurId, "#5b3a23");
+  const cF = assombrir(c, 0.82);
+  const cL = eclaircir(c, 1.18);
+  const reflet = `<path d="M44 22 Q56 21 66 28" fill="none" stroke="${cL}" stroke-width="2.4" stroke-linecap="round" opacity="0.55"/>`;
+  const calotte = `M23 47 Q24 21 50 19 Q76 21 77 47`; // contour du cuir chevelu
+  switch (coiffure) {
+    case "court":
+      return `<path d="${calotte} Q72 40 64 41 Q57 35 50 38 Q43 35 36 41 Q28 40 23 47Z" fill="${c}"/>${reflet}`;
+    case "frange":
+      return `<path d="${calotte} Q74 45 69 46 Q64 41 59 46 Q54 41 49 46 Q44 41 39 46 Q34 41 30 46 Q26 45 23 47Z" fill="${c}"/>`;
+    case "couettes":
+      return `<path d="${calotte} Q72 41 64 42 Q57 36 50 39 Q43 36 36 42 Q28 41 23 47Z" fill="${c}"/>${reflet}
+              <g fill="${cF}"><ellipse cx="15" cy="60" rx="7" ry="10"/><ellipse cx="85" cy="60" rx="7" ry="10"/></g>
+              <rect x="11" y="50" width="9" height="4" rx="2" fill="${c}"/><rect x="80" y="50" width="9" height="4" rx="2" fill="${c}"/>`;
+    case "chignon":
+      return `<path d="${calotte} Q72 40 50 38 Q28 40 23 47Z" fill="${c}"/>${reflet}
+              <circle cx="50" cy="14" r="8" fill="${c}"/><ellipse cx="50" cy="21" rx="9" ry="3" fill="${cF}"/>`;
+    case "long":
+      return `<path d="${calotte} Q72 42 50 38 Q28 42 23 47Z" fill="${c}"/>${reflet}
+              <path d="M24 45 Q20 65 26 76 L31 73 Q27 58 31 47Z" fill="${c}"/>
+              <path d="M76 45 Q80 65 74 76 L69 73 Q73 58 69 47Z" fill="${c}"/>`;
     case "boucle":
       return `<g fill="${c}">
-              <circle cx="30" cy="34" r="8"/><circle cx="42" cy="28" r="9"/><circle cx="55" cy="27" r="9"/>
-              <circle cx="68" cy="33" r="8"/><circle cx="24" cy="44" r="7"/><circle cx="76" cy="44" r="7"/></g>`;
+              <circle cx="29" cy="33" r="9"/><circle cx="42" cy="26" r="10"/><circle cx="56" cy="26" r="10"/>
+              <circle cx="69" cy="33" r="9"/><circle cx="24" cy="44" r="7.5"/><circle cx="76" cy="44" r="7.5"/>
+              <circle cx="37" cy="39" r="6"/><circle cx="63" cy="39" r="6"/></g>
+              <g fill="${cL}" opacity="0.5"><circle cx="44" cy="24" r="2.6"/><circle cx="58" cy="25" r="2.1"/></g>`;
     case "crete":
-      return `<path d="M24 46 Q26 34 34 32 Q30 40 34 44Z" fill="${cFonce}"/>
-              <path d="M76 46 Q74 34 66 32 Q70 40 66 44Z" fill="${cFonce}"/>
-              <path d="M44 30 L50 12 L56 30 Q50 24 44 30Z" fill="${c}"/>
-              <path d="M38 34 L42 20 L48 32 Z" fill="${c}"/><path d="M52 32 L58 20 L62 34 Z" fill="${c}"/>`;
-    default: // court
-      return `<path d="M23 48 Q50 12 77 48 Q78 32 50 28 Q22 32 23 48Z" fill="${c}"/>
-              <path d="M23 48 Q26 40 30 40 L30 46Z M77 48 Q74 40 70 40 L70 46Z" fill="${cFonce}"/>`;
+      return `<path d="M25 47 Q26 38 32 36 Q29 42 33 46Z" fill="${cF}"/>
+              <path d="M75 47 Q74 38 68 36 Q71 42 67 46Z" fill="${cF}"/>
+              <path d="M39 39 L43 17 L47 36 L50 11 L53 36 L57 17 L61 39 Q50 33 39 39Z" fill="${c}"/>`;
+    default:
+      return "";
   }
 }
 
@@ -149,6 +172,36 @@ function svgChapeau(id) {
   }
 }
 
+function svgTaches(id) {
+  if (id !== "taches") return "";
+  const c = "rgba(150,90,50,0.55)";
+  const pts = [[36, 58], [40, 60], [44, 59], [56, 59], [60, 60], [64, 58]];
+  return pts.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1" fill="${c}"/>`).join("");
+}
+
+function svgPilosite(id, couleurId) {
+  if (!id || id === "rien") return "";
+  const c = hexAvatar("cheveux", couleurId, "#5b3a23");
+  if (id === "moustache")
+    return `<path d="M42 60 Q50 56 58 60 Q54 64 50 61 Q46 64 42 60Z" fill="${c}"/>`;
+  // barbe
+  return `<path d="M30 58 Q32 82 50 84 Q68 82 70 58 Q64 66 50 66 Q36 66 30 58Z" fill="${c}" opacity="0.95"/>`;
+}
+
+function svgBoucles(id) {
+  if (!id || id === "rien") return "";
+  const G = 31, D = 69, Y = 63; // sous les oreilles
+  const bijou = (x) => {
+    switch (id) {
+      case "anneaux": return `<circle cx="${x}" cy="${Y}" r="2.6" fill="none" stroke="#f2c11b" stroke-width="1.6"/>`;
+      case "etoiles": return etoile(x, Y, 2.6, "#f2c11b");
+      case "coeurs":  return coeurForme(x, Y, 2.4, "#e8607d");
+      default:        return `<circle cx="${x}" cy="${Y}" r="2.2" fill="#dfe7f2" stroke="#b9c4d6" stroke-width="0.6"/>`; // perles
+    }
+  };
+  return bijou(G) + bijou(D);
+}
+
 // Accessoire tenu (emoji, coin bas-droite) et compagnon (emoji, coin bas-gauche).
 function svgEmojiCoin(cat, id, x, y, taille) {
   const o = optAvatar(cat, id);
@@ -161,24 +214,19 @@ function buildAvatar(av) {
   av = av || {};
   return `<svg viewBox="0 0 100 100" class="av-svg" xmlns="http://www.w3.org/2000/svg">
     ${svgFond(av.fond)}
-    ${svgCheveux(av.coiffure, av.cheveux)}
+    ${svgCheveuxArriere(av.coiffure, av.cheveux)}
     ${svgTete(av.peau)}
+    ${svgBoucles(av.boucles)}
+    ${svgCheveuxDevant(av.coiffure, av.cheveux)}
+    ${svgTaches(av.taches)}
     ${svgYeux(av.yeux)}
     ${svgBouche()}
+    ${svgPilosite(av.pilosite, av.cheveux)}
     ${svgLunettes(av.lunettes)}
-    ${frangeAvant(av.coiffure, av.cheveux)}
     ${svgChapeau(av.chapeau)}
     ${svgEmojiCoin("compagnon", av.compagnon, 18, 92, 18)}
     ${svgEmojiCoin("accessoire", av.accessoire, 84, 90, 18)}
   </svg>`;
-}
-
-// Pour la frange/le toupet, on redessine une petite mèche par-dessus le front
-// (sous le chapeau) afin que la coiffure encadre bien le visage.
-function frangeAvant(coiffure, couleurId) {
-  if (coiffure === "frange" || coiffure === "chauve") return "";
-  const c = hexAvatar("cheveux", couleurId, "#5b3a23");
-  return `<path d="M27 34 Q50 22 73 34 Q73 40 70 40 Q60 33 50 38 Q40 33 30 40 Q27 40 27 34Z" fill="${c}" opacity="0.95"/>`;
 }
 
 /* ---------- Petites formes utilitaires ---------- */
@@ -200,6 +248,8 @@ function coeurForme(cx, cy, r, fill) {
 function assombrir(hex, f) {
   const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!m) return hex;
-  const c = [1, 2, 3].map(i => Math.round(parseInt(m[i], 16) * f));
+  const c = [1, 2, 3].map(i => Math.min(255, Math.round(parseInt(m[i], 16) * f)));
   return "#" + c.map(v => v.toString(16).padStart(2, "0")).join("");
 }
+// Éclaircit une couleur hex (facteur > 1).
+function eclaircir(hex, f) { return assombrir(hex, f); }
