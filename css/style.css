@@ -181,6 +181,15 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .eco-carte-sp.verrou-prereq .ec-emoji{filter:grayscale(.7)}
 .eco-carte-sp.verrou-prereq .ec-etat{background:#eef2f7; color:var(--doux)}
 
+/* Référence des prérequis (espace parents) */
+.eco-ref-tier{margin-top:10px}
+.eco-ref-titre{font-size:15px; margin:8px 0 4px}
+.eco-ref-ligne{display:flex; align-items:baseline; gap:8px; padding:5px 0;
+  border-bottom:1px solid #eef2f7; font-size:13px}
+.eco-ref-ligne .erl-nom{font-weight:800; min-width:108px}
+.eco-ref-ligne .erl-cout{color:var(--planete); font-weight:800; min-width:46px}
+.eco-ref-ligne .erl-prereq{color:var(--doux); flex:1}
+
 /* ---- Avatar (SVG) ---- */
 .avatar-scene{width:150px; height:150px; margin:0 auto}
 .avatar-scene .av-svg{width:100%; height:100%; display:block}

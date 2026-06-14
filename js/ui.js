@@ -535,6 +535,33 @@ function blocCorrections(enf) {
   return sec;
 }
 
+// Tableau de référence (parents) : coût et prérequis de chaque espèce.
+function blocEcoReference() {
+  const sec = el("section", "carte");
+  sec.innerHTML = `<h2>🌍 Écosystème — prérequis des espèces</h2>
+    <p class="note">Pour information : ce dont chaque plante ou animal a besoin pour être créé (coût en Gouttes 💧 et prérequis).</p>`;
+  TIERS_ECO.forEach(tier => {
+    const grp = el("div", "eco-ref-tier");
+    grp.innerHTML = `<h3 class="eco-ref-titre">${tier.emoji} ${tier.nom}</h3>`;
+    tier.especes.forEach(sp => {
+      const entrees = Object.keys(sp.prereq || {});
+      const prereq = entrees.length
+        ? entrees.map(id => {
+            const info = spInfo(id);
+            return `${sp.prereq[id]}× ${info ? info.sp.emoji + " " + info.sp.nom : id}`;
+          }).join(", ")
+        : "aucun prérequis";
+      const ligne = el("div", "eco-ref-ligne");
+      ligne.innerHTML = `<span class="erl-nom">${sp.emoji} ${sp.nom}</span>
+        <span class="erl-cout">${sp.cout} 💧</span>
+        <span class="erl-prereq">${prereq}</span>`;
+      grp.appendChild(ligne);
+    });
+    sec.appendChild(grp);
+  });
+  return sec;
+}
+
 function vueReglages(c) {
   const totalAttente = Object.values(etat.enfants).reduce((s, e) => s + e.enAttente.length, 0);
 
@@ -667,6 +694,9 @@ function vueReglages(c) {
   const bAjout = el("button", "gros-bouton famille", "➕ Ajouter un enfant");
   bAjout.onclick = () => { ajouterEnfant(); rendre(); };
   c.appendChild(bAjout);
+
+  // ----- Référence : prérequis de chaque espèce de l'écosystème -----
+  c.appendChild(blocEcoReference());
 
   // ----- Mode démo : bandeau au lieu des sections compte/famille -----
   if (typeof modeDemo !== "undefined" && modeDemo) {
