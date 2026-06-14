@@ -4,15 +4,12 @@
 -- Comptes (auth.users gérés par Supabase) + familles multi-membres,
 -- invitations par lien, état de jeu par famille, et ancrages d'abonnement.
 -- Sécurité par RLS : un utilisateur n'accède qu'aux familles dont il est membre.
+--
+-- Remarque : on n'ajoute volontairement AUCUN trigger sur auth.users
+-- (cette table ne nous appartient pas) ; on utilise auth.uid() directement.
 -- =====================================================================
 
 -- ---------- Tables ----------
-create table if not exists public.profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
-  email text,
-  created_at timestamptz default now()
-);
-
 create table if not exists public.families (
   id uuid primary key default gen_random_uuid(),
   name text not null default 'Ma famille',
@@ -57,15 +54,10 @@ returns boolean language sql security definer set search_path = public as $$
 $$;
 
 -- ---------- RLS ----------
-alter table public.profiles        enable row level security;
 alter table public.families        enable row level security;
 alter table public.family_members  enable row level security;
 alter table public.family_state    enable row level security;
 alter table public.invites         enable row level security;
-
-drop policy if exists "own profile" on public.profiles;
-create policy "own profile" on public.profiles
-  for all using (id = auth.uid()) with check (id = auth.uid());
 
 drop policy if exists "read my families" on public.families;
 create policy "read my families" on public.families
@@ -92,18 +84,6 @@ create policy "members rw state" on public.family_state
 drop policy if exists "members read invites" on public.invites;
 create policy "members read invites" on public.invites
   for select using (is_family_member(family_id));
-
--- ---------- Création de profil à l'inscription ----------
-create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path = public as $$
-begin
-  insert into public.profiles(id, email) values (new.id, new.email)
-  on conflict (id) do nothing;
-  return new;
-end; $$;
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users for each row execute function public.handle_new_user();
 
 -- ---------- RPC : créer une famille (+ membre owner + état vide) ----------
 create or replace function public.create_family(p_name text)
@@ -165,5 +145,10 @@ grant execute on function public.create_invite(uuid, text)      to authenticated
 grant execute on function public.invite_info(uuid)              to authenticated;
 grant execute on function public.accept_invite(uuid)            to authenticated;
 
--- ---------- Temps réel sur l'état de jeu ----------
-alter publication supabase_realtime add table public.family_state;
+-- ---------- Temps réel sur l'état de jeu (tolérant si déjà activé) ----------
+do $$ begin
+  alter publication supabase_realtime add table public.family_state;
+exception when others then null; end $$;
+
+-- ---------- Recharge le cache de l'API (PostgREST) ----------
+notify pgrst, 'reload schema';
