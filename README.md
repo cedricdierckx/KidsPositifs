@@ -2,8 +2,7 @@
 
 Un programme **évolutif et ludique** pour aider les enfants de **2 à 7 ans** à
 adopter des comportements positifs — et à se détourner des négatifs — dans
-l'esprit de la pédagogie **« Papa Positive »** (parentalité positive et
-bienveillante).
+l'esprit de la **parentalité positive et bienveillante**.
 
 C'est une petite application web qui fonctionne dans le navigateur (tablette,
 téléphone ou ordinateur). Chaque famille a son **compte** : on se connecte par
@@ -90,7 +89,7 @@ créer, en dépensant ses Gouttes 💧. Il comprend ainsi, en jouant, que chaque
 maillon dépend du précédent. La configuration (niveaux, espèces, quantités
 requises) se règle dans `TIERS_ECO` (`js/data.js`).
 
-## 🌈 L'esprit « Papa Positive »
+## 🌈 L'esprit bienveillant
 
 Le système est volontairement conçu pour rester **bienveillant** :
 

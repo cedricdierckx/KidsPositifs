@@ -1,7 +1,7 @@
 /* =====================================================================
  * KidsPositifs — Données de configuration
  * ---------------------------------------------------------------------
- * Inspiration pédagogique « Papa Positive » :
+ * Inspiration pédagogique (parentalité positive et bienveillante) :
  *  - On valorise l'effort et la coopération, jamais la performance.
  *  - On ne retire JAMAIS de points (pas de punition par les points).
  *  - On dissuade les comportements négatifs par l'encouragement de

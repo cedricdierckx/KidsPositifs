@@ -46,8 +46,8 @@ function initSquelette() {
   document.querySelectorAll(".nav-btn").forEach(b =>
     b.addEventListener("click", () => { etat.vue = b.dataset.vue; ecrireCache(); rendre(); }));
 
-  // Minuteur : le bandeau dodo suit l'heure en continu (toutes les 30 s).
-  if (!window.__dodoTimer) window.__dodoTimer = setInterval(majDodo, 30000);
+  // Minuteur : le bandeau dodo suit l'heure en continu (toutes les 20 s).
+  if (!window.__dodoTimer) window.__dodoTimer = setInterval(majDodo, 20000);
 }
 
 // Panneau d'administration : liste de toutes les familles.
@@ -216,9 +216,14 @@ function bandeauDodo(enf) {
   const sec = el("section", "dodo " + m.classe);
   sec.id = "dodo-bandeau";
   sec.innerHTML = `
-    <div class="dodo-ciel"><span class="dodo-astre">${m.emoji}</span>
-      <span class="dodo-etoiles">✦ ✧ ⭐ ✦ ✧</span></div>
-    <div class="dodo-txt"><strong>${m.titre}</strong><small>${m.info}</small></div>`;
+    <div class="dodo-etoiles">✦ ✧ ⭐ ✦ ✧ ✦ ✧</div>
+    <div class="dodo-txt"><strong>${m.emoji} ${m.titre}</strong><small>🛏️ ${m.heure}</small></div>
+    <div class="dodo-chemin" title="Quand l'étoile arrive à la lune, c'est l'heure de dormir">
+      <span class="dc-bout">☀️</span>
+      <div class="dc-piste"><div class="dc-rempli" style="width:${m.progress}%"></div>
+        <span class="dc-token" style="left:${m.progress}%">⭐</span></div>
+      <span class="dc-bout">🌙</span>
+    </div>`;
   const b = el("button", "dodo-btn" + (fait ? " fait" : ""),
     fait ? "✅ Au lit à l'heure !" : (enAttente ? "⏳ En attente" : `Je vais au lit à l'heure 🌙 +${mission.points}💛`));
   b.onclick = () => validerMission(mission);
@@ -519,7 +524,7 @@ function vueReglages(c) {
     v.innerHTML = `<h1>⚙️ Espace parents</h1>
       <p>Réservé aux parents : valider les actions, corriger les données, régler le programme.</p>
       ${totalAttente ? `<p class="note">⏳ <strong>${totalAttente}</strong> action(s) en attente de validation.</p>` : ""}
-      <p class="note">💡 <strong>Esprit « Papa Positive »</strong> : on valorise l'effort, jamais la performance. Les corrections servent à ajuster avec justesse, pas à punir.</p>`;
+      <p class="note">💡 <strong>Esprit bienveillant</strong> : on valorise l'effort, jamais la performance. Les corrections servent à ajuster avec justesse, pas à punir.</p>`;
     const b = el("button", "gros-bouton planete", "🔓 Activer le mode parents");
     b.onclick = activerModeParents;
     v.appendChild(b);

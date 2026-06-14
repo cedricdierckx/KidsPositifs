@@ -92,12 +92,21 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* Bandeau dodo (ambiance selon l'heure) */
 .dodo{border-radius:var(--rayon); padding:14px 16px; margin-bottom:14px; color:#fff;
   box-shadow:var(--ombre); position:relative; overflow:hidden}
-.dodo-ciel{position:absolute; inset:0; opacity:.9}
-.dodo-astre{position:absolute; top:8px; right:14px; font-size:30px}
-.dodo-etoiles{position:absolute; top:10px; left:12px; font-size:12px; opacity:0; letter-spacing:6px}
+.dodo-etoiles{position:absolute; top:8px; right:10px; font-size:12px; opacity:0; letter-spacing:5px}
 .dodo-txt{position:relative; z-index:2}
 .dodo-txt strong{display:block; font-size:17px; text-shadow:0 1px 4px rgba(0,0,0,.25)}
 .dodo-txt small{opacity:.95}
+
+/* Chemin visuel du dodo (☀️ → 🌙), compréhensible sans lire */
+.dodo-chemin{position:relative; z-index:2; display:flex; align-items:center; gap:8px; margin-top:10px}
+.dodo-chemin .dc-bout{font-size:22px}
+.dc-piste{position:relative; flex:1; height:14px; border-radius:10px;
+  background:rgba(255,255,255,.35)}
+.dc-rempli{position:absolute; left:0; top:0; bottom:0; border-radius:10px;
+  background:rgba(255,255,255,.85); transition:width .6s ease}
+.dc-token{position:absolute; top:50%; transform:translate(-50%,-50%); font-size:22px;
+  transition:left .6s ease; filter:drop-shadow(0 0 4px rgba(0,0,0,.25))}
+
 .dodo-btn{position:relative; z-index:2; margin-top:10px; border:none; border-radius:14px;
   padding:12px 14px; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit;
   background:rgba(255,255,255,.92); color:#2b3445; width:100%}
@@ -106,7 +115,6 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .dodo-soir{background:linear-gradient(135deg,#ff9e6d,#ffd28a)}
 .dodo-nuit{background:linear-gradient(135deg,#1b2350,#3a3f72)}
 .dodo-nuit .dodo-etoiles{opacity:.9; animation:scintille 2s ease-in-out infinite}
-.dodo-nuit .dodo-astre{filter:drop-shadow(0 0 8px #fff3b0)}
 @keyframes scintille{0%,100%{opacity:.3}50%{opacity:1}}
 
 /* Titres de catégorie sur l'accueil */

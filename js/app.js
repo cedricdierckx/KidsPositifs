@@ -149,17 +149,35 @@ function ageDepuis(dateNaissance) {
 }
 function age(enfant) { return ageDepuis(enfant.naissance); }
 function enfantActif() { return etat.enfants[etat.enfantActif]; }
+// Id de l'enfant aîné (date de naissance la plus ancienne).
+function idAine() {
+  const liste = Object.values(etat.enfants);
+  if (!liste.length) return null;
+  return liste.slice().sort((a, b) => (a.naissance || "").localeCompare(b.naissance || ""))[0].id;
+}
+// Réinitialise l'affichage : accueil de l'enfant aîné, hors mode parents.
+function vueAccueilAine() {
+  const aine = idAine();
+  if (aine) etat.enfantActif = aine;
+  etat.vue = "accueil";
+  modeParents = false;
+}
 
-// Ambiance "dodo" selon l'heure actuelle par rapport à l'heure de coucher.
+// Ambiance "dodo" selon l'heure LOCALE par rapport à l'heure de coucher.
+// FENETRE = durée (minutes) avant le coucher pendant laquelle le décompte
+// visuel progresse (le jeton avance vers la lune).
+const DODO_FENETRE = 120;
 function momentDodo(enf) {
   const parts = (enf.heureCoucher || "19:30").split(":");
   const coucher = (parseInt(parts[0], 10) || 19) * 60 + (parseInt(parts[1], 10) || 30);
-  const now = new Date();
+  const now = new Date();                       // heure locale de l'appareil
   const maintenant = now.getHours() * 60 + now.getMinutes();
-  const reste = coucher - maintenant; // minutes avant le coucher
-  if (reste > 60) return { classe: "dodo-jour", emoji: "☀️", titre: "Encore du temps pour jouer", info: `Dodo à ${enf.heureCoucher}` };
-  if (reste > 0)  return { classe: "dodo-soir", emoji: "🌇", titre: "Bientôt l'heure du dodo", info: `Dans ${reste} min (${enf.heureCoucher})` };
-  return { classe: "dodo-nuit", emoji: "🌙", titre: "C'est l'heure de dormir", info: `Dodo à ${enf.heureCoucher}` };
+  const reste = coucher - maintenant;           // minutes avant le coucher
+  let classe, emoji, titre, progress;
+  if (reste > DODO_FENETRE)      { classe = "dodo-jour"; emoji = "☀️"; titre = "Encore du temps pour jouer"; progress = 0; }
+  else if (reste > 0)           { classe = "dodo-soir"; emoji = "🌇"; titre = "Le dodo approche";           progress = Math.round((1 - reste / DODO_FENETRE) * 100); }
+  else                          { classe = "dodo-nuit"; emoji = "🌙"; titre = "C'est l'heure de dormir";   progress = 100; }
+  return { classe, emoji, titre, progress, heure: enf.heureCoucher };
 }
 function $(sel) { return document.querySelector(sel); }
 function el(tag, cls, html) {

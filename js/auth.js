@@ -82,6 +82,7 @@ async function ouvrirFamille(f) {
   const cache = lireCache();
   if (cache) etat = cache;                // affichage instantané / hors-ligne
   await chargerEtatFamille();
+  vueAccueilAine();                       // toujours démarrer sur l'accueil de l'aîné
   rendre();
   abonnerRealtime();
   document.removeEventListener("visibilitychange", auRetour);
@@ -296,6 +297,7 @@ function demarrerDemo() {
   estAdmin = false;
   etat = etatDemo();
   initSquelette();
+  vueAccueilAine();
   rendre();
   majBadgeSync("🧪");
 }
