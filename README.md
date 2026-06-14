@@ -5,9 +5,38 @@ adopter des comportements positifs — et à se détourner des négatifs — dan
 l'esprit de la pédagogie **« Papa Positive »** (parentalité positive et
 bienveillante).
 
-C'est une petite application web, **100 % hors-ligne** : tout fonctionne dans le
-navigateur (tablette, téléphone ou ordinateur) et les données sont enregistrées
-**localement** sur l'appareil (aucun compte, aucun envoi sur internet).
+C'est une petite application web qui fonctionne dans le navigateur (tablette,
+téléphone ou ordinateur). Les données sont **synchronisées entre tous les
+appareils** de la famille grâce à un simple **code famille** partagé, avec un
+cache local qui assure le fonctionnement même **hors-ligne**.
+
+## 🔄 Synchronisation entre appareils
+
+Au premier lancement, l'appli demande un **code famille** (ex.
+`famille-dierckx`). Saisissez **le même code** sur chaque appareil : ils
+partageront alors les mêmes Cœurs, Gouttes, avatars et écosystèmes. Les
+modifications sont envoyées automatiquement et chaque appareil se rafraîchit
+toutes les ~12 secondes (et au retour sur l'onglet).
+
+> Données peu sensibles (points de comportement) : pas de compte ni d'email.
+> Toute personne connaissant le code voit les données — gardez-le en famille.
+
+### Configuration du stockage (Vercel + Upstash KV)
+
+Le site est déployé sur Vercel (https://kids-positifs.vercel.app/). La synchro
+repose sur une fonction serverless (`api/state.js`) et une base **Upstash for
+Redis / Vercel KV** :
+
+1. Dans le dashboard Vercel du projet → onglet **Storage** → **Create
+   Database** → **Upstash for Redis** (ou « KV »), puis **Connect** au projet.
+2. Vercel ajoute alors automatiquement les variables d'environnement
+   `KV_REST_API_URL` et `KV_REST_API_TOKEN` (l'API accepte aussi
+   `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`).
+3. **Redeploy** le projet. C'est prêt : la synchro fonctionne.
+
+Tant que ces variables ne sont pas configurées, l'appli continue de fonctionner
+en local sur chaque appareil (sans synchro), et l'API renvoie un message
+explicite.
 
 ## ▶️ Lancer l'application
 
@@ -27,9 +56,10 @@ comme une vraie application.
 ## 👨‍👩‍👧‍👦 Les enfants
 
 Quatre profils sont pré-configurés (nés en 2018, 2019, 2021, 2023). Dans
-l'onglet **⚙️ Parents**, tu peux modifier les prénoms, l'année de naissance,
-l'emoji et la couleur de chacun. Les missions proposées **s'adaptent
-automatiquement à l'âge** de chaque enfant.
+l'onglet **⚙️ Parents**, tu peux modifier le prénom, la **date de naissance
+complète**, le **sexe** (👧 fille / 👦 garçon), l'emoji et la couleur de chacun.
+Les missions proposées **s'adaptent automatiquement à l'âge** (calculé à partir
+de la date de naissance), et l'avatar de base est proposé selon le sexe.
 
 ## 🎮 Comment ça marche (la gamification)
 
@@ -77,8 +107,10 @@ Le système est volontairement conçu pour rester **bienveillant** :
 index.html        Page de l'application
 css/style.css     Styles (interface tactile, lisible par de jeunes enfants)
 js/data.js        Configuration : enfants, catégories, missions, récompenses
-js/app.js         Logique : état, sauvegarde locale, actions
-js/ui.js          Rendu des différents écrans
+js/app.js         Logique : état, synchronisation, calcul d'âge, actions
+js/ui.js          Rendu des différents écrans (dont l'écran code famille)
+api/state.js      Fonction serverless de synchro (Vercel + Upstash KV)
+vercel.json       Configuration du déploiement Vercel
 ```
 
 ## 🔧 Personnaliser
@@ -89,8 +121,8 @@ Tout se règle dans `js/data.js` :
 - **Ajouter un élément d'avatar** : complète `AVATAR_OPTIONS`.
 - **Modifier l'écosystème** : ajuste les paliers de `ECOSYSTEME_PALIERS`.
 
-Dans l'onglet Parents, tu peux **exporter** une sauvegarde JSON ou **tout
-réinitialiser**.
+Dans l'onglet Parents, tu peux **changer de code famille**, **exporter** une
+sauvegarde JSON ou **tout réinitialiser**.
 
-> ⚠️ L'âge est calculé à partir de la constante `ANNEE_REF` dans `js/app.js`
-> (2026). Mets-la à jour au fil des années.
+> L'âge se calcule automatiquement à partir de la date de naissance, il n'y a
+> rien à mettre à jour au fil des années.

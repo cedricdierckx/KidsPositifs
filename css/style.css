@@ -175,6 +175,25 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .confetti{position:absolute; top:-30px; animation:chute 1.8s linear forwards}
 @keyframes chute{to{transform:translateY(110vh) rotate(360deg); opacity:.2}}
 
+/* ---- Synchro ---- */
+.sync-etat{font-size:14px; opacity:.8; margin-left:4px}
+
+/* ---- Écran code famille ---- */
+.ecran-code{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:18px}
+.code-carte{max-width:380px; text-align:center}
+.code-logo{font-size:54px}
+.code-carte h1{margin:.1em 0}
+.code-carte input{width:100%; padding:14px; font-size:18px; text-align:center;
+  border:3px solid #e3edf5; border-radius:14px; margin:12px 0; font-family:inherit}
+.code-carte input.erreur{border-color:#e26d9b}
+.code-carte .gros-bouton{width:100%}
+
+/* ---- Sélecteur de sexe ---- */
+.segmente{display:flex; gap:8px; margin-top:4px}
+.seg{flex:1; padding:12px; border:2px solid #e3edf5; background:#fff; border-radius:12px;
+  font-size:15px; font-weight:700; cursor:pointer; font-family:inherit}
+.seg.actif{border-color:var(--c,#39c0a0); background:#f1faf6}
+
 @media(max-width:420px){
   .compteurs{flex-direction:column; align-items:center}
 }

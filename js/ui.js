@@ -8,7 +8,7 @@ function initSquelette() {
     <div id="toast" class="toast"></div>
 
     <header class="topbar">
-      <div class="logo">🌟 KidsPositifs</div>
+      <div class="logo">🌟 KidsPositifs <span id="sync-etat" class="sync-etat" title="État de la synchronisation">…</span></div>
       <div id="selecteur-enfant" class="selecteur"></div>
     </header>
 
@@ -22,8 +22,35 @@ function initSquelette() {
       <button data-vue="reglages" class="nav-btn">⚙️<span>Parents</span></button>
     </nav>`;
 
+  // Navigation : choix d'affichage local (non synchronisé entre appareils).
   document.querySelectorAll(".nav-btn").forEach(b =>
-    b.addEventListener("click", () => { etat.vue = b.dataset.vue; sauver(); rendre(); }));
+    b.addEventListener("click", () => { etat.vue = b.dataset.vue; ecrireCache(); rendre(); }));
+}
+
+/* ---------- Écran de connexion (code famille) ---------- */
+function ecranCode() {
+  document.body.innerHTML = `
+    <div class="ecran-code">
+      <div class="carte code-carte">
+        <div class="code-logo">🌟</div>
+        <h1>KidsPositifs</h1>
+        <p>Pour retrouver les mêmes données sur tous vos appareils, entrez un
+           <strong>code famille</strong> (le même partout).</p>
+        <input id="champ-code" placeholder="ex. famille-dierckx" autocomplete="off">
+        <button id="btn-code" class="gros-bouton planete">C'est parti ! 🚀</button>
+        <p class="note">Choisissez un code unique et facile à retenir. Toute personne
+           connaissant ce code verra les données — gardez-le en famille.</p>
+      </div>
+    </div>`;
+  const champ = document.querySelector("#champ-code");
+  const valider = () => {
+    const v = champ.value.trim();
+    if (v.length < 3) { champ.focus(); champ.classList.add("erreur"); return; }
+    demarrerAvecCode(v);
+  };
+  document.querySelector("#btn-code").onclick = valider;
+  champ.addEventListener("keydown", e => { if (e.key === "Enter") valider(); });
+  champ.focus();
 }
 
 function rendre() {
@@ -50,7 +77,7 @@ function rendreSelecteur() {
     const b = el("button", "pastille" + (enf.id === etat.enfantActif ? " actif" : ""));
     b.style.setProperty("--c", enf.couleur);
     b.innerHTML = `<span class="pastille-emoji">${enf.emoji}</span><span class="pastille-nom">${enf.prenom}</span>`;
-    b.onclick = () => { etat.enfantActif = enf.id; sauver(); rendre(); };
+    b.onclick = () => { etat.enfantActif = enf.id; ecrireCache(); rendre(); };
     s.appendChild(b);
   });
 }
@@ -270,11 +297,20 @@ function vueReglages(c) {
     iPrenom.oninput = () => { majEnfant(enf.id, "prenom", iPrenom.value); rendreSelecteur(); };
     lPrenom.appendChild(iPrenom);
 
-    const lAnnee = el("label", "champ", `Année de naissance`);
-    const iAnnee = el("input");
-    iAnnee.type = "number"; iAnnee.value = enf.naissance; iAnnee.min = 2010; iAnnee.max = ANNEE_REF;
-    iAnnee.oninput = () => majEnfant(enf.id, "naissance", parseInt(iAnnee.value) || enf.naissance);
-    lAnnee.appendChild(iAnnee);
+    const lDate = el("label", "champ", `Date de naissance`);
+    const iDate = el("input");
+    iDate.type = "date"; iDate.value = enf.naissance; iDate.max = aujourdHui(); iDate.min = "2008-01-01";
+    iDate.onchange = () => { majEnfant(enf.id, "naissance", iDate.value || enf.naissance); rendreSelecteur(); rendre(); };
+    lDate.appendChild(iDate);
+
+    const lSexe = el("label", "champ", `Sexe`);
+    const iSexe = el("div", "segmente");
+    ["fille", "garcon"].forEach(s => {
+      const b = el("button", "seg" + (enf.sexe === s ? " actif" : ""), s === "fille" ? "👧 Fille" : "👦 Garçon");
+      b.onclick = () => { majEnfant(enf.id, "sexe", s); rendre(); };
+      iSexe.appendChild(b);
+    });
+    lSexe.appendChild(iSexe);
 
     const lEmoji = el("label", "champ", `Emoji`);
     const iEmoji = el("input");
@@ -288,11 +324,21 @@ function vueReglages(c) {
     iCouleur.oninput = () => majEnfant(enf.id, "couleur", iCouleur.value);
     lCouleur.appendChild(iCouleur);
 
-    const stats = el("p", "note", `Total cumulé : 💛 ${enf.coeursTotal} Cœurs · 💧 ${enf.gouttesTotal} Gouttes · 🌍 ${nbTotalEspeces(enf)} êtres vivants · 🏆 ${enf.badges.length} badges`);
+    const stats = el("p", "note", `${age(enf)} ans · Total cumulé : 💛 ${enf.coeursTotal} Cœurs · 💧 ${enf.gouttesTotal} Gouttes · 🌍 ${nbTotalEspeces(enf)} êtres vivants · 🏆 ${enf.badges.length} badges`);
 
-    [lPrenom, lAnnee, lEmoji, lCouleur, stats].forEach(x => sec.appendChild(x));
+    [lPrenom, lDate, lSexe, lEmoji, lCouleur, stats].forEach(x => sec.appendChild(x));
     c.appendChild(sec);
   });
+
+  // Synchronisation
+  const sync = el("section", "carte");
+  sync.innerHTML = `<h2>🔄 Synchronisation</h2>
+    <p>Code famille actuel : <strong>${codeFamille || "(local)"}</strong></p>
+    <p class="note">Saisissez le même code sur vos autres appareils pour partager les mêmes données.</p>`;
+  const bCode = el("button", "btn-secondaire", "🔑 Changer de code famille");
+  bCode.onclick = changerCode;
+  sync.appendChild(bCode);
+  c.appendChild(sync);
 
   const actions = el("section", "carte");
   actions.innerHTML = `<h2>Données</h2>`;

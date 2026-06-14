@@ -1,13 +1,18 @@
 /* =====================================================================
  * KidsPositifs — Logique de l'application
- * Données sauvegardées en local (localStorage). Aucune connexion requise.
+ * Données synchronisées entre appareils via une API (/api) + Upstash KV,
+ * grâce à un "code famille" partagé. localStorage sert de cache hors-ligne.
  * ===================================================================== */
 
-const STORAGE_KEY = "kidspositifs_v1";
-const ANNEE_REF = 2026; // sert au calcul de l'âge (mettez à jour si besoin)
+const STORAGE_KEY = "kidspositifs_v1";   // cache local (par code famille)
+const CODE_KEY = "kidspositifs_code";    // code famille mémorisé sur l'appareil
+const PULL_INTERVAL = 12000;             // rafraîchissement auto (ms)
 
 /* ---------- État ---------- */
-let etat = chargerEtat();
+let etat = etatVierge();      // remplacé au démarrage par la synchro
+let codeFamille = null;       // identifiant partagé de la famille
+let pushTimer = null;         // anti-rebond pour l'envoi
+let syncEnCours = false;
 
 function etatVierge() {
   const enfants = {};
@@ -19,38 +24,138 @@ function etatVierge() {
       gouttes: 0,           // monnaie planète (dépensable pour l'écosystème)
       gouttesTotal: 0,      // total cumulé (statistiques)
       ecosysteme: { plantes: {}, herbivores: {}, carnivores: {} }, // tier -> {especeId: nb}
-      avatar: { base: e.id === "e2023" ? "bebe" : "garcon", chapeau: "rien",
+      avatar: { base: avatarDefaut(e), chapeau: "rien",
                 accessoire: "rien", compagnon: "rien", fond: "ciel" },
       debloque: [],         // ids d'options d'avatar débloquées
       journal: {},          // { "2026-06-14": { missionId: count } }
       badges: []            // récompenses symboliques
     };
   });
-  return { enfants, enfantActif: ENFANTS_DEFAUT[0].id, vue: "accueil" };
+  return { enfants, enfantActif: ENFANTS_DEFAUT[0].id, vue: "accueil", maj: 0 };
 }
 
-function chargerEtat() {
+// Avatar de base par défaut selon l'âge et le sexe.
+function avatarDefaut(e) {
+  if (ageDepuis(e.naissance) <= 2) return "bebe";
+  return e.sexe === "fille" ? "fille" : "garcon";
+}
+
+// Normalise / complète un état (migrations).
+function normaliser(e) {
+  if (!e || !e.enfants) return etatVierge();
+  Object.values(e.enfants).forEach(enf => {
+    if (!enf.ecosysteme) enf.ecosysteme = { plantes: {}, herbivores: {}, carnivores: {} };
+    TIERS_ECO.forEach(t => { if (!enf.ecosysteme[t.id]) enf.ecosysteme[t.id] = {}; });
+    if (enf.gouttesTotal === undefined) enf.gouttesTotal = enf.gouttes || 0;
+    // migration date de naissance : ancien format = année (nombre)
+    if (typeof enf.naissance === "number") enf.naissance = enf.naissance + "-01-01";
+    if (!enf.naissance) enf.naissance = "2020-01-01";
+    if (!enf.sexe) enf.sexe = "garcon";
+  });
+  if (e.maj === undefined) e.maj = 0;
+  return e;
+}
+
+/* ---------- Cache local ---------- */
+function cleCache() { return STORAGE_KEY + ":" + (codeFamille || "_local"); }
+function lireCache() {
   try {
-    const brut = localStorage.getItem(STORAGE_KEY);
-    if (!brut) return etatVierge();
-    const e = JSON.parse(brut);
-    // garde-fou : compléter les champs manquants
-    if (!e.enfants) return etatVierge();
-    // migration : s'assurer que chaque enfant a un écosystème structuré
-    Object.values(e.enfants).forEach(enf => {
-      if (!enf.ecosysteme) enf.ecosysteme = { plantes: {}, herbivores: {}, carnivores: {} };
-      TIERS_ECO.forEach(t => { if (!enf.ecosysteme[t.id]) enf.ecosysteme[t.id] = {}; });
-      if (enf.gouttesTotal === undefined) enf.gouttesTotal = enf.gouttes || 0;
+    const brut = localStorage.getItem(cleCache());
+    return brut ? normaliser(JSON.parse(brut)) : null;
+  } catch { return null; }
+}
+function ecrireCache() {
+  try { localStorage.setItem(cleCache(), JSON.stringify(etat)); } catch {}
+}
+
+// Sauvegarde : met à jour l'horodatage, le cache local, puis pousse en ligne.
+function sauver() {
+  etat.maj = Date.now();
+  ecrireCache();
+  planifierPush();
+}
+
+/* ---------- Synchronisation en ligne ---------- */
+function planifierPush() {
+  if (!codeFamille) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(pousser, 600);
+}
+
+async function pousser() {
+  if (!codeFamille) return;
+  try {
+    majBadgeSync("⏫");
+    const r = await fetch(`/api/state?code=${encodeURIComponent(codeFamille)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(etat)
     });
-    return e;
-  } catch (err) {
-    console.warn("Sauvegarde illisible, réinitialisation.", err);
-    return etatVierge();
+    majBadgeSync(r.ok ? "✅" : "⚠️");
+  } catch {
+    majBadgeSync("📴"); // hors-ligne : le cache local prend le relais
   }
 }
 
-function sauver() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(etat));
+async function tirer({ silencieux = false } = {}) {
+  if (!codeFamille || syncEnCours) return;
+  syncEnCours = true;
+  try {
+    if (!silencieux) majBadgeSync("⏬");
+    const r = await fetch(`/api/state?code=${encodeURIComponent(codeFamille)}`);
+    if (r.ok) {
+      const distant = await r.json();
+      if (distant && distant.enfants && (distant.maj || 0) > (etat.maj || 0)) {
+        etat = normaliser(distant);
+        ecrireCache();
+        rendre();
+      }
+      majBadgeSync("✅");
+    }
+  } catch {
+    majBadgeSync("📴");
+  } finally {
+    syncEnCours = false;
+  }
+}
+
+function majBadgeSync(symbole) {
+  const b = document.querySelector("#sync-etat");
+  if (b) b.textContent = symbole;
+}
+
+// Connexion à un code famille : charge le distant, sinon publie le local.
+async function connecterFamille(code) {
+  codeFamille = code.trim().toLowerCase().replace(/[^a-z0-9\-]/g, "-").slice(0, 40);
+  if (!codeFamille) return;
+  localStorage.setItem(CODE_KEY, codeFamille);
+
+  const cache = lireCache();
+  if (cache) etat = cache;
+
+  try {
+    const r = await fetch(`/api/state?code=${encodeURIComponent(codeFamille)}`);
+    if (r.ok) {
+      const distant = await r.json();
+      if (distant && distant.enfants) {
+        // fusion simple : on garde la version la plus récente
+        if ((distant.maj || 0) >= (etat.maj || 0)) etat = normaliser(distant);
+        else await pousser();
+      } else {
+        await pousser(); // espace vide en ligne : on y publie nos données
+      }
+    }
+  } catch {
+    /* hors-ligne : on reste sur le cache local */
+  }
+  rendre();
+}
+
+function changerCode() {
+  if (confirm("Changer de code famille ? Cet appareil affichera alors les données liées au nouveau code.")) {
+    localStorage.removeItem(CODE_KEY);
+    location.reload();
+  }
 }
 
 /* ---------- Utilitaires ---------- */
@@ -58,7 +163,17 @@ function aujourdHui() {
   const d = new Date();
   return d.toISOString().slice(0, 10);
 }
-function age(enfant) { return ANNEE_REF - enfant.naissance; }
+// Âge en années révolues à partir d'une date AAAA-MM-JJ.
+function ageDepuis(dateNaissance) {
+  const n = new Date(dateNaissance);
+  if (isNaN(n)) return 0;
+  const a = new Date();
+  let ans = a.getFullYear() - n.getFullYear();
+  const m = a.getMonth() - n.getMonth();
+  if (m < 0 || (m === 0 && a.getDate() < n.getDate())) ans--;
+  return Math.max(0, ans);
+}
+function age(enfant) { return ageDepuis(enfant.naissance); }
 function enfantActif() { return etat.enfants[etat.enfantActif]; }
 function $(sel) { return document.querySelector(sel); }
 function el(tag, cls, html) {
@@ -248,7 +363,22 @@ function exporter() {
 }
 
 /* ---------- Démarrage ---------- */
-document.addEventListener("DOMContentLoaded", () => {
-  initSquelette();
-  rendre();
+document.addEventListener("DOMContentLoaded", async () => {
+  const code = localStorage.getItem(CODE_KEY);
+  if (!code) {
+    ecranCode();   // première fois : on demande le code famille
+    return;
+  }
+  await demarrerAvecCode(code);
 });
+
+async function demarrerAvecCode(code) {
+  initSquelette();
+  await connecterFamille(code);
+  rendre();
+  // rafraîchissement périodique + au retour sur l'onglet
+  setInterval(() => tirer({ silencieux: true }), PULL_INTERVAL);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) tirer({ silencieux: true });
+  });
+}
