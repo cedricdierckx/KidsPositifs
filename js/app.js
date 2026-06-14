@@ -25,8 +25,7 @@ function etatVierge() {
       gouttes: 0,           // monnaie planète (dépensable pour l'écosystème)
       gouttesTotal: 0,      // total cumulé (statistiques)
       ecosysteme: { plantes: {}, herbivores: {}, carnivores: {} }, // tier -> {especeId: nb}
-      avatar: { base: avatarDefaut(e), chapeau: "rien",
-                accessoire: "rien", compagnon: "rien", fond: "ciel" },
+      avatar: avatarParDefaut(e),
       debloque: [],         // ids d'options d'avatar débloquées
       journal: {},          // { "2026-06-14": { missionId: count } }
       enAttente: [],        // actions en attente de validation parentale
@@ -39,20 +38,24 @@ function etatVierge() {
   };
 }
 
-// Avatar de base par défaut selon l'âge et le sexe.
-function avatarDefaut(e) {
-  if (ageDepuis(e.naissance) <= 2) return "bebe";
-  return e.sexe === "fille" ? "fille" : "garcon";
+// Coiffure par défaut selon le sexe.
+function coiffureDefaut(e) { return e.sexe === "fille" ? "couettes" : "court"; }
+// Avatar complet par défaut.
+function avatarParDefaut(e) {
+  return {
+    peau: "clair", coiffure: coiffureDefaut(e), cheveux: "brun", yeux: "ronds",
+    lunettes: "rien", chapeau: "rien", accessoire: "rien", compagnon: "rien", fond: "ciel"
+  };
 }
 // Emoji par défaut (sélecteur) selon l'âge et le sexe.
 function emojiDefaut(e) {
   if (ageDepuis(e.naissance) <= 2) return "👶";
   return e.sexe === "fille" ? "👧" : "👦";
 }
-// Réaligne avatar et emoji sur le sexe, sans écraser un choix personnalisé.
+// Réaligne coiffure et emoji sur le sexe, sans écraser un choix personnalisé.
 function appliquerSexe(enf) {
-  const basesDefaut = ["fille", "garcon", "bebe"];
-  if (basesDefaut.includes(enf.avatar.base)) enf.avatar.base = avatarDefaut(enf);
+  const coiffuresDefaut = ["couettes", "court"];
+  if (enf.avatar && coiffuresDefaut.includes(enf.avatar.coiffure)) enf.avatar.coiffure = coiffureDefaut(enf);
   const emojisDefaut = ["🧒", "👦", "👧", "🧑", "👶"];
   if (emojisDefaut.includes(enf.emoji)) enf.emoji = emojiDefaut(enf);
 }
@@ -69,6 +72,11 @@ function normaliser(e) {
     if (typeof enf.naissance === "number") enf.naissance = enf.naissance + "-01-01";
     if (!enf.naissance) enf.naissance = "2020-01-01";
     if (!enf.sexe) enf.sexe = "garcon";
+    // migration avatar : ancien format (emoji superposés) -> nouvel avatar SVG
+    if (!enf.avatar || enf.avatar.base !== undefined || enf.avatar.peau === undefined) {
+      enf.avatar = avatarParDefaut(enf);
+      enf.debloque = []; // les anciens déblocages ne correspondent plus
+    }
   });
   if (e.maj === undefined) e.maj = 0;
   if (!e.reglages) e.reglages = { validationParentale: false, codeParent: "" };

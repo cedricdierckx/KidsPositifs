@@ -116,29 +116,24 @@ main{max-width:680px; margin:0 auto; padding:14px}
   padding:8px 10px; border-radius:10px; font-weight:600}
 .eco-tier .o-cout{color:var(--planete)!important; font-weight:800}
 
-/* ---- Avatar ---- */
-.avatar-scene{position:relative; width:150px; height:150px; margin:0 auto;
-  border-radius:24px; display:flex; align-items:center; justify-content:center;
-  background:#eaf2ff; overflow:hidden}
-.avatar-scene .av-fond{position:absolute; font-size:120px; opacity:.25}
-.avatar-scene .av-perso{font-size:80px; position:relative; z-index:2}
-.avatar-scene .av-chapeau{position:absolute; top:8px; font-size:40px; z-index:3}
-.avatar-scene .av-acc{position:absolute; right:14px; bottom:36px; font-size:34px; z-index:3}
-.avatar-scene .av-comp{position:absolute; right:8px; bottom:6px; font-size:38px; z-index:3}
+/* ---- Avatar (SVG) ---- */
+.avatar-scene{width:150px; height:150px; margin:0 auto}
+.avatar-scene .av-svg{width:100%; height:100%; display:block}
 .avatar-grand{margin:10px auto}
 .accueil-avatar .avatar-scene{width:110px; height:110px}
-.accueil-avatar .av-perso{font-size:60px}
 
-.options{display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:10px}
-.option{background:#fff; border:3px solid #eef2f7; border-radius:16px; padding:12px 6px;
+.options{display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:10px}
+.option{background:#fff; border:3px solid #eef2f7; border-radius:16px; padding:10px 6px;
   display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer;
   font-family:inherit; transition:.12s}
 .option:active{transform:scale(.95)}
-.option .o-emoji{font-size:34px}
-.option .o-nom{font-size:13px; font-weight:700}
+.option .o-apercu{width:52px; height:52px; display:flex; align-items:center; justify-content:center}
+.option .o-apercu .av-svg{width:52px; height:52px}
+.option .o-swatch{width:34px; height:34px; border-radius:50%; border:2px solid rgba(0,0,0,.12)}
+.option .o-nom{font-size:12px; font-weight:700; line-height:1.15}
 .option .o-cout{font-size:12px; color:var(--doux)}
 .option.equipe{border-color:var(--planete); background:#f1faf6}
-.option.verrou .o-emoji{filter:grayscale(1) opacity(.6)}
+.option.verrou .o-apercu{filter:grayscale(.7) opacity(.65)}
 .option.verrou .o-cout{color:var(--famille); font-weight:800}
 
 /* ---- Réglages ---- */

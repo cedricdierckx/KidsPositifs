@@ -86,48 +86,88 @@ const DEFIS_REPARATION = [
 ];
 
 /* =====================================================================
- *  RÉCOMPENSE FAMILLE — Avatar évolutif
- *  L'enfant débloque des éléments d'avatar avec ses Cœurs.
+ *  RÉCOMPENSE FAMILLE — Avatar vectoriel (SVG) personnalisable
+ * ---------------------------------------------------------------------
+ *  Chaque élément est dessiné à des coordonnées fixes (voir js/avatar.js),
+ *  donc tout reste parfaitement aligné (yeux, lunettes, chapeau…).
+ *  Les éléments se débloquent avec les Cœurs 💛.
+ *  L'ordre des catégories ci-dessous est l'ordre d'affichage.
  * ===================================================================== */
 const AVATAR_OPTIONS = {
-  base: [
-    { id: "fille",  emoji: "👧", nom: "Visage fille",  cout: 0 },
-    { id: "garcon", emoji: "👦", nom: "Visage garçon", cout: 0 },
-    { id: "bebe",   emoji: "👶", nom: "Bébé",          cout: 0 },
-    { id: "robot",  emoji: "🤖", nom: "Robot",         cout: 25 },
-    { id: "licorne",emoji: "🦄", nom: "Licorne",       cout: 40 },
-    { id: "chat",   emoji: "🐱", nom: "Chaton",        cout: 30 },
-    { id: "dragon", emoji: "🐲", nom: "Dragon",        cout: 60 }
+  peau: [
+    { id: "clair",  nom: "Clair",  cout: 0, hex: "#ffd9b3" },
+    { id: "mate",   nom: "Mate",   cout: 0, hex: "#f0bd84" },
+    { id: "doree",  nom: "Dorée",  cout: 0, hex: "#d99a5b" },
+    { id: "brune",  nom: "Brune",  cout: 0, hex: "#a96b3e" },
+    { id: "foncee", nom: "Foncée", cout: 0, hex: "#7a4a28" }
+  ],
+  coiffure: [
+    { id: "court",    nom: "Cheveux courts", cout: 0 },
+    { id: "couettes", nom: "Couettes",       cout: 0 },
+    { id: "frange",   nom: "Frange",         cout: 0 },
+    { id: "chignon",  nom: "Chignon",        cout: 10 },
+    { id: "long",     nom: "Cheveux longs",  cout: 15 },
+    { id: "boucle",   nom: "Bouclés",        cout: 15 },
+    { id: "crete",    nom: "Crête",          cout: 25 },
+    { id: "chauve",   nom: "Sans cheveux",   cout: 0 }
+  ],
+  cheveux: [
+    { id: "brun",   nom: "Brun",   cout: 0,  hex: "#5b3a23" },
+    { id: "noir",   nom: "Noir",   cout: 0,  hex: "#1c1c22" },
+    { id: "blond",  nom: "Blond",  cout: 0,  hex: "#e7c067" },
+    { id: "roux",   nom: "Roux",   cout: 10, hex: "#c2562d" },
+    { id: "blanc",  nom: "Blanc",  cout: 12, hex: "#eef0f4" },
+    { id: "rose",   nom: "Rose",   cout: 20, hex: "#ff7eb6" },
+    { id: "bleu",   nom: "Bleu",   cout: 20, hex: "#4cb3e6" },
+    { id: "vert",   nom: "Vert",   cout: 20, hex: "#5fc97a" }
+  ],
+  yeux: [
+    { id: "ronds",   nom: "Ronds",      cout: 0 },
+    { id: "joyeux",  nom: "Joyeux",     cout: 0 },
+    { id: "clin",    nom: "Clin d'œil", cout: 10 },
+    { id: "etoiles", nom: "Étoilés",    cout: 20 },
+    { id: "coeur",   nom: "Cœurs",      cout: 20 }
+  ],
+  lunettes: [
+    { id: "rien",    nom: "Aucunes",          cout: 0 },
+    { id: "rondes",  nom: "Lunettes rondes",  cout: 10 },
+    { id: "soleil",  nom: "Lunettes soleil",  cout: 12 },
+    { id: "etoile",  nom: "Lunettes étoiles", cout: 25 }
   ],
   chapeau: [
-    { id: "rien",     emoji: "",   nom: "Sans chapeau", cout: 0 },
-    { id: "casquette",emoji: "🧢", nom: "Casquette",    cout: 10 },
-    { id: "couronne", emoji: "👑", nom: "Couronne",     cout: 35 },
-    { id: "hautform", emoji: "🎩", nom: "Haut-de-forme",cout: 20 },
-    { id: "graduation",emoji: "🎓",nom: "Diplôme",      cout: 25 }
+    { id: "rien",      nom: "Aucun",          cout: 0 },
+    { id: "noeud",     nom: "Nœud",           cout: 8,  hex: "#ff6f91" },
+    { id: "casquette", nom: "Casquette",      cout: 12, hex: "#3a7bd5" },
+    { id: "bonnet",    nom: "Bonnet",         cout: 12, hex: "#e05a47" },
+    { id: "couronne",  nom: "Couronne",       cout: 35, hex: "#f2c11b" },
+    { id: "hautform",  nom: "Haut-de-forme",  cout: 25, hex: "#2b2b35" },
+    { id: "diademe",   nom: "Diadème",        cout: 30, hex: "#7ed0ff" }
   ],
   accessoire: [
-    { id: "rien",    emoji: "",   nom: "Aucun",        cout: 0 },
-    { id: "lunettes",emoji: "🕶️", nom: "Lunettes",     cout: 10 },
-    { id: "etoile",  emoji: "⭐", nom: "Étoile",       cout: 15 },
-    { id: "ballon",  emoji: "🎈", nom: "Ballon",       cout: 12 },
-    { id: "guitare", emoji: "🎸", nom: "Guitare",      cout: 30 },
-    { id: "epee",    emoji: "⚔️", nom: "Épée",         cout: 30 }
+    { id: "rien",     emoji: "",    nom: "Aucun",   cout: 0 },
+    { id: "fleur",    emoji: "🌸",  nom: "Fleur",   cout: 8 },
+    { id: "ballon",   emoji: "🎈",  nom: "Ballon",  cout: 10 },
+    { id: "etoile",   emoji: "⭐",  nom: "Étoile",  cout: 12 },
+    { id: "baguette", emoji: "🪄",  nom: "Baguette magique", cout: 20 },
+    { id: "guitare",  emoji: "🎸",  nom: "Guitare", cout: 30 },
+    { id: "epee",     emoji: "⚔️",  nom: "Épée",    cout: 30 }
   ],
   compagnon: [
-    { id: "rien",   emoji: "",   nom: "Aucun",      cout: 0 },
-    { id: "chien",  emoji: "🐶", nom: "Chien",      cout: 20 },
-    { id: "lapin",  emoji: "🐰", nom: "Lapin",      cout: 20 },
-    { id: "oiseau", emoji: "🐦", nom: "Oiseau",     cout: 18 },
-    { id: "dino",   emoji: "🦕", nom: "Dinosaure",  cout: 45 },
-    { id: "papillon",emoji: "🦋",nom: "Papillon",   cout: 22 }
+    { id: "rien",     emoji: "",    nom: "Aucun",     cout: 0 },
+    { id: "chat",     emoji: "🐱",  nom: "Chaton",    cout: 20 },
+    { id: "chien",    emoji: "🐶",  nom: "Chien",     cout: 20 },
+    { id: "lapin",    emoji: "🐰",  nom: "Lapin",     cout: 20 },
+    { id: "oiseau",   emoji: "🐦",  nom: "Oiseau",    cout: 18 },
+    { id: "papillon", emoji: "🦋",  nom: "Papillon",  cout: 22 },
+    { id: "dino",     emoji: "🦕",  nom: "Dinosaure", cout: 45 }
   ],
   fond: [
-    { id: "ciel",    emoji: "🌤️", nom: "Ciel",      cout: 0 },
-    { id: "nuit",    emoji: "🌙", nom: "Nuit étoilée",cout: 15 },
-    { id: "plage",   emoji: "🏖️", nom: "Plage",     cout: 20 },
-    { id: "espace",  emoji: "🚀", nom: "Espace",     cout: 40 },
-    { id: "chateau", emoji: "🏰", nom: "Château",    cout: 35 }
+    { id: "ciel",      nom: "Ciel",      cout: 0,  hex: "#bfe3ff", motif: "" },
+    { id: "nuit",      nom: "Nuit",      cout: 15, hex: "#34406e", motif: "🌙" },
+    { id: "foret",     nom: "Forêt",     cout: 15, hex: "#cdeccf", motif: "🌳" },
+    { id: "plage",     nom: "Plage",     cout: 20, hex: "#ffe7ad", motif: "🏖️" },
+    { id: "arcenciel", nom: "Arc-en-ciel", cout: 35, hex: "#ffd6ec", motif: "🌈" },
+    { id: "espace",    nom: "Espace",    cout: 40, hex: "#241a52", motif: "⭐" }
   ]
 };
 

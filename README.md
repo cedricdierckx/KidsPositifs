@@ -67,7 +67,7 @@ Deux catégories, deux monnaies, deux récompenses qui **évoluent dans le temps
 
 | Catégorie | Monnaie | Récompense évolutive |
 |-----------|---------|----------------------|
-| 🏡 **Famille** (entraide, mettre/débarrasser la table, manger proprement, ranger sa chambre, dire merci…) | 💛 Cœurs | **Avatar personnalisable** : personnage, chapeau, accessoire, compagnon, décor à débloquer |
+| 🏡 **Famille** (entraide, mettre/débarrasser la table, manger proprement, ranger sa chambre, dire merci…) | 💛 Cœurs | **Avatar vectoriel personnalisable** : peau, coiffure, couleur de cheveux, yeux, lunettes, chapeau, accessoire, compagnon, décor |
 | 🌍 **Planète** (éteindre la lumière, fermer le robinet, ne pas gaspiller, trier, arroser…) | 💧 Gouttes | **Écosystème éducatif** : l'enfant dépense ses Gouttes pour bâtir une **chaîne alimentaire** |
 
 Chaque mission validée déclenche encouragements et confettis. Des **badges**
@@ -123,6 +123,7 @@ L'onglet **⚙️ Parents** est verrouillé par défaut. En l'activant (avec un
 index.html        Page de l'application
 css/style.css     Styles (interface tactile, lisible par de jeunes enfants)
 js/data.js        Configuration : enfants, catégories, missions, récompenses
+js/avatar.js      Rendu vectoriel (SVG) des avatars, parfaitement alignés
 js/app.js         Logique : état, synchronisation, calcul d'âge, actions
 js/ui.js          Rendu des différents écrans (dont l'écran code famille)
 api/state.js      Fonction serverless de synchro (Vercel + Upstash KV)

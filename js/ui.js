@@ -243,7 +243,11 @@ function vueEcosysteme(enf) {
 }
 
 /* ---------- Vue Avatar ---------- */
-const AVATAR_LIBELLES = { base: "Personnage", chapeau: "Chapeau", accessoire: "Accessoire", compagnon: "Compagnon", fond: "Décor" };
+const AVATAR_LIBELLES = {
+  peau: "Couleur de peau", coiffure: "Coiffure", cheveux: "Couleur des cheveux",
+  yeux: "Yeux", lunettes: "Lunettes", chapeau: "Chapeau",
+  accessoire: "Accessoire", compagnon: "Compagnon", fond: "Décor"
+};
 
 function vueAvatar(c) {
   const enf = enfantActif();
@@ -263,7 +267,7 @@ function vueAvatar(c) {
       const equipe = enf.avatar[categorie] === opt.id;
       const o = el("button", "option" + (equipe ? " equipe" : "") + (dispo ? "" : " verrou"));
       o.innerHTML = `
-        <span class="o-emoji">${opt.emoji || "🚫"}</span>
+        <span class="o-apercu">${apercuOption(enf, categorie, opt)}</span>
         <span class="o-nom">${opt.nom}</span>
         <span class="o-cout">${dispo ? (equipe ? "Porté ✅" : "Choisir") : `🔒 ${opt.cout} 💛`}</span>`;
       o.onclick = () => acheterOption(categorie, opt);
@@ -274,21 +278,19 @@ function vueAvatar(c) {
   });
 }
 
-function emojiOption(categorie, id) {
-  const opt = AVATAR_OPTIONS[categorie].find(o => o.id === id);
-  return opt ? opt.emoji : "";
+// Aperçu d'une option : on rend l'avatar de l'enfant en remplaçant
+// uniquement la catégorie concernée, pour montrer l'effet réel.
+function apercuOption(enf, categorie, opt) {
+  if (categorie === "peau" || categorie === "cheveux") {
+    // pour les couleurs, une pastille est plus lisible
+    return `<span class="o-swatch" style="background:${opt.hex}"></span>`;
+  }
+  const apercu = { ...enf.avatar, [categorie]: opt.id };
+  return buildAvatar(apercu);
 }
 
 function renduAvatar(enf) {
-  const a = enf.avatar;
-  return `
-    <div class="avatar-scene fond-${a.fond}">
-      <span class="av-fond">${emojiOption("fond", a.fond)}</span>
-      <span class="av-perso">${emojiOption("base", a.base)}</span>
-      <span class="av-chapeau">${emojiOption("chapeau", a.chapeau)}</span>
-      <span class="av-acc">${emojiOption("accessoire", a.accessoire)}</span>
-      <span class="av-comp">${emojiOption("compagnon", a.compagnon)}</span>
-    </div>`;
+  return `<div class="avatar-scene">${buildAvatar(enf.avatar)}</div>`;
 }
 
 /* ---------- Vue Réglages (parents) ---------- */
