@@ -134,10 +134,30 @@ function vueAccueil(c) {
     </div>`;
   c.appendChild(carte);
 
+  // Missions Famille (directement sur la page de l'enfant)
+  const titreFam = el("section", "carte titre-cat");
+  titreFam.style.setProperty("--c", CATEGORIES.famille.couleur);
+  titreFam.innerHTML = `<h2>🏡 Missions Famille <span class="solde-inline">💛 ${enf.coeurs}</span></h2>`;
+  const lienFam = el("button", "lien-cat", "Voir tout →");
+  lienFam.onclick = () => { etat.vue = "famille"; ecrireCache(); rendre(); };
+  titreFam.querySelector("h2").appendChild(lienFam);
+  c.appendChild(titreFam);
+  c.appendChild(grilleMissions("famille"));
+
+  // Missions Planète (directement sur la page de l'enfant)
+  const titrePla = el("section", "carte titre-cat");
+  titrePla.style.setProperty("--c", CATEGORIES.planete.couleur);
+  titrePla.innerHTML = `<h2>🌍 Missions Planète <span class="solde-inline">💧 ${enf.gouttes}</span></h2>`;
+  const lienPla = el("button", "lien-cat", "Voir tout →");
+  lienPla.onclick = () => { etat.vue = "planete"; ecrireCache(); rendre(); };
+  titrePla.querySelector("h2").appendChild(lienPla);
+  c.appendChild(titrePla);
+  c.appendChild(grilleMissions("planete"));
+
   // Aperçu écosystème
   const ecoCarte = el("section", "carte");
   const apercu = renduSceneEco(enf);
-  ecoCarte.innerHTML = `<h2>🌍 Mon écosystème</h2>
+  ecoCarte.innerHTML = `<h2>🌱 Mon écosystème</h2>
     <div class="eco-mini">${apercu || "🌱 Ta nature attend tes premières plantes…"}</div>
     <p class="eco-statut">${nbTotalEspeces(enf)} êtres vivants</p>`;
   c.appendChild(ecoCarte);
@@ -149,15 +169,27 @@ function vueAccueil(c) {
       <div class="badges">${enf.badges.map(b => `<span class="badge">${b.emoji} ${b.nom}</span>`).join("")}</div>`;
     c.appendChild(bCarte);
   }
+}
 
-  // Raccourcis
-  const ras = el("section", "raccourcis");
-  ras.innerHTML = `
-    <button class="gros-bouton famille" data-go="famille">🏡 Missions Famille</button>
-    <button class="gros-bouton planete" data-go="planete">🌍 Missions Planète</button>`;
-  ras.querySelectorAll("[data-go]").forEach(b =>
-    b.onclick = () => { etat.vue = b.dataset.go; sauver(); rendre(); });
-  c.appendChild(ras);
+// Grille des missions d'une catégorie, adaptées à l'âge de l'enfant actif.
+function grilleMissions(catId) {
+  const enf = enfantActif();
+  const cat = CATEGORIES[catId];
+  const jour = aujourdHui();
+  const journalJour = enf.journal[jour] || {};
+  const liste = el("section", "missions");
+  MISSIONS.filter(m => m.cat === catId && age(enf) >= m.ageMin).forEach(m => {
+    const fait = (journalJour[m.id] || 0) >= 1 && m.type === "quotidien";
+    const enAttente = enf.enAttente.some(a => a.missionId === m.id && a.jour === jour);
+    const carte = el("button", "mission" + (fait ? " fait" : "") + (enAttente ? " attente" : ""));
+    carte.innerHTML = `
+      <span class="m-emoji">${m.emoji}</span>
+      <span class="m-titre">${m.titre}</span>
+      <span class="m-points">${fait ? "✅" : (enAttente ? "⏳" : `+${m.points} ${cat.monnaieEmoji}`)}</span>`;
+    carte.onclick = () => validerMission(m);
+    liste.appendChild(carte);
+  });
+  return liste;
 }
 
 /* ---------- Vue Missions (famille / planète) ---------- */
@@ -178,19 +210,7 @@ function vueMissions(c, catId) {
   if (catId === "planete") c.appendChild(vueEcosysteme(enf));
 
   // Liste des missions adaptées à l'âge
-  const liste = el("section", "missions");
-  const dispo = MISSIONS.filter(m => m.cat === catId && age(enf) >= m.ageMin);
-  dispo.forEach(m => {
-    const fait = (journalJour[m.id] || 0) >= 1 && m.type === "quotidien";
-    const carte = el("button", "mission" + (fait ? " fait" : ""));
-    carte.innerHTML = `
-      <span class="m-emoji">${m.emoji}</span>
-      <span class="m-titre">${m.titre}</span>
-      <span class="m-points">${fait ? "✅" : `+${m.points} ${cat.monnaieEmoji}`}</span>`;
-    carte.onclick = () => validerMission(m);
-    liste.appendChild(carte);
-  });
-  c.appendChild(liste);
+  c.appendChild(grilleMissions(catId));
 
   // Section famille : défis réparation (alternative à la punition)
   if (catId === "famille") {

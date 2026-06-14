@@ -86,6 +86,15 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .mission .m-titre{font-size:14px; font-weight:700; line-height:1.2}
 .mission .m-points{font-size:13px; font-weight:800; color:var(--famille)}
 .mission.fait{opacity:.55; background:#f1faf6; border-color:#bfe9da}
+.mission.attente{background:#fff7e6; border-color:#ffe2a8}
+.mission.attente .m-points{color:#a86b00}
+
+/* Titres de catégorie sur l'accueil */
+.titre-cat{border-left:6px solid var(--c); padding:10px 16px; margin-bottom:8px}
+.titre-cat h2{display:flex; align-items:center; gap:8px; margin:0; font-size:18px}
+.solde-inline{font-size:15px; font-weight:800; color:var(--c)}
+.lien-cat{margin-left:auto; border:none; background:#f0f3f8; color:var(--doux);
+  border-radius:10px; padding:6px 10px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit}
 .mission.fait .m-points{color:var(--planete)}
 .mission.rep{border-color:#d9d2f0}
 .reparation{border-top:6px solid #a78bfa}
