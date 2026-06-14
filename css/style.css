@@ -1,0 +1,165 @@
+/* =====================================================================
+ * KidsPositifs — Styles (interface tactile, lisible par de jeunes enfants)
+ * ===================================================================== */
+:root{
+  --bg:#f3f7fb; --carte:#ffffff; --texte:#2b3445; --doux:#6b7689;
+  --famille:#f6a623; --planete:#39c0a0; --ombre:0 6px 18px rgba(40,60,90,.10);
+  --rayon:20px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:"Comic Sans MS","Baloo 2","Segoe UI",system-ui,sans-serif;
+  background:var(--bg); color:var(--texte);
+  padding-bottom:88px; -webkit-user-select:none; user-select:none;
+}
+
+/* ---- Barre du haut ---- */
+.topbar{
+  position:sticky; top:0; z-index:20; background:#fff; box-shadow:var(--ombre);
+  padding:10px 14px; display:flex; flex-direction:column; gap:10px;
+}
+.logo{font-size:22px; font-weight:800}
+.selecteur{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px}
+.pastille{
+  flex:0 0 auto; border:3px solid transparent; background:#f0f3f8;
+  border-radius:16px; padding:6px 10px; display:flex; flex-direction:column;
+  align-items:center; min-width:64px; cursor:pointer; transition:.15s;
+}
+.pastille .pastille-emoji{font-size:26px}
+.pastille .pastille-nom{font-size:12px; font-weight:700; max-width:64px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.pastille.actif{border-color:var(--c); background:#fff; transform:translateY(-2px)}
+
+/* ---- Contenu ---- */
+main{max-width:680px; margin:0 auto; padding:14px}
+.carte{
+  background:var(--carte); border-radius:var(--rayon); padding:16px;
+  box-shadow:var(--ombre); margin-bottom:14px;
+}
+.carte h1{margin:.1em 0 .3em; font-size:24px}
+.carte h2{margin:.1em 0 .5em; font-size:19px}
+.carte p{margin:.3em 0; color:var(--doux); line-height:1.4}
+.note{font-size:13px; background:#f3f7fb; padding:10px; border-radius:12px}
+
+/* ---- Accueil ---- */
+.carte-accueil{
+  background:linear-gradient(135deg,var(--c),#ffffff 140%);
+  border-radius:var(--rayon); padding:18px; box-shadow:var(--ombre);
+  margin-bottom:14px; text-align:center; color:#fff;
+}
+.carte-accueil h1{color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.15)}
+.carte-accueil small{font-weight:400; opacity:.9}
+.accueil-avatar{margin:0 auto 6px}
+.compteurs{display:flex; gap:12px; justify-content:center; margin-top:8px}
+.compteur{background:rgba(255,255,255,.9); color:var(--texte);
+  border-radius:16px; padding:10px 14px; min-width:120px}
+.compteur .big{display:block; font-size:24px; font-weight:800}
+.compteur span:not(.big){font-size:12px; color:var(--doux)}
+
+.eco-mini{font-size:26px; line-height:1.4}
+.eco-statut{font-weight:700; color:var(--planete)!important}
+.badges{display:flex; flex-wrap:wrap; gap:8px}
+.badge{background:#fff7e6; border:2px solid #ffe2a8; border-radius:14px;
+  padding:6px 10px; font-size:14px; font-weight:700}
+
+.raccourcis{display:grid; gap:12px}
+.gros-bouton{border:none; border-radius:var(--rayon); padding:20px; font-size:18px;
+  font-weight:800; color:#fff; cursor:pointer; box-shadow:var(--ombre)}
+.gros-bouton.famille{background:var(--famille)}
+.gros-bouton.planete{background:var(--planete)}
+
+/* ---- En-tête catégorie ---- */
+.entete-cat{border-top:6px solid var(--c)}
+.solde{font-size:18px; color:var(--texte)!important}
+
+/* ---- Grille de missions ---- */
+.missions{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px}
+.mission{
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  background:#fff; border:3px solid #eef2f7; border-radius:18px;
+  padding:14px 10px; cursor:pointer; transition:.12s; text-align:center;
+  font-family:inherit;
+}
+.mission:active{transform:scale(.96)}
+.mission .m-emoji{font-size:38px}
+.mission .m-titre{font-size:14px; font-weight:700; line-height:1.2}
+.mission .m-points{font-size:13px; font-weight:800; color:var(--famille)}
+.mission.fait{opacity:.55; background:#f1faf6; border-color:#bfe9da}
+.mission.fait .m-points{color:var(--planete)}
+.mission.rep{border-color:#d9d2f0}
+.reparation{border-top:6px solid #a78bfa}
+
+/* ---- Écosystème ---- */
+.eco-carte{background:linear-gradient(180deg,#eaf7ff,#f4fff6)}
+.eco-scene{font-size:40px; line-height:1.3; min-height:60px;
+  display:flex; flex-wrap:wrap; gap:4px; align-items:flex-end}
+.eco-item{animation:pousse .5s ease}
+@keyframes pousse{from{transform:scale(0) translateY(10px); opacity:0}
+  to{transform:scale(1); opacity:1}}
+.progress{background:#e3edf5; border-radius:20px; height:16px; overflow:hidden; margin:10px 0 6px}
+.progress-bar{background:var(--planete); height:100%; border-radius:20px; transition:width .5s}
+.eco-next{font-weight:700; color:var(--texte)!important}
+
+/* ---- Avatar ---- */
+.avatar-scene{position:relative; width:150px; height:150px; margin:0 auto;
+  border-radius:24px; display:flex; align-items:center; justify-content:center;
+  background:#eaf2ff; overflow:hidden}
+.avatar-scene .av-fond{position:absolute; font-size:120px; opacity:.25}
+.avatar-scene .av-perso{font-size:80px; position:relative; z-index:2}
+.avatar-scene .av-chapeau{position:absolute; top:8px; font-size:40px; z-index:3}
+.avatar-scene .av-acc{position:absolute; right:14px; bottom:36px; font-size:34px; z-index:3}
+.avatar-scene .av-comp{position:absolute; right:8px; bottom:6px; font-size:38px; z-index:3}
+.avatar-grand{margin:10px auto}
+.accueil-avatar .avatar-scene{width:110px; height:110px}
+.accueil-avatar .av-perso{font-size:60px}
+
+.options{display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:10px}
+.option{background:#fff; border:3px solid #eef2f7; border-radius:16px; padding:12px 6px;
+  display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer;
+  font-family:inherit; transition:.12s}
+.option:active{transform:scale(.95)}
+.option .o-emoji{font-size:34px}
+.option .o-nom{font-size:13px; font-weight:700}
+.option .o-cout{font-size:12px; color:var(--doux)}
+.option.equipe{border-color:var(--planete); background:#f1faf6}
+.option.verrou .o-emoji{filter:grayscale(1) opacity(.6)}
+.option.verrou .o-cout{color:var(--famille); font-weight:800}
+
+/* ---- Réglages ---- */
+.reglage-enfant{border-left:6px solid var(--c)}
+.champ{display:block; font-size:13px; font-weight:700; color:var(--doux); margin:10px 0 0}
+.champ input{display:block; width:100%; margin-top:4px; padding:10px;
+  border:2px solid #e3edf5; border-radius:12px; font-size:16px; font-family:inherit}
+.champ input[type=color]{height:44px; padding:4px}
+.btn-secondaire,.btn-danger{border:none; border-radius:14px; padding:14px;
+  font-size:15px; font-weight:800; cursor:pointer; width:100%; margin-top:8px; font-family:inherit}
+.btn-secondaire{background:#e8f0fb; color:#2b3445}
+.btn-danger{background:#ffe3e3; color:#c0392b}
+
+/* ---- Barre de navigation ---- */
+.navbar{position:fixed; bottom:0; left:0; right:0; background:#fff;
+  box-shadow:0 -4px 16px rgba(40,60,90,.10); display:flex; z-index:30}
+.nav-btn{flex:1; border:none; background:none; padding:8px 2px 10px; cursor:pointer;
+  font-size:24px; display:flex; flex-direction:column; align-items:center; gap:2px;
+  color:var(--doux); font-family:inherit}
+.nav-btn span{font-size:11px; font-weight:700}
+.nav-btn.actif{color:var(--texte)}
+.nav-btn.actif{position:relative}
+.nav-btn.actif::after{content:""; position:absolute; top:0; width:34px; height:4px;
+  border-radius:0 0 6px 6px; background:var(--famille)}
+
+/* ---- Toast & confettis ---- */
+.toast{position:fixed; left:50%; bottom:100px; transform:translateX(-50%) translateY(40px);
+  background:#2b3445; color:#fff; padding:14px 20px; border-radius:16px; font-weight:700;
+  max-width:90vw; text-align:center; opacity:0; pointer-events:none; transition:.3s; z-index:50}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+.toast.succes{background:#2e9e6f}
+.toast.info{background:#3a6ea5}
+#confettis{position:fixed; inset:0; pointer-events:none; z-index:60; overflow:hidden}
+.confetti{position:absolute; top:-30px; animation:chute 1.8s linear forwards}
+@keyframes chute{to{transform:translateY(110vh) rotate(360deg); opacity:.2}}
+
+@media(max-width:420px){
+  .compteurs{flex-direction:column; align-items:center}
+}

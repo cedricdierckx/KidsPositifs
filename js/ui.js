@@ -1,0 +1,274 @@
+/* =====================================================================
+ * KidsPositifs — Rendu de l'interface
+ * ===================================================================== */
+
+function initSquelette() {
+  document.body.innerHTML = `
+    <div id="confettis"></div>
+    <div id="toast" class="toast"></div>
+
+    <header class="topbar">
+      <div class="logo">🌟 KidsPositifs</div>
+      <div id="selecteur-enfant" class="selecteur"></div>
+    </header>
+
+    <main id="contenu"></main>
+
+    <nav class="navbar">
+      <button data-vue="accueil"  class="nav-btn">🏠<span>Accueil</span></button>
+      <button data-vue="famille"  class="nav-btn">🏡<span>Famille</span></button>
+      <button data-vue="planete"  class="nav-btn">🌍<span>Planète</span></button>
+      <button data-vue="avatar"   class="nav-btn">🎨<span>Avatar</span></button>
+      <button data-vue="reglages" class="nav-btn">⚙️<span>Parents</span></button>
+    </nav>`;
+
+  document.querySelectorAll(".nav-btn").forEach(b =>
+    b.addEventListener("click", () => { etat.vue = b.dataset.vue; sauver(); rendre(); }));
+}
+
+function rendre() {
+  rendreSelecteur();
+  document.querySelectorAll(".nav-btn").forEach(b =>
+    b.classList.toggle("actif", b.dataset.vue === etat.vue));
+
+  const c = $("#contenu");
+  c.innerHTML = "";
+  switch (etat.vue) {
+    case "accueil":  vueAccueil(c);  break;
+    case "famille":  vueMissions(c, "famille"); break;
+    case "planete":  vueMissions(c, "planete"); break;
+    case "avatar":   vueAvatar(c);   break;
+    case "reglages": vueReglages(c); break;
+  }
+}
+
+/* ---------- Sélecteur d'enfant ---------- */
+function rendreSelecteur() {
+  const s = $("#selecteur-enfant");
+  s.innerHTML = "";
+  Object.values(etat.enfants).forEach(enf => {
+    const b = el("button", "pastille" + (enf.id === etat.enfantActif ? " actif" : ""));
+    b.style.setProperty("--c", enf.couleur);
+    b.innerHTML = `<span class="pastille-emoji">${enf.emoji}</span><span class="pastille-nom">${enf.prenom}</span>`;
+    b.onclick = () => { etat.enfantActif = enf.id; sauver(); rendre(); };
+    s.appendChild(b);
+  });
+}
+
+/* ---------- Vue Accueil ---------- */
+function vueAccueil(c) {
+  const enf = enfantActif();
+  const eco = paliersAtteints(enf.gouttes);
+  const dernier = eco[eco.length - 1];
+
+  const carte = el("section", "carte-accueil");
+  carte.style.setProperty("--c", enf.couleur);
+  carte.innerHTML = `
+    <div class="accueil-avatar">${renduAvatar(enf)}</div>
+    <h1>Salut ${enf.prenom} ! <small>(${age(enf)} ans)</small></h1>
+    <div class="compteurs">
+      <div class="compteur"><span class="big">💛 ${enf.coeurs}</span><span>Cœurs à dépenser</span></div>
+      <div class="compteur"><span class="big">💧 ${enf.gouttes}</span><span>Gouttes de vie</span></div>
+    </div>`;
+  c.appendChild(carte);
+
+  // Aperçu écosystème
+  const ecoCarte = el("section", "carte");
+  ecoCarte.innerHTML = `<h2>🌍 Mon écosystème</h2>
+    <div class="eco-mini">${eco.map(p => `<span title="${p.nom}">${p.emoji}</span>`).join("")}</div>
+    <p class="eco-statut">${dernier ? dernier.nom : ""}</p>`;
+  c.appendChild(ecoCarte);
+
+  // Badges
+  if (enf.badges.length) {
+    const bCarte = el("section", "carte");
+    bCarte.innerHTML = `<h2>🏆 Mes badges</h2>
+      <div class="badges">${enf.badges.map(b => `<span class="badge">${b.emoji} ${b.nom}</span>`).join("")}</div>`;
+    c.appendChild(bCarte);
+  }
+
+  // Raccourcis
+  const ras = el("section", "raccourcis");
+  ras.innerHTML = `
+    <button class="gros-bouton famille" data-go="famille">🏡 Missions Famille</button>
+    <button class="gros-bouton planete" data-go="planete">🌍 Missions Planète</button>`;
+  ras.querySelectorAll("[data-go]").forEach(b =>
+    b.onclick = () => { etat.vue = b.dataset.go; sauver(); rendre(); });
+  c.appendChild(ras);
+}
+
+/* ---------- Vue Missions (famille / planète) ---------- */
+function vueMissions(c, catId) {
+  const enf = enfantActif();
+  const cat = CATEGORIES[catId];
+  const jour = aujourdHui();
+  const journalJour = enf.journal[jour] || {};
+
+  const entete = el("section", "carte entete-cat");
+  entete.style.setProperty("--c", cat.couleur);
+  entete.innerHTML = `<h1>${cat.emoji} ${cat.nom}</h1>
+    <p>${cat.description}</p>
+    <p class="solde">${cat.monnaieEmoji} <strong>${catId === "famille" ? enf.coeurs : enf.gouttes}</strong> ${cat.monnaie}</p>`;
+  c.appendChild(entete);
+
+  // Aperçu de la récompense liée
+  if (catId === "planete") c.appendChild(vueEcosysteme(enf));
+
+  // Liste des missions adaptées à l'âge
+  const liste = el("section", "missions");
+  const dispo = MISSIONS.filter(m => m.cat === catId && age(enf) >= m.ageMin);
+  dispo.forEach(m => {
+    const fait = (journalJour[m.id] || 0) >= 1 && m.type === "quotidien";
+    const carte = el("button", "mission" + (fait ? " fait" : ""));
+    carte.innerHTML = `
+      <span class="m-emoji">${m.emoji}</span>
+      <span class="m-titre">${m.titre}</span>
+      <span class="m-points">${fait ? "✅" : `+${m.points} ${cat.monnaieEmoji}`}</span>`;
+    carte.onclick = () => validerMission(m);
+    liste.appendChild(carte);
+  });
+  c.appendChild(liste);
+
+  // Section famille : défis réparation (alternative à la punition)
+  if (catId === "famille") {
+    const rep = el("section", "carte reparation");
+    rep.innerHTML = `<h2>🌈 Oups, ça arrive…</h2>
+      <p>Pas de point en moins ! Quand quelque chose ne va pas, on <strong>répare</strong> et on gagne même un petit bonus.</p>`;
+    const g = el("div", "missions");
+    DEFIS_REPARATION.forEach(d => {
+      const b = el("button", "mission rep");
+      b.innerHTML = `<span class="m-emoji">${d.emoji}</span><span class="m-titre">${d.titre}</span><span class="m-points">+${d.bonus} 💛</span>`;
+      b.onclick = () => defiReparation(d);
+      g.appendChild(b);
+    });
+    rep.appendChild(g);
+    c.appendChild(rep);
+  }
+}
+
+/* ---------- Écosystème détaillé ---------- */
+function vueEcosysteme(enf) {
+  const atteints = paliersAtteints(enf.gouttes);
+  const suivant = prochainPalier(enf.gouttes);
+  const dernier = atteints[atteints.length - 1];
+
+  const sec = el("section", "carte eco-carte");
+  let barre = "";
+  if (suivant) {
+    const debut = dernier ? dernier.seuil : 0;
+    const pct = Math.round(((enf.gouttes - debut) / (suivant.seuil - debut)) * 100);
+    barre = `
+      <div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div>
+      <p class="eco-next">Encore <strong>${suivant.seuil - enf.gouttes}</strong> 💧 pour : ${suivant.emoji} ${suivant.nom}</p>`;
+  } else {
+    barre = `<p class="eco-next">🎉 Écosystème complet, bravo !</p>`;
+  }
+
+  sec.innerHTML = `<h2>🌱 Ma graine grandit</h2>
+    <div class="eco-scene">${atteints.map(p => `<span class="eco-item" title="${p.nom}">${p.emoji}</span>`).join("")}</div>
+    ${barre}`;
+  return sec;
+}
+
+/* ---------- Vue Avatar ---------- */
+const AVATAR_LIBELLES = { base: "Personnage", chapeau: "Chapeau", accessoire: "Accessoire", compagnon: "Compagnon", fond: "Décor" };
+
+function vueAvatar(c) {
+  const enf = enfantActif();
+
+  const apercu = el("section", "carte avatar-apercu");
+  apercu.innerHTML = `<h1>🎨 Mon avatar</h1>
+    <div class="avatar-grand">${renduAvatar(enf)}</div>
+    <p class="solde">💛 <strong>${enf.coeurs}</strong> Cœurs à dépenser</p>`;
+  c.appendChild(apercu);
+
+  Object.keys(AVATAR_OPTIONS).forEach(categorie => {
+    const sec = el("section", "carte");
+    sec.innerHTML = `<h2>${AVATAR_LIBELLES[categorie]}</h2>`;
+    const grille = el("div", "options");
+    AVATAR_OPTIONS[categorie].forEach(opt => {
+      const dispo = estDebloque(enf, categorie, opt);
+      const equipe = enf.avatar[categorie] === opt.id;
+      const o = el("button", "option" + (equipe ? " equipe" : "") + (dispo ? "" : " verrou"));
+      o.innerHTML = `
+        <span class="o-emoji">${opt.emoji || "🚫"}</span>
+        <span class="o-nom">${opt.nom}</span>
+        <span class="o-cout">${dispo ? (equipe ? "Porté ✅" : "Choisir") : `🔒 ${opt.cout} 💛`}</span>`;
+      o.onclick = () => acheterOption(categorie, opt);
+      grille.appendChild(o);
+    });
+    sec.appendChild(grille);
+    c.appendChild(sec);
+  });
+}
+
+function emojiOption(categorie, id) {
+  const opt = AVATAR_OPTIONS[categorie].find(o => o.id === id);
+  return opt ? opt.emoji : "";
+}
+
+function renduAvatar(enf) {
+  const a = enf.avatar;
+  return `
+    <div class="avatar-scene fond-${a.fond}">
+      <span class="av-fond">${emojiOption("fond", a.fond)}</span>
+      <span class="av-perso">${emojiOption("base", a.base)}</span>
+      <span class="av-chapeau">${emojiOption("chapeau", a.chapeau)}</span>
+      <span class="av-acc">${emojiOption("accessoire", a.accessoire)}</span>
+      <span class="av-comp">${emojiOption("compagnon", a.compagnon)}</span>
+    </div>`;
+}
+
+/* ---------- Vue Réglages (parents) ---------- */
+function vueReglages(c) {
+  const intro = el("section", "carte");
+  intro.innerHTML = `<h1>⚙️ Espace parents</h1>
+    <p>Personnalisez les prénoms et avatars de base. Les missions s'adaptent automatiquement à l'âge de chaque enfant.</p>
+    <p class="note">💡 <strong>Esprit « Papa Positive »</strong> : on valorise l'effort, jamais la performance ; on ne retire jamais de points ; on remplace la punition par un « défi réparation ». La coopération est encouragée plutôt que la compétition entre enfants.</p>`;
+  c.appendChild(intro);
+
+  Object.values(etat.enfants).forEach(enf => {
+    const sec = el("section", "carte reglage-enfant");
+    sec.style.setProperty("--c", enf.couleur);
+    sec.innerHTML = `<h2>${enf.emoji} ${enf.prenom}</h2>`;
+
+    const lPrenom = el("label", "champ", `Prénom`);
+    const iPrenom = el("input");
+    iPrenom.value = enf.prenom;
+    iPrenom.oninput = () => { majEnfant(enf.id, "prenom", iPrenom.value); rendreSelecteur(); };
+    lPrenom.appendChild(iPrenom);
+
+    const lAnnee = el("label", "champ", `Année de naissance`);
+    const iAnnee = el("input");
+    iAnnee.type = "number"; iAnnee.value = enf.naissance; iAnnee.min = 2010; iAnnee.max = ANNEE_REF;
+    iAnnee.oninput = () => majEnfant(enf.id, "naissance", parseInt(iAnnee.value) || enf.naissance);
+    lAnnee.appendChild(iAnnee);
+
+    const lEmoji = el("label", "champ", `Emoji`);
+    const iEmoji = el("input");
+    iEmoji.value = enf.emoji; iEmoji.maxLength = 4;
+    iEmoji.oninput = () => { majEnfant(enf.id, "emoji", iEmoji.value); rendreSelecteur(); };
+    lEmoji.appendChild(iEmoji);
+
+    const lCouleur = el("label", "champ", `Couleur`);
+    const iCouleur = el("input");
+    iCouleur.type = "color"; iCouleur.value = enf.couleur;
+    iCouleur.oninput = () => majEnfant(enf.id, "couleur", iCouleur.value);
+    lCouleur.appendChild(iCouleur);
+
+    const stats = el("p", "note", `Total cumulé : 💛 ${enf.coeursTotal} Cœurs · 💧 ${enf.gouttes} Gouttes · 🏆 ${enf.badges.length} badges`);
+
+    [lPrenom, lAnnee, lEmoji, lCouleur, stats].forEach(x => sec.appendChild(x));
+    c.appendChild(sec);
+  });
+
+  const actions = el("section", "carte");
+  actions.innerHTML = `<h2>Données</h2>`;
+  const bExp = el("button", "btn-secondaire", "💾 Exporter la sauvegarde");
+  bExp.onclick = exporter;
+  const bRaz = el("button", "btn-danger", "🗑️ Tout réinitialiser");
+  bRaz.onclick = reinitialiser;
+  actions.appendChild(bExp);
+  actions.appendChild(bRaz);
+  c.appendChild(actions);
+}
