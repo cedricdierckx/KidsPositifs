@@ -116,7 +116,21 @@ L'onglet **⚙️ Parents** est verrouillé par défaut. En l'activant (avec un
   validées ce jour-là ; les soldes sont recalculés automatiquement.
 - **Gestion des badges** : retirer un badge (il ne sera pas ré-attribué),
   réautoriser les badges retirés, ou tout effacer.
+- **Missions du jour** : pour chaque enfant et chaque date, cocher les missions
+  à proposer (sans sélection, toutes les missions adaptées à l'âge sont
+  proposées). La page d'accueil de l'enfant n'affiche alors que celles-ci.
 - Modification des profils, réglages de synchro et données.
+
+> **Correction d'erreur** : un 1ᵉʳ clic sur une mission la valide ; un 2ᵉ clic
+> l'annule et **retire les points** correspondants (ou annule la demande en
+> attente). Pratique en cas de fausse manipulation par l'enfant.
+
+> **Animation de badge** : l'obtention d'un nouveau badge déclenche une
+> animation festive (badge qui surgit + confettis).
+
+> **Mode démo** : depuis l'écran de connexion, « 🧪 Découvrir en démo » ouvre une
+> famille de démonstration pré-remplie, entièrement hors-ligne (rien n'est
+> enregistré en ligne) — idéal pour tester sans créer de compte.
 
 > L'avatar et l'emoji de chaque enfant **suivent automatiquement le sexe** (et
 > l'âge pour les tout-petits), tant qu'ils n'ont pas été personnalisés.

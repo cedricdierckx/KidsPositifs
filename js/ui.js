@@ -2,6 +2,26 @@
  * KidsPositifs — Rendu de l'interface
  * ===================================================================== */
 
+// Affichage de la section abonnement (masquée tant que les utilisateurs
+// actuels sont des « early adopters » avec usage gratuit).
+const AFFICHER_ABONNEMENT = false;
+
+// Animation festive à l'obtention d'un nouveau badge.
+function animationBadge(emoji, nom) {
+  const ov = el("div", "badge-pop");
+  ov.innerHTML = `
+    <div class="badge-pop-carte">
+      <div class="badge-pop-rayons">${emoji}</div>
+      <div class="badge-pop-titre">Nouveau badge !</div>
+      <div class="badge-pop-nom">${nom}</div>
+    </div>`;
+  document.body.appendChild(ov);
+  if (typeof confettis === "function") confettis();
+  const fermer = () => ov.remove();
+  ov.addEventListener("click", fermer);
+  setTimeout(fermer, 2800);
+}
+
 function initSquelette() {
   document.body.innerHTML = `
     <div id="confettis"></div>
@@ -178,7 +198,12 @@ function grilleMissions(catId) {
   const jour = aujourdHui();
   const journalJour = enf.journal[jour] || {};
   const liste = el("section", "missions");
-  MISSIONS.filter(m => m.cat === catId && age(enf) >= m.ageMin).forEach(m => {
+  const actives = missionsActives(enf, catId, jour);
+  if (actives.length === 0) {
+    liste.appendChild(el("p", "note", "Aucune mission prévue aujourd'hui pour cette catégorie."));
+    return liste;
+  }
+  actives.forEach(m => {
     const fait = (journalJour[m.id] || 0) >= 1 && m.type === "quotidien";
     const enAttente = enf.enAttente.some(a => a.missionId === m.id && a.jour === jour);
     const carte = el("button", "mission" + (fait ? " fait" : "") + (enAttente ? " attente" : ""));
@@ -340,6 +365,45 @@ function renduAvatar(enf) {
 
 /* ---------- Vue Réglages (parents) ---------- */
 const histDate = {}; // date sélectionnée pour la correction d'historique, par enfant
+const planDate = {}; // date sélectionnée pour les missions du jour, par enfant
+
+// Sélection des missions proposées à un enfant pour un jour donné.
+function blocMissionsDuJour(enf) {
+  const sec = el("section", "carte correction");
+  sec.style.setProperty("--c", enf.couleur);
+  const jour = planDate[enf.id] || aujourdHui();
+  planDate[enf.id] = jour;
+  sec.innerHTML = `<h2>🗓️ Missions du jour — ${enf.emoji} ${enf.prenom}</h2>
+    <p class="note">Coche les missions à proposer ce jour-là. Sans sélection, toutes les missions adaptées à l'âge sont proposées.</p>`;
+
+  const lDate = el("label", "champ", "Jour");
+  const iDate = el("input"); iDate.type = "date"; iDate.value = jour;
+  iDate.onchange = () => { planDate[enf.id] = iDate.value || jour; rendre(); };
+  lDate.appendChild(iDate);
+  sec.appendChild(lDate);
+
+  const plan = planDuJour(enf, jour); // null = toutes les missions adaptées
+  ["famille", "planete"].forEach(catId => {
+    const cat = CATEGORIES[catId];
+    const dispo = MISSIONS.filter(m => m.cat === catId && age(enf) >= m.ageMin);
+    if (!dispo.length) return;
+    sec.appendChild(el("p", "sous-titre", `${cat.emoji} ${cat.nom}`));
+    dispo.forEach(m => {
+      const inclus = plan ? plan.includes(m.id) : true;
+      const ligne = el("label", "switch-ligne");
+      const cb = el("input"); cb.type = "checkbox"; cb.checked = inclus;
+      cb.onchange = () => basculerPlan(enf, jour, m.id);
+      ligne.appendChild(cb);
+      ligne.appendChild(el("span", null, `${m.emoji} ${m.titre} (${cat.monnaieEmoji}${m.points})`));
+      sec.appendChild(ligne);
+    });
+  });
+
+  const rb = el("button", "btn-secondaire", "↩️ Tout proposer (réinitialiser ce jour)");
+  rb.onclick = () => reinitPlan(enf, jour);
+  sec.appendChild(rb);
+  return sec;
+}
 
 // Bloc de corrections manuelles pour un enfant (mode parents).
 function blocCorrections(enf) {
@@ -473,6 +537,9 @@ function vueReglages(c) {
     prog.appendChild(el("p", "note", "💡 Astuce : définissez un code PIN pour protéger l'accès au mode parents."));
   c.appendChild(prog);
 
+  // ----- Missions du jour (sélection par les parents) -----
+  c.appendChild(blocMissionsDuJour(enfantActif()));
+
   // ----- Corrections pour l'enfant sélectionné -----
   c.appendChild(blocCorrections(enfantActif()));
 
@@ -521,6 +588,18 @@ function vueReglages(c) {
     c.appendChild(sec);
   });
 
+  // ----- Mode démo : bandeau au lieu des sections compte/famille -----
+  if (typeof modeDemo !== "undefined" && modeDemo) {
+    const d = el("section", "carte");
+    d.innerHTML = `<h2>🧪 Mode démo</h2>
+      <p>Tu explores une <strong>famille de démonstration</strong>. Rien n'est enregistré en ligne.</p>`;
+    const bq = el("button", "gros-bouton planete", "Créer un compte / se connecter");
+    bq.onclick = () => location.reload();
+    d.appendChild(bq);
+    c.appendChild(d);
+    return; // pas de famille/abonnement/compte/admin en démo
+  }
+
   // ----- Famille & invitations -----
   const fam = el("section", "carte");
   fam.innerHTML = `<h2>👪 Famille</h2>
@@ -539,15 +618,17 @@ function vueReglages(c) {
   fam.appendChild(bSwitch);
   c.appendChild(fam);
 
-  // ----- Abonnement (préparé pour l'avenir) -----
-  const abo = el("section", "carte");
-  abo.innerHTML = `<h2>⭐ Abonnement</h2>
-    <p>Offre actuelle : <strong>${planLibelle()}</strong></p>
-    <p class="note">Les paiements arriveront bientôt. Pour l'instant, tout est gratuit. 💛</p>`;
-  const bAbo = el("button", "btn-secondaire", "Gérer l'abonnement (bientôt)");
-  bAbo.disabled = true;
-  abo.appendChild(bAbo);
-  c.appendChild(abo);
+  // ----- Abonnement (masqué provisoirement : early adopters = gratuit) -----
+  if (AFFICHER_ABONNEMENT) {
+    const abo = el("section", "carte");
+    abo.innerHTML = `<h2>⭐ Abonnement</h2>
+      <p>Offre actuelle : <strong>${planLibelle()}</strong></p>
+      <p class="note">Les paiements arriveront bientôt. Pour l'instant, tout est gratuit. 💛</p>`;
+    const bAbo = el("button", "btn-secondaire", "Gérer l'abonnement (bientôt)");
+    bAbo.disabled = true;
+    abo.appendChild(bAbo);
+    c.appendChild(abo);
+  }
 
   // ----- Administration (réservé aux admins) -----
   if (typeof estAdmin !== "undefined" && estAdmin) c.appendChild(blocAdmin());

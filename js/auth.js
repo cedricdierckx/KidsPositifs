@@ -115,6 +115,7 @@ async function tirerEtat() {
 }
 
 function planifierSauvegardeCloud() {
+  if (modeDemo) return;                 // la démo ne synchronise rien
   if (!sb || !familleId) return;
   clearTimeout(cloudTimer);
   cloudTimer = setTimeout(sauvegardeCloud, 700);
@@ -244,7 +245,9 @@ function ecranAuth() {
     <button id="b-principal" class="gros-bouton planete">Recevoir un lien magique ✨</button>
     <button id="b-toggle" class="btn-secondaire">Utiliser un mot de passe</button>
     <button id="b-signup" class="btn-secondaire" style="display:none">Pas de compte ? Créer un compte</button>
-    <p class="note" id="auth-msg"></p>`);
+    <p class="note" id="auth-msg"></p>
+    <hr style="border:none;border-top:1px solid #e3edf5;margin:14px 0">
+    <button id="b-demo" class="btn-secondaire">🧪 Découvrir en démo (sans compte)</button>`);
 
   let modeMdp = false, inscriptionMode = false;
   const elEmail = document.getElementById("email");
@@ -281,7 +284,20 @@ function ecranAuth() {
       }
     } finally { bPrinc.disabled = false; }
   };
+  document.getElementById("b-demo").onclick = demarrerDemo;
   rafraichir();
+}
+
+// Mode démonstration : famille pré-remplie, 100 % hors-ligne, sans compte.
+function demarrerDemo() {
+  modeDemo = true;
+  familleActive = { id: "_demo", name: "Famille démo", plan: "free", role: "owner" };
+  familleId = "_demo";
+  estAdmin = false;
+  etat = etatDemo();
+  initSquelette();
+  rendre();
+  majBadgeSync("🧪");
 }
 
 function ecranFamilles(opts) {

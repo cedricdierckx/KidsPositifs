@@ -61,6 +61,17 @@ const MISSIONS = [
   { id: "linge_panier",  cat: "famille", emoji: "🧺", titre: "Mettre son linge sale au panier", ageMin: 2, points: 1, type: "quotidien" },
   { id: "calme_colere",  cat: "famille", emoji: "🌬️", titre: "Se calmer en respirant",    ageMin: 4, points: 3, type: "quotidien" },
   { id: "ecouter",       cat: "famille", emoji: "👂", titre: "Écouter du premier coup",   ageMin: 4, points: 2, type: "quotidien" },
+  { id: "lit_faire",     cat: "famille", emoji: "🛏️", titre: "Faire son lit",            ageMin: 3, points: 2, type: "quotidien" },
+  { id: "ranger_jouets", cat: "famille", emoji: "🧹", titre: "Ranger les jouets",         ageMin: 2, points: 2, type: "quotidien" },
+  { id: "partager",      cat: "famille", emoji: "🤲", titre: "Partager un jouet",         ageMin: 2, points: 2, type: "quotidien" },
+  { id: "jouer_calme",   cat: "famille", emoji: "🧩", titre: "Jouer calmement",           ageMin: 2, points: 1, type: "quotidien" },
+  { id: "chaussures",    cat: "famille", emoji: "👟", titre: "Mettre ses chaussures seul", ageMin: 3, points: 1, type: "quotidien" },
+  { id: "aider_cuisine", cat: "famille", emoji: "🍳", titre: "Aider à cuisiner",          ageMin: 4, points: 2, type: "quotidien" },
+  { id: "histoire",      cat: "famille", emoji: "📖", titre: "Écouter/lire une histoire", ageMin: 2, points: 1, type: "quotidien" },
+  { id: "bonjour",       cat: "famille", emoji: "👋", titre: "Dire bonjour / au revoir",  ageMin: 2, points: 1, type: "quotidien" },
+  { id: "aider_courses", cat: "famille", emoji: "🛒", titre: "Aider aux courses",         ageMin: 4, points: 2, type: "ponctuel" },
+  { id: "coucher_lheure",cat: "famille", emoji: "😴", titre: "Aller au lit sans rouspéter", ageMin: 2, points: 2, type: "quotidien" },
+  { id: "se_laver",      cat: "famille", emoji: "🛁", titre: "Se laver / prendre le bain", ageMin: 2, points: 1, type: "quotidien" },
 
   /* ---------------- PLANÈTE ---------------- */
   { id: "lumiere",       cat: "planete", emoji: "💡", titre: "Éteindre la lumière",       ageMin: 2, points: 1, type: "quotidien" },
@@ -71,7 +82,12 @@ const MISSIONS = [
   { id: "marche_velo",   cat: "planete", emoji: "🚲", titre: "Y aller à pied ou à vélo",  ageMin: 3, points: 2, type: "ponctuel" },
   { id: "arroser",       cat: "planete", emoji: "🪴", titre: "Arroser les plantes",       ageMin: 3, points: 2, type: "quotidien" },
   { id: "ramasser",      cat: "planete", emoji: "🧤", titre: "Ramasser un déchet dehors", ageMin: 3, points: 2, type: "ponctuel" },
-  { id: "gourde",        cat: "planete", emoji: "🥤", titre: "Utiliser sa gourde",        ageMin: 2, points: 1, type: "quotidien" }
+  { id: "gourde",        cat: "planete", emoji: "🥤", titre: "Utiliser sa gourde",        ageMin: 2, points: 1, type: "quotidien" },
+  { id: "douche_courte", cat: "planete", emoji: "🚿", titre: "Prendre une douche courte", ageMin: 4, points: 1, type: "quotidien" },
+  { id: "jardiner",      cat: "planete", emoji: "🌻", titre: "Jardiner / semer",          ageMin: 3, points: 2, type: "ponctuel" },
+  { id: "oiseaux",       cat: "planete", emoji: "🐦", titre: "Nourrir les oiseaux",       ageMin: 3, points: 1, type: "quotidien" },
+  { id: "ecrans",        cat: "planete", emoji: "📺", titre: "Éteindre les écrans",       ageMin: 3, points: 1, type: "quotidien" },
+  { id: "recup",         cat: "planete", emoji: "📦", titre: "Réutiliser au lieu de jeter", ageMin: 4, points: 1, type: "ponctuel" }
 ];
 
 /* ---- Défis « réparation » (alternative bienveillante à la punition)

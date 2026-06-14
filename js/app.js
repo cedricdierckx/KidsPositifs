@@ -10,6 +10,7 @@ const STORAGE_KEY = "kidspositifs_state"; // préfixe du cache local (par famill
 let etat = etatVierge();      // remplacé au démarrage par les données de la famille
 let familleId = null;         // id de la famille active (défini par auth.js)
 let modeParents = false;      // mode parents actif (session, non synchronisé)
+let modeDemo = false;         // mode démonstration (hors-ligne, sans compte)
 
 /* ---------- Cache local (par famille, pour le hors-ligne) ---------- */
 function cleCache() { return STORAGE_KEY + ":" + (familleId || "_local"); }
@@ -43,6 +44,7 @@ function etatVierge() {
       avatar: avatarParDefaut(e),
       debloque: [],         // ids d'options d'avatar débloquées
       journal: {},          // { "2026-06-14": { missionId: count } }
+      planJour: {},         // { "2026-06-14": [missionId,...] } missions imposées du jour
       enAttente: [],        // actions en attente de validation parentale
       badges: [],           // récompenses symboliques
       badgesRetires: []     // badges retirés par les parents (non re-attribués)
@@ -52,6 +54,29 @@ function etatVierge() {
     enfants, enfantActif: ENFANTS_DEFAUT[0].id, vue: "accueil", maj: 0,
     reglages: { validationParentale: false, codeParent: "" }
   };
+}
+
+// État d'une "famille démo" pré-remplie (mode découverte, hors-ligne).
+function etatDemo() {
+  const e = etatVierge();
+  const ids = Object.keys(e.enfants);
+  const noms = ["Lina", "Tom", "Jade", "Noé"];
+  ids.forEach((id, i) => { if (noms[i]) e.enfants[id].prenom = noms[i]; });
+
+  const a = e.enfants[ids[0]];
+  a.coeurs = 24; a.coeursTotal = 38; a.gouttes = 16; a.gouttesTotal = 22;
+  a.avatar = { ...a.avatar, chapeau: "couronne", lunettes: "rondes", fond: "arcenciel", compagnon: "chat", coiffure: "couettes", cheveux: "rose" };
+  a.ecosysteme.plantes = { herbe: 3, fleur: 2, arbre: 1 };
+  a.ecosysteme.herbivores = { lapin: 1, papillon: 2 };
+  a.badges = [{ id: "coeur10", nom: "Cœur d'or", emoji: "💛" },
+              { id: "eco_p", nom: "Jardinier en herbe", emoji: "🌱" }];
+
+  const b = e.enfants[ids[1]];
+  b.coeurs = 9; b.coeursTotal = 9; b.gouttes = 5; b.gouttesTotal = 5;
+  b.ecosysteme.plantes = { trefle: 2 };
+
+  e.maj = Date.now();
+  return e;
 }
 
 // Coiffure par défaut selon le sexe.
@@ -98,6 +123,7 @@ function normaliser(e) {
     ["taches", "pilosite", "boucles"].forEach(k => { if (enf.avatar[k] === undefined) enf.avatar[k] = "rien"; });
     if (!Array.isArray(enf.badgesRetires)) enf.badgesRetires = [];
     if (!Array.isArray(enf.badges)) enf.badges = [];
+    if (!enf.planJour || typeof enf.planJour !== "object") enf.planJour = {};
   });
   if (e.maj === undefined) e.maj = 0;
   if (!e.reglages) e.reglages = { validationParentale: false, codeParent: "" };
@@ -145,31 +171,86 @@ function crediterMission(enf, mission, jour) {
   verifierBadges(enf);
 }
 
+// Retire le crédit d'une mission un jour donné (correction d'erreur).
+function decrediterMission(enf, mission, jour) {
+  const j = enf.journal[jour];
+  if (!j || !j[mission.id]) return;
+  if (j[mission.id] <= 1) delete j[mission.id]; else j[mission.id] -= 1;
+  if (Object.keys(j).length === 0) delete enf.journal[jour];
+  const champ = mission.cat === "famille" ? "coeurs" : "gouttes";
+  const total = mission.cat === "famille" ? "coeursTotal" : "gouttesTotal";
+  enf[champ] = Math.max(0, enf[champ] - mission.points);
+  enf[total] = Math.max(0, enf[total] - mission.points);
+}
+
+// Clic sur une mission : 1er clic = valider, 2e clic = annuler (corrige une erreur).
 function validerMission(mission) {
   const enf = enfantActif();
   const jour = aujourdHui();
   const dejaFait = (enf.journal[jour] && enf.journal[jour][mission.id]) || 0;
-  const dejaEnAttente = enf.enAttente.some(a => a.missionId === mission.id && a.jour === jour);
+  const idxAttente = enf.enAttente.findIndex(a => a.missionId === mission.id && a.jour === jour);
 
-  // Les missions quotidiennes ne se valident qu'une fois par jour.
-  if (mission.type === "quotidien" && (dejaFait >= 1 || dejaEnAttente)) {
-    toast(dejaEnAttente ? "En attente de validation des parents ⏳"
-                        : "Déjà validé aujourd'hui ! Reviens demain 😊", "info");
+  // 2e clic alors qu'une demande est en attente -> on annule la demande.
+  if (idxAttente >= 0) {
+    enf.enAttente.splice(idxAttente, 1);
+    toast("Demande annulée.", "info");
+    sauver(); rendre();
     return;
   }
 
-  // Validation parentale : on met en attente au lieu de créditer (sauf si mode parents actif).
+  // 2e clic alors que c'est déjà validé -> on annule et on retire les points.
+  if (dejaFait >= 1) {
+    decrediterMission(enf, mission, jour);
+    const cat = CATEGORIES[mission.cat];
+    toast(`Annulé : −${mission.points} ${cat.monnaieEmoji}`, "info");
+    sauver(); rendre();
+    return;
+  }
+
+  // 1er clic : validation parentale -> mise en attente (sauf mode parents).
   if (etat.reglages.validationParentale && !modeParents) {
     enf.enAttente.push({ missionId: mission.id, cat: mission.cat, points: mission.points,
                          titre: mission.titre, emoji: mission.emoji, jour, ts: Date.now() });
     toast("Bravo ! 🎉 À faire valider par un parent ⏳", "info");
-    sauver();
-    rendre();
+    sauver(); rendre();
     return;
   }
 
+  // 1er clic : on crédite.
   crediterMission(enf, mission, jour);
   feterGain(mission);
+  sauver();
+  rendre();
+}
+
+/* ---------- Missions du jour (sélection par les parents) ----------
+ * enf.planJour[date] = [missionId, ...]  -> liste imposée pour ce jour.
+ * Si aucune liste pour la date : toutes les missions adaptées à l'âge. */
+function planDuJour(enf, jour) {
+  return enf.planJour && Array.isArray(enf.planJour[jour]) ? enf.planJour[jour] : null;
+}
+function missionsActives(enf, catId, jour) {
+  const dispo = MISSIONS.filter(m => m.cat === catId && age(enf) >= m.ageMin);
+  const plan = planDuJour(enf, jour);
+  if (!plan) return dispo;
+  return dispo.filter(m => plan.includes(m.id));
+}
+// Active/retire une mission du plan d'un jour (mode parents).
+function basculerPlan(enf, jour, missionId) {
+  if (!enf.planJour) enf.planJour = {};
+  if (!Array.isArray(enf.planJour[jour])) {
+    // initialise depuis le défaut (toutes les missions adaptées à l'âge)
+    enf.planJour[jour] = MISSIONS.filter(m => age(enf) >= m.ageMin).map(m => m.id);
+  }
+  const arr = enf.planJour[jour];
+  const i = arr.indexOf(missionId);
+  if (i >= 0) arr.splice(i, 1); else arr.push(missionId);
+  sauver();
+  rendre();
+}
+// Réinitialise le plan d'un jour (= toutes les missions adaptées à l'âge).
+function reinitPlan(enf, jour) {
+  if (enf.planJour) delete enf.planJour[jour];
   sauver();
   rendre();
 }
@@ -281,7 +362,8 @@ function verifierBadges(enf) {
     if (enf.badgesRetires.includes(id)) return; // retiré par un parent : on ne le redonne pas
     if (!enf.badges.find(b => b.id === id)) {
       enf.badges.push({ id, nom, emoji });
-      toast(`Nouveau badge : ${emoji} ${nom} !`, "succes");
+      if (typeof animationBadge === "function") animationBadge(emoji, nom);
+      else toast(`Nouveau badge : ${emoji} ${nom} !`, "succes");
     }
   };
   if (enf.coeursTotal >= 10) ajoute("coeur10", "Cœur d'or", "💛");
