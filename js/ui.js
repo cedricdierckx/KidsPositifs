@@ -45,6 +45,9 @@ function initSquelette() {
   // Navigation : choix d'affichage local (non synchronisé entre appareils).
   document.querySelectorAll(".nav-btn").forEach(b =>
     b.addEventListener("click", () => { etat.vue = b.dataset.vue; ecrireCache(); rendre(); }));
+
+  // Minuteur : le bandeau dodo suit l'heure en continu (toutes les 30 s).
+  if (!window.__dodoTimer) window.__dodoTimer = setInterval(majDodo, 30000);
 }
 
 // Panneau d'administration : liste de toutes les familles.
@@ -194,6 +197,13 @@ function vueAccueil(c) {
   }
 }
 
+// Rafraîchit en continu le bandeau dodo (l'ambiance suit l'heure réelle).
+function majDodo() {
+  if (etat.vue !== "accueil") return;
+  const ancien = document.getElementById("dodo-bandeau");
+  if (ancien) ancien.replaceWith(bandeauDodo(enfantActif()));
+}
+
 // Bandeau "dodo" : change d'ambiance selon l'heure et permet de valider
 // la mission "aller au lit à l'heure" (toggle, points).
 function bandeauDodo(enf) {
@@ -204,6 +214,7 @@ function bandeauDodo(enf) {
   const enAttente = enf.enAttente.some(a => a.missionId === mission.id && a.jour === jour);
 
   const sec = el("section", "dodo " + m.classe);
+  sec.id = "dodo-bandeau";
   sec.innerHTML = `
     <div class="dodo-ciel"><span class="dodo-astre">${m.emoji}</span>
       <span class="dodo-etoiles">✦ ✧ ⭐ ✦ ✧</span></div>
