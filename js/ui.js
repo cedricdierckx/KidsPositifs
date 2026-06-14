@@ -154,6 +154,9 @@ function vueAccueil(c) {
     </div>`;
   c.appendChild(carte);
 
+  // Bandeau "dodo" : ambiance selon l'heure + mission coucher à l'heure
+  c.appendChild(bandeauDodo(enf));
+
   // Missions Famille (directement sur la page de l'enfant)
   const titreFam = el("section", "carte titre-cat");
   titreFam.style.setProperty("--c", CATEGORIES.famille.couleur);
@@ -191,6 +194,27 @@ function vueAccueil(c) {
   }
 }
 
+// Bandeau "dodo" : change d'ambiance selon l'heure et permet de valider
+// la mission "aller au lit à l'heure" (toggle, points).
+function bandeauDodo(enf) {
+  const m = momentDodo(enf);
+  const mission = MISSIONS.find(x => x.id === "coucher_lheure");
+  const jour = aujourdHui();
+  const fait = ((enf.journal[jour] || {})[mission.id] || 0) >= 1;
+  const enAttente = enf.enAttente.some(a => a.missionId === mission.id && a.jour === jour);
+
+  const sec = el("section", "dodo " + m.classe);
+  sec.innerHTML = `
+    <div class="dodo-ciel"><span class="dodo-astre">${m.emoji}</span>
+      <span class="dodo-etoiles">✦ ✧ ⭐ ✦ ✧</span></div>
+    <div class="dodo-txt"><strong>${m.titre}</strong><small>${m.info}</small></div>`;
+  const b = el("button", "dodo-btn" + (fait ? " fait" : ""),
+    fait ? "✅ Au lit à l'heure !" : (enAttente ? "⏳ En attente" : `Je vais au lit 🌙 +${mission.points}💛`));
+  b.onclick = () => validerMission(mission);
+  sec.appendChild(b);
+  return sec;
+}
+
 // Grille des missions d'une catégorie, adaptées à l'âge de l'enfant actif.
 function grilleMissions(catId) {
   const enf = enfantActif();
@@ -198,13 +222,14 @@ function grilleMissions(catId) {
   const jour = aujourdHui();
   const journalJour = enf.journal[jour] || {};
   const liste = el("section", "missions");
-  const actives = missionsActives(enf, catId, jour);
+  // La mission spéciale "coucher" est affichée à part (bandeau dodo).
+  const actives = missionsActives(enf, catId, jour).filter(m => m.speciale !== "coucher");
   if (actives.length === 0) {
     liste.appendChild(el("p", "note", "Aucune mission prévue aujourd'hui pour cette catégorie."));
     return liste;
   }
   actives.forEach(m => {
-    const fait = (journalJour[m.id] || 0) >= 1 && m.type === "quotidien";
+    const fait = (journalJour[m.id] || 0) >= 1;
     const enAttente = enf.enAttente.some(a => a.missionId === m.id && a.jour === jour);
     const carte = el("button", "mission" + (fait ? " fait" : "") + (enAttente ? " attente" : ""));
     carte.innerHTML = `
@@ -382,14 +407,15 @@ function blocMissionsDuJour(enf) {
   lDate.appendChild(iDate);
   sec.appendChild(lDate);
 
-  const plan = planDuJour(enf, jour); // null = toutes les missions adaptées
+  const plan = planDuJour(enf, jour); // null = sélection par défaut
+  const defauts = idsDefaut(enf);
   ["famille", "planete"].forEach(catId => {
     const cat = CATEGORIES[catId];
     const dispo = MISSIONS.filter(m => m.cat === catId && age(enf) >= m.ageMin);
     if (!dispo.length) return;
     sec.appendChild(el("p", "sous-titre", `${cat.emoji} ${cat.nom}`));
     dispo.forEach(m => {
-      const inclus = plan ? plan.includes(m.id) : true;
+      const inclus = plan ? plan.includes(m.id) : defauts.includes(m.id);
       const ligne = el("label", "switch-ligne");
       const cb = el("input"); cb.type = "checkbox"; cb.checked = inclus;
       cb.onchange = () => basculerPlan(enf, jour, m.id);
@@ -582,9 +608,15 @@ function vueReglages(c) {
     iCouleur.oninput = () => majEnfant(enf.id, "couleur", iCouleur.value);
     lCouleur.appendChild(iCouleur);
 
+    const lDodo = el("label", "champ", `Heure du coucher 🌙`);
+    const iDodo = el("input");
+    iDodo.type = "time"; iDodo.value = enf.heureCoucher || "19:30";
+    iDodo.onchange = () => { majEnfant(enf.id, "heureCoucher", iDodo.value || "19:30"); rendre(); };
+    lDodo.appendChild(iDodo);
+
     const stats = el("p", "note", `${age(enf)} ans · Total cumulé : 💛 ${enf.coeursTotal} Cœurs · 💧 ${enf.gouttesTotal} Gouttes · 🌍 ${nbTotalEspeces(enf)} êtres vivants · 🏆 ${enf.badges.length} badges`);
 
-    [lPrenom, lDate, lSexe, lEmoji, lCouleur, stats].forEach(x => sec.appendChild(x));
+    [lPrenom, lDate, lSexe, lEmoji, lCouleur, lDodo, stats].forEach(x => sec.appendChild(x));
     c.appendChild(sec);
   });
 

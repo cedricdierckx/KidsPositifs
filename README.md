@@ -117,13 +117,16 @@ L'onglet **⚙️ Parents** est verrouillé par défaut. En l'activant (avec un
 - **Gestion des badges** : retirer un badge (il ne sera pas ré-attribué),
   réautoriser les badges retirés, ou tout effacer.
 - **Missions du jour** : pour chaque enfant et chaque date, cocher les missions
-  à proposer (sans sélection, toutes les missions adaptées à l'âge sont
-  proposées). La page d'accueil de l'enfant n'affiche alors que celles-ci.
+  à proposer. Par défaut, une **sélection pertinente selon l'âge** (les plus
+  prioritaires, ~8 par catégorie) est proposée ; les parents l'ajustent ensuite.
+- **Heure du coucher** : réglable par enfant. La page d'accueil affiche un
+  bandeau « dodo » dont l'**ambiance change selon l'heure** (☀️ jour → 🌇 bientôt
+  l'heure → 🌙 nuit étoilée), avec la mission « aller au lit à l'heure ».
 - Modification des profils, réglages de synchro et données.
 
 > **Correction d'erreur** : un 1ᵉʳ clic sur une mission la valide ; un 2ᵉ clic
 > l'annule et **retire les points** correspondants (ou annule la demande en
-> attente). Pratique en cas de fausse manipulation par l'enfant.
+> attente). Vaut pour toutes les missions (quotidiennes comme ponctuelles).
 
 > **Animation de badge** : l'obtention d'un nouveau badge déclenche une
 > animation festive (badge qui surgit + confettis).

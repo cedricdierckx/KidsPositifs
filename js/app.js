@@ -43,6 +43,7 @@ function etatVierge() {
       ecosysteme: { plantes: {}, herbivores: {}, carnivores: {} }, // tier -> {especeId: nb}
       avatar: avatarParDefaut(e),
       debloque: [],         // ids d'options d'avatar débloquées
+      heureCoucher: "19:30",// heure de coucher (réglable par les parents)
       journal: {},          // { "2026-06-14": { missionId: count } }
       planJour: {},         // { "2026-06-14": [missionId,...] } missions imposées du jour
       enAttente: [],        // actions en attente de validation parentale
@@ -124,6 +125,7 @@ function normaliser(e) {
     if (!Array.isArray(enf.badgesRetires)) enf.badgesRetires = [];
     if (!Array.isArray(enf.badges)) enf.badges = [];
     if (!enf.planJour || typeof enf.planJour !== "object") enf.planJour = {};
+    if (!/^\d{1,2}:\d{2}$/.test(enf.heureCoucher || "")) enf.heureCoucher = "19:30";
   });
   if (e.maj === undefined) e.maj = 0;
   if (!e.reglages) e.reglages = { validationParentale: false, codeParent: "" };
@@ -147,6 +149,18 @@ function ageDepuis(dateNaissance) {
 }
 function age(enfant) { return ageDepuis(enfant.naissance); }
 function enfantActif() { return etat.enfants[etat.enfantActif]; }
+
+// Ambiance "dodo" selon l'heure actuelle par rapport à l'heure de coucher.
+function momentDodo(enf) {
+  const parts = (enf.heureCoucher || "19:30").split(":");
+  const coucher = (parseInt(parts[0], 10) || 19) * 60 + (parseInt(parts[1], 10) || 30);
+  const now = new Date();
+  const maintenant = now.getHours() * 60 + now.getMinutes();
+  const reste = coucher - maintenant; // minutes avant le coucher
+  if (reste > 60) return { classe: "dodo-jour", emoji: "☀️", titre: "Encore du temps pour jouer", info: `Dodo à ${enf.heureCoucher}` };
+  if (reste > 0)  return { classe: "dodo-soir", emoji: "🌇", titre: "Bientôt l'heure du dodo", info: `Dans ${reste} min (${enf.heureCoucher})` };
+  return { classe: "dodo-nuit", emoji: "🌙", titre: "C'est l'heure de dormir", info: `Dodo à ${enf.heureCoucher}` };
+}
 function $(sel) { return document.querySelector(sel); }
 function el(tag, cls, html) {
   const n = document.createElement(tag);
@@ -229,18 +243,31 @@ function validerMission(mission) {
 function planDuJour(enf, jour) {
   return enf.planJour && Array.isArray(enf.planJour[jour]) ? enf.planJour[jour] : null;
 }
-function missionsActives(enf, catId, jour) {
+// Sélection par défaut, pertinente selon l'âge (les + prioritaires), ordre d'origine.
+function missionsDefautCat(enf, catId, n) {
+  n = n || NB_DEFAUT_PAR_CAT;
   const dispo = MISSIONS.filter(m => m.cat === catId && age(enf) >= m.ageMin);
+  const choisis = new Set(
+    dispo.slice().sort((a, b) => (PRIO_DEFAUT[a.id] || 5) - (PRIO_DEFAUT[b.id] || 5))
+         .slice(0, n).map(m => m.id)
+  );
+  return dispo.filter(m => choisis.has(m.id));
+}
+// Tous les ids proposés par défaut (toutes catégories).
+function idsDefaut(enf) {
+  return [...missionsDefautCat(enf, "famille"), ...missionsDefautCat(enf, "planete")].map(m => m.id);
+}
+function missionsActives(enf, catId, jour) {
   const plan = planDuJour(enf, jour);
-  if (!plan) return dispo;
-  return dispo.filter(m => plan.includes(m.id));
+  if (!plan) return missionsDefautCat(enf, catId);
+  return MISSIONS.filter(m => m.cat === catId && age(enf) >= m.ageMin && plan.includes(m.id));
 }
 // Active/retire une mission du plan d'un jour (mode parents).
 function basculerPlan(enf, jour, missionId) {
   if (!enf.planJour) enf.planJour = {};
   if (!Array.isArray(enf.planJour[jour])) {
-    // initialise depuis le défaut (toutes les missions adaptées à l'âge)
-    enf.planJour[jour] = MISSIONS.filter(m => age(enf) >= m.ageMin).map(m => m.id);
+    // initialise depuis la sélection par défaut pertinente selon l'âge
+    enf.planJour[jour] = idsDefaut(enf);
   }
   const arr = enf.planJour[jour];
   const i = arr.indexOf(missionId);

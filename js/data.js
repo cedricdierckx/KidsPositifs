@@ -70,7 +70,7 @@ const MISSIONS = [
   { id: "histoire",      cat: "famille", emoji: "📖", titre: "Écouter/lire une histoire", ageMin: 2, points: 1, type: "quotidien" },
   { id: "bonjour",       cat: "famille", emoji: "👋", titre: "Dire bonjour / au revoir",  ageMin: 2, points: 1, type: "quotidien" },
   { id: "aider_courses", cat: "famille", emoji: "🛒", titre: "Aider aux courses",         ageMin: 4, points: 2, type: "ponctuel" },
-  { id: "coucher_lheure",cat: "famille", emoji: "😴", titre: "Aller au lit sans rouspéter", ageMin: 2, points: 2, type: "quotidien" },
+  { id: "coucher_lheure",cat: "famille", emoji: "🌙", titre: "Aller au lit à l'heure", ageMin: 2, points: 2, type: "quotidien", speciale: "coucher" },
   { id: "se_laver",      cat: "famille", emoji: "🛁", titre: "Se laver / prendre le bain", ageMin: 2, points: 1, type: "quotidien" },
 
   /* ---------------- PLANÈTE ---------------- */
@@ -89,6 +89,25 @@ const MISSIONS = [
   { id: "ecrans",        cat: "planete", emoji: "📺", titre: "Éteindre les écrans",       ageMin: 3, points: 1, type: "quotidien" },
   { id: "recup",         cat: "planete", emoji: "📦", titre: "Réutiliser au lieu de jeter", ageMin: 4, points: 1, type: "ponctuel" }
 ];
+
+/* ---- Priorité des missions pour la sélection PAR DÉFAUT ------------
+ * Plus le chiffre est petit, plus la mission est jugée essentielle.
+ * Par défaut (si les parents n'ont rien réglé), on propose les missions
+ * adaptées à l'âge les plus prioritaires (5 à 10 par catégorie).
+ * ------------------------------------------------------------------- */
+const PRIO_DEFAUT = {
+  // Famille
+  dents: 1, ranger_jouets: 1, coucher_lheure: 1, dire_merci: 2, manger_propre: 2,
+  partager: 2, entraide: 2, ranger_chambre: 2, table_mettre: 3, calin: 3,
+  bonjour: 3, habiller_seul: 3, ecouter: 3, se_laver: 3, table_debarr: 4,
+  histoire: 4, lit_faire: 4, jouer_calme: 4, calme_colere: 4, chaussures: 5,
+  linge_panier: 5, aider_cuisine: 6, aider_courses: 7,
+  // Planète
+  lumiere: 1, eau_robinet: 1, gourde: 2, pas_gaspiller: 2, tri_dechets: 2,
+  ecrans: 3, arroser: 3, compost: 3, douche_courte: 3, oiseaux: 4,
+  marche_velo: 4, ramasser: 4, jardiner: 5, recup: 5
+};
+const NB_DEFAUT_PAR_CAT = 8; // nombre de missions proposées par défaut par catégorie
 
 /* ---- Défis « réparation » (alternative bienveillante à la punition)
  * Quand un comportement négatif apparaît, on ne retire pas de points :
