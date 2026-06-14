@@ -1,19 +1,34 @@
 /* =====================================================================
- * KidsPositifs — Logique de l'application
- * Données synchronisées entre appareils via une API (/api) + Upstash KV,
- * grâce à un "code famille" partagé. localStorage sert de cache hors-ligne.
+ * KidsPositifs — Logique de l'application (jeu)
+ * L'authentification, les familles et la synchronisation Supabase sont
+ * gérées dans js/auth.js. Ce fichier contient l'état de jeu et les actions.
  * ===================================================================== */
 
-const STORAGE_KEY = "kidspositifs_v1";   // cache local (par code famille)
-const CODE_KEY = "kidspositifs_code";    // code famille mémorisé sur l'appareil
-const PULL_INTERVAL = 12000;             // rafraîchissement auto (ms)
+const STORAGE_KEY = "kidspositifs_state"; // préfixe du cache local (par famille)
 
 /* ---------- État ---------- */
-let etat = etatVierge();      // remplacé au démarrage par la synchro
-let codeFamille = null;       // identifiant partagé de la famille
-let pushTimer = null;         // anti-rebond pour l'envoi
-let syncEnCours = false;
+let etat = etatVierge();      // remplacé au démarrage par les données de la famille
+let familleId = null;         // id de la famille active (défini par auth.js)
 let modeParents = false;      // mode parents actif (session, non synchronisé)
+
+/* ---------- Cache local (par famille, pour le hors-ligne) ---------- */
+function cleCache() { return STORAGE_KEY + ":" + (familleId || "_local"); }
+function lireCache() {
+  try {
+    const brut = localStorage.getItem(cleCache());
+    return brut ? normaliser(JSON.parse(brut)) : null;
+  } catch { return null; }
+}
+function ecrireCache() {
+  try { localStorage.setItem(cleCache(), JSON.stringify(etat)); } catch {}
+}
+
+// Sauvegarde : horodatage + cache local + envoi vers Supabase (auth.js).
+function sauver() {
+  etat.maj = Date.now();
+  ecrireCache();
+  if (typeof planifierSauvegardeCloud === "function") planifierSauvegardeCloud();
+}
 
 function etatVierge() {
   const enfants = {};
@@ -87,108 +102,6 @@ function normaliser(e) {
   if (e.maj === undefined) e.maj = 0;
   if (!e.reglages) e.reglages = { validationParentale: false, codeParent: "" };
   return e;
-}
-
-/* ---------- Cache local ---------- */
-function cleCache() { return STORAGE_KEY + ":" + (codeFamille || "_local"); }
-function lireCache() {
-  try {
-    const brut = localStorage.getItem(cleCache());
-    return brut ? normaliser(JSON.parse(brut)) : null;
-  } catch { return null; }
-}
-function ecrireCache() {
-  try { localStorage.setItem(cleCache(), JSON.stringify(etat)); } catch {}
-}
-
-// Sauvegarde : met à jour l'horodatage, le cache local, puis pousse en ligne.
-function sauver() {
-  etat.maj = Date.now();
-  ecrireCache();
-  planifierPush();
-}
-
-/* ---------- Synchronisation en ligne ---------- */
-function planifierPush() {
-  if (!codeFamille) return;
-  clearTimeout(pushTimer);
-  pushTimer = setTimeout(pousser, 600);
-}
-
-async function pousser() {
-  if (!codeFamille) return;
-  try {
-    majBadgeSync("⏫");
-    const r = await fetch(`/api/state?code=${encodeURIComponent(codeFamille)}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(etat)
-    });
-    majBadgeSync(r.ok ? "✅" : "⚠️");
-  } catch {
-    majBadgeSync("📴"); // hors-ligne : le cache local prend le relais
-  }
-}
-
-async function tirer({ silencieux = false } = {}) {
-  if (!codeFamille || syncEnCours) return;
-  syncEnCours = true;
-  try {
-    if (!silencieux) majBadgeSync("⏬");
-    const r = await fetch(`/api/state?code=${encodeURIComponent(codeFamille)}`);
-    if (r.ok) {
-      const distant = await r.json();
-      if (distant && distant.enfants && (distant.maj || 0) > (etat.maj || 0)) {
-        etat = normaliser(distant);
-        ecrireCache();
-        rendre();
-      }
-      majBadgeSync("✅");
-    }
-  } catch {
-    majBadgeSync("📴");
-  } finally {
-    syncEnCours = false;
-  }
-}
-
-function majBadgeSync(symbole) {
-  const b = document.querySelector("#sync-etat");
-  if (b) b.textContent = symbole;
-}
-
-// Connexion à un code famille : charge le distant, sinon publie le local.
-async function connecterFamille(code) {
-  codeFamille = code.trim().toLowerCase().replace(/[^a-z0-9\-]/g, "-").slice(0, 40);
-  if (!codeFamille) return;
-  localStorage.setItem(CODE_KEY, codeFamille);
-
-  const cache = lireCache();
-  if (cache) etat = cache;
-
-  try {
-    const r = await fetch(`/api/state?code=${encodeURIComponent(codeFamille)}`);
-    if (r.ok) {
-      const distant = await r.json();
-      if (distant && distant.enfants) {
-        // fusion simple : on garde la version la plus récente
-        if ((distant.maj || 0) >= (etat.maj || 0)) etat = normaliser(distant);
-        else await pousser();
-      } else {
-        await pousser(); // espace vide en ligne : on y publie nos données
-      }
-    }
-  } catch {
-    /* hors-ligne : on reste sur le cache local */
-  }
-  rendre();
-}
-
-function changerCode() {
-  if (confirm("Changer de code famille ? Cet appareil affichera alors les données liées au nouveau code.")) {
-    localStorage.removeItem(CODE_KEY);
-    location.reload();
-  }
 }
 
 /* ---------- Utilitaires ---------- */
@@ -534,23 +447,5 @@ function exporter() {
   a.click();
 }
 
-/* ---------- Démarrage ---------- */
-document.addEventListener("DOMContentLoaded", async () => {
-  const code = localStorage.getItem(CODE_KEY);
-  if (!code) {
-    ecranCode();   // première fois : on demande le code famille
-    return;
-  }
-  await demarrerAvecCode(code);
-});
-
-async function demarrerAvecCode(code) {
-  initSquelette();
-  await connecterFamille(code);
-  rendre();
-  // rafraîchissement périodique + au retour sur l'onglet
-  setInterval(() => tirer({ silencieux: true }), PULL_INTERVAL);
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) tirer({ silencieux: true });
-  });
-}
+/* Le démarrage (authentification, choix de famille, chargement des données)
+ * est orchestré dans js/auth.js. */

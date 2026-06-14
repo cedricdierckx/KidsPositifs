@@ -6,37 +6,38 @@ l'esprit de la pédagogie **« Papa Positive »** (parentalité positive et
 bienveillante).
 
 C'est une petite application web qui fonctionne dans le navigateur (tablette,
-téléphone ou ordinateur). Les données sont **synchronisées entre tous les
-appareils** de la famille grâce à un simple **code famille** partagé, avec un
-cache local qui assure le fonctionnement même **hors-ligne**.
+téléphone ou ordinateur). Chaque famille a son **compte** : on se connecte par
+**e-mail**, les données sont **synchronisées en temps réel** entre tous les
+appareils, et un cache local assure le fonctionnement même **hors-ligne**.
 
-## 🔄 Synchronisation entre appareils
+## 🔐 Comptes, familles & synchronisation (Supabase)
 
-Au premier lancement, l'appli demande un **code famille** (ex.
-`famille-dierckx`). Saisissez **le même code** sur chaque appareil : ils
-partageront alors les mêmes Cœurs, Gouttes, avatars et écosystèmes. Les
-modifications sont envoyées automatiquement et chaque appareil se rafraîchit
-toutes les ~12 secondes (et au retour sur l'onglet).
+L'authentification et la base de données reposent sur **Supabase** :
 
-> Données peu sensibles (points de comportement) : pas de compte ni d'email.
-> Toute personne connaissant le code voit les données — gardez-le en famille.
+- **Connexion par e-mail** : lien magique (sans mot de passe) **ou** e-mail +
+  mot de passe, au choix.
+- **Multi-familles** : un compte peut appartenir à plusieurs familles ; chaque
+  famille a ses propres enfants, points, avatars et écosystèmes.
+- **Lien d'invitation** : depuis l'espace parents, on génère un lien à envoyer
+  à l'autre parent ; en l'ouvrant (après connexion), il rejoint la famille.
+- **Sécurité** : chaque famille n'est accessible qu'à ses membres (règles RLS).
+- **Abonnement** : le modèle de données prévoit déjà un `plan` par famille
+  (`free` / `premium`) pour brancher **Stripe** plus tard, sans refonte.
 
-### Configuration du stockage (Vercel + Upstash KV)
+### Mise en place (une seule fois)
 
-Le site est déployé sur Vercel (https://kids-positifs.vercel.app/). La synchro
-repose sur une fonction serverless (`api/state.js`) et une base **Upstash for
-Redis / Vercel KV** :
+1. Crée un projet sur [supabase.com](https://supabase.com) (offre gratuite).
+2. Dans **SQL Editor**, colle et exécute le contenu de `supabase/schema.sql`
+   (tables, RLS, fonctions, invitations, temps réel).
+3. Dans **Project Settings → API**, copie *Project URL* et la clé *anon public*,
+   et renseigne-les dans `js/config.js` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`).
+   Ces valeurs sont publiques par conception (la sécurité est assurée par RLS).
+4. Dans **Authentication → URL Configuration**, ajoute l'URL du site
+   (https://kids-positifs.vercel.app/) aux *Redirect URLs* (pour les liens
+   magiques), puis déploie.
 
-1. Dans le dashboard Vercel du projet → onglet **Storage** → **Create
-   Database** → **Upstash for Redis** (ou « KV »), puis **Connect** au projet.
-2. Vercel ajoute alors automatiquement les variables d'environnement
-   `KV_REST_API_URL` et `KV_REST_API_TOKEN` (l'API accepte aussi
-   `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`).
-3. **Redeploy** le projet. C'est prêt : la synchro fonctionne.
-
-Tant que ces variables ne sont pas configurées, l'appli continue de fonctionner
-en local sur chaque appareil (sans synchro), et l'API renvoie un message
-explicite.
+Tant que `js/config.js` n'est pas renseigné, l'appli affiche un écran de
+configuration expliquant la marche à suivre.
 
 ## ▶️ Lancer l'application
 
@@ -123,14 +124,16 @@ L'onglet **⚙️ Parents** est verrouillé par défaut. En l'activant (avec un
 ## 📁 Structure
 
 ```
-index.html        Page de l'application
-css/style.css     Styles (interface tactile, lisible par de jeunes enfants)
-js/data.js        Configuration : enfants, catégories, missions, récompenses
-js/avatar.js      Rendu vectoriel (SVG) des avatars, parfaitement alignés
-js/app.js         Logique : état, synchronisation, calcul d'âge, actions
-js/ui.js          Rendu des différents écrans (dont l'écran code famille)
-api/state.js      Fonction serverless de synchro (Vercel + Upstash KV)
-vercel.json       Configuration du déploiement Vercel
+index.html           Page de l'application
+css/style.css        Styles (interface tactile, lisible par de jeunes enfants)
+js/config.js         Clés Supabase (URL + clé anon) — à renseigner
+js/data.js           Configuration : enfants, catégories, missions, récompenses
+js/avatar.js         Rendu vectoriel (SVG) des avatars, parfaitement alignés
+js/app.js            Logique de jeu : état, calcul d'âge, actions, badges
+js/ui.js             Rendu des différents écrans de l'application
+js/auth.js           Comptes, familles, invitations, synchro Supabase, démarrage
+supabase/schema.sql  Schéma de la base (tables, RLS, fonctions, invitations)
+vercel.json          Configuration du déploiement Vercel
 ```
 
 ## 🔧 Personnaliser

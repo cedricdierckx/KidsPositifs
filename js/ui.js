@@ -27,30 +27,21 @@ function initSquelette() {
     b.addEventListener("click", () => { etat.vue = b.dataset.vue; ecrireCache(); rendre(); }));
 }
 
-/* ---------- Écran de connexion (code famille) ---------- */
-function ecranCode() {
-  document.body.innerHTML = `
-    <div class="ecran-code">
-      <div class="carte code-carte">
-        <div class="code-logo">🌟</div>
-        <h1>KidsPositifs</h1>
-        <p>Pour retrouver les mêmes données sur tous vos appareils, entrez un
-           <strong>code famille</strong> (le même partout).</p>
-        <input id="champ-code" placeholder="ex. famille-dierckx" autocomplete="off">
-        <button id="btn-code" class="gros-bouton planete">C'est parti ! 🚀</button>
-        <p class="note">Choisissez un code unique et facile à retenir. Toute personne
-           connaissant ce code verra les données — gardez-le en famille.</p>
-      </div>
-    </div>`;
-  const champ = document.querySelector("#champ-code");
-  const valider = () => {
-    const v = champ.value.trim();
-    if (v.length < 3) { champ.focus(); champ.classList.add("erreur"); return; }
-    demarrerAvecCode(v);
+// Affiche un lien d'invitation copiable.
+function montrerLienInvitation(conteneur, lien) {
+  let box = conteneur.querySelector(".invite-box");
+  if (!box) { box = el("div", "invite-box"); conteneur.appendChild(box); }
+  box.innerHTML = "";
+  const inp = el("input", "aj-val"); inp.style.width = "100%"; inp.value = lien; inp.readOnly = true;
+  inp.onclick = () => inp.select();
+  const copier = el("button", "btn-secondaire", "📋 Copier le lien");
+  copier.onclick = async () => {
+    try { await navigator.clipboard.writeText(lien); copier.textContent = "✅ Copié !"; }
+    catch { inp.select(); document.execCommand && document.execCommand("copy"); copier.textContent = "✅ Copié !"; }
+    setTimeout(() => (copier.textContent = "📋 Copier le lien"), 1500);
   };
-  document.querySelector("#btn-code").onclick = valider;
-  champ.addEventListener("keydown", e => { if (e.key === "Enter") valider(); });
-  champ.focus();
+  box.appendChild(inp); box.appendChild(copier);
+  box.appendChild(el("p", "note", "Ce lien est valable 14 jours."));
 }
 
 function rendre() {
@@ -477,18 +468,46 @@ function vueReglages(c) {
     c.appendChild(sec);
   });
 
-  // Synchronisation
-  const sync = el("section", "carte");
-  sync.innerHTML = `<h2>🔄 Synchronisation</h2>
-    <p>Code famille actuel : <strong>${codeFamille || "(local)"}</strong></p>
-    <p class="note">Saisissez le même code sur vos autres appareils pour partager les mêmes données.</p>`;
-  const bCode = el("button", "btn-secondaire", "🔑 Changer de code famille");
-  bCode.onclick = changerCode;
-  sync.appendChild(bCode);
-  c.appendChild(sync);
+  // ----- Famille & invitations -----
+  const fam = el("section", "carte");
+  fam.innerHTML = `<h2>👪 Famille</h2>
+    <p>Famille : <strong>${familleActive ? echapper(familleActive.name) : "—"}</strong></p>
+    <p class="note">Invite l'autre parent : partage-lui ce lien, il rejoindra cette famille après connexion.</p>`;
+  const bInvite = el("button", "btn-secondaire", "🔗 Créer un lien d'invitation");
+  bInvite.onclick = async () => {
+    bInvite.disabled = true; bInvite.textContent = "Création…";
+    const lien = await creerInvitation();
+    bInvite.disabled = false; bInvite.textContent = "🔗 Créer un lien d'invitation";
+    if (lien) montrerLienInvitation(fam, lien);
+  };
+  fam.appendChild(bInvite);
+  const bSwitch = el("button", "btn-secondaire", "🔁 Changer / créer une famille");
+  bSwitch.onclick = changerFamille;
+  fam.appendChild(bSwitch);
+  c.appendChild(fam);
+
+  // ----- Abonnement (préparé pour l'avenir) -----
+  const abo = el("section", "carte");
+  abo.innerHTML = `<h2>⭐ Abonnement</h2>
+    <p>Offre actuelle : <strong>${planLibelle()}</strong></p>
+    <p class="note">Les paiements arriveront bientôt. Pour l'instant, tout est gratuit. 💛</p>`;
+  const bAbo = el("button", "btn-secondaire", "Gérer l'abonnement (bientôt)");
+  bAbo.disabled = true;
+  abo.appendChild(bAbo);
+  c.appendChild(abo);
+
+  // ----- Compte -----
+  const cpt = el("section", "carte");
+  const u = typeof utilisateurCourant === "function" ? utilisateurCourant() : null;
+  cpt.innerHTML = `<h2>👤 Compte</h2>
+    <p>Connecté en tant que <strong>${u ? echapper(u.email) : "—"}</strong></p>`;
+  const bDeco = el("button", "btn-secondaire", "🚪 Se déconnecter");
+  bDeco.onclick = deconnexion;
+  cpt.appendChild(bDeco);
+  c.appendChild(cpt);
 
   const actions = el("section", "carte");
-  actions.innerHTML = `<h2>Données</h2>`;
+  actions.innerHTML = `<h2>Données (cette famille)</h2>`;
   const bExp = el("button", "btn-secondaire", "💾 Exporter la sauvegarde");
   bExp.onclick = exporter;
   const bRaz = el("button", "btn-danger", "🗑️ Tout réinitialiser");

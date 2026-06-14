@@ -1,10 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "cleanUrls": true,
-  "headers": [
-    {
-      "source": "/api/state",
-      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
-    }
-  ]
+  "cleanUrls": true
 }
