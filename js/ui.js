@@ -67,6 +67,19 @@ function rendre() {
     case "avatar":   vueAvatar(c);   break;
     case "reglages": vueReglages(c); break;
   }
+  majPastilleAttente();
+}
+
+// Pastille du nombre d'actions en attente sur l'onglet Parents.
+function majPastilleAttente() {
+  const total = Object.values(etat.enfants).reduce((s, e) => s + (e.enAttente ? e.enAttente.length : 0), 0);
+  const btn = document.querySelector('.nav-btn[data-vue="reglages"]');
+  if (!btn) return;
+  let pin = btn.querySelector(".nav-pin");
+  if (total > 0) {
+    if (!pin) { pin = el("span", "nav-pin"); btn.appendChild(pin); }
+    pin.textContent = total;
+  } else if (pin) { pin.remove(); }
 }
 
 /* ---------- Sélecteur d'enfant ---------- */
@@ -279,13 +292,118 @@ function renduAvatar(enf) {
 }
 
 /* ---------- Vue Réglages (parents) ---------- */
-function vueReglages(c) {
-  const intro = el("section", "carte");
-  intro.innerHTML = `<h1>⚙️ Espace parents</h1>
-    <p>Personnalisez les prénoms et avatars de base. Les missions s'adaptent automatiquement à l'âge de chaque enfant.</p>
-    <p class="note">💡 <strong>Esprit « Papa Positive »</strong> : on valorise l'effort, jamais la performance ; on ne retire jamais de points ; on remplace la punition par un « défi réparation ». La coopération est encouragée plutôt que la compétition entre enfants.</p>`;
-  c.appendChild(intro);
+const histDate = {}; // date sélectionnée pour la correction d'historique, par enfant
 
+// Bloc de corrections manuelles pour un enfant (mode parents).
+function blocCorrections(enf) {
+  const sec = el("section", "carte correction");
+  sec.style.setProperty("--c", enf.couleur);
+  sec.innerHTML = `<h2>✏️ Corrections — ${enf.emoji} ${enf.prenom}</h2>
+    <p class="note">Changez d'enfant avec les pastilles en haut. Ajustez les soldes ou corrigez l'historique (rétroactif).</p>`;
+
+  // -- Ajusteurs de monnaie --
+  [["coeurs", "💛 Cœurs"], ["gouttes", "💧 Gouttes"]].forEach(([champ, libelle]) => {
+    const l = el("div", "ajusteur");
+    l.appendChild(el("span", "aj-label", libelle));
+    [-5, -1].forEach(d => { const b = el("button", "mini-btn", d); b.onclick = () => ajusterMonnaie(enf, champ, d); l.appendChild(b); });
+    const inp = el("input", "aj-val"); inp.type = "number"; inp.value = enf[champ]; inp.min = 0;
+    inp.onchange = () => { fixerMonnaie(enf, champ, inp.value); rendre(); };
+    l.appendChild(inp);
+    [1, 5].forEach(d => { const b = el("button", "mini-btn", "+" + d); b.onclick = () => ajusterMonnaie(enf, champ, d); l.appendChild(b); });
+    sec.appendChild(l);
+  });
+
+  // -- Historique rétroactif --
+  const jour = histDate[enf.id] || aujourdHui();
+  histDate[enf.id] = jour;
+  const lDate = el("label", "champ", "Corriger les missions du jour");
+  const iDate = el("input"); iDate.type = "date"; iDate.value = jour; iDate.max = aujourdHui();
+  iDate.onchange = () => { histDate[enf.id] = iDate.value; rendre(); };
+  lDate.appendChild(iDate);
+  sec.appendChild(lDate);
+
+  const journalJour = enf.journal[jour] || {};
+  MISSIONS.filter(m => age(enf) >= m.ageMin).forEach(m => {
+    const n = journalJour[m.id] || 0;
+    const ligne = el("div", "hist-ligne" + (n ? " valide" : ""));
+    const cat = CATEGORIES[m.cat];
+    ligne.innerHTML = `<span class="h-info">${m.emoji} ${m.titre} <small>${cat.monnaieEmoji}${m.points}</small></span>
+      <span class="h-compte">${n}</span>`;
+    const moins = el("button", "mini-btn", "−"); moins.onclick = () => modifierHistorique(enf, jour, m, -1);
+    const plus = el("button", "mini-btn", "+"); plus.onclick = () => modifierHistorique(enf, jour, m, +1);
+    ligne.appendChild(moins); ligne.appendChild(plus);
+    sec.appendChild(ligne);
+  });
+
+  return sec;
+}
+
+function vueReglages(c) {
+  const totalAttente = Object.values(etat.enfants).reduce((s, e) => s + e.enAttente.length, 0);
+
+  // ----- Écran verrouillé (mode parents inactif) -----
+  if (!modeParents) {
+    const v = el("section", "carte");
+    v.innerHTML = `<h1>⚙️ Espace parents</h1>
+      <p>Réservé aux parents : valider les actions, corriger les données, régler le programme.</p>
+      ${totalAttente ? `<p class="note">⏳ <strong>${totalAttente}</strong> action(s) en attente de validation.</p>` : ""}
+      <p class="note">💡 <strong>Esprit « Papa Positive »</strong> : on valorise l'effort, jamais la performance. Les corrections servent à ajuster avec justesse, pas à punir.</p>`;
+    const b = el("button", "gros-bouton planete", "🔓 Activer le mode parents");
+    b.onclick = activerModeParents;
+    v.appendChild(b);
+    c.appendChild(v);
+    return;
+  }
+
+  // ----- Bandeau mode parents actif -----
+  const banniere = el("section", "carte");
+  banniere.innerHTML = `<h1>⚙️ Mode parents <span class="badge">activé</span></h1>`;
+  const bq = el("button", "btn-secondaire", "🔒 Quitter le mode parents");
+  bq.onclick = quitterModeParents;
+  banniere.appendChild(bq);
+  c.appendChild(banniere);
+
+  // ----- Validations en attente -----
+  const att = el("section", "carte");
+  att.innerHTML = `<h2>⏳ Actions à valider${totalAttente ? ` (${totalAttente})` : ""}</h2>`;
+  if (!totalAttente) {
+    att.appendChild(el("p", "note", "Aucune action en attente."));
+  } else {
+    Object.values(etat.enfants).forEach(enf => {
+      enf.enAttente.forEach((a, idx) => {
+        const cat = CATEGORIES[a.cat];
+        const ligne = el("div", "attente-ligne");
+        ligne.innerHTML = `<span class="att-info">${enf.emoji} <strong>${enf.prenom}</strong> — ${a.emoji || ""} ${a.titre}
+          <small>(${a.jour}) +${a.points} ${cat ? cat.monnaieEmoji : ""}</small></span>`;
+        const ok = el("button", "mini-btn ok", "✅");
+        ok.onclick = () => confirmerAttente(enf, idx);
+        const non = el("button", "mini-btn non", "✖️");
+        non.onclick = () => refuserAttente(enf, idx);
+        ligne.appendChild(ok); ligne.appendChild(non);
+        att.appendChild(ligne);
+      });
+    });
+  }
+  c.appendChild(att);
+
+  // ----- Réglages du programme -----
+  const prog = el("section", "carte");
+  prog.innerHTML = `<h2>🛠️ Réglages du programme</h2>`;
+  const lVal = el("label", "switch-ligne");
+  const iVal = el("input"); iVal.type = "checkbox"; iVal.checked = etat.reglages.validationParentale;
+  iVal.onchange = () => basculerValidationParentale(iVal.checked);
+  lVal.appendChild(iVal);
+  lVal.appendChild(el("span", null, "Validation parentale requise (les actions des enfants attendent votre confirmation)"));
+  prog.appendChild(lVal);
+  const bCp = el("button", "btn-secondaire", etat.reglages.codeParent ? "🔑 Changer le code parent" : "🔑 Définir un code parent");
+  bCp.onclick = definirCodeParent;
+  prog.appendChild(bCp);
+  c.appendChild(prog);
+
+  // ----- Corrections pour l'enfant sélectionné -----
+  c.appendChild(blocCorrections(enfantActif()));
+
+  // ----- Profils -----
   Object.values(etat.enfants).forEach(enf => {
     const sec = el("section", "carte reglage-enfant");
     sec.style.setProperty("--c", enf.couleur);

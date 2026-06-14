@@ -13,6 +13,7 @@ let etat = etatVierge();      // remplacé au démarrage par la synchro
 let codeFamille = null;       // identifiant partagé de la famille
 let pushTimer = null;         // anti-rebond pour l'envoi
 let syncEnCours = false;
+let modeParents = false;      // mode parents actif (session, non synchronisé)
 
 function etatVierge() {
   const enfants = {};
@@ -28,16 +29,32 @@ function etatVierge() {
                 accessoire: "rien", compagnon: "rien", fond: "ciel" },
       debloque: [],         // ids d'options d'avatar débloquées
       journal: {},          // { "2026-06-14": { missionId: count } }
+      enAttente: [],        // actions en attente de validation parentale
       badges: []            // récompenses symboliques
     };
   });
-  return { enfants, enfantActif: ENFANTS_DEFAUT[0].id, vue: "accueil", maj: 0 };
+  return {
+    enfants, enfantActif: ENFANTS_DEFAUT[0].id, vue: "accueil", maj: 0,
+    reglages: { validationParentale: false, codeParent: "" }
+  };
 }
 
 // Avatar de base par défaut selon l'âge et le sexe.
 function avatarDefaut(e) {
   if (ageDepuis(e.naissance) <= 2) return "bebe";
   return e.sexe === "fille" ? "fille" : "garcon";
+}
+// Emoji par défaut (sélecteur) selon l'âge et le sexe.
+function emojiDefaut(e) {
+  if (ageDepuis(e.naissance) <= 2) return "👶";
+  return e.sexe === "fille" ? "👧" : "👦";
+}
+// Réaligne avatar et emoji sur le sexe, sans écraser un choix personnalisé.
+function appliquerSexe(enf) {
+  const basesDefaut = ["fille", "garcon", "bebe"];
+  if (basesDefaut.includes(enf.avatar.base)) enf.avatar.base = avatarDefaut(enf);
+  const emojisDefaut = ["🧒", "👦", "👧", "🧑", "👶"];
+  if (emojisDefaut.includes(enf.emoji)) enf.emoji = emojiDefaut(enf);
 }
 
 // Normalise / complète un état (migrations).
@@ -47,12 +64,14 @@ function normaliser(e) {
     if (!enf.ecosysteme) enf.ecosysteme = { plantes: {}, herbivores: {}, carnivores: {} };
     TIERS_ECO.forEach(t => { if (!enf.ecosysteme[t.id]) enf.ecosysteme[t.id] = {}; });
     if (enf.gouttesTotal === undefined) enf.gouttesTotal = enf.gouttes || 0;
+    if (!Array.isArray(enf.enAttente)) enf.enAttente = [];
     // migration date de naissance : ancien format = année (nombre)
     if (typeof enf.naissance === "number") enf.naissance = enf.naissance + "-01-01";
     if (!enf.naissance) enf.naissance = "2020-01-01";
     if (!enf.sexe) enf.sexe = "garcon";
   });
   if (e.maj === undefined) e.maj = 0;
+  if (!e.reglages) e.reglages = { validationParentale: false, codeParent: "" };
   return e;
 }
 
@@ -185,20 +204,10 @@ function el(tag, cls, html) {
 function aleatoire(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 /* ---------- Actions ---------- */
-function validerMission(mission) {
-  const enf = enfantActif();
-  const jour = aujourdHui();
+// Crédite réellement les points d'une mission un jour donné.
+function crediterMission(enf, mission, jour) {
   enf.journal[jour] = enf.journal[jour] || {};
-  const dejaFait = enf.journal[jour][mission.id] || 0;
-
-  // Les missions quotidiennes ne se valident qu'une fois par jour.
-  if (mission.type === "quotidien" && dejaFait >= 1) {
-    toast("Déjà validé aujourd'hui ! Reviens demain 😊", "info");
-    return;
-  }
-
-  enf.journal[jour][mission.id] = dejaFait + 1;
-
+  enf.journal[jour][mission.id] = (enf.journal[jour][mission.id] || 0) + 1;
   if (mission.cat === "famille") {
     enf.coeurs += mission.points;
     enf.coeursTotal += mission.points;
@@ -206,9 +215,54 @@ function validerMission(mission) {
     enf.gouttes += mission.points;
     enf.gouttesTotal += mission.points;
   }
-
-  feterGain(mission);
   verifierBadges(enf);
+}
+
+function validerMission(mission) {
+  const enf = enfantActif();
+  const jour = aujourdHui();
+  const dejaFait = (enf.journal[jour] && enf.journal[jour][mission.id]) || 0;
+  const dejaEnAttente = enf.enAttente.some(a => a.missionId === mission.id && a.jour === jour);
+
+  // Les missions quotidiennes ne se valident qu'une fois par jour.
+  if (mission.type === "quotidien" && (dejaFait >= 1 || dejaEnAttente)) {
+    toast(dejaEnAttente ? "En attente de validation des parents ⏳"
+                        : "Déjà validé aujourd'hui ! Reviens demain 😊", "info");
+    return;
+  }
+
+  // Validation parentale : on met en attente au lieu de créditer (sauf si mode parents actif).
+  if (etat.reglages.validationParentale && !modeParents) {
+    enf.enAttente.push({ missionId: mission.id, cat: mission.cat, points: mission.points,
+                         titre: mission.titre, emoji: mission.emoji, jour, ts: Date.now() });
+    toast("Bravo ! 🎉 À faire valider par un parent ⏳", "info");
+    sauver();
+    rendre();
+    return;
+  }
+
+  crediterMission(enf, mission, jour);
+  feterGain(mission);
+  sauver();
+  rendre();
+}
+
+/* ---------- Mode parents : validation des actions en attente ---------- */
+function confirmerAttente(enf, idx) {
+  const a = enf.enAttente[idx];
+  if (!a) return;
+  const mission = MISSIONS.find(m => m.id === a.missionId) ||
+                  { id: a.missionId, cat: a.cat, points: a.points, titre: a.titre };
+  crediterMission(enf, mission, a.jour);
+  enf.enAttente.splice(idx, 1);
+  toast(`Validé : ${a.emoji || ""} ${a.titre} (+${a.points})`, "succes");
+  confettis();
+  sauver();
+  rendre();
+}
+function refuserAttente(enf, idx) {
+  enf.enAttente.splice(idx, 1);
+  toast("Demande retirée.", "info");
   sauver();
   rendre();
 }
@@ -342,9 +396,85 @@ function confettis() {
   }
 }
 
+/* ---------- Mode parents ---------- */
+function activerModeParents() {
+  const code = etat.reglages.codeParent;
+  if (code) {
+    const saisi = prompt("Code parent :");
+    if (saisi === null) return;
+    if (saisi !== code) { toast("Code incorrect 🔒", "info"); return; }
+  }
+  modeParents = true;
+  rendre();
+}
+function quitterModeParents() { modeParents = false; rendre(); }
+
+function definirCodeParent() {
+  const actuel = etat.reglages.codeParent;
+  const v = prompt(actuel ? "Nouveau code parent (vide pour supprimer) :" : "Choisir un code parent (chiffres conseillés) :", "");
+  if (v === null) return;
+  etat.reglages.codeParent = v.trim();
+  sauver();
+  toast(etat.reglages.codeParent ? "Code parent enregistré 🔒" : "Code parent supprimé", "succes");
+  rendre();
+}
+
+function basculerValidationParentale(actif) {
+  etat.reglages.validationParentale = !!actif;
+  sauver();
+  rendre();
+}
+
+/* ---------- Ajustements manuels (mode parents) ---------- */
+// Ajuste une monnaie d'un delta (peut être négatif). Met aussi à jour le total cumulé.
+function ajusterMonnaie(enf, champ, delta) {
+  if (champ === "coeurs") {
+    enf.coeurs = Math.max(0, enf.coeurs + delta);
+    if (delta > 0) enf.coeursTotal += delta;
+  } else if (champ === "gouttes") {
+    enf.gouttes = Math.max(0, enf.gouttes + delta);
+    if (delta > 0) enf.gouttesTotal += delta;
+  }
+  sauver();
+  rendre();
+}
+// Fixe directement une valeur de monnaie.
+function fixerMonnaie(enf, champ, valeur) {
+  const v = Math.max(0, parseInt(valeur) || 0);
+  enf[champ] = v;
+  sauver();
+}
+
+// Édition rétroactive : ajoute/retire une validation de mission un jour donné,
+// et ajuste les soldes en conséquence.
+function modifierHistorique(enf, jour, mission, sens) {
+  enf.journal[jour] = enf.journal[jour] || {};
+  const actuel = enf.journal[jour][mission.id] || 0;
+  const champ = mission.cat === "famille" ? "coeurs" : "gouttes";
+  const totalChamp = mission.cat === "famille" ? "coeursTotal" : "gouttesTotal";
+
+  if (sens > 0) {
+    enf.journal[jour][mission.id] = actuel + 1;
+    enf[champ] += mission.points;
+    enf[totalChamp] += mission.points;
+  } else {
+    if (actuel <= 0) return;
+    if (actuel === 1) delete enf.journal[jour][mission.id];
+    else enf.journal[jour][mission.id] = actuel - 1;
+    enf[champ] = Math.max(0, enf[champ] - mission.points);
+    enf[totalChamp] = Math.max(0, enf[totalChamp] - mission.points);
+  }
+  if (Object.keys(enf.journal[jour]).length === 0) delete enf.journal[jour];
+  sauver();
+  rendre();
+}
+
 /* ---------- Réglages ---------- */
 function majEnfant(id, champ, valeur) {
-  etat.enfants[id][champ] = valeur;
+  const enf = etat.enfants[id];
+  enf[champ] = valeur;
+  // L'avatar et l'emoji suivent le sexe/l'âge tant qu'ils sont "par défaut".
+  if (champ === "sexe" || champ === "naissance") appliquerSexe(enf);
   sauver();
 }
 function reinitialiser() {
