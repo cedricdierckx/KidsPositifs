@@ -10,6 +10,6 @@
  *   - Project API keys: anon public -> SUPABASE_ANON_KEY
  * ===================================================================== */
 window.KP_CONFIG = {
-  SUPABASE_URL: "",       // ex. "https://abcdefgh.supabase.co"
-  SUPABASE_ANON_KEY: ""   // ex. "eyJhbGciOi..."
+  SUPABASE_URL: "https://ztraacsqtwslvcjfpdtp.supabase.co",       // ex. "https://abcdefgh.supabase.co"
+  SUPABASE_ANON_KEY: "sb_publishable_l1y_BldUMtdiQWRTmMzSUw_XAyYmQGW"   // ex. "eyJhbGciOi..."
 };
