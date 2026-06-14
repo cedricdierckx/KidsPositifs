@@ -242,15 +242,15 @@ function ecranAuth() {
     <div class="code-logo">🌟</div><h1>KidsPositifs</h1>
     <p id="auth-titre">Connecte-toi pour retrouver ta famille sur tous tes appareils.</p>
     <input id="email" type="email" inputmode="email" placeholder="ton@email.com" autocomplete="email">
-    <input id="mdp" type="password" placeholder="Mot de passe" autocomplete="current-password" style="display:none">
-    <button id="b-principal" class="gros-bouton planete">Recevoir un lien magique ✨</button>
-    <button id="b-toggle" class="btn-secondaire">Utiliser un mot de passe</button>
-    <button id="b-signup" class="btn-secondaire" style="display:none">Pas de compte ? Créer un compte</button>
+    <input id="mdp" type="password" placeholder="Mot de passe" autocomplete="current-password">
+    <button id="b-principal" class="gros-bouton planete">Se connecter</button>
+    <button id="b-toggle" class="btn-secondaire">Utiliser un lien magique ✨</button>
+    <button id="b-signup" class="btn-secondaire">Pas de compte ? Créer un compte</button>
     <p class="note" id="auth-msg"></p>
     <hr style="border:none;border-top:1px solid #e3edf5;margin:14px 0">
     <button id="b-demo" class="btn-secondaire">🧪 Découvrir en démo (sans compte)</button>`);
 
-  let modeMdp = false, inscriptionMode = false;
+  let modeMdp = true, inscriptionMode = false;
   const elEmail = document.getElementById("email");
   const elMdp = document.getElementById("mdp");
   const bPrinc = document.getElementById("b-principal");
