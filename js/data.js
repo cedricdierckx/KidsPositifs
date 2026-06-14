@@ -230,57 +230,89 @@ const AVATAR_OPTIONS = {
  * ---------------------------------------------------------------------
  *  L'enfant CONSTRUIT son écosystème dans l'ordre de la nature :
  *   1) Les PLANTES (les producteurs : elles captent la lumière du soleil)
- *   2) Les HERBIVORES — débloqués seulement quand il y a assez de plantes
- *      (les plantes les nourrissent)
- *   3) Les CARNIVORES — débloqués seulement quand il y a assez d'herbivores
- *      (les herbivores les nourrissent)
- *  À chaque étape l'enfant a plusieurs CHOIX d'espèces à créer.
- *  Chaque création coûte des Gouttes 💧 (monnaie dépensable).
+ *   2) Les HERBIVORES — qui mangent des plantes
+ *   3) Les CARNIVORES — qui mangent des herbivores
  *
- *  TIERS_ECO est ORDONNÉ : chaque niveau exige une quantité minimale
- *  d'êtres vivants du niveau précédent (champ `requis`).
+ *  Chaque espèce est une CARTE avec ses propres PRÉREQUIS (`prereq`) :
+ *  une liste d'autres êtres vivants nécessaires (et en quelle quantité)
+ *  avant de pouvoir la créer. Exemples :
+ *    - un Singe 🐒 réclame 10 arbres 🌳 et 1 bananier 🍌 ;
+ *    - un Lion 🦁 réclame 5 gazelles 🦌, 1 autruche 🦤 et 1 phacochère 🐗.
+ *  Cela enseigne, en jouant, les vraies dépendances de la chaîne
+ *  alimentaire. Chaque création coûte aussi des Gouttes 💧 (`cout`).
+ *
+ *  `prereq` = { especeId: quantité }. Les ids référencés doivent exister
+ *  dans TIERS_ECO. L'ordre plantes → herbivores → carnivores est donc
+ *  garanti naturellement par les prérequis eux-mêmes.
  * ===================================================================== */
 const TIERS_ECO = [
   {
     id: "plantes",
     nom: "Plantes",
     emoji: "🌱",
-    requis: 0,            // toujours disponible
     lecon: "Tout commence par les plantes 🌱 : grâce au soleil, elles fabriquent leur propre nourriture. Ce sont elles qui nourrissent tout l'écosystème.",
     especes: [
-      { id: "herbe",  emoji: "🌿", nom: "Herbe",   cout: 3 },
-      { id: "trefle", emoji: "🍀", nom: "Trèfle",  cout: 3 },
-      { id: "fleur",  emoji: "🌷", nom: "Fleur",   cout: 4 },
-      { id: "ble",    emoji: "🌾", nom: "Blé",     cout: 4 },
-      { id: "arbre",  emoji: "🌳", nom: "Arbre",   cout: 6 }
+      { id: "herbe",      emoji: "🌿", nom: "Herbe",       cout: 2,  prereq: {} },
+      { id: "trefle",     emoji: "🍀", nom: "Trèfle",      cout: 2,  prereq: {} },
+      { id: "fleur",      emoji: "🌸", nom: "Fleur",       cout: 3,  prereq: {} },
+      { id: "ble",        emoji: "🌾", nom: "Blé",         cout: 3,  prereq: {} },
+      { id: "champignon", emoji: "🍄", nom: "Champignon",  cout: 3,  prereq: {} },
+      { id: "cactus",     emoji: "🌵", nom: "Cactus",      cout: 4,  prereq: {} },
+      { id: "arbre",      emoji: "🌳", nom: "Arbre",       cout: 5,  prereq: {} },
+      { id: "palmier",    emoji: "🌴", nom: "Palmier",     cout: 6,  prereq: { arbre: 2 } },
+      { id: "bananier",   emoji: "🍌", nom: "Bananier",    cout: 6,  prereq: { arbre: 2 } }
     ]
   },
   {
     id: "herbivores",
     nom: "Herbivores",
     emoji: "🐰",
-    requis: 4,            // il faut au moins 4 plantes
-    lecon: "Les herbivores 🐰 mangent les plantes. Il faut donc assez de plantes pour les nourrir avant qu'ils arrivent !",
+    lecon: "Les herbivores 🐰 ne mangent que des plantes. Chaque animal a besoin des bonnes plantes pour vivre : crée-les d'abord !",
     especes: [
-      { id: "escargot", emoji: "🐌", nom: "Escargot", cout: 4 },
-      { id: "abeille",  emoji: "🐝", nom: "Abeille",  cout: 5 },
-      { id: "papillon", emoji: "🦋", nom: "Papillon", cout: 5 },
-      { id: "lapin",    emoji: "🐰", nom: "Lapin",    cout: 7 },
-      { id: "cerf",     emoji: "🦌", nom: "Cerf",     cout: 9 }
+      { id: "escargot",  emoji: "🐌",  nom: "Escargot",   cout: 3,  prereq: { herbe: 2 } },
+      { id: "chenille",  emoji: "🐛",  nom: "Chenille",   cout: 3,  prereq: { fleur: 1 } },
+      { id: "coccinelle",emoji: "🐞",  nom: "Coccinelle", cout: 3,  prereq: { fleur: 2 } },
+      { id: "abeille",   emoji: "🐝",  nom: "Abeille",    cout: 4,  prereq: { fleur: 3 } },
+      { id: "papillon",  emoji: "🦋",  nom: "Papillon",   cout: 4,  prereq: { fleur: 2 } },
+      { id: "souris",    emoji: "🐭",  nom: "Souris",     cout: 4,  prereq: { ble: 2 } },
+      { id: "lapin",     emoji: "🐰",  nom: "Lapin",      cout: 5,  prereq: { herbe: 3, trefle: 1 } },
+      { id: "tortue",    emoji: "🐢",  nom: "Tortue",     cout: 5,  prereq: { herbe: 2, fleur: 1 } },
+      { id: "ecureuil",  emoji: "🐿️", nom: "Écureuil",   cout: 5,  prereq: { arbre: 1, champignon: 1 } },
+      { id: "mouton",    emoji: "🐑",  nom: "Mouton",     cout: 6,  prereq: { herbe: 5 } },
+      { id: "chevre",    emoji: "🐐",  nom: "Chèvre",     cout: 6,  prereq: { herbe: 3, arbre: 1 } },
+      { id: "gazelle",   emoji: "🦌",  nom: "Gazelle",    cout: 6,  prereq: { herbe: 4 } },
+      { id: "cerf",      emoji: "🦌",  nom: "Cerf",       cout: 7,  prereq: { herbe: 4, arbre: 1 } },
+      { id: "vache",     emoji: "🐄",  nom: "Vache",      cout: 7,  prereq: { herbe: 6 } },
+      { id: "cheval",    emoji: "🐴",  nom: "Cheval",     cout: 7,  prereq: { herbe: 5, ble: 2 } },
+      { id: "zebre",     emoji: "🦓",  nom: "Zèbre",      cout: 7,  prereq: { herbe: 6 } },
+      { id: "kangourou", emoji: "🦘",  nom: "Kangourou",  cout: 7,  prereq: { herbe: 5 } },
+      { id: "autruche",  emoji: "🦤",  nom: "Autruche",   cout: 6,  prereq: { herbe: 3, ble: 1 } },
+      { id: "phacochere",emoji: "🐗",  nom: "Phacochère", cout: 6,  prereq: { herbe: 3, champignon: 1 } },
+      { id: "chameau",   emoji: "🐪",  nom: "Chameau",    cout: 8,  prereq: { cactus: 2, herbe: 3 } },
+      { id: "girafe",    emoji: "🦒",  nom: "Girafe",     cout: 9,  prereq: { arbre: 4 } },
+      { id: "elephant",  emoji: "🐘",  nom: "Éléphant",   cout: 10, prereq: { arbre: 3, herbe: 6 } },
+      { id: "singe",     emoji: "🐒",  nom: "Singe",      cout: 8,  prereq: { arbre: 10, bananier: 1 } }
     ]
   },
   {
     id: "carnivores",
     nom: "Carnivores",
     emoji: "🦊",
-    requis: 4,            // il faut au moins 4 herbivores
-    lecon: "Les carnivores 🦊 mangent les herbivores. Une fois qu'ils sont là, la chaîne alimentaire est complète : plantes → herbivores → carnivores !",
+    lecon: "Les carnivores 🦊 mangent les herbivores. Une fois là, la chaîne alimentaire est complète : plantes → herbivores → carnivores !",
     especes: [
-      { id: "herisson", emoji: "🦔", nom: "Hérisson", cout: 7 },
-      { id: "serpent",  emoji: "🐍", nom: "Serpent",  cout: 8 },
-      { id: "hibou",    emoji: "🦉", nom: "Hibou",    cout: 9 },
-      { id: "renard",   emoji: "🦊", nom: "Renard",   cout: 10 },
-      { id: "aigle",    emoji: "🦅", nom: "Aigle",    cout: 12 }
+      { id: "grenouille",emoji: "🐸",  nom: "Grenouille", cout: 4,  prereq: { chenille: 1, escargot: 1 } },
+      { id: "araignee",  emoji: "🕷️", nom: "Araignée",   cout: 4,  prereq: { papillon: 1, abeille: 1 } },
+      { id: "herisson",  emoji: "🦔",  nom: "Hérisson",   cout: 5,  prereq: { escargot: 2 } },
+      { id: "serpent",   emoji: "🐍",  nom: "Serpent",    cout: 6,  prereq: { souris: 2 } },
+      { id: "hibou",     emoji: "🦉",  nom: "Hibou",      cout: 7,  prereq: { souris: 3 } },
+      { id: "renard",    emoji: "🦊",  nom: "Renard",     cout: 8,  prereq: { lapin: 2, souris: 1 } },
+      { id: "aigle",     emoji: "🦅",  nom: "Aigle",      cout: 9,  prereq: { lapin: 2, souris: 2 } },
+      { id: "loup",      emoji: "🐺",  nom: "Loup",       cout: 10, prereq: { cerf: 1, lapin: 2 } },
+      { id: "crocodile", emoji: "🐊",  nom: "Crocodile",  cout: 10, prereq: { zebre: 1, souris: 2 } },
+      { id: "ours",      emoji: "🐻",  nom: "Ours",       cout: 11, prereq: { lapin: 2, abeille: 2 } },
+      { id: "tigre",     emoji: "🐅",  nom: "Tigre",      cout: 12, prereq: { cerf: 2, zebre: 1 } },
+      { id: "leopard",   emoji: "🐆",  nom: "Léopard",    cout: 12, prereq: { gazelle: 2, singe: 1 } },
+      { id: "lion",      emoji: "🦁",  nom: "Lion",       cout: 13, prereq: { gazelle: 5, autruche: 1, phacochere: 1 } }
     ]
   }
 ];

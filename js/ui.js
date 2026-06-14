@@ -310,48 +310,66 @@ function renduSceneEco(enf) {
   return html;
 }
 
-/* ---------- Écosystème détaillé (chaîne alimentaire) ---------- */
+/* ---------- Écosystème détaillé (chaîne alimentaire, cartes) ---------- */
 function vueEcosysteme(enf) {
   const sec = el("section", "carte eco-carte");
   const scene = renduSceneEco(enf);
   sec.innerHTML = `<h2>🌱 Mon écosystème vivant</h2>
-    <p class="note">Construis la nature dans le bon ordre : d'abord les 🌱 plantes, puis les 🐰 herbivores qui les mangent, puis les 🦊 carnivores. <strong>Choisis</strong> ce que tu veux créer !</p>
+    <p class="note">Chaque être vivant est une <strong>carte</strong> 🃏 avec ses besoins. Crée d'abord les 🌱 plantes, puis les 🐰 herbivores qui les mangent, puis les 🦊 carnivores. Pour un 🐒 singe il faut 10 arbres et 1 bananier !</p>
     <div class="eco-scene">${scene || "<span class='eco-vide'>Crée ta première plante 🌱</span>"}</div>`;
 
   TIERS_ECO.forEach(tier => {
     const bloc = el("div", "eco-tier");
-    const debloque = tierDebloque(enf, tier);
     const compte = nbTier(enf, tier.id);
-
-    let entete = `<div class="eco-tier-tete"><span class="t-emoji">${tier.emoji}</span>
+    bloc.innerHTML = `<div class="eco-tier-tete"><span class="t-emoji">${tier.emoji}</span>
       <span class="t-nom">${tier.nom}</span><span class="t-compte">${compte}</span></div>
       <p class="t-lecon">${tier.lecon}</p>`;
 
-    if (!debloque) {
-      const manque = manqueePourDebloquer(enf, tier);
-      const prec = TIERS_ECO[TIERS_ECO.findIndex(t => t.id === tier.id) - 1];
-      bloc.className = "eco-tier verrouille";
-      bloc.innerHTML = entete +
-        `<p class="t-verrou">🔒 Crée encore <strong>${manque}</strong> ${prec.nom.toLowerCase()} ${prec.emoji} pour nourrir les ${tier.nom.toLowerCase()} et les débloquer.</p>`;
-    } else {
-      bloc.innerHTML = entete;
-      const grille = el("div", "options");
-      tier.especes.forEach(sp => {
-        const possede = (enf.ecosysteme[tier.id] || {})[sp.id] || 0;
-        const o = el("button", "option" + (enf.gouttes < sp.cout ? " verrou" : ""));
-        o.innerHTML = `
-          <span class="o-emoji">${sp.emoji}</span>
-          <span class="o-nom">${sp.nom}${possede ? ` ×${possede}` : ""}</span>
-          <span class="o-cout">${sp.cout} 💧</span>`;
-        o.onclick = () => creerEspece(tier, sp);
-        grille.appendChild(o);
-      });
-      bloc.appendChild(grille);
-    }
+    const grille = el("div", "eco-cartes");
+    tier.especes.forEach(sp => {
+      grille.appendChild(carteEspece(enf, tier, sp));
+    });
+    bloc.appendChild(grille);
     sec.appendChild(bloc);
   });
 
   return sec;
+}
+
+// Une carte d'espèce : emoji, nom, coût, prérequis cochés, état.
+function carteEspece(enf, tier, sp) {
+  const possede = (enf.ecosysteme[tier.id] || {})[sp.id] || 0;
+  const prereqOk = especeDebloquee(enf, sp);
+  const assezGouttes = enf.gouttes >= sp.cout;
+  const creable = prereqOk && assezGouttes;
+
+  let etatCls = creable ? "creable" : (prereqOk ? "verrou-cout" : "verrou-prereq");
+  const carte = el("button", "eco-carte-sp " + etatCls);
+
+  // Liste des prérequis (avec ✓ / compteur).
+  let prereqHtml = "";
+  const entrees = Object.keys(sp.prereq || {});
+  if (entrees.length) {
+    prereqHtml = `<div class="ec-prereq">` + entrees.map(id => {
+      const info = spInfo(id);
+      const emoji = info ? info.sp.emoji : "?";
+      const a = nbEspece(enf, id), req = sp.prereq[id];
+      const ok = a >= req;
+      return `<span class="ec-need ${ok ? "ok" : "ko"}">${emoji} ${a}/${req}${ok ? " ✓" : ""}</span>`;
+    }).join("") + `</div>`;
+  } else {
+    prereqHtml = `<div class="ec-prereq"><span class="ec-libre">Aucun prérequis ☀️</span></div>`;
+  }
+
+  carte.innerHTML = `
+    <span class="ec-coin">${possede ? "×" + possede : ""}</span>
+    <span class="ec-emoji">${sp.emoji}</span>
+    <span class="ec-nom">${sp.nom}</span>
+    <span class="ec-cout ${assezGouttes ? "" : "manque"}">${sp.cout} 💧</span>
+    ${prereqHtml}
+    <span class="ec-etat">${creable ? "➕ Créer" : (prereqOk ? "💧 Plus de gouttes" : "🔒 Verrouillé")}</span>`;
+  carte.onclick = () => creerEspece(tier, sp);
+  return carte;
 }
 
 /* ---------- Vue Avatar ---------- */

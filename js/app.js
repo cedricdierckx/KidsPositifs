@@ -368,28 +368,43 @@ function nbTier(enf, tierId) {
 function nbTotalEspeces(enf) {
   return TIERS_ECO.reduce((s, t) => s + nbTier(enf, t.id), 0);
 }
-// Un niveau est-il débloqué ? (assez d'êtres vivants au niveau précédent)
-function tierDebloque(enf, tier) {
-  const idx = TIERS_ECO.findIndex(t => t.id === tier.id);
-  if (idx === 0) return true;
-  const precedent = TIERS_ECO[idx - 1];
-  return nbTier(enf, precedent.id) >= tier.requis;
+// Retrouve une espèce (et son tier) par son id, où qu'elle soit.
+function spInfo(id) {
+  for (const t of TIERS_ECO) {
+    const sp = t.especes.find(s => s.id === id);
+    if (sp) return { tier: t, sp };
+  }
+  return null;
 }
-// Manque combien d'êtres du niveau précédent pour débloquer ce niveau.
-function manqueePourDebloquer(enf, tier) {
-  const idx = TIERS_ECO.findIndex(t => t.id === tier.id);
-  if (idx === 0) return 0;
-  const precedent = TIERS_ECO[idx - 1];
-  return Math.max(0, tier.requis - nbTier(enf, precedent.id));
+// Combien d'exemplaires d'une espèce précise l'enfant possède-t-il ?
+function nbEspece(enf, id) {
+  const info = spInfo(id);
+  if (!info) return 0;
+  return (enf.ecosysteme[info.tier.id] || {})[id] || 0;
+}
+// Prérequis d'une espèce encore manquants : [{ info, requis, possede }].
+function prereqManquants(enf, sp) {
+  const p = sp.prereq || {};
+  return Object.keys(p)
+    .map(id => ({ info: spInfo(id), requis: p[id], possede: nbEspece(enf, id) }))
+    .filter(x => x.possede < x.requis);
+}
+// L'espèce est-elle débloquée (tous ses prérequis satisfaits) ?
+function especeDebloquee(enf, sp) {
+  return prereqManquants(enf, sp).length === 0;
 }
 
-// Créer un être vivant : dépense des Gouttes et l'ajoute à l'écosystème.
+// Créer un être vivant : vérifie les prérequis, dépense des Gouttes, l'ajoute.
 function creerEspece(tier, espece) {
   const enf = enfantActif();
-  if (!tierDebloque(enf, tier)) {
-    const manque = manqueePourDebloquer(enf, tier);
-    const prec = TIERS_ECO[TIERS_ECO.findIndex(t => t.id === tier.id) - 1];
-    toast(`Crée encore ${manque} ${prec.nom.toLowerCase()} ${prec.emoji} d'abord — ils nourrissent les ${tier.nom.toLowerCase()} !`, "info");
+  const manquants = prereqManquants(enf, espece);
+  if (manquants.length) {
+    const liste = manquants.map(m => {
+      const n = m.info ? m.info.sp.nom.toLowerCase() : "?";
+      const e = m.info ? m.info.sp.emoji : "";
+      return `${m.requis - m.possede} ${n} ${e}`;
+    }).join(", ");
+    toast(`Pour créer ${espece.emoji} ${espece.nom}, il manque : ${liste}.`, "info");
     return;
   }
   if (enf.gouttes < espece.cout) {

@@ -153,6 +153,34 @@ main{max-width:680px; margin:0 auto; padding:14px}
   padding:8px 10px; border-radius:10px; font-weight:600}
 .eco-tier .o-cout{color:var(--planete)!important; font-weight:800}
 
+/* Cartes d'espèces (écosystème) */
+.eco-cartes{display:grid; grid-template-columns:repeat(auto-fill,minmax(108px,1fr)); gap:8px}
+.eco-carte-sp{position:relative; display:flex; flex-direction:column; align-items:center;
+  gap:3px; padding:10px 6px 8px; border-radius:14px; border:2px solid #e6eef5;
+  background:#fff; cursor:pointer; font-family:inherit; text-align:center;
+  transition:transform .1s, box-shadow .15s}
+.eco-carte-sp:active{transform:scale(.96)}
+.eco-carte-sp .ec-emoji{font-size:34px; line-height:1}
+.eco-carte-sp .ec-nom{font-size:13px; font-weight:800; color:var(--texte)}
+.eco-carte-sp .ec-cout{font-size:12px; font-weight:800; color:var(--planete)}
+.eco-carte-sp .ec-cout.manque{color:#c0395b}
+.eco-carte-sp .ec-coin{position:absolute; top:4px; right:6px; font-size:12px;
+  font-weight:800; color:var(--planete)}
+.ec-prereq{display:flex; flex-wrap:wrap; gap:3px; justify-content:center; margin:1px 0}
+.ec-need{font-size:11px; font-weight:700; border-radius:8px; padding:1px 5px}
+.ec-need.ok{background:#e7f7ef; color:#1c8a5b}
+.ec-need.ko{background:#fdeef2; color:#c0395b}
+.ec-libre{font-size:11px; color:var(--doux)}
+.eco-carte-sp .ec-etat{font-size:11px; font-weight:800; margin-top:2px;
+  padding:3px 8px; border-radius:10px}
+.eco-carte-sp.creable{border-color:#bfe9da}
+.eco-carte-sp.creable .ec-etat{background:var(--planete); color:#fff}
+.eco-carte-sp.verrou-cout{opacity:.92}
+.eco-carte-sp.verrou-cout .ec-etat{background:#fff4e6; color:#a86b00}
+.eco-carte-sp.verrou-prereq{opacity:.6; background:#f6f8fb}
+.eco-carte-sp.verrou-prereq .ec-emoji{filter:grayscale(.7)}
+.eco-carte-sp.verrou-prereq .ec-etat{background:#eef2f7; color:var(--doux)}
+
 /* ---- Avatar (SVG) ---- */
 .avatar-scene{width:150px; height:150px; margin:0 auto}
 .avatar-scene .av-svg{width:100%; height:100%; display:block}

@@ -75,19 +75,22 @@ récompensent les efforts dans la durée.
 
 ### 🌍 L'écosystème éducatif (chaîne alimentaire)
 
-Côté Planète, l'enfant **construit la nature dans le bon ordre**, comme dans la
-réalité :
+Côté Planète, chaque être vivant est une **carte** 🃏 (plus de **40 espèces** :
+plantes 🌱, herbivores 🐰, carnivores 🦊). Pour créer une espèce, il faut :
 
-1. 🌱 **Les plantes** d'abord (elles captent l'énergie du soleil).
-2. 🐰 **Les herbivores** ensuite — débloqués seulement quand il y a **assez de
-   plantes** pour les nourrir.
-3. 🦊 **Les carnivores** enfin — débloqués seulement quand il y a **assez
-   d'herbivores**.
+1. réunir ses **prérequis** — d'autres êtres vivants précis, en quantité (la
+   carte les affiche avec ✓ quand c'est bon) ;
+2. payer son **coût** en Gouttes 💧.
 
-À chaque niveau, l'enfant **choisit** parmi plusieurs espèces ce qu'il veut
-créer, en dépensant ses Gouttes 💧. Il comprend ainsi, en jouant, que chaque
-maillon dépend du précédent. La configuration (niveaux, espèces, quantités
-requises) se règle dans `TIERS_ECO` (`js/data.js`).
+Les prérequis enseignent les **vraies dépendances** de la chaîne alimentaire.
+Par exemple :
+
+- un 🐒 **Singe** réclame **10 arbres** 🌳 et **1 bananier** 🍌 ;
+- un 🦁 **Lion** réclame **5 gazelles** 🦌, **1 autruche** 🦤 et **1 phacochère** 🐗.
+
+L'ordre nature (plantes → herbivores → carnivores) découle automatiquement des
+prérequis. Toute la configuration (espèces, emojis, coûts, prérequis) se règle
+dans `TIERS_ECO` (`js/data.js`) : `prereq: { especeId: quantité }`.
 
 ## 🌈 L'esprit bienveillant
 
@@ -176,7 +179,8 @@ Tout se règle dans `js/data.js` :
 - **Ajouter une mission** : ajoute un objet dans `MISSIONS` (catégorie, emoji,
   titre, âge minimum, points, type `quotidien`/`ponctuel`).
 - **Ajouter un élément d'avatar** : complète `AVATAR_OPTIONS`.
-- **Modifier l'écosystème** : ajuste les paliers de `ECOSYSTEME_PALIERS`.
+- **Ajouter une espèce** : complète `TIERS_ECO` (emoji, nom, `cout`, et
+  `prereq: { especeId: quantité }`).
 
 Dans l'onglet Parents, tu peux **changer de code famille**, **exporter** une
 sauvegarde JSON ou **tout réinitialiser**.
