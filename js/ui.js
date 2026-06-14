@@ -220,7 +220,7 @@ function bandeauDodo(enf) {
       <span class="dodo-etoiles">✦ ✧ ⭐ ✦ ✧</span></div>
     <div class="dodo-txt"><strong>${m.titre}</strong><small>${m.info}</small></div>`;
   const b = el("button", "dodo-btn" + (fait ? " fait" : ""),
-    fait ? "✅ Au lit à l'heure !" : (enAttente ? "⏳ En attente" : `Je vais au lit 🌙 +${mission.points}💛`));
+    fait ? "✅ Au lit à l'heure !" : (enAttente ? "⏳ En attente" : `Je vais au lit à l'heure 🌙 +${mission.points}💛`));
   b.onclick = () => validerMission(mission);
   sec.appendChild(b);
   return sec;

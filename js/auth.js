@@ -87,7 +87,7 @@ async function ouvrirFamille(f) {
   document.removeEventListener("visibilitychange", auRetour);
   document.addEventListener("visibilitychange", auRetour);
 }
-function auRetour() { if (!document.hidden) tirerEtat(); }
+function auRetour() { if (!document.hidden) { tirerEtat(); if (typeof majDodo === "function") majDodo(); } }
 
 /* ---------- Synchronisation de l'état de jeu ---------- */
 async function chargerEtatFamille() {
