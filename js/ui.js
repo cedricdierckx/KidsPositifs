@@ -65,11 +65,13 @@ function blocAdmin() {
     liste.appendChild(el("p", "note", `${familles.length} famille(s).`));
     familles.forEach(f => {
       const maj = f.updated_at ? new Date(f.updated_at).toLocaleDateString("fr-BE") : "—";
-      const ligne = el("div", "admin-item");
-      ligne.innerHTML = `<div class="adm-info"><strong>${echapper(f.name)}</strong>
+      const active = familleActive && familleActive.id === f.id;
+      const ligne = el("div", "admin-item" + (active ? " actif" : ""));
+      ligne.innerHTML = `<div class="adm-info"><strong>${echapper(f.name)}${active ? " ✅" : ""}</strong>
         <small>${echapper(f.owner_email || "?")} · ${f.members} membre(s) · ${f.plan} · maj ${maj}</small></div>`;
-      const open = el("button", "mini-btn ok", "Ouvrir");
-      open.onclick = () => adminOuvrirFamille(f);
+      const open = el("button", "mini-btn ok", active ? "Ouverte" : "Ouvrir");
+      open.disabled = active;
+      open.onclick = async () => { await adminOuvrirFamille(f); toast("Famille ouverte : " + f.name, "info"); };
       const plan = el("button", "mini-btn", f.plan === "premium" ? "→ free" : "→ premium");
       plan.onclick = async () => {
         await adminMajPlan(f.id, f.plan === "premium" ? "free" : "premium");
@@ -589,7 +591,14 @@ function vueReglages(c) {
   Object.values(etat.enfants).forEach(enf => {
     const sec = el("section", "carte reglage-enfant");
     sec.style.setProperty("--c", enf.couleur);
-    sec.innerHTML = `<h2>${enf.emoji} ${enf.prenom}</h2>`;
+    const enTete = el("div", "reglage-entete");
+    enTete.innerHTML = `<h2>${enf.emoji} ${enf.prenom}</h2>`;
+    if (Object.keys(etat.enfants).length > 1) {
+      const bSup = el("button", "mini-btn danger", "🗑️ Supprimer");
+      bSup.onclick = () => supprimerEnfant(enf.id);
+      enTete.appendChild(bSup);
+    }
+    sec.appendChild(enTete);
 
     const lPrenom = el("label", "champ", `Prénom`);
     const iPrenom = el("input");
@@ -635,6 +644,11 @@ function vueReglages(c) {
     [lPrenom, lDate, lSexe, lEmoji, lCouleur, lDodo, stats].forEach(x => sec.appendChild(x));
     c.appendChild(sec);
   });
+
+  // ----- Ajouter un enfant -----
+  const bAjout = el("button", "gros-bouton famille", "➕ Ajouter un enfant");
+  bAjout.onclick = () => { ajouterEnfant(); rendre(); };
+  c.appendChild(bAjout);
 
   // ----- Mode démo : bandeau au lieu des sections compte/famille -----
   if (typeof modeDemo !== "undefined" && modeDemo) {

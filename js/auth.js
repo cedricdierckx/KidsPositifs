@@ -177,12 +177,17 @@ async function deconnexion() {
 }
 
 /* ---------- Familles & invitations ---------- */
-async function creerFamille(nom) {
+async function creerFamille(nom, nbEnfants) {
   const { data, error } = await sb.rpc("create_family", { p_name: nom });
   if (error) { alert("Erreur : " + error.message); return; }
   await chargerFamilles();
   const f = mesFamilles.find(x => x.id === data) || mesFamilles[mesFamilles.length - 1];
   if (f) await ouvrirFamille(f);
+  // Nouvelle famille (état vierge) : on ajuste le nombre d'enfants choisi.
+  if (nbEnfants && typeof ajusterNombreEnfantsCreation === "function") {
+    ajusterNombreEnfantsCreation(nbEnfants);
+    vueAccueilAine(); rendre();
+  }
 }
 
 function changerFamille() { ecranFamilles({}); }
@@ -313,6 +318,10 @@ function ecranFamilles(opts) {
                     : "<p>Choisis une famille ou crées-en une nouvelle.</p>"}
     <div class="familles-liste">${liste}</div>
     <input id="nom-famille" placeholder="Nom de la nouvelle famille (ex. Famille Dupont)">
+    <label class="champ" style="text-align:left">Nombre d'enfants
+      <input id="nb-enfants" type="number" min="1" max="12" value="2" inputmode="numeric">
+    </label>
+    <p class="note">Tu pourras en ajouter ou en retirer à tout moment dans l'espace parents.</p>
     <button id="b-creer" class="gros-bouton planete">➕ Créer cette famille</button>
     <button id="b-deco" class="btn-secondaire">Se déconnecter (${echapper(utilisateur.email || "")})</button>`);
 
@@ -320,7 +329,8 @@ function ecranFamilles(opts) {
     b.onclick = () => { const f = mesFamilles.find(x => x.id === b.dataset.id); if (f) ouvrirFamille(f); });
   document.getElementById("b-creer").onclick = () => {
     const nom = document.getElementById("nom-famille").value.trim();
-    creerFamille(nom || "Ma famille");
+    const nb = parseInt(document.getElementById("nb-enfants").value, 10) || 2;
+    creerFamille(nom || "Ma famille", nb);
   };
   document.getElementById("b-deco").onclick = deconnexion;
 }

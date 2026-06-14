@@ -166,9 +166,9 @@ language plpgsql security definer set search_path = public as $$
 begin
   if not is_admin() then raise exception 'Accès refusé'; end if;
   return query
-    select f.id, f.name, f.plan, f.plan_status,
+    select f.id, f.name::text, f.plan::text, f.plan_status::text,
       (select count(*) from family_members m where m.family_id = f.id),
-      (select u.email from auth.users u where u.id = f.owner_id),
+      (select u.email::text from auth.users u where u.id = f.owner_id),
       (select s.updated_at from family_state s where s.family_id = f.id)
     from families f
     order by f.created_at;

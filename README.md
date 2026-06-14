@@ -121,7 +121,25 @@ L'onglet **⚙️ Parents** est verrouillé par défaut. En l'activant (avec un
 - **Heure du coucher** : réglable par enfant. La page d'accueil affiche un
   bandeau « dodo » dont l'**ambiance change selon l'heure** (☀️ jour → 🌇 bientôt
   l'heure → 🌙 nuit étoilée), avec la mission « aller au lit à l'heure ».
+- **Gestion des enfants** : ajouter un enfant (➕) ou en supprimer un à tout
+  moment. À la **création d'une famille**, on choisit directement le **nombre
+  d'enfants** souhaité.
 - Modification des profils, réglages de synchro et données.
+
+### 🛡️ Compte administrateur
+
+Un compte **administrateur** (table `app_admins`) peut **lister toutes les
+familles** et **naviguer entre elles** depuis l'onglet Parents → Administration
+(la famille actuellement ouverte est mise en évidence ✅), et basculer leur plan.
+
+### 💾 Pérennité des données
+
+La version est désormais **officielle**. L'état de chaque famille est stocké en
+JSON (`family_state.data`) et porté par une **version de schéma** (`ETAT_VERSION`).
+Toutes les migrations de la fonction `normaliser()` sont **strictement additives**
+(on n'efface jamais de données existantes), de sorte qu'une future mise à jour de
+l'application **ne fait jamais perdre la progression** d'une famille. La synchro
+résout les conflits via l'horodatage `maj` (la version la plus récente gagne).
 
 > **Correction d'erreur** : un 1ᵉʳ clic sur une mission la valide ; un 2ᵉ clic
 > l'annule et **retire les points** correspondants (ou annule la demande en

@@ -244,6 +244,11 @@ main{max-width:680px; margin:0 auto; padding:14px}
   min-width:40px; padding:8px; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit}
 .mini-btn.ok{border-color:#bfe9da; background:#f1faf6}
 .mini-btn.non{border-color:#f2c9d6; background:#fdf0f4}
+.mini-btn.danger{border-color:#f2c9d6; background:#fdf0f4; color:#c0395b}
+.mini-btn:disabled{opacity:.55; cursor:default}
+.reglage-entete{display:flex; align-items:center; justify-content:space-between; gap:10px}
+.reglage-entete h2{margin:0}
+.admin-item.actif{background:#f1faf6; border-radius:8px}
 .switch-ligne{display:flex; align-items:center; gap:10px; margin:8px 0; font-size:14px; cursor:pointer}
 .switch-ligne input{width:22px; height:22px}
 

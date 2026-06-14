@@ -5,6 +5,7 @@
  * ===================================================================== */
 
 const STORAGE_KEY = "kidspositifs_state"; // préfixe du cache local (par famille)
+const ETAT_VERSION = 2;                    // version du schéma d'état (migrations additives)
 
 /* ---------- État ---------- */
 let etat = etatVierge();      // remplacé au démarrage par les données de la famille
@@ -53,6 +54,7 @@ function etatVierge() {
   });
   return {
     enfants, enfantActif: ENFANTS_DEFAUT[0].id, vue: "accueil", maj: 0,
+    version: ETAT_VERSION,
     reglages: { validationParentale: false, codeParent: "" }
   };
 }
@@ -129,6 +131,10 @@ function normaliser(e) {
   });
   if (e.maj === undefined) e.maj = 0;
   if (!e.reglages) e.reglages = { validationParentale: false, codeParent: "" };
+  // Estampille de version : les migrations ci-dessus sont *additives* (on ne
+  // supprime jamais de données existantes), garantissant qu'une mise à jour de
+  // l'application ne fait jamais perdre la progression d'une famille.
+  e.version = ETAT_VERSION;
   return e;
 }
 
@@ -549,6 +555,69 @@ function effacerBadges(enf) {
   sauver();
   toast("Badges effacés.", "info");
   rendre();
+}
+
+/* ---------- Gestion des enfants ---------- */
+// Crée un objet enfant vierge (mêmes champs que dans etatVierge).
+function enfantVierge(modele) {
+  const base = modele || { id: "", prenom: "Nouvel enfant", naissance: "2020-01-01",
+                           sexe: "garcon", emoji: "🧒", couleur: "#5b8def" };
+  return {
+    ...base,
+    coeurs: 0, coeursTotal: 0, gouttes: 0, gouttesTotal: 0,
+    ecosysteme: { plantes: {}, herbivores: {}, carnivores: {} },
+    avatar: avatarParDefaut(base), debloque: [], heureCoucher: "19:30",
+    journal: {}, planJour: {}, enAttente: [], badges: [], badgesRetires: []
+  };
+}
+// Ajoute un enfant à la famille et l'active.
+function ajouterEnfant() {
+  const id = "e" + Date.now().toString(36) + Math.floor(Math.random() * 1000);
+  const couleurs = ["#5b8def", "#39c0a0", "#f6a623", "#e26d9b", "#9b6ef3", "#e2566d"];
+  const n = Object.keys(etat.enfants).length;
+  const enf = enfantVierge({ id, prenom: "Nouvel enfant", naissance: "2020-01-01",
+                             sexe: "garcon", emoji: "🧒", couleur: couleurs[n % couleurs.length] });
+  appliquerSexe(enf);
+  etat.enfants[id] = enf;
+  etat.enfantActif = id;
+  sauver();
+  return id;
+}
+// Supprime un enfant (toutes ses données). Refuse de supprimer le dernier.
+function supprimerEnfant(id) {
+  const ids = Object.keys(etat.enfants);
+  if (ids.length <= 1) { toast("Il faut au moins un enfant.", "info"); return; }
+  const enf = etat.enfants[id];
+  if (!enf) return;
+  if (!confirm(`Supprimer définitivement ${enf.prenom} et toutes ses données (cœurs, gouttes, avatar, écosystème, badges) ? Cette action est irréversible.`)) return;
+  delete etat.enfants[id];
+  if (etat.enfantActif === id) etat.enfantActif = Object.keys(etat.enfants)[0];
+  sauver();
+  rendre();
+}
+// Ajuste le nombre d'enfants d'une famille VIERGE (à la création uniquement).
+// Ne supprime jamais un enfant qui possède déjà des données.
+function ajusterNombreEnfantsCreation(n) {
+  n = Math.max(1, Math.min(12, n | 0));
+  let ids = Object.keys(etat.enfants);
+  // Retirer les enfants en trop (uniquement s'ils sont vierges).
+  while (ids.length > n) {
+    const id = ids[ids.length - 1];
+    const enf = etat.enfants[id];
+    if ((enf.coeursTotal || 0) > 0 || (enf.gouttesTotal || 0) > 0) break;
+    delete etat.enfants[id];
+    ids = Object.keys(etat.enfants);
+  }
+  // Ajouter les enfants manquants.
+  while (ids.length < n) {
+    const id = "e" + Date.now().toString(36) + ids.length + Math.floor(Math.random() * 1000);
+    const couleurs = ["#5b8def", "#39c0a0", "#f6a623", "#e26d9b", "#9b6ef3", "#e2566d"];
+    etat.enfants[id] = enfantVierge({ id, prenom: "Enfant " + (ids.length + 1),
+      naissance: "2020-01-01", sexe: "garcon", emoji: "🧒", couleur: couleurs[ids.length % couleurs.length] });
+    ids = Object.keys(etat.enfants);
+  }
+  etat.enfantActif = Object.keys(etat.enfants)[0];
+  sauver();
 }
 
 /* ---------- Réglages ---------- */
