@@ -117,7 +117,11 @@ create policy "members read history" on public.family_state_history
 create or replace function public.snapshot_family_state()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  if OLD.data ? 'enfants' and OLD.data -> 'enfants' <> '{}'::jsonb then
+  if OLD.data ? 'enfants' and OLD.data -> 'enfants' <> '{}'::jsonb
+     and not exists (
+       select 1 from family_state_history
+       where family_id = OLD.family_id and saved_at > now() - interval '1 hour'
+     ) then
     insert into family_state_history(family_id, data) values (OLD.family_id, OLD.data);
     delete from family_state_history h
       where h.family_id = OLD.family_id
