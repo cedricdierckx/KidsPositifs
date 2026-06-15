@@ -37,6 +37,16 @@ create table if not exists public.family_state (
   updated_at timestamptz default now()
 );
 
+-- Historique automatique : à chaque modification de family_state, on archive
+-- l'état PRÉCÉDENT (filet de sécurité contre toute perte de données).
+create table if not exists public.family_state_history (
+  id bigint generated always as identity primary key,
+  family_id uuid references public.families(id) on delete cascade,
+  data jsonb not null,
+  saved_at timestamptz default now()
+);
+create index if not exists idx_fsh_family on public.family_state_history(family_id, saved_at desc);
+
 create table if not exists public.invites (
   token uuid primary key default gen_random_uuid(),
   family_id uuid not null references public.families(id) on delete cascade,
@@ -95,6 +105,33 @@ drop policy if exists "members rw state" on public.family_state;
 create policy "members rw state" on public.family_state
   for all using (is_family_member(family_id) or is_admin())
           with check (is_family_member(family_id) or is_admin());
+
+alter table public.family_state_history enable row level security;
+drop policy if exists "members read history" on public.family_state_history;
+create policy "members read history" on public.family_state_history
+  for select using (is_family_member(family_id) or is_admin());
+
+-- Déclencheur d'archivage : avant chaque mise à jour de family_state, on
+-- enregistre l'ancien état (s'il contenait des enfants) puis on ne conserve
+-- que les 40 derniers instantanés par famille.
+create or replace function public.snapshot_family_state()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if OLD.data ? 'enfants' and OLD.data -> 'enfants' <> '{}'::jsonb then
+    insert into family_state_history(family_id, data) values (OLD.family_id, OLD.data);
+    delete from family_state_history h
+      where h.family_id = OLD.family_id
+        and h.id not in (
+          select id from family_state_history
+          where family_id = OLD.family_id order by saved_at desc limit 40
+        );
+  end if;
+  return NEW;
+end; $$;
+drop trigger if exists trg_snapshot_family_state on public.family_state;
+create trigger trg_snapshot_family_state
+  before update on public.family_state
+  for each row execute function public.snapshot_family_state();
 
 drop policy if exists "members read invites" on public.invites;
 create policy "members read invites" on public.invites

@@ -157,6 +157,20 @@ async function sauvegardeCloud() {
   } catch { majBadgeSync("📴"); }
 }
 
+// Liste les instantanés (sauvegardes automatiques) de la famille courante.
+async function listerHistoriqueCloud() {
+  if (!sb || !familleId || modeDemo) return [];
+  const { data, error } = await sb.from("family_state_history")
+    .select("id,saved_at,data").eq("family_id", familleId)
+    .order("saved_at", { ascending: false }).limit(40);
+  if (error) return [];
+  return (data || []).map(r => {
+    const enfants = (r.data && r.data.enfants) ? Object.values(r.data.enfants) : [];
+    return { id: r.id, saved_at: r.saved_at, nb: enfants.length,
+             prenoms: enfants.map(e => e.prenom), data: r.data };
+  });
+}
+
 function abonnerRealtime() {
   if (canalRealtime) { sb.removeChannel(canalRealtime); canalRealtime = null; }
   canalRealtime = sb.channel("fs:" + familleId)

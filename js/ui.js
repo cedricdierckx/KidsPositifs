@@ -998,6 +998,32 @@ function blocRecuperation() {
     });
   }
 
+  // Historique automatique côté serveur (sauvegardes ponctuelles).
+  sec.appendChild(el("p", "sous-titre", "☁️ Sauvegardes automatiques (cloud)"));
+  const zoneCloud = el("div", "admin-liste");
+  const bCloud = el("button", "btn-secondaire", "🔄 Afficher l'historique des sauvegardes");
+  bCloud.onclick = async () => {
+    bCloud.disabled = true; bCloud.textContent = "Chargement…";
+    const hist = (typeof listerHistoriqueCloud === "function") ? await listerHistoriqueCloud() : [];
+    bCloud.disabled = false; bCloud.textContent = "🔄 Rafraîchir l'historique";
+    zoneCloud.innerHTML = "";
+    if (!hist.length) { zoneCloud.appendChild(el("p", "note", "Aucune sauvegarde automatique pour l'instant.")); return; }
+    hist.forEach(h => {
+      const d = h.saved_at ? new Date(h.saved_at).toLocaleString("fr-BE") : "—";
+      const ligne = el("div", "admin-item");
+      ligne.innerHTML = `<div class="adm-info"><strong>${h.nb} enfant(s) : ${echapper(h.prenoms.join(", "))}</strong>
+        <small>${d}</small></div>`;
+      const b = el("button", "mini-btn ok", "♻️ Restaurer");
+      b.onclick = () => {
+        if (confirm(`Restaurer cette sauvegarde du ${d} (${h.nb} enfant(s)) dans la famille actuelle ?`))
+          restaurerSauvegarde(JSON.stringify(h.data));
+      };
+      ligne.appendChild(b);
+      zoneCloud.appendChild(ligne);
+    });
+  };
+  sec.appendChild(bCloud); sec.appendChild(zoneCloud);
+
   // Import depuis un fichier JSON (sauvegarde exportée).
   sec.appendChild(el("p", "sous-titre", "📥 Importer un fichier de sauvegarde"));
   const inp = el("input"); inp.type = "file"; inp.accept = "application/json,.json";
