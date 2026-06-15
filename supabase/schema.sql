@@ -228,6 +228,32 @@ begin
           where family_id = p_family and accepted_at is not null);
 end; $$;
 
+-- ---------- Liste d'attente (inscriptions sur invitation uniquement) ----------
+create table if not exists public.waitlist (
+  email text primary key,
+  created_at timestamptz default now()
+);
+alter table public.waitlist enable row level security;
+-- Pas de politique SELECT pour le public : on lit la liste via une RPC admin.
+
+-- Rejoindre la liste d'attente (ouvert à tous, même sans compte).
+create or replace function public.join_waitlist(p_email text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if coalesce(trim(p_email), '') = '' then raise exception 'E-mail requis'; end if;
+  insert into waitlist(email) values (lower(trim(p_email)))
+    on conflict (email) do nothing;
+end; $$;
+
+-- RPC admin : consulter la liste d'attente.
+create or replace function public.admin_list_waitlist()
+returns table(email text, created_at timestamptz)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  return query select w.email::text, w.created_at from waitlist w order by w.created_at;
+end; $$;
+
 -- ---------- RPC admin : lister toutes les familles ----------
 create or replace function public.admin_list_families()
 returns table(id uuid, name text, plan text, plan_status text,
@@ -262,6 +288,8 @@ grant execute on function public.create_referral(uuid)          to authenticated
 grant execute on function public.referral_info(uuid)            to anon, authenticated;
 grant execute on function public.claim_referral(uuid, uuid)     to authenticated;
 grant execute on function public.referral_accepted_count(uuid)  to authenticated;
+grant execute on function public.join_waitlist(text)            to anon, authenticated;
+grant execute on function public.admin_list_waitlist()          to authenticated;
 grant execute on function public.is_admin()                     to authenticated;
 grant execute on function public.admin_list_families()          to authenticated;
 grant execute on function public.admin_set_plan(uuid, text)     to authenticated;

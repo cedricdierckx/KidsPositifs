@@ -19,7 +19,14 @@ body{
   position:sticky; top:0; z-index:20; background:#fff; box-shadow:var(--ombre);
   padding:10px 14px; display:flex; flex-direction:column; gap:10px;
 }
-.logo{font-size:22px; font-weight:800}
+.logo{font-size:22px; font-weight:800; padding-left:44px}
+.pastille-inviter{position:absolute; top:9px; left:12px; width:36px; height:36px;
+  border:none; border-radius:50%; background:linear-gradient(135deg,#ffe9b8,#ffd1e0);
+  font-size:19px; cursor:pointer; box-shadow:var(--ombre); line-height:1}
+.pastille-inviter:active{transform:scale(.92)}
+.parrain-modale{position:relative; max-width:340px}
+.modale-fermer{position:absolute; top:8px; right:10px; border:none; background:transparent;
+  font-size:18px; cursor:pointer; color:var(--doux)}
 .selecteur{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px}
 .pastille{
   flex:0 0 auto; border:3px solid transparent; background:#f0f3f8;

@@ -70,12 +70,52 @@ function demanderPin(opts) {
   setTimeout(() => { inp.focus(); inp.click(); }, 50);
 }
 
+// Modale rapide pour parrainer une autre famille (depuis la pastille en-tête).
+function modaleParrainage() {
+  const ov = el("div", "pin-modal");
+  ov.innerHTML = `
+    <div class="pin-carte parrain-modale">
+      <button class="modale-fermer" aria-label="Fermer">✕</button>
+      <div class="pin-titre">🎁 Inviter une famille amie</div>
+      <p class="note">Offre KidsPositifs à des amis : ils créeront <strong>leur propre famille</strong>.</p>
+      <p id="pm-quota" class="note">Vérification de ton quota…</p>
+      <div id="pm-zone"></div>
+      <button id="pm-creer" class="gros-bouton planete">🎁 Créer un lien de parrainage</button>
+    </div>`;
+  document.body.appendChild(ov);
+  const fermer = () => ov.remove();
+  ov.querySelector(".modale-fermer").onclick = fermer;
+  ov.addEventListener("click", e => { if (e.target === ov) fermer(); });
+
+  const zone = ov.querySelector("#pm-zone");
+  const bCreer = ov.querySelector("#pm-creer");
+  const majQuota = () => parrainageRestant().then(n => {
+    const q = ov.querySelector("#pm-quota");
+    if (typeof estAdmin !== "undefined" && estAdmin) { q.innerHTML = "👑 Parrainages <strong>illimités</strong> (admin)."; bCreer.disabled = false; }
+    else { q.innerHTML = `Il te reste <strong>${n}</strong> parrainage(s) cette semaine.`; bCreer.disabled = n <= 0; }
+  });
+  majQuota();
+  bCreer.onclick = async () => {
+    bCreer.disabled = true; bCreer.textContent = "Création…";
+    const lien = await creerParrainage();
+    bCreer.textContent = "🎁 Créer un lien de parrainage";
+    if (lien) {
+      montrerLienInvitation(zone, lien, "Partage ce lien : ton ami créera sa propre famille. 💛", {
+        sujet: "Je t'offre KidsPositifs 🌟",
+        corps: "Coucou !\n\nJe te parraine sur KidsPositifs, une appli bienveillante qui aide nos enfants à adopter de bons gestes (avatar à faire évoluer 💛 et écosystème vivant à bâtir 🌍).\n\nOuvre ce lien pour créer ta propre famille :\n{lien}\n\nÀ très vite ! 🤝"
+      });
+    }
+    majQuota();
+  };
+}
+
 function initSquelette() {
   document.body.innerHTML = `
     <div id="confettis"></div>
     <div id="toast" class="toast"></div>
 
     <header class="topbar">
+      <button id="pastille-inviter" class="pastille-inviter" title="Inviter une autre famille">🎁</button>
       <div class="logo">🌟 KidsPositifs <span id="sync-etat" class="sync-etat" title="État de la synchronisation">…</span></div>
       <div id="selecteur-enfant" class="selecteur"></div>
     </header>
@@ -93,6 +133,13 @@ function initSquelette() {
   // Navigation : choix d'affichage local (non synchronisé entre appareils).
   document.querySelectorAll(".nav-btn").forEach(b =>
     b.addEventListener("click", () => { etat.vue = b.dataset.vue; ecrireCache(); rendre(); }));
+
+  // Pastille « inviter une autre famille » (parrainage rapide).
+  const pInv = document.getElementById("pastille-inviter");
+  if (pInv) pInv.onclick = () => {
+    if (typeof modeDemo !== "undefined" && modeDemo) { toast("Indisponible en mode démo 🧪", "info"); return; }
+    modaleParrainage();
+  };
 
   // Minuteur : le bandeau dodo suit l'heure en continu (toutes les 20 s).
   if (!window.__dodoTimer) window.__dodoTimer = setInterval(majDodo, 20000);
@@ -130,6 +177,25 @@ function blocAdmin() {
     });
   };
   sec.appendChild(b); sec.appendChild(liste);
+
+  // ----- Liste d'attente des candidats -----
+  sec.appendChild(el("h2", null, "📝 Liste d'attente"));
+  const bW = el("button", "btn-secondaire", "📋 Charger la liste d'attente");
+  const listeW = el("div", "admin-liste");
+  bW.onclick = async () => {
+    bW.disabled = true; bW.textContent = "Chargement…";
+    const cands = await adminListerAttente();
+    bW.disabled = false; bW.textContent = "🔄 Recharger la liste d'attente";
+    listeW.innerHTML = "";
+    listeW.appendChild(el("p", "note", `${cands.length} candidat(s).`));
+    cands.forEach(w => {
+      const d = w.created_at ? new Date(w.created_at).toLocaleDateString("fr-BE") : "—";
+      const ligne = el("div", "admin-item");
+      ligne.innerHTML = `<div class="adm-info"><strong>${echapper(w.email)}</strong><small>inscrit le ${d}</small></div>`;
+      listeW.appendChild(ligne);
+    });
+  };
+  sec.appendChild(bW); sec.appendChild(listeW);
   return sec;
 }
 
@@ -664,12 +730,10 @@ function vueReglages(c) {
   banniere.appendChild(bq);
   c.appendChild(banniere);
 
-  // ----- Validations en attente -----
-  const att = el("section", "carte");
-  att.innerHTML = `<h2>⏳ Actions à valider${totalAttente ? ` (${totalAttente})` : ""}</h2>`;
-  if (!totalAttente) {
-    att.appendChild(el("p", "note", "Aucune action en attente."));
-  } else {
+  // ----- Validations en attente (affichées seulement s'il y en a) -----
+  if (totalAttente) {
+    const att = el("section", "carte");
+    att.innerHTML = `<h2>⏳ Actions à valider (${totalAttente})</h2>`;
     Object.values(etat.enfants).forEach(enf => {
       enf.enAttente.forEach((a, idx) => {
         const cat = CATEGORIES[a.cat];
@@ -684,8 +748,8 @@ function vueReglages(c) {
         att.appendChild(ligne);
       });
     });
+    c.appendChild(att);
   }
-  c.appendChild(att);
 
   // ----- Réglages du programme -----
   const prog = el("section", "carte");

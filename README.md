@@ -15,6 +15,11 @@ L'authentification et la base de données reposent sur **Supabase** :
 
 - **Connexion par e-mail** : lien magique (sans mot de passe) **ou** e-mail +
   mot de passe, au choix.
+- **Inscriptions sur invitation** (provisoire) : la création de compte n'est
+  possible qu'en arrivant via un **lien d'invitation** ou de **parrainage**. Les
+  autres candidats laissent leur e-mail dans une **liste d'attente** (table
+  `waitlist`, consultable par l'admin). Une **pastille 🎁 en haut à gauche**
+  permet d'inviter une autre famille à tout moment.
 - **Multi-familles** : un compte peut appartenir à plusieurs familles ; chaque
   famille a ses propres enfants, points, avatars et écosystèmes.
 - **Lien d'invitation** : depuis l'espace parents, on génère un lien à envoyer
