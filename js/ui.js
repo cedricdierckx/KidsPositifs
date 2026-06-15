@@ -966,4 +966,42 @@ function vueReglages(c) {
   actions.appendChild(bExp);
   actions.appendChild(bRaz);
   c.appendChild(actions);
+
+  // ----- 🛟 Récupération de données -----
+  c.appendChild(blocRecuperation());
+}
+
+// Outil de récupération : restaurer une sauvegarde locale ou un fichier JSON.
+function blocRecuperation() {
+  const sec = el("section", "carte");
+  sec.innerHTML = `<h2>🛟 Récupération de données</h2>
+    <p class="note">Si des enfants ont disparu, retrouve ici les <strong>sauvegardes
+    locales</strong> de cet appareil et restaure la bonne dans la <strong>famille
+    actuellement ouverte</strong> (${familleActive ? echapper(familleActive.name) : "—"}).</p>`;
+
+  const sauvegardes = (typeof listerSauvegardesLocales === "function") ? listerSauvegardesLocales() : [];
+  if (!sauvegardes.length) {
+    sec.appendChild(el("p", "note", "Aucune sauvegarde locale trouvée sur cet appareil."));
+  } else {
+    sauvegardes.forEach(s => {
+      const d = s.maj ? new Date(s.maj).toLocaleString("fr-BE") : "date inconnue";
+      const ligne = el("div", "admin-item");
+      ligne.innerHTML = `<div class="adm-info"><strong>${s.nb} enfant(s) : ${echapper(s.prenoms.join(", "))}</strong>
+        <small>maj ${d}</small></div>`;
+      const b = el("button", "mini-btn ok", "♻️ Restaurer");
+      b.onclick = () => {
+        if (confirm(`Restaurer ces ${s.nb} enfant(s) (${s.prenoms.join(", ")}) dans la famille « ${familleActive ? familleActive.name : "?"} » ? Cela remplacera son contenu actuel.`))
+          restaurerSauvegarde(s.brut);
+      };
+      ligne.appendChild(b);
+      sec.appendChild(ligne);
+    });
+  }
+
+  // Import depuis un fichier JSON (sauvegarde exportée).
+  sec.appendChild(el("p", "sous-titre", "📥 Importer un fichier de sauvegarde"));
+  const inp = el("input"); inp.type = "file"; inp.accept = "application/json,.json";
+  inp.onchange = () => { if (inp.files && inp.files[0]) importerSauvegardeFichier(inp.files[0]); };
+  sec.appendChild(inp);
+  return sec;
 }

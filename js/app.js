@@ -714,5 +714,51 @@ function exporter() {
   a.click();
 }
 
+/* ---------- Récupération de données (sauvegardes locales) ----------
+ * Liste toutes les sauvegardes présentes dans le cache du navigateur,
+ * tous comptes/familles confondus, pour pouvoir en restaurer une. */
+function listerSauvegardesLocales() {
+  const out = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const cle = localStorage.key(i);
+    if (!cle || cle.indexOf(STORAGE_KEY) !== 0) continue;
+    try {
+      const data = JSON.parse(localStorage.getItem(cle));
+      if (!data || !data.enfants) continue;
+      const enfants = Object.values(data.enfants);
+      out.push({
+        cle,
+        familleId: cle.slice(STORAGE_KEY.length + 1),
+        prenoms: enfants.map(e => e.prenom),
+        nb: enfants.length,
+        maj: data.maj || 0,
+        brut: localStorage.getItem(cle)
+      });
+    } catch {}
+  }
+  return out.sort((a, b) => b.maj - a.maj);
+}
+// Restaure un état (chaîne JSON) DANS la famille actuellement ouverte.
+function restaurerSauvegarde(brutJson) {
+  let data;
+  try { data = JSON.parse(brutJson); } catch { toast("Sauvegarde illisible.", "info"); return false; }
+  if (!data || !data.enfants || !Object.keys(data.enfants).length) {
+    toast("Cette sauvegarde ne contient aucun enfant.", "info"); return false;
+  }
+  etat = normaliser(data);
+  etat.maj = Date.now();          // force la priorité sur la version distante
+  vueAccueilAine();
+  sauver();                       // écrit dans le cache ET dans le cloud de la famille actuelle
+  rendre();
+  toast("Sauvegarde restaurée ✅", "succes");
+  return true;
+}
+// Importe une sauvegarde depuis un fichier JSON.
+function importerSauvegardeFichier(file) {
+  const r = new FileReader();
+  r.onload = () => restaurerSauvegarde(r.result);
+  r.readAsText(file);
+}
+
 /* Le démarrage (authentification, choix de famille, chargement des données)
  * est orchestré dans js/auth.js. */
