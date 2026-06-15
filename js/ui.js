@@ -752,10 +752,18 @@ function vueReglages(c) {
 
   // ----- Bandeau mode parents actif -----
   const banniere = el("section", "carte");
-  banniere.innerHTML = `<h1>⚙️ Mode parents <span class="badge">activé</span></h1>`;
-  const bq = el("button", "btn-secondaire", "🔒 Quitter le mode parents");
+  banniere.innerHTML = `<h1>${t("par.actif.titre")} <span class="badge">${t("par.actif.badge")}</span></h1>`;
+  const bq = el("button", "btn-secondaire", t("par.actif.quitter"));
   bq.onclick = quitterModeParents;
   banniere.appendChild(bq);
+  // Sélecteur de langue (E5) : changer la langue une fois connecté.
+  const lLang = el("label", "champ", "🌐 " + t("langue"));
+  const selLang = el("select");
+  selLang.innerHTML = Object.keys(LANGUES).map(l =>
+    `<option value="${l}"${l === langue ? " selected" : ""}>${LANGUES[l]}</option>`).join("");
+  selLang.onchange = () => { definirLangue(selLang.value); rendre(); };
+  lLang.appendChild(selLang);
+  banniere.appendChild(lLang);
   c.appendChild(banniere);
 
   // ----- Validations en attente (affichées seulement s'il y en a) -----
