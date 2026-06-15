@@ -489,20 +489,20 @@ function blocMissionsDuJour(enf) {
   sec.style.setProperty("--c", enf.couleur);
   const jour = planDate[enf.id] || aujourdHui();
   planDate[enf.id] = jour;
-  sec.innerHTML = `<h2>🗓️ Missions du jour — ${enf.emoji} ${enf.prenom}</h2>
-    <p class="note">Coche les missions à proposer ce jour-là. Sans sélection, toutes les missions adaptées à l'âge sont proposées.</p>`;
+  sec.innerHTML = `<h2>🗓️ Missions proposées — ${enf.emoji} ${enf.prenom}</h2>
+    <p class="note">Coche les missions à proposer. Ton choix s'applique à partir de cette date et <strong>pour tous les jours suivants</strong> (jusqu'à une prochaine modification).</p>`;
 
-  const lDate = el("label", "champ", "Jour");
+  const lDate = el("label", "champ", "À partir du");
   const iDate = el("input"); iDate.type = "date"; iDate.value = jour;
   iDate.onchange = () => { planDate[enf.id] = iDate.value || jour; rendre(); };
   lDate.appendChild(iDate);
   sec.appendChild(lDate);
 
-  const plan = planDuJour(enf, jour); // null = sélection par défaut
+  const plan = planEffectif(enf, jour); // null = sélection par défaut
   const defauts = idsDefaut(enf);
   ["famille", "planete"].forEach(catId => {
     const cat = CATEGORIES[catId];
-    const dispo = MISSIONS.filter(m => m.cat === catId && age(enf) >= m.ageMin);
+    const dispo = toutesMissions().filter(m => m.cat === catId && age(enf) >= m.ageMin);
     if (!dispo.length) return;
     sec.appendChild(el("p", "sous-titre", `${cat.emoji} ${cat.nom}`));
     dispo.forEach(m => {
@@ -511,14 +511,36 @@ function blocMissionsDuJour(enf) {
       const cb = el("input"); cb.type = "checkbox"; cb.checked = inclus;
       cb.onchange = () => basculerPlan(enf, jour, m.id);
       ligne.appendChild(cb);
-      ligne.appendChild(el("span", null, `${m.emoji} ${m.titre} (${cat.monnaieEmoji}${m.points})`));
+      ligne.appendChild(el("span", null, `${m.emoji} ${m.titre} (${cat.monnaieEmoji}${m.points})${m.perso ? " ✏️" : ""}`));
+      if (m.perso) {
+        const sup = el("button", "mini-btn danger", "🗑️");
+        sup.title = "Supprimer cette mission personnalisée";
+        sup.onclick = (e) => { e.preventDefault(); if (confirm(`Supprimer la mission « ${m.titre} » ?`)) supprimerMissionPerso(m.id); };
+        ligne.appendChild(sup);
+      }
       sec.appendChild(ligne);
     });
   });
 
-  const rb = el("button", "btn-secondaire", "↩️ Tout proposer (réinitialiser ce jour)");
+  const rb = el("button", "btn-secondaire", "↩️ Proposer la sélection par défaut (selon l'âge)");
   rb.onclick = () => reinitPlan(enf, jour);
   sec.appendChild(rb);
+
+  // ----- Ajouter une mission personnalisée -----
+  sec.appendChild(el("p", "sous-titre", "➕ Ajouter une mission personnalisée"));
+  const form = el("div", "mission-perso-form");
+  const iTitre = el("input"); iTitre.placeholder = "Nom (ex. Ranger son vélo)"; iTitre.maxLength = 40;
+  const iEmoji = el("input"); iEmoji.placeholder = "Emoji"; iEmoji.maxLength = 4; iEmoji.className = "mp-emoji";
+  const iCat = el("select");
+  iCat.innerHTML = `<option value="famille">🏡 Famille (💛)</option><option value="planete">🌍 Planète (💧)</option>`;
+  const iPts = el("input"); iPts.type = "number"; iPts.min = "1"; iPts.max = "5"; iPts.value = "1"; iPts.className = "mp-pts";
+  const bAdd = el("button", "btn-secondaire", "Ajouter ✨");
+  bAdd.onclick = () => {
+    ajouterMissionPerso(iCat.value, iTitre.value, iEmoji.value, iPts.value);
+    iTitre.value = ""; iEmoji.value = "";
+  };
+  [iTitre, iEmoji, iCat, iPts, bAdd].forEach(x => form.appendChild(x));
+  sec.appendChild(form);
   return sec;
 }
 
@@ -551,7 +573,7 @@ function blocCorrections(enf) {
   sec.appendChild(lDate);
 
   const journalJour = enf.journal[jour] || {};
-  MISSIONS.filter(m => age(enf) >= m.ageMin).forEach(m => {
+  toutesMissions().filter(m => age(enf) >= m.ageMin).forEach(m => {
     const n = journalJour[m.id] || 0;
     const ligne = el("div", "hist-ligne" + (n ? " valide" : ""));
     const cat = CATEGORIES[m.cat];

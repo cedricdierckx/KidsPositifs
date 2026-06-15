@@ -55,6 +55,7 @@ function etatVierge() {
   return {
     enfants, enfantActif: ENFANTS_DEFAUT[0].id, vue: "accueil", maj: 0,
     version: ETAT_VERSION,
+    missionsPerso: [],     // missions personnalisées ajoutées par les parents
     reglages: { validationParentale: false, codeParent: "" }
   };
 }
@@ -130,6 +131,7 @@ function normaliser(e) {
     if (!/^\d{1,2}:\d{2}$/.test(enf.heureCoucher || "")) enf.heureCoucher = "19:30";
   });
   if (e.maj === undefined) e.maj = 0;
+  if (!Array.isArray(e.missionsPerso)) e.missionsPerso = [];
   if (!e.reglages) e.reglages = { validationParentale: false, codeParent: "" };
   // Estampille de version : les migrations ci-dessus sont *additives* (on ne
   // supprime jamais de données existantes), garantissant qu'une mise à jour de
@@ -261,16 +263,58 @@ function validerMission(mission) {
   rendre();
 }
 
+/* ---------- Missions (catalogue + missions personnalisées) ----------
+ * Les parents peuvent ajouter des missions propres à la famille.
+ * Elles sont stockées dans etat.missionsPerso (synchronisées). */
+function toutesMissions() {
+  return (etat && Array.isArray(etat.missionsPerso)) ? MISSIONS.concat(etat.missionsPerso) : MISSIONS;
+}
+function trouverMission(id) {
+  return toutesMissions().find(m => m.id === id) || null;
+}
+// Ajoute une mission personnalisée (mode parents).
+function ajouterMissionPerso(cat, titre, emoji, points) {
+  titre = (titre || "").trim();
+  if (!titre) { toast("Donne un nom à la mission.", "info"); return; }
+  if (!Array.isArray(etat.missionsPerso)) etat.missionsPerso = [];
+  const id = "perso_" + Date.now().toString(36) + Math.floor(Math.random() * 1000);
+  etat.missionsPerso.push({
+    id, cat: cat === "planete" ? "planete" : "famille",
+    emoji: (emoji || "").trim() || (cat === "planete" ? "🌍" : "⭐"),
+    titre, ageMin: 0, points: Math.max(1, parseInt(points, 10) || 1),
+    type: "quotidien", perso: true
+  });
+  sauver();
+  toast("Mission ajoutée ✨", "succes");
+  rendre();
+}
+function supprimerMissionPerso(id) {
+  if (!Array.isArray(etat.missionsPerso)) return;
+  etat.missionsPerso = etat.missionsPerso.filter(m => m.id !== id);
+  // On retire aussi la mission des plans enregistrés.
+  Object.values(etat.enfants).forEach(enf => {
+    if (enf.planJour) Object.keys(enf.planJour).forEach(d => {
+      if (Array.isArray(enf.planJour[d])) enf.planJour[d] = enf.planJour[d].filter(x => x !== id);
+    });
+  });
+  sauver();
+  rendre();
+}
+
 /* ---------- Missions du jour (sélection par les parents) ----------
- * enf.planJour[date] = [missionId, ...]  -> liste imposée pour ce jour.
- * Si aucune liste pour la date : toutes les missions adaptées à l'âge. */
-function planDuJour(enf, jour) {
-  return enf.planJour && Array.isArray(enf.planJour[jour]) ? enf.planJour[jour] : null;
+ * enf.planJour[date] = [missionId, ...] est un MODÈLE valable à partir de
+ * cette date : pour un jour donné, on applique le dernier modèle dont la
+ * date est <= ce jour. Modifier un jour s'applique donc à tous les suivants. */
+function planEffectif(enf, jour) {
+  if (!enf.planJour) return null;
+  const dates = Object.keys(enf.planJour)
+    .filter(d => Array.isArray(enf.planJour[d]) && d <= jour).sort();
+  return dates.length ? enf.planJour[dates[dates.length - 1]] : null;
 }
 // Sélection par défaut, pertinente selon l'âge (les + prioritaires), ordre d'origine.
 function missionsDefautCat(enf, catId, n) {
   n = n || NB_DEFAUT_PAR_CAT;
-  const dispo = MISSIONS.filter(m => m.cat === catId && age(enf) >= m.ageMin);
+  const dispo = toutesMissions().filter(m => m.cat === catId && age(enf) >= m.ageMin);
   const choisis = new Set(
     dispo.slice().sort((a, b) => (PRIO_DEFAUT[a.id] || 5) - (PRIO_DEFAUT[b.id] || 5))
          .slice(0, n).map(m => m.id)
@@ -282,26 +326,32 @@ function idsDefaut(enf) {
   return [...missionsDefautCat(enf, "famille"), ...missionsDefautCat(enf, "planete")].map(m => m.id);
 }
 function missionsActives(enf, catId, jour) {
-  const plan = planDuJour(enf, jour);
+  const plan = planEffectif(enf, jour);
   if (!plan) return missionsDefautCat(enf, catId);
-  return MISSIONS.filter(m => m.cat === catId && age(enf) >= m.ageMin && plan.includes(m.id));
+  return toutesMissions().filter(m => m.cat === catId && age(enf) >= m.ageMin && plan.includes(m.id));
 }
-// Active/retire une mission du plan d'un jour (mode parents).
+// Active/retire une mission du plan (mode parents) : vaut pour ce jour et les suivants.
 function basculerPlan(enf, jour, missionId) {
   if (!enf.planJour) enf.planJour = {};
   if (!Array.isArray(enf.planJour[jour])) {
-    // initialise depuis la sélection par défaut pertinente selon l'âge
-    enf.planJour[jour] = idsDefaut(enf);
+    // on part du modèle actuellement en vigueur (ou des défauts selon l'âge)
+    const base = planEffectif(enf, jour);
+    enf.planJour[jour] = base ? base.slice() : idsDefaut(enf);
   }
   const arr = enf.planJour[jour];
   const i = arr.indexOf(missionId);
   if (i >= 0) arr.splice(i, 1); else arr.push(missionId);
+  // Pour que la modification s'applique vraiment à tous les jours suivants,
+  // on efface les modèles postérieurs à ce jour.
+  Object.keys(enf.planJour).forEach(d => { if (d > jour) delete enf.planJour[d]; });
   sauver();
   rendre();
 }
-// Réinitialise le plan d'un jour (= toutes les missions adaptées à l'âge).
+// Réinitialise le plan à partir de ce jour (= sélection par défaut selon l'âge).
 function reinitPlan(enf, jour) {
-  if (enf.planJour) delete enf.planJour[jour];
+  if (!enf.planJour) enf.planJour = {};
+  enf.planJour[jour] = idsDefaut(enf);
+  Object.keys(enf.planJour).forEach(d => { if (d > jour) delete enf.planJour[d]; });
   sauver();
   rendre();
 }
@@ -310,7 +360,7 @@ function reinitPlan(enf, jour) {
 function confirmerAttente(enf, idx) {
   const a = enf.enAttente[idx];
   if (!a) return;
-  const mission = MISSIONS.find(m => m.id === a.missionId) ||
+  const mission = trouverMission(a.missionId) ||
                   { id: a.missionId, cat: a.cat, points: a.points, titre: a.titre };
   crediterMission(enf, mission, a.jour);
   enf.enAttente.splice(idx, 1);

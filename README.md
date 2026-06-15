@@ -122,9 +122,12 @@ L'onglet **⚙️ Parents** est verrouillé par défaut. En l'activant (avec un
   validées ce jour-là ; les soldes sont recalculés automatiquement.
 - **Gestion des badges** : retirer un badge (il ne sera pas ré-attribué),
   réautoriser les badges retirés, ou tout effacer.
-- **Missions du jour** : pour chaque enfant et chaque date, cocher les missions
-  à proposer. Par défaut, une **sélection pertinente selon l'âge** (les plus
-  prioritaires, ~8 par catégorie) est proposée ; les parents l'ajustent ensuite.
+- **Missions proposées** : pour chaque enfant, cocher les missions à proposer.
+  Le choix s'applique **à partir de la date choisie et pour tous les jours
+  suivants** (jusqu'à une prochaine modification). Par défaut, une **sélection
+  pertinente selon l'âge** (~8 par catégorie) est proposée.
+- **Missions personnalisées** : les parents peuvent **ajouter leurs propres
+  missions** (nom, emoji, catégorie 🏡/🌍, points) et les supprimer ✏️.
 - **Heure du coucher** : réglable par enfant. La page d'accueil affiche un
   bandeau « dodo » dont l'**ambiance change selon l'heure** (☀️ jour → 🌇 bientôt
   l'heure → 🌙 nuit étoilée), avec la mission « aller au lit à l'heure ».

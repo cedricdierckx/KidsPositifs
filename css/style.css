@@ -213,6 +213,15 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .pin-actions .btn-secondaire{flex:1; margin:0}
 .pin-actions .gros-bouton{flex:1; padding:14px}
 
+/* Formulaire d'ajout de mission personnalisée */
+.mission-perso-form{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:6px}
+.mission-perso-form input, .mission-perso-form select{padding:9px; border:2px solid #e3edf5;
+  border-radius:10px; font-family:inherit; font-size:14px}
+.mission-perso-form input:not(.mp-emoji):not(.mp-pts){flex:1; min-width:140px}
+.mission-perso-form .mp-emoji{width:64px; text-align:center}
+.mission-perso-form .mp-pts{width:60px}
+.mission-perso-form .btn-secondaire{margin:0}
+
 /* ---- Avatar (SVG) ---- */
 .avatar-scene{width:150px; height:150px; margin:0 auto}
 .avatar-scene .av-svg{width:100%; height:100%; display:block}

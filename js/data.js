@@ -87,6 +87,7 @@ const MISSIONS = [
   { id: "jardiner",      cat: "planete", emoji: "🌻", titre: "Jardiner / semer",          ageMin: 3, points: 2, type: "ponctuel" },
   { id: "oiseaux",       cat: "planete", emoji: "🐦", titre: "Nourrir les oiseaux",       ageMin: 3, points: 1, type: "quotidien" },
   { id: "ecrans",        cat: "planete", emoji: "📺", titre: "Éteindre les écrans",       ageMin: 3, points: 1, type: "quotidien" },
+  { id: "animaux",       cat: "planete", emoji: "🐾", titre: "S'occuper des animaux",     ageMin: 2, points: 2, type: "quotidien" },
   { id: "recup",         cat: "planete", emoji: "📦", titre: "Réutiliser au lieu de jeter", ageMin: 4, points: 1, type: "ponctuel" }
 ];
 
@@ -105,7 +106,7 @@ const PRIO_DEFAUT = {
   // Planète
   lumiere: 1, eau_robinet: 1, gourde: 2, pas_gaspiller: 2, tri_dechets: 2,
   ecrans: 3, arroser: 3, compost: 3, douche_courte: 3, oiseaux: 4,
-  marche_velo: 4, ramasser: 4, jardiner: 5, recup: 5
+  animaux: 2, marche_velo: 4, ramasser: 4, jardiner: 5, recup: 5
 };
 const NB_DEFAUT_PAR_CAT = 8; // nombre de missions proposées par défaut par catégorie
 
