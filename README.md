@@ -159,6 +159,22 @@ Toutes les migrations de la fonction `normaliser()` sont **strictement additives
 l'application **ne fait jamais perdre la progression** d'une famille. La synchro
 résout les conflits via l'horodatage `maj` (la version la plus récente gagne).
 
+**Garde-fous anti-corruption** (couche données) :
+
+- `etat` est **lié à une famille précise** (`lierEtat` / `familleEtat`) : toute
+  tentative d'écrire l'état d'une famille dans **une autre** est **refusée**.
+- Une sauvegarde **sans aucun enfant** est **refusée** (anti-écrasement vide).
+- Au changement de famille, l'état est **réinitialisé** et toute sauvegarde
+  différée en attente est **annulée** (plus d'effet de bord entre familles).
+
+**Sauvegardes automatiques (cloud)** : un déclencheur Supabase archive l'état
+**précédent** à chaque modification dans `family_state_history` (40 derniers
+instantanés par famille). 
+
+**Outil de récupération** (espace parents → 🛟) : restaurer une sauvegarde
+**locale** (cache du navigateur), un **instantané cloud** de l'historique, ou un
+**fichier `.json`** exporté — le tout sans console.
+
 > **Correction d'erreur** : un 1ᵉʳ clic sur une mission la valide ; un 2ᵉ clic
 > l'annule et **retire les points** correspondants (ou annule la demande en
 > attente). Vaut pour toutes les missions (quotidiennes comme ponctuelles).
