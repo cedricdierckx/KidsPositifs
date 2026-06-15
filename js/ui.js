@@ -91,18 +91,18 @@ function modaleParrainage() {
   const bCreer = ov.querySelector("#pm-creer");
   const majQuota = () => parrainageRestant().then(n => {
     const q = ov.querySelector("#pm-quota");
-    if (typeof estAdmin !== "undefined" && estAdmin) { q.innerHTML = "👑 Parrainages <strong>illimités</strong> (admin)."; bCreer.disabled = false; }
-    else { q.innerHTML = `Il te reste <strong>${n}</strong> parrainage(s) cette semaine.`; bCreer.disabled = n <= 0; }
+    if (typeof estAdmin !== "undefined" && estAdmin) { q.innerHTML = t("parr.illimite"); bCreer.disabled = false; }
+    else { q.innerHTML = t("parr.restant", { n }); bCreer.disabled = n <= 0; }
   });
   majQuota();
   bCreer.onclick = async () => {
-    bCreer.disabled = true; bCreer.textContent = "Création…";
+    bCreer.disabled = true; bCreer.textContent = t("common.creation");
     const lien = await creerParrainage();
-    bCreer.textContent = "🎁 Créer un lien de parrainage";
+    bCreer.textContent = t("parr.creer");
     if (lien) {
-      montrerLienInvitation(zone, lien, "Partage ce lien : ton ami créera sa propre famille. 💛", {
-        sujet: "Je t'offre " + APP_NOM + " 🌟",
-        corps: "Coucou !\n\nJe te parraine sur " + APP_NOM + ", une appli bienveillante qui aide toute la famille à instaurer une ambiance positive et à s'aligner sur les tâches de la maison et la protection de la planète (avatar à faire évoluer 💛 et écosystème vivant à bâtir 🌍).\n\nOuvre ce lien pour créer ta propre famille :\n{lien}\n\nÀ très vite ! 🤝"
+      montrerLienInvitation(zone, lien, t("parr.partage"), {
+        sujet: t("parr.sujet", { app: APP_NOM }),
+        corps: t("parr.corps", { app: APP_NOM, lien: "{lien}" })
       });
     }
     majQuota();
@@ -148,25 +148,25 @@ function initSquelette() {
 // Panneau d'administration : liste de toutes les familles.
 function blocAdmin() {
   const sec = el("section", "carte");
-  sec.innerHTML = `<h2>🛡️ Administration</h2>
-    <p class="note">Accès à toutes les familles. À utiliser avec précaution.</p>`;
-  const b = el("button", "btn-secondaire", "📋 Charger toutes les familles");
+  sec.innerHTML = `<h2>${t("admin.titre")}</h2>
+    <p class="note">${t("admin.note")}</p>`;
+  const b = el("button", "btn-secondaire", t("admin.charger"));
   const liste = el("div", "admin-liste");
   b.onclick = async () => {
-    b.disabled = true; b.textContent = "Chargement…";
+    b.disabled = true; b.textContent = t("common.chargement");
     const familles = await adminListerFamilles();
-    b.disabled = false; b.textContent = "🔄 Recharger les familles";
+    b.disabled = false; b.textContent = t("admin.recharger");
     liste.innerHTML = "";
-    liste.appendChild(el("p", "note", `${familles.length} famille(s).`));
+    liste.appendChild(el("p", "note", t("admin.familles", {n: familles.length})));
     familles.forEach(f => {
       const maj = f.updated_at ? new Date(f.updated_at).toLocaleDateString("fr-BE") : "—";
       const active = familleActive && familleActive.id === f.id;
       const ligne = el("div", "admin-item" + (active ? " actif" : ""));
       ligne.innerHTML = `<div class="adm-info"><strong>${echapper(f.name)}${active ? " ✅" : ""}</strong>
         <small>${echapper(f.owner_email || "?")} · ${f.members} membre(s) · ${f.plan} · maj ${maj}</small></div>`;
-      const open = el("button", "mini-btn ok", active ? "Ouverte" : "Ouvrir");
+      const open = el("button", "mini-btn ok", active ? t("admin.ouverte") : t("admin.ouvrir"));
       open.disabled = active;
-      open.onclick = async () => { await adminOuvrirFamille(f); toast("Famille ouverte : " + f.name, "info"); };
+      open.onclick = async () => { await adminOuvrirFamille(f); toast(t("admin.ouverte_toast", {nom: f.name}), "info"); };
       const plan = el("button", "mini-btn", f.plan === "premium" ? "→ free" : "→ premium");
       plan.onclick = async () => {
         await adminMajPlan(f.id, f.plan === "premium" ? "free" : "premium");
@@ -179,36 +179,36 @@ function blocAdmin() {
   sec.appendChild(b); sec.appendChild(liste);
 
   // ----- Liste d'attente des candidats -----
-  sec.appendChild(el("h2", null, "📝 Liste d'attente"));
-  const bW = el("button", "btn-secondaire", "📋 Charger la liste d'attente");
+  sec.appendChild(el("h2", null, t("admin.attente_titre")));
+  const bW = el("button", "btn-secondaire", t("admin.attente_charger"));
   const listeW = el("div", "admin-liste");
   bW.onclick = async () => {
-    bW.disabled = true; bW.textContent = "Chargement…";
+    bW.disabled = true; bW.textContent = t("common.chargement");
     const cands = await adminListerAttente();
-    bW.disabled = false; bW.textContent = "🔄 Recharger la liste d'attente";
+    bW.disabled = false; bW.textContent = t("admin.attente_recharger");
     listeW.innerHTML = "";
-    listeW.appendChild(el("p", "note", `${cands.length} candidat(s).`));
+    listeW.appendChild(el("p", "note", t("admin.candidats", {n: cands.length})));
     cands.forEach(w => {
       const d = w.created_at ? new Date(w.created_at).toLocaleDateString("fr-BE") : "—";
       const ligne = el("div", "admin-item");
-      ligne.innerHTML = `<div class="adm-info"><strong>${echapper(w.email)}</strong><small>inscrit le ${d}</small></div>`;
-      const appr = el("button", "mini-btn ok", "✅ Approuver");
+      ligne.innerHTML = `<div class="adm-info"><strong>${echapper(w.email)}</strong><small>${t("admin.inscrit_le", { date: d })}</small></div>`;
+      const appr = el("button", "mini-btn ok", t("admin.approuver"));
       appr.onclick = async () => {
         appr.disabled = true; appr.textContent = "…";
         const lien = await creerParrainage();      // admin : parrainages illimités
-        if (!lien) { appr.disabled = false; appr.textContent = "✅ Approuver"; return; }
+        if (!lien) { appr.disabled = false; appr.textContent = t("admin.approuver"); return; }
         await adminRetirerAttente(w.email);        // sort de la liste d'attente
-        ligne.innerHTML = `<div class="adm-info"><strong>${echapper(w.email)}</strong><small>✅ approuvé·e — envoie-lui le lien :</small></div>`;
-        montrerLienInvitation(ligne, lien, "Lien d'accès pour ce candidat.", {
-          sujet: "Bienvenue sur " + APP_NOM + " 🌟",
-          corps: "Bonne nouvelle ! Ton accès à " + APP_NOM + " est ouvert.\n\nCrée ta famille ici :\n{lien}\n\nÀ très vite ! 🤝",
+        ligne.innerHTML = `<div class="adm-info"><strong>${echapper(w.email)}</strong><small>${t("admin.approuve")}</small></div>`;
+        montrerLienInvitation(ligne, lien, t("admin.lien_acces"), {
+          sujet: t("admin.bienvenue_sujet", { app: APP_NOM }),
+          corps: t("admin.bienvenue_corps", { app: APP_NOM, lien: "{lien}" }),
           to: w.email
         });
       };
       const sup = el("button", "mini-btn non", "🗑️");
-      sup.title = "Supprimer de la liste d'attente";
+      sup.title = t("admin.suppr_attente");
       sup.onclick = async () => {
-        if (!confirm(`Supprimer ${w.email} de la liste d'attente ?`)) return;
+        if (!confirm(t("admin.confirm_suppr_attente", { email: w.email }))) return;
         if (await adminRetirerAttente(w.email)) ligne.remove();
       };
       ligne.appendChild(appr); ligne.appendChild(sup);
@@ -226,21 +226,21 @@ function montrerLienInvitation(conteneur, lien, note, mailto) {
   box.innerHTML = "";
   const inp = el("input", "aj-val"); inp.style.width = "100%"; inp.value = lien; inp.readOnly = true;
   inp.onclick = () => inp.select();
-  const copier = el("button", "btn-secondaire", "📋 Copier le lien");
+  const copier = el("button", "btn-secondaire", t("lien.copier"));
   copier.onclick = async () => {
-    try { await navigator.clipboard.writeText(lien); copier.textContent = "✅ Copié !"; }
-    catch { inp.select(); document.execCommand && document.execCommand("copy"); copier.textContent = "✅ Copié !"; }
-    setTimeout(() => (copier.textContent = "📋 Copier le lien"), 1500);
+    try { await navigator.clipboard.writeText(lien); copier.textContent = t("lien.copie"); }
+    catch { inp.select(); document.execCommand && document.execCommand("copy"); copier.textContent = t("lien.copie"); }
+    setTimeout(() => (copier.textContent = t("lien.copier")), 1500);
   };
   box.appendChild(inp); box.appendChild(copier);
   // Option : envoyer le lien directement par e-mail (ouvre le client mail).
   if (mailto) {
-    const mail = el("a", "btn-secondaire btn-mail", "✉️ Envoyer par e-mail");
+    const mail = el("a", "btn-secondaire btn-mail", t("lien.envoyer_mail"));
     const corps = (mailto.corps || "").replace("{lien}", lien);
     mail.href = `mailto:${encodeURIComponent(mailto.to || "")}?subject=${encodeURIComponent(mailto.sujet || "")}&body=${encodeURIComponent(corps)}`;
     box.appendChild(mail);
   }
-  box.appendChild(el("p", "note", note || "Ce lien est valable 14 jours."));
+  box.appendChild(el("p", "note", note || t("lien.valable")));
 }
 
 function rendre() {
@@ -583,10 +583,10 @@ function blocMissionsDuJour(enf) {
   sec.style.setProperty("--c", enf.couleur);
   const jour = planDate[enf.id] || aujourdHui();
   planDate[enf.id] = jour;
-  sec.innerHTML = `<h2>🗓️ Missions proposées — ${enf.emoji} ${enf.prenom}</h2>
-    <p class="note">Coche les missions à proposer. Ton choix s'applique à partir de cette date et <strong>pour tous les jours suivants</strong> (jusqu'à une prochaine modification).</p>`;
+  sec.innerHTML = `<h2>${t("mdj.titre", { enf: enf.emoji + " " + enf.prenom })}</h2>
+    <p class="note">${t("mdj.note")}</p>`;
 
-  const lDate = el("label", "champ", "À partir du");
+  const lDate = el("label", "champ", t("mdj.a_partir"));
   const iDate = el("input"); iDate.type = "date"; iDate.value = jour;
   iDate.onchange = () => { planDate[enf.id] = iDate.value || jour; rendre(); };
   lDate.appendChild(iDate);
@@ -608,27 +608,27 @@ function blocMissionsDuJour(enf) {
       ligne.appendChild(el("span", null, `${m.emoji} ${m.titre} (${cat.monnaieEmoji}${m.points})${m.perso ? " ✏️" : ""}`));
       if (m.perso) {
         const sup = el("button", "mini-btn danger", "🗑️");
-        sup.title = "Supprimer cette mission personnalisée";
-        sup.onclick = (e) => { e.preventDefault(); if (confirm(`Supprimer la mission « ${m.titre} » ?`)) supprimerMissionPerso(m.id); };
+        sup.title = t("mdj.suppr_perso");
+        sup.onclick = (e) => { e.preventDefault(); if (confirm(t("mdj.confirm_suppr", { nom: m.titre }))) supprimerMissionPerso(m.id); };
         ligne.appendChild(sup);
       }
       sec.appendChild(ligne);
     });
   });
 
-  const rb = el("button", "btn-secondaire", "↩️ Proposer la sélection par défaut (selon l'âge)");
+  const rb = el("button", "btn-secondaire", t("mdj.defaut"));
   rb.onclick = () => reinitPlan(enf, jour);
   sec.appendChild(rb);
 
   // ----- Ajouter une mission personnalisée -----
-  sec.appendChild(el("p", "sous-titre", "➕ Ajouter une mission personnalisée"));
+  sec.appendChild(el("p", "sous-titre", t("mdj.ajouter_perso")));
   const form = el("div", "mission-perso-form");
-  const iTitre = el("input"); iTitre.placeholder = "Nom (ex. Ranger son vélo)"; iTitre.maxLength = 40;
-  const iEmoji = el("input"); iEmoji.placeholder = "Emoji"; iEmoji.maxLength = 4; iEmoji.className = "mp-emoji";
+  const iTitre = el("input"); iTitre.placeholder = t("mdj.nom_ph"); iTitre.maxLength = 40;
+  const iEmoji = el("input"); iEmoji.placeholder = t("mdj.emoji_ph"); iEmoji.maxLength = 4; iEmoji.className = "mp-emoji";
   const iCat = el("select");
-  iCat.innerHTML = `<option value="famille">🏡 Famille (💛)</option><option value="planete">🌍 Planète (💧)</option>`;
+  iCat.innerHTML = `<option value="famille">🏡 ${t("cat.famille.nom")} (💛)</option><option value="planete">🌍 ${t("cat.planete.nom")} (💧)</option>`;
   const iPts = el("input"); iPts.type = "number"; iPts.min = "1"; iPts.max = "5"; iPts.value = "1"; iPts.className = "mp-pts";
-  const bAdd = el("button", "btn-secondaire", "Ajouter ✨");
+  const bAdd = el("button", "btn-secondaire", t("mdj.ajouter"));
   bAdd.onclick = () => {
     ajouterMissionPerso(iCat.value, iTitre.value, iEmoji.value, iPts.value);
     iTitre.value = ""; iEmoji.value = "";
@@ -642,8 +642,8 @@ function blocMissionsDuJour(enf) {
 function blocCorrections(enf) {
   const sec = el("section", "carte correction");
   sec.style.setProperty("--c", enf.couleur);
-  sec.innerHTML = `<h2>✏️ Corrections — ${enf.emoji} ${enf.prenom}</h2>
-    <p class="note">Changez d'enfant avec les pastilles en haut. Ajustez les soldes ou corrigez l'historique (rétroactif).</p>`;
+  sec.innerHTML = `<h2>${t("cor.titre", { enf: enf.emoji + " " + enf.prenom })}</h2>
+    <p class="note">${t("cor.note")}</p>`;
 
   // -- Ajusteurs de monnaie --
   [["coeurs", "💛 Cœurs"], ["gouttes", "💧 Gouttes"]].forEach(([champ, libelle]) => {
@@ -660,7 +660,7 @@ function blocCorrections(enf) {
   // -- Historique rétroactif --
   const jour = histDate[enf.id] || aujourdHui();
   histDate[enf.id] = jour;
-  const lDate = el("label", "champ", "Corriger les missions du jour");
+  const lDate = el("label", "champ", t("cor.corriger_jour"));
   const iDate = el("input"); iDate.type = "date"; iDate.value = jour; iDate.max = aujourdHui();
   iDate.onchange = () => { histDate[enf.id] = iDate.value; rendre(); };
   lDate.appendChild(iDate);
@@ -680,26 +680,26 @@ function blocCorrections(enf) {
   });
 
   // -- Badges --
-  const hBadges = el("h2", null, "🏆 Badges"); hBadges.style.marginTop = "12px";
+  const hBadges = el("h2", null, t("cor.badges")); hBadges.style.marginTop = "12px";
   sec.appendChild(hBadges);
   if (!enf.badges.length) {
-    sec.appendChild(el("p", "note", "Aucun badge pour le moment."));
+    sec.appendChild(el("p", "note", t("cor.aucun_badge")));
   } else {
     enf.badges.forEach(b => {
       const ligne = el("div", "hist-ligne");
       ligne.innerHTML = `<span class="h-info">${b.emoji} ${b.nom}</span>`;
-      const x = el("button", "mini-btn non", "Retirer");
+      const x = el("button", "mini-btn non", t("cor.retirer"));
       x.onclick = () => retirerBadge(enf, b.id);
       ligne.appendChild(x);
       sec.appendChild(ligne);
     });
   }
   if (enf.badgesRetires && enf.badgesRetires.length) {
-    const r = el("button", "btn-secondaire", `↩️ Réautoriser ${enf.badgesRetires.length} badge(s) retiré(s)`);
+    const r = el("button", "btn-secondaire", t("cor.reautoriser", { n: enf.badgesRetires.length }));
     r.onclick = () => reactiverBadges(enf);
     sec.appendChild(r);
   }
-  const eff = el("button", "btn-secondaire", "🧹 Effacer tous les badges");
+  const eff = el("button", "btn-secondaire", t("cor.effacer"));
   eff.onclick = () => effacerBadges(enf);
   sec.appendChild(eff);
 
@@ -709,8 +709,8 @@ function blocCorrections(enf) {
 // Tableau de référence (parents) : coût et prérequis de chaque espèce.
 function blocEcoReference() {
   const sec = el("section", "carte");
-  sec.innerHTML = `<h2>🌍 Écosystème — prérequis des espèces</h2>
-    <p class="note">Pour information : ce dont chaque plante ou animal a besoin pour être créé (coût en Gouttes 💧 et prérequis).</p>`;
+  sec.innerHTML = `<h2>${t("ecoref.titre")}</h2>
+    <p class="note">${t("ecoref.note")}</p>`;
   TIERS_ECO.forEach(tier => {
     const grp = el("div", "eco-ref-tier");
     grp.innerHTML = `<h3 class="eco-ref-titre">${tier.emoji} ${tier.nom}</h3>`;
@@ -721,7 +721,7 @@ function blocEcoReference() {
             const info = spInfo(id);
             return `${sp.prereq[id]}× ${info ? info.sp.emoji + " " + info.sp.nom : id}`;
           }).join(", ")
-        : "aucun prérequis";
+        : t("ecoref.aucun");
       const ligne = el("div", "eco-ref-ligne");
       ligne.innerHTML = `<span class="erl-nom">${sp.emoji} ${sp.nom}</span>
         <span class="erl-cout">${sp.cout} 💧</span>
@@ -739,11 +739,11 @@ function vueReglages(c) {
   // ----- Écran verrouillé (mode parents inactif) -----
   if (!modeParents) {
     const v = el("section", "carte");
-    v.innerHTML = `<h1>⚙️ Espace parents</h1>
-      <p>Réservé aux parents : valider les actions, corriger les données, régler le programme.</p>
-      ${totalAttente ? `<p class="note">⏳ <strong>${totalAttente}</strong> action(s) en attente de validation.</p>` : ""}
-      <p class="note">💡 <strong>Esprit bienveillant</strong> : on valorise l'effort, jamais la performance. Les corrections servent à ajuster avec justesse, pas à punir.</p>`;
-    const b = el("button", "gros-bouton planete", "🔓 Activer le mode parents");
+    v.innerHTML = `<h1>${t("par.verrou.titre")}</h1>
+      <p>${t("par.verrou.desc")}</p>
+      ${totalAttente ? `<p class="note">${t("par.verrou.attente", { n: totalAttente })}</p>` : ""}
+      <p class="note">${t("par.verrou.esprit")}</p>`;
+    const b = el("button", "gros-bouton planete", t("par.verrou.activer"));
     b.onclick = activerModeParents;
     v.appendChild(b);
     c.appendChild(v);
@@ -769,7 +769,7 @@ function vueReglages(c) {
   // ----- Validations en attente (affichées seulement s'il y en a) -----
   if (totalAttente) {
     const att = el("section", "carte");
-    att.innerHTML = `<h2>⏳ Actions à valider (${totalAttente})</h2>`;
+    att.innerHTML = `<h2>${t("par.attente.titre", { n: totalAttente })}</h2>`;
     Object.values(etat.enfants).forEach(enf => {
       enf.enAttente.forEach((a, idx) => {
         const cat = CATEGORIES[a.cat];
@@ -789,18 +789,18 @@ function vueReglages(c) {
 
   // ----- Réglages du programme -----
   const prog = el("section", "carte");
-  prog.innerHTML = `<h2>🛠️ Réglages du programme</h2>`;
+  prog.innerHTML = `<h2>${t("par.prog.titre")}</h2>`;
   const lVal = el("label", "switch-ligne");
   const iVal = el("input"); iVal.type = "checkbox"; iVal.checked = etat.reglages.validationParentale;
   iVal.onchange = () => basculerValidationParentale(iVal.checked);
   lVal.appendChild(iVal);
-  lVal.appendChild(el("span", null, "Validation parentale requise (les actions des enfants attendent votre confirmation)"));
+  lVal.appendChild(el("span", null, t("par.prog.validation")));
   prog.appendChild(lVal);
-  const bCp = el("button", "btn-secondaire", etat.reglages.codeParent ? "🔑 Changer le code PIN parent" : "🔑 Définir un code PIN parent");
+  const bCp = el("button", "btn-secondaire", etat.reglages.codeParent ? t("par.prog.changer_pin") : t("par.prog.definir_pin"));
   bCp.onclick = definirCodeParent;
   prog.appendChild(bCp);
   if (!etat.reglages.codeParent)
-    prog.appendChild(el("p", "note", "💡 Astuce : définissez un code PIN pour protéger l'accès au mode parents."));
+    prog.appendChild(el("p", "note", t("par.prog.astuce_pin")));
   c.appendChild(prog);
 
   // ----- Missions du jour (sélection par les parents) -----
@@ -816,59 +816,59 @@ function vueReglages(c) {
     const enTete = el("div", "reglage-entete");
     enTete.innerHTML = `<h2>${enf.emoji} ${enf.prenom}</h2>`;
     if (Object.keys(etat.enfants).length > 1) {
-      const bSup = el("button", "mini-btn danger", "🗑️ Supprimer");
+      const bSup = el("button", "mini-btn danger", t("profil.supprimer"));
       bSup.onclick = () => supprimerEnfant(enf.id);
       enTete.appendChild(bSup);
     }
     sec.appendChild(enTete);
 
-    const lPrenom = el("label", "champ", `Prénom`);
+    const lPrenom = el("label", "champ", t("profil.prenom"));
     const iPrenom = el("input");
     iPrenom.value = enf.prenom;
     iPrenom.oninput = () => { majEnfant(enf.id, "prenom", iPrenom.value); rendreSelecteur(); };
     lPrenom.appendChild(iPrenom);
 
-    const lDate = el("label", "champ", `Date de naissance`);
+    const lDate = el("label", "champ", t("profil.naissance"));
     const iDate = el("input");
     iDate.type = "date"; iDate.value = enf.naissance; iDate.max = aujourdHui(); iDate.min = "2008-01-01";
     iDate.onchange = () => { majEnfant(enf.id, "naissance", iDate.value || enf.naissance); rendreSelecteur(); rendre(); };
     lDate.appendChild(iDate);
 
-    const lSexe = el("label", "champ", `Sexe`);
+    const lSexe = el("label", "champ", t("profil.sexe"));
     const iSexe = el("div", "segmente");
     ["fille", "garcon"].forEach(s => {
-      const b = el("button", "seg" + (enf.sexe === s ? " actif" : ""), s === "fille" ? "👧 Fille" : "👦 Garçon");
+      const b = el("button", "seg" + (enf.sexe === s ? " actif" : ""), s === "fille" ? t("profil.fille") : t("profil.garcon"));
       b.onclick = () => { majEnfant(enf.id, "sexe", s); rendre(); };
       iSexe.appendChild(b);
     });
     lSexe.appendChild(iSexe);
 
-    const lEmoji = el("label", "champ", `Emoji`);
+    const lEmoji = el("label", "champ", t("profil.emoji"));
     const iEmoji = el("input");
     iEmoji.value = enf.emoji; iEmoji.maxLength = 4;
     iEmoji.oninput = () => { majEnfant(enf.id, "emoji", iEmoji.value); rendreSelecteur(); };
     lEmoji.appendChild(iEmoji);
 
-    const lCouleur = el("label", "champ", `Couleur`);
+    const lCouleur = el("label", "champ", t("profil.couleur"));
     const iCouleur = el("input");
     iCouleur.type = "color"; iCouleur.value = enf.couleur;
     iCouleur.oninput = () => majEnfant(enf.id, "couleur", iCouleur.value);
     lCouleur.appendChild(iCouleur);
 
-    const lDodo = el("label", "champ", `Heure du coucher 🌙`);
+    const lDodo = el("label", "champ", t("profil.coucher"));
     const iDodo = el("input");
     iDodo.type = "time"; iDodo.value = enf.heureCoucher || "19:30";
     iDodo.onchange = () => { majEnfant(enf.id, "heureCoucher", iDodo.value || "19:30"); rendre(); };
     lDodo.appendChild(iDodo);
 
-    const stats = el("p", "note", `${age(enf)} ans · Total cumulé : 💛 ${enf.coeursTotal} Cœurs · 💧 ${enf.gouttesTotal} Gouttes · 🌍 ${nbTotalEspeces(enf)} êtres vivants · 🏆 ${enf.badges.length} badges`);
+    const stats = el("p", "note", t("profil.stats", { age: age(enf), c: enf.coeursTotal, g: enf.gouttesTotal, e: nbTotalEspeces(enf), b: enf.badges.length }));
 
     [lPrenom, lDate, lSexe, lEmoji, lCouleur, lDodo, stats].forEach(x => sec.appendChild(x));
     c.appendChild(sec);
   });
 
   // ----- Ajouter un enfant -----
-  const bAjout = el("button", "gros-bouton famille", "➕ Ajouter un enfant");
+  const bAjout = el("button", "gros-bouton famille", t("profil.ajouter_enfant"));
   bAjout.onclick = () => { ajouterEnfant(); rendre(); };
   c.appendChild(bAjout);
 
@@ -878,9 +878,9 @@ function vueReglages(c) {
   // ----- Mode démo : bandeau au lieu des sections compte/famille -----
   if (typeof modeDemo !== "undefined" && modeDemo) {
     const d = el("section", "carte");
-    d.innerHTML = `<h2>🧪 Mode démo</h2>
-      <p>Tu explores une <strong>famille de démonstration</strong>. Rien n'est enregistré en ligne.</p>`;
-    const bq = el("button", "gros-bouton planete", "Créer un compte / se connecter");
+    d.innerHTML = `<h2>${t("demo.titre")}</h2>
+      <p>${t("demo.desc")}</p>`;
+    const bq = el("button", "gros-bouton planete", t("demo.creer"));
     bq.onclick = () => location.reload();
     d.appendChild(bq);
     c.appendChild(d);
@@ -889,53 +889,50 @@ function vueReglages(c) {
 
   // ----- Famille & invitations -----
   const fam = el("section", "carte");
-  fam.innerHTML = `<h2>👪 Famille</h2>
-    <p>Famille : <strong>${familleActive ? echapper(familleActive.name) : "—"}</strong></p>
-    <p class="note">Invite l'autre parent : partage-lui ce lien, il rejoindra cette famille après connexion.</p>`;
-  const bInvite = el("button", "btn-secondaire", "🔗 Créer un lien d'invitation");
+  fam.innerHTML = `<h2>${t("fam.titre")}</h2>
+    <p>${t("fam.label", { nom: familleActive ? echapper(familleActive.name) : "—" })}</p>
+    <p class="note">${t("fam.note")}</p>`;
+  const bInvite = el("button", "btn-secondaire", t("fam.creer_invitation"));
   bInvite.onclick = async () => {
-    bInvite.disabled = true; bInvite.textContent = "Création…";
+    bInvite.disabled = true; bInvite.textContent = t("common.creation");
     const lien = await creerInvitation();
-    bInvite.disabled = false; bInvite.textContent = "🔗 Créer un lien d'invitation";
+    bInvite.disabled = false; bInvite.textContent = t("fam.creer_invitation");
     if (lien) montrerLienInvitation(fam, lien);
   };
   fam.appendChild(bInvite);
-  const bSwitch = el("button", "btn-secondaire", "🔁 Changer / créer une famille");
+  const bSwitch = el("button", "btn-secondaire", t("fam.changer"));
   bSwitch.onclick = changerFamille;
   fam.appendChild(bSwitch);
   c.appendChild(fam);
 
   // ----- Parrainage : inviter une famille amie à créer la sienne -----
   const par = el("section", "carte");
-  par.innerHTML = `<h2>🎁 Parrainer une famille amie</h2>
-    <p class="note">Offre ${APP_NOM} à des amis : avec ton lien de parrainage, ils
-    créeront <strong>leur propre famille</strong>. Tu peux parrainer
-    <strong>3 familles par semaine</strong>. Plus on est nombreux, plus on répand
-    les ondes positives ! 🤝</p>
-    <p id="par-quota" class="note">Vérification de ton quota…</p>`;
-  const bPar = el("button", "btn-secondaire", "🎁 Créer un lien de parrainage");
+  par.innerHTML = `<h2>${t("parr.titre")}</h2>
+    <p class="note">${t("parr.note", { app: APP_NOM })}</p>
+    <p id="par-quota" class="note">${t("parr.quota_check")}</p>`;
+  const bPar = el("button", "btn-secondaire", t("parr.creer"));
   par.appendChild(bPar);
   c.appendChild(par);
   // Quota affiché de façon asynchrone.
   parrainageRestant().then(n => {
     const q = par.querySelector("#par-quota");
-    if (estAdmin) { q.innerHTML = "👑 Compte administrateur : parrainages <strong>illimités</strong>."; }
-    else { q.innerHTML = `Il te reste <strong>${n}</strong> parrainage(s) cette semaine.`; bPar.disabled = n <= 0; }
+    if (estAdmin) { q.innerHTML = t("parr.illimite"); }
+    else { q.innerHTML = t("parr.restant", { n }); bPar.disabled = n <= 0; }
   });
   bPar.onclick = async () => {
-    bPar.disabled = true; bPar.textContent = "Création…";
+    bPar.disabled = true; bPar.textContent = t("common.creation");
     const lien = await creerParrainage();
-    bPar.textContent = "🎁 Créer un lien de parrainage";
+    bPar.textContent = t("parr.creer");
     if (lien) {
       const mailto = {
-        sujet: "Je t'offre " + APP_NOM + " 🌟",
-        corps: "Coucou !\n\nJe te parraine sur " + APP_NOM + ", une appli bienveillante qui aide toute la famille à instaurer une ambiance positive et à s'aligner sur les tâches de la maison et la protection de la planète (avatar à faire évoluer 💛 et écosystème vivant à bâtir 🌍).\n\nOuvre ce lien pour créer ta propre famille :\n{lien}\n\nÀ très vite ! 🤝"
+        sujet: t("parr.sujet", { app: APP_NOM }),
+        corps: t("parr.corps", { app: APP_NOM, lien: "{lien}" })
       };
-      montrerLienInvitation(par, lien, "Partage ce lien : ton ami créera sa propre famille. 💛", mailto);
+      montrerLienInvitation(par, lien, t("parr.partage"), mailto);
       parrainageRestant().then(n => {
         const q = par.querySelector("#par-quota");
-        if (estAdmin) { q.innerHTML = "👑 Compte administrateur : parrainages <strong>illimités</strong>."; bPar.disabled = false; }
-        else { q.innerHTML = `Il te reste <strong>${n}</strong> parrainage(s) cette semaine.`; bPar.disabled = n <= 0; }
+        if (estAdmin) { q.innerHTML = t("parr.illimite"); bPar.disabled = false; }
+        else { q.innerHTML = t("parr.restant", { n }); bPar.disabled = n <= 0; }
       });
     } else { bPar.disabled = false; }
   };
@@ -943,10 +940,10 @@ function vueReglages(c) {
   // ----- Abonnement (masqué provisoirement : early adopters = gratuit) -----
   if (AFFICHER_ABONNEMENT) {
     const abo = el("section", "carte");
-    abo.innerHTML = `<h2>⭐ Abonnement</h2>
-      <p>Offre actuelle : <strong>${planLibelle()}</strong></p>
-      <p class="note">Les paiements arriveront bientôt. Pour l'instant, tout est gratuit. 💛</p>`;
-    const bAbo = el("button", "btn-secondaire", "Gérer l'abonnement (bientôt)");
+    abo.innerHTML = `<h2>${t("abo.titre")}</h2>
+      <p>${t("abo.offre", { plan: planLibelle() })}</p>
+      <p class="note">${t("abo.note")}</p>`;
+    const bAbo = el("button", "btn-secondaire", t("abo.gerer"));
     bAbo.disabled = true;
     abo.appendChild(bAbo);
     c.appendChild(abo);
@@ -958,18 +955,18 @@ function vueReglages(c) {
   // ----- Compte -----
   const cpt = el("section", "carte");
   const u = typeof utilisateurCourant === "function" ? utilisateurCourant() : null;
-  cpt.innerHTML = `<h2>👤 Compte</h2>
-    <p>Connecté en tant que <strong>${u ? echapper(u.email) : "—"}</strong></p>`;
-  const bDeco = el("button", "btn-secondaire", "🚪 Se déconnecter");
+  cpt.innerHTML = `<h2>${t("compte.titre")}</h2>
+    <p>${t("compte.connecte", { email: u ? echapper(u.email) : "—" })}</p>`;
+  const bDeco = el("button", "btn-secondaire", t("compte.deconnexion"));
   bDeco.onclick = deconnexion;
   cpt.appendChild(bDeco);
   c.appendChild(cpt);
 
   const actions = el("section", "carte");
-  actions.innerHTML = `<h2>Données (cette famille)</h2>`;
-  const bExp = el("button", "btn-secondaire", "💾 Exporter la sauvegarde");
+  actions.innerHTML = `<h2>${t("donnees.titre")}</h2>`;
+  const bExp = el("button", "btn-secondaire", t("donnees.exporter"));
   bExp.onclick = exporter;
-  const bRaz = el("button", "btn-danger", "🗑️ Tout réinitialiser");
+  const bRaz = el("button", "btn-danger", t("donnees.reset"));
   bRaz.onclick = reinitialiser;
   actions.appendChild(bExp);
   actions.appendChild(bRaz);
@@ -982,23 +979,21 @@ function vueReglages(c) {
 // Outil de récupération : restaurer une sauvegarde locale ou un fichier JSON.
 function blocRecuperation() {
   const sec = el("section", "carte");
-  sec.innerHTML = `<h2>🛟 Récupération de données</h2>
-    <p class="note">Si des enfants ont disparu, retrouve ici les <strong>sauvegardes
-    locales</strong> de cet appareil et restaure la bonne dans la <strong>famille
-    actuellement ouverte</strong> (${familleActive ? echapper(familleActive.name) : "—"}).</p>`;
+  sec.innerHTML = `<h2>${t("recup.titre")}</h2>
+    <p class="note">${t("recup.note", { nom: familleActive ? echapper(familleActive.name) : "—" })}</p>`;
 
   const sauvegardes = (typeof listerSauvegardesLocales === "function") ? listerSauvegardesLocales() : [];
   if (!sauvegardes.length) {
-    sec.appendChild(el("p", "note", "Aucune sauvegarde locale trouvée sur cet appareil."));
+    sec.appendChild(el("p", "note", t("recup.aucune_locale")));
   } else {
     sauvegardes.forEach(s => {
-      const d = s.maj ? new Date(s.maj).toLocaleString("fr-BE") : "date inconnue";
+      const d = s.maj ? new Date(s.maj).toLocaleString("fr-BE") : "—";
       const ligne = el("div", "admin-item");
-      ligne.innerHTML = `<div class="adm-info"><strong>${s.nb} enfant(s) : ${echapper(s.prenoms.join(", "))}</strong>
-        <small>maj ${d}</small></div>`;
-      const b = el("button", "mini-btn ok", "♻️ Restaurer");
+      ligne.innerHTML = `<div class="adm-info"><strong>${t("recup.enfants", { n: s.nb, liste: echapper(s.prenoms.join(", ")) })}</strong>
+        <small>${t("recup.maj", { date: d })}</small></div>`;
+      const b = el("button", "mini-btn ok", t("recup.restaurer"));
       b.onclick = () => {
-        if (confirm(`Restaurer ces ${s.nb} enfant(s) (${s.prenoms.join(", ")}) dans la famille « ${familleActive ? familleActive.name : "?"} » ? Cela remplacera son contenu actuel.`))
+        if (confirm(t("recup.confirm_local", { n: s.nb, liste: s.prenoms.join(", "), fam: familleActive ? familleActive.name : "?" })))
           restaurerSauvegarde(s.brut);
       };
       ligne.appendChild(b);
@@ -1007,23 +1002,23 @@ function blocRecuperation() {
   }
 
   // Historique automatique côté serveur (sauvegardes ponctuelles).
-  sec.appendChild(el("p", "sous-titre", "☁️ Sauvegardes automatiques (cloud)"));
+  sec.appendChild(el("p", "sous-titre", t("recup.cloud_titre")));
   const zoneCloud = el("div", "admin-liste");
-  const bCloud = el("button", "btn-secondaire", "🔄 Afficher l'historique des sauvegardes");
+  const bCloud = el("button", "btn-secondaire", t("recup.cloud_btn"));
   bCloud.onclick = async () => {
-    bCloud.disabled = true; bCloud.textContent = "Chargement…";
+    bCloud.disabled = true; bCloud.textContent = t("common.chargement");
     const hist = (typeof listerHistoriqueCloud === "function") ? await listerHistoriqueCloud() : [];
-    bCloud.disabled = false; bCloud.textContent = "🔄 Rafraîchir l'historique";
+    bCloud.disabled = false; bCloud.textContent = t("recup.cloud_rafraichir");
     zoneCloud.innerHTML = "";
-    if (!hist.length) { zoneCloud.appendChild(el("p", "note", "Aucune sauvegarde automatique pour l'instant.")); return; }
+    if (!hist.length) { zoneCloud.appendChild(el("p", "note", t("recup.cloud_aucune"))); return; }
     hist.forEach(h => {
       const d = h.saved_at ? new Date(h.saved_at).toLocaleString("fr-BE") : "—";
       const ligne = el("div", "admin-item");
-      ligne.innerHTML = `<div class="adm-info"><strong>${h.nb} enfant(s) : ${echapper(h.prenoms.join(", "))}</strong>
+      ligne.innerHTML = `<div class="adm-info"><strong>${t("recup.enfants", { n: h.nb, liste: echapper(h.prenoms.join(", ")) })}</strong>
         <small>${d}</small></div>`;
-      const b = el("button", "mini-btn ok", "♻️ Restaurer");
+      const b = el("button", "mini-btn ok", t("recup.restaurer"));
       b.onclick = () => {
-        if (confirm(`Restaurer cette sauvegarde du ${d} (${h.nb} enfant(s)) dans la famille actuelle ?`))
+        if (confirm(t("recup.confirm_cloud", { date: d, n: h.nb })))
           restaurerSauvegarde(JSON.stringify(h.data));
       };
       ligne.appendChild(b);
@@ -1033,7 +1028,7 @@ function blocRecuperation() {
   sec.appendChild(bCloud); sec.appendChild(zoneCloud);
 
   // Import depuis un fichier JSON (sauvegarde exportée).
-  sec.appendChild(el("p", "sous-titre", "📥 Importer un fichier de sauvegarde"));
+  sec.appendChild(el("p", "sous-titre", t("recup.import_titre")));
   const inp = el("input"); inp.type = "file"; inp.accept = "application/json,.json";
   inp.onchange = () => { if (inp.files && inp.files[0]) importerSauvegardeFichier(inp.files[0]); };
   sec.appendChild(inp);

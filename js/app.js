@@ -299,7 +299,7 @@ function ajouterMissionPerso(cat, titre, emoji, points) {
     type: "quotidien", perso: true
   });
   sauver();
-  toast("Mission ajoutée ✨", "succes");
+  toast(t("toast.mission_ajoutee"), "succes");
   rendre();
 }
 function supprimerMissionPerso(id) {
@@ -714,7 +714,7 @@ function majEnfant(id, champ, valeur) {
   sauver();
 }
 function reinitialiser() {
-  if (confirm("Tout effacer et recommencer à zéro ? (Cœurs, gouttes, avatars, écosystèmes)")) {
+  if (confirm(t("donnees.confirm_reset"))) {
     lierEtat(etatVierge());
     sauver();
     rendre();
@@ -764,7 +764,7 @@ function restaurerSauvegarde(brutJson) {
   vueAccueilAine();
   sauver();                       // écrit dans le cache ET dans le cloud de la famille actuelle
   rendre();
-  toast("Sauvegarde restaurée ✅", "succes");
+  toast(t("toast.sauv_restauree"), "succes");
   return true;
 }
 // Importe une sauvegarde depuis un fichier JSON.
