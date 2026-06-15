@@ -39,6 +39,37 @@ function feterParrainage(nb) {
   setTimeout(fermer, 4200);
 }
 
+// Saisie d'un code PIN : masqué par des points, clavier numérique sur mobile.
+function demanderPin(opts) {
+  opts = opts || {};
+  const ov = el("div", "pin-modal");
+  ov.innerHTML = `
+    <div class="pin-carte">
+      <div class="pin-titre">${opts.titre || "🔒 Code PIN"}</div>
+      ${opts.sousTitre ? `<div class="pin-sous">${opts.sousTitre}</div>` : ""}
+      <input id="pin-input" type="password" inputmode="numeric" pattern="[0-9]*"
+             autocomplete="off" maxlength="8" class="pin-input" placeholder="••••">
+      <div class="pin-actions">
+        <button id="pin-annuler" class="btn-secondaire">Annuler</button>
+        <button id="pin-ok" class="gros-bouton planete">Valider</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  const inp = ov.querySelector("#pin-input");
+  const fermer = () => ov.remove();
+  const valider = () => {
+    const v = inp.value;
+    if (!opts.permettreVide && !v.trim()) { inp.focus(); return; }
+    fermer();
+    if (opts.onOk) opts.onOk(v);
+  };
+  ov.querySelector("#pin-ok").onclick = valider;
+  ov.querySelector("#pin-annuler").onclick = () => { fermer(); if (opts.onCancel) opts.onCancel(); };
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") valider(); });
+  // Ouvre tout de suite le clavier (numérique) du smartphone.
+  setTimeout(() => { inp.focus(); inp.click(); }, 50);
+}
+
 function initSquelette() {
   document.body.innerHTML = `
     <div id="confettis"></div>

@@ -476,25 +476,31 @@ function confettis() {
 /* ---------- Mode parents ---------- */
 function activerModeParents() {
   const code = etat.reglages.codeParent;
-  if (code) {
-    const saisi = prompt("🔒 Code PIN parent :");
-    if (saisi === null) return;
-    if (saisi.trim() !== code) { toast("Code PIN incorrect 🔒", "info"); return; }
-  }
-  modeParents = true;
-  rendre();
+  if (!code) { modeParents = true; rendre(); return; }
+  demanderPin({
+    titre: "🔒 Code PIN parent",
+    onOk: (saisi) => {
+      if (saisi.trim() !== code) { toast("Code PIN incorrect 🔒", "info"); return; }
+      modeParents = true;
+      rendre();
+    }
+  });
 }
 function quitterModeParents() { modeParents = false; rendre(); }
 
 function definirCodeParent() {
   const actuel = etat.reglages.codeParent;
-  const v = prompt(actuel ? "Nouveau code PIN (laisser vide pour le supprimer) :"
-                          : "Choisir un code PIN parent (ex. 4 chiffres) :", "");
-  if (v === null) return;
-  etat.reglages.codeParent = v.trim();
-  sauver();
-  toast(etat.reglages.codeParent ? "Code PIN enregistré 🔒" : "Code PIN supprimé", "succes");
-  rendre();
+  demanderPin({
+    titre: actuel ? "🔑 Nouveau code PIN" : "🔑 Choisir un code PIN parent",
+    sousTitre: actuel ? "Laissez vide pour supprimer le code." : "Par exemple 4 chiffres.",
+    permettreVide: true,
+    onOk: (v) => {
+      etat.reglages.codeParent = (v || "").trim();
+      sauver();
+      toast(etat.reglages.codeParent ? "Code PIN enregistré 🔒" : "Code PIN supprimé", "succes");
+      rendre();
+    }
+  });
 }
 
 function basculerValidationParentale(actif) {

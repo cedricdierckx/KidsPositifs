@@ -200,6 +200,19 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .btn-mail{display:block; text-align:center; text-decoration:none; margin-top:8px}
 .parrain-pop{background:linear-gradient(135deg,#fff3d6,#ffe0ec)}
 
+/* Saisie du code PIN (masqué + clavier numérique) */
+.pin-modal{position:fixed; inset:0; z-index:1000; display:flex; align-items:center;
+  justify-content:center; background:rgba(20,30,50,.45); padding:20px}
+.pin-carte{background:#fff; border-radius:18px; padding:20px; width:100%; max-width:300px;
+  box-shadow:0 12px 40px rgba(0,0,0,.25); text-align:center}
+.pin-titre{font-size:18px; font-weight:800; margin-bottom:4px}
+.pin-sous{font-size:13px; color:var(--doux); margin-bottom:10px}
+.pin-input{width:100%; text-align:center; font-size:28px; letter-spacing:10px;
+  padding:12px; border:2px solid #e3edf5; border-radius:12px; margin:6px 0 14px}
+.pin-actions{display:flex; gap:8px}
+.pin-actions .btn-secondaire{flex:1; margin:0}
+.pin-actions .gros-bouton{flex:1; padding:14px}
+
 /* ---- Avatar (SVG) ---- */
 .avatar-scene{width:150px; height:150px; margin:0 auto}
 .avatar-scene .av-svg{width:100%; height:100%; display:block}
