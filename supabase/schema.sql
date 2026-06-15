@@ -254,6 +254,14 @@ begin
   return query select w.email::text, w.created_at from waitlist w order by w.created_at;
 end; $$;
 
+-- RPC admin : retirer un candidat de la liste d'attente (approuvé ou refusé).
+create or replace function public.admin_remove_waitlist(p_email text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  delete from waitlist where email = lower(trim(p_email));
+end; $$;
+
 -- ---------- RPC admin : lister toutes les familles ----------
 create or replace function public.admin_list_families()
 returns table(id uuid, name text, plan text, plan_status text,
@@ -290,6 +298,7 @@ grant execute on function public.claim_referral(uuid, uuid)     to authenticated
 grant execute on function public.referral_accepted_count(uuid)  to authenticated;
 grant execute on function public.join_waitlist(text)            to anon, authenticated;
 grant execute on function public.admin_list_waitlist()          to authenticated;
+grant execute on function public.admin_remove_waitlist(text)    to authenticated;
 grant execute on function public.is_admin()                     to authenticated;
 grant execute on function public.admin_list_families()          to authenticated;
 grant execute on function public.admin_set_plan(uuid, text)     to authenticated;

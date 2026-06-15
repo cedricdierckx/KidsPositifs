@@ -192,6 +192,26 @@ function blocAdmin() {
       const d = w.created_at ? new Date(w.created_at).toLocaleDateString("fr-BE") : "—";
       const ligne = el("div", "admin-item");
       ligne.innerHTML = `<div class="adm-info"><strong>${echapper(w.email)}</strong><small>inscrit le ${d}</small></div>`;
+      const appr = el("button", "mini-btn ok", "✅ Approuver");
+      appr.onclick = async () => {
+        appr.disabled = true; appr.textContent = "…";
+        const lien = await creerParrainage();      // admin : parrainages illimités
+        if (!lien) { appr.disabled = false; appr.textContent = "✅ Approuver"; return; }
+        await adminRetirerAttente(w.email);        // sort de la liste d'attente
+        ligne.innerHTML = `<div class="adm-info"><strong>${echapper(w.email)}</strong><small>✅ approuvé·e — envoie-lui le lien :</small></div>`;
+        montrerLienInvitation(ligne, lien, "Lien d'accès pour ce candidat.", {
+          sujet: "Bienvenue sur " + APP_NOM + " 🌟",
+          corps: "Bonne nouvelle ! Ton accès à " + APP_NOM + " est ouvert.\n\nCrée ta famille ici :\n{lien}\n\nÀ très vite ! 🤝",
+          to: w.email
+        });
+      };
+      const sup = el("button", "mini-btn non", "🗑️");
+      sup.title = "Supprimer de la liste d'attente";
+      sup.onclick = async () => {
+        if (!confirm(`Supprimer ${w.email} de la liste d'attente ?`)) return;
+        if (await adminRetirerAttente(w.email)) ligne.remove();
+      };
+      ligne.appendChild(appr); ligne.appendChild(sup);
       listeW.appendChild(ligne);
     });
   };
@@ -217,7 +237,7 @@ function montrerLienInvitation(conteneur, lien, note, mailto) {
   if (mailto) {
     const mail = el("a", "btn-secondaire btn-mail", "✉️ Envoyer par e-mail");
     const corps = (mailto.corps || "").replace("{lien}", lien);
-    mail.href = `mailto:?subject=${encodeURIComponent(mailto.sujet || "")}&body=${encodeURIComponent(corps)}`;
+    mail.href = `mailto:${encodeURIComponent(mailto.to || "")}?subject=${encodeURIComponent(mailto.sujet || "")}&body=${encodeURIComponent(corps)}`;
     box.appendChild(mail);
   }
   box.appendChild(el("p", "note", note || "Ce lien est valable 14 jours."));

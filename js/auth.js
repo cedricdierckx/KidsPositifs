@@ -83,11 +83,17 @@ async function chargerFamilles() {
 }
 
 async function ouvrirFamille(f) {
+  // On annule toute sauvegarde différée de la famille précédente (sinon elle
+  // risquerait d'écraser la nouvelle famille avec l'ancien état).
+  clearTimeout(cloudTimer);
   familleActive = { ...f, role: f.owner_id === utilisateur.id ? "owner" : "parent" };
   familleId = f.id;                       // variable globale (app.js) pour le cache
   localStorage.setItem(FAMILLE_KEY, f.id);
 
   initSquelette();
+  // On repart d'un état vierge pour ne JAMAIS conserver les données de la
+  // famille précédente, puis on charge le cache local de CETTE famille s'il existe.
+  etat = etatVierge();
   const cache = lireCache();
   if (cache) etat = cache;                // affichage instantané / hors-ligne
   await chargerEtatFamille();
@@ -256,6 +262,12 @@ async function adminListerAttente() {
   const { data, error } = await sb.rpc("admin_list_waitlist");
   if (error) { toast("Erreur admin : " + error.message, "info"); return []; }
   return data || [];
+}
+// RPC admin : retirer un candidat (après approbation ou refus).
+async function adminRetirerAttente(email) {
+  const { error } = await sb.rpc("admin_remove_waitlist", { p_email: email });
+  if (error) toast("Erreur : " + error.message, "info");
+  return !error;
 }
 
 async function creerInvitation() {
