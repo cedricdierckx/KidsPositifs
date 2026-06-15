@@ -23,6 +23,11 @@ const FAMILLE_KEY = "kp_famille_active";
 const INVITE_KEY = "kp_pending_invite";
 const PARRAIN_KEY = "kp_pending_parrain";   // parrainage : créer SA propre famille
 
+// Interrupteur global des inscriptions :
+//   false = sur invitation/parrainage uniquement (+ liste d'attente)  ← provisoire
+//   true  = inscriptions ouvertes à tous
+const INSCRIPTIONS_OUVERTES = false;
+
 document.addEventListener("DOMContentLoaded", demarrer);
 
 async function demarrer() {
@@ -236,9 +241,10 @@ async function verifierParrainages() {
 
 function changerFamille() { ecranFamilles({}); }
 
-// Inscriptions sur invitation : autorisées seulement avec un jeton en attente.
+// Inscriptions autorisées si ouvertes globalement, ou via un jeton en attente.
 function inscriptionAutorisee() {
-  return !!(localStorage.getItem(INVITE_KEY) || localStorage.getItem(PARRAIN_KEY));
+  return INSCRIPTIONS_OUVERTES ||
+         !!(localStorage.getItem(INVITE_KEY) || localStorage.getItem(PARRAIN_KEY));
 }
 // Rejoindre la liste d'attente (candidats sans invitation).
 async function rejoindreListeAttente(email) {
