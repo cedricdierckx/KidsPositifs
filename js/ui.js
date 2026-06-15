@@ -301,10 +301,10 @@ function vueAccueil(c) {
   carte.style.setProperty("--c", enf.couleur);
   carte.innerHTML = `
     <div class="accueil-avatar">${renduAvatar(enf)}</div>
-    <h1>Salut ${enf.prenom} ! <small>(${age(enf)} ans)</small></h1>
+    <h1>${t("home.salut", { prenom: enf.prenom })} <small>(${t("home.ans", { age: age(enf) })})</small></h1>
     <div class="compteurs">
-      <div class="compteur"><span class="big">💛 ${enf.coeurs}</span><span>Cœurs à dépenser</span></div>
-      <div class="compteur"><span class="big">💧 ${enf.gouttes}</span><span>Gouttes de vie</span></div>
+      <div class="compteur"><span class="big">💛 ${enf.coeurs}</span><span>${t("home.coeurs_label")}</span></div>
+      <div class="compteur"><span class="big">💧 ${enf.gouttes}</span><span>${t("home.gouttes_label")}</span></div>
     </div>`;
   colA.appendChild(carte);
 
@@ -314,8 +314,8 @@ function vueAccueil(c) {
   // Missions Famille (directement sur la page de l'enfant)
   const titreFam = el("section", "carte titre-cat");
   titreFam.style.setProperty("--c", CATEGORIES.famille.couleur);
-  titreFam.innerHTML = `<h2>🏡 Missions Famille <span class="solde-inline">💛 ${enf.coeurs}</span></h2>`;
-  const lienFam = el("button", "lien-cat", "Voir tout →");
+  titreFam.innerHTML = `<h2>${t("home.missions_famille")} <span class="solde-inline">💛 ${enf.coeurs}</span></h2>`;
+  const lienFam = el("button", "lien-cat", t("home.voir_tout"));
   lienFam.onclick = () => { etat.vue = "famille"; ecrireCache(); rendre(); };
   titreFam.querySelector("h2").appendChild(lienFam);
   colB.appendChild(titreFam);
@@ -324,8 +324,8 @@ function vueAccueil(c) {
   // Missions Planète (directement sur la page de l'enfant)
   const titrePla = el("section", "carte titre-cat");
   titrePla.style.setProperty("--c", CATEGORIES.planete.couleur);
-  titrePla.innerHTML = `<h2>🌍 Missions Planète <span class="solde-inline">💧 ${enf.gouttes}</span></h2>`;
-  const lienPla = el("button", "lien-cat", "Voir tout →");
+  titrePla.innerHTML = `<h2>${t("home.missions_planete")} <span class="solde-inline">💧 ${enf.gouttes}</span></h2>`;
+  const lienPla = el("button", "lien-cat", t("home.voir_tout"));
   lienPla.onclick = () => { etat.vue = "planete"; ecrireCache(); rendre(); };
   titrePla.querySelector("h2").appendChild(lienPla);
   colB.appendChild(titrePla);
@@ -334,15 +334,15 @@ function vueAccueil(c) {
   // Aperçu écosystème
   const ecoCarte = el("section", "carte");
   const apercu = renduSceneEco(enf);
-  ecoCarte.innerHTML = `<h2>🌱 Mon écosystème</h2>
-    <div class="eco-mini">${apercu || "🌱 Ta nature attend tes premières plantes…"}</div>
-    <p class="eco-statut">${nbTotalEspeces(enf)} êtres vivants</p>`;
+  ecoCarte.innerHTML = `<h2>${t("home.mon_ecosysteme")}</h2>
+    <div class="eco-mini">${apercu || t("home.eco_vide")}</div>
+    <p class="eco-statut">${t("home.etres_vivants", { n: nbTotalEspeces(enf) })}</p>`;
   colB.appendChild(ecoCarte);
 
   // Badges
   if (enf.badges.length) {
     const bCarte = el("section", "carte");
-    bCarte.innerHTML = `<h2>🏆 Mes badges</h2>
+    bCarte.innerHTML = `<h2>${t("home.mes_badges")}</h2>
       <div class="badges">${enf.badges.map(b => `<span class="badge">${b.emoji} ${b.nom}</span>`).join("")}</div>`;
     colB.appendChild(bCarte);
   }
@@ -369,14 +369,14 @@ function bandeauDodo(enf) {
   sec.innerHTML = `
     <div class="dodo-etoiles">✦ ✧ ⭐ ✦ ✧ ✦ ✧</div>
     <div class="dodo-txt"><strong>${m.emoji} ${m.titre}</strong><small>🛏️ ${m.heure}</small></div>
-    <div class="dodo-chemin" title="Quand l'étoile arrive à la lune, c'est l'heure de dormir">
+    <div class="dodo-chemin" title="${t("dodo.title")}">
       <span class="dc-bout">☀️</span>
       <div class="dc-piste"><div class="dc-rempli" style="width:${m.progress}%"></div>
         <span class="dc-token" style="left:${m.progress}%">⭐</span></div>
       <span class="dc-bout">🌙</span>
     </div>`;
   const b = el("button", "dodo-btn" + (fait ? " fait" : ""),
-    fait ? "✅ Au lit à l'heure !" : (enAttente ? "⏳ En attente" : `Je vais au lit à l'heure 🌙 +${mission.points}💛`));
+    fait ? t("dodo.fait") : (enAttente ? t("dodo.attente") : t("dodo.bouton", { pts: mission.points })));
   b.onclick = () => validerMission(mission);
   sec.appendChild(b);
   return sec;
@@ -392,7 +392,7 @@ function grilleMissions(catId) {
   // La mission spéciale "coucher" est affichée à part (bandeau dodo).
   const actives = missionsActives(enf, catId, jour).filter(m => m.speciale !== "coucher");
   if (actives.length === 0) {
-    liste.appendChild(el("p", "note", "Aucune mission prévue aujourd'hui pour cette catégorie."));
+    liste.appendChild(el("p", "note", t("missions.aucune")));
     return liste;
   }
   actives.forEach(m => {
@@ -418,9 +418,9 @@ function vueMissions(c, catId) {
 
   const entete = el("section", "carte entete-cat");
   entete.style.setProperty("--c", cat.couleur);
-  entete.innerHTML = `<h1>${cat.emoji} ${cat.nom}</h1>
-    <p>${cat.description}</p>
-    <p class="solde">${cat.monnaieEmoji} <strong>${catId === "famille" ? enf.coeurs : enf.gouttes}</strong> ${cat.monnaie}</p>`;
+  entete.innerHTML = `<h1>${cat.emoji} ${t("cat." + catId + ".nom")}</h1>
+    <p>${t("cat." + catId + ".desc")}</p>
+    <p class="solde">${cat.monnaieEmoji} <strong>${catId === "famille" ? enf.coeurs : enf.gouttes}</strong> ${t("money." + (catId === "famille" ? "coeurs" : "gouttes"))}</p>`;
   c.appendChild(entete);
 
   // Aperçu de la récompense liée
@@ -432,8 +432,8 @@ function vueMissions(c, catId) {
   // Section famille : défis réparation (alternative à la punition)
   if (catId === "famille") {
     const rep = el("section", "carte reparation");
-    rep.innerHTML = `<h2>🌈 Oups, ça arrive…</h2>
-      <p>Pas de point en moins ! Quand quelque chose ne va pas, on <strong>répare</strong> et on gagne même un petit bonus.</p>`;
+    rep.innerHTML = `<h2>${t("rep.titre")}</h2>
+      <p>${t("rep.texte")}</p>`;
     const g = el("div", "missions");
     DEFIS_REPARATION.forEach(d => {
       const b = el("button", "mission rep");
@@ -463,9 +463,9 @@ function renduSceneEco(enf) {
 function vueEcosysteme(enf) {
   const sec = el("section", "carte eco-carte");
   const scene = renduSceneEco(enf);
-  sec.innerHTML = `<h2>🌱 Mon écosystème vivant</h2>
-    <p class="note">Chaque être vivant est une <strong>carte</strong> 🃏 avec ses besoins. Crée d'abord les 🌱 plantes, puis les 🐰 herbivores qui les mangent, puis les 🦊 carnivores. Pour un 🐒 singe il faut 10 arbres et 1 bananier !</p>
-    <div class="eco-scene">${scene || "<span class='eco-vide'>Crée ta première plante 🌱</span>"}</div>`;
+  sec.innerHTML = `<h2>${t("eco.titre")}</h2>
+    <p class="note">${t("eco.intro")}</p>
+    <div class="eco-scene">${scene || `<span class='eco-vide'>${t("eco.vide_court")}</span>`}</div>`;
 
   TIERS_ECO.forEach(tier => {
     const bloc = el("div", "eco-tier");
@@ -507,7 +507,7 @@ function carteEspece(enf, tier, sp) {
       return `<span class="ec-need ${ok ? "ok" : "ko"}">${emoji} ${a}/${req}${ok ? " ✓" : ""}</span>`;
     }).join("") + `</div>`;
   } else {
-    prereqHtml = `<div class="ec-prereq"><span class="ec-libre">Aucun prérequis ☀️</span></div>`;
+    prereqHtml = `<div class="ec-prereq"><span class="ec-libre">${t("eco.aucun_prereq")}</span></div>`;
   }
 
   carte.innerHTML = `
@@ -516,7 +516,7 @@ function carteEspece(enf, tier, sp) {
     <span class="ec-nom">${sp.nom}</span>
     <span class="ec-cout ${assezGouttes ? "" : "manque"}">${sp.cout} 💧</span>
     ${prereqHtml}
-    <span class="ec-etat">${creable ? "➕ Créer" : (prereqOk ? "💧 Plus de gouttes" : "🔒 Verrouillé")}</span>`;
+    <span class="ec-etat">${creable ? t("eco.creer") : (prereqOk ? t("eco.plus_gouttes") : t("eco.verrouille"))}</span>`;
   carte.onclick = () => creerEspece(tier, sp);
   return carte;
 }

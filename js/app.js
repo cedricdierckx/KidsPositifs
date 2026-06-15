@@ -196,9 +196,9 @@ function momentDodo(enf) {
   const maintenant = now.getHours() * 60 + now.getMinutes();
   const reste = coucher - maintenant;           // minutes avant le coucher
   let classe, emoji, titre, progress;
-  if (reste > DODO_FENETRE)      { classe = "dodo-jour"; emoji = "☀️"; titre = "Encore du temps pour jouer"; progress = 0; }
-  else if (reste > 0)           { classe = "dodo-soir"; emoji = "🌇"; titre = "Le dodo approche";           progress = Math.round((1 - reste / DODO_FENETRE) * 100); }
-  else                          { classe = "dodo-nuit"; emoji = "🌙"; titre = "C'est l'heure de dormir";   progress = 100; }
+  if (reste > DODO_FENETRE)      { classe = "dodo-jour"; emoji = "☀️"; titre = t("dodo.jour"); progress = 0; }
+  else if (reste > 0)           { classe = "dodo-soir"; emoji = "🌇"; titre = t("dodo.soir"); progress = Math.round((1 - reste / DODO_FENETRE) * 100); }
+  else                          { classe = "dodo-nuit"; emoji = "🌙"; titre = t("dodo.nuit"); progress = 100; }
   return { classe, emoji, titre, progress, heure: enf.heureCoucher };
 }
 function $(sel) { return document.querySelector(sel); }
