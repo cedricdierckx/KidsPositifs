@@ -1,5 +1,5 @@
 /* =====================================================================
- * KidsPositifs — Données de configuration
+ * FamiTeam — Données de configuration
  * ---------------------------------------------------------------------
  * Inspiration pédagogique (parentalité positive et bienveillante) :
  *  - On valorise l'effort et la coopération, jamais la performance.
@@ -8,6 +8,9 @@
  *    leur opposé positif et par des « défis réparation » bienveillants.
  *  - Chaque enfant progresse à son rythme (programme évolutif par âge).
  * ===================================================================== */
+
+/* ---- Nom de l'application (défini à un seul endroit) --------------- */
+const APP_NOM = "FamiTeam";
 
 /* ---- Les enfants (modifiables dans les Réglages) -------------------
  * naissance : date complète au format AAAA-MM-JJ

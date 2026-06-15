@@ -1,5 +1,5 @@
 /* =====================================================================
- * KidsPositifs — Logique de l'application (jeu)
+ * FamiTeam — Logique de l'application (jeu)
  * L'authentification, les familles et la synchronisation Supabase sont
  * gérées dans js/auth.js. Ce fichier contient l'état de jeu et les actions.
  * ===================================================================== */
@@ -710,7 +710,7 @@ function exporter() {
   const blob = new Blob([JSON.stringify(etat, null, 2)], { type: "application/json" });
   const a = el("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "kidspositifs-sauvegarde.json";
+  a.download = "famiteam-sauvegarde.json";
   a.click();
 }
 

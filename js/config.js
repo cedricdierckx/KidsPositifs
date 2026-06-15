@@ -1,5 +1,5 @@
 /* =====================================================================
- * KidsPositifs — Configuration Supabase
+ * FamiTeam — Configuration Supabase
  * ---------------------------------------------------------------------
  * Renseignez ici l'URL et la clé "anon" (publique) de votre projet
  * Supabase. Ces deux valeurs sont publiques par conception : la sécurité

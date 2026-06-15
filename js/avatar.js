@@ -1,5 +1,5 @@
 /* =====================================================================
- * KidsPositifs — Rendu d'avatar vectoriel (SVG)
+ * FamiTeam — Rendu d'avatar vectoriel (SVG)
  * ---------------------------------------------------------------------
  * Tous les éléments sont dessinés sur une grille fixe 100×100, donc
  * parfaitement alignés quelle que soit la combinaison choisie.

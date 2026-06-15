@@ -1,5 +1,5 @@
 /* =====================================================================
- * KidsPositifs — Styles (interface tactile, lisible par de jeunes enfants)
+ * FamiTeam — Styles (interface tactile, lisible par de jeunes enfants)
  * ===================================================================== */
 :root{
   --bg:#f3f7fb; --carte:#ffffff; --texte:#2b3445; --doux:#6b7689;
@@ -364,4 +364,56 @@ main{max-width:680px; margin:0 auto; padding:14px}
 
 @media(max-width:420px){
   .compteurs{flex-direction:column; align-items:center}
+}
+
+/* =====================================================================
+ * Accueil : disposition 2 colonnes (desktop) / empilée (mobile)
+ * ===================================================================== */
+.accueil-layout{display:block}
+.acc-col{display:block}
+
+/* =====================================================================
+ * Tablette & ordinateur : largeurs confortables, en-tête et barre
+ * de navigation centrées, effets de survol (souris).
+ * ===================================================================== */
+@media(min-width:820px){
+  body{padding-bottom:96px}
+
+  /* Contenu plus large et centré */
+  main{max-width:1040px; padding:22px}
+
+  /* En-tête : tout sur une ligne, centré sur la largeur du contenu */
+  .topbar{flex-direction:row; align-items:center; gap:16px; padding:12px 22px}
+  .topbar .logo{flex:0 0 auto; padding-left:48px}
+  .topbar .selecteur{flex:1 1 auto; justify-content:flex-end}
+  .pastille-inviter{width:40px; height:40px; font-size:21px}
+
+  /* Accueil sur 2 colonnes : profil/dodo à gauche, le reste à droite */
+  main[data-vue="accueil"] .accueil-layout{
+    display:grid; grid-template-columns:330px 1fr; gap:20px; align-items:start;
+  }
+  .acc-col-a{position:sticky; top:90px}
+
+  /* Barre de navigation : pilule flottante centrée */
+  .navbar{
+    left:50%; right:auto; bottom:16px; transform:translateX(-50%);
+    width:auto; max-width:680px; border-radius:22px; padding:4px 8px;
+    box-shadow:0 8px 26px rgba(40,60,90,.18);
+  }
+  .nav-btn{padding:10px 18px}
+  .nav-btn.actif::after{top:auto; bottom:-4px}
+
+  /* Survol souris : petit relief sur les éléments cliquables */
+  .mission:hover, .eco-carte-sp:hover, .pastille:hover,
+  .raccourcis .gros-bouton:hover, .famille-item:hover{
+    transform:translateY(-2px); box-shadow:var(--ombre);
+  }
+  .gros-bouton:hover{filter:brightness(1.03)}
+  .btn-secondaire:hover, .mini-btn:hover{filter:brightness(.98)}
+}
+
+/* Très grand écran : on garde une largeur de lecture agréable */
+@media(min-width:1280px){
+  main{max-width:1140px}
+  main[data-vue="accueil"] .accueil-layout{grid-template-columns:360px 1fr}
 }

@@ -1,5 +1,5 @@
 /* =====================================================================
- * KidsPositifs — Rendu de l'interface
+ * FamiTeam — Rendu de l'interface
  * ===================================================================== */
 
 // Affichage de la section abonnement (masquée tant que les utilisateurs
@@ -30,7 +30,7 @@ function feterParrainage(nb) {
     <div class="badge-pop-carte parrain-pop">
       <div class="badge-pop-rayons">🎉</div>
       <div class="badge-pop-titre">Merci & bravo ! 💛</div>
-      <div class="badge-pop-nom">${sfx} rejoint KidsPositifs grâce à toi.<br>Tu répands les ondes positives ! 🤝🌍</div>
+      <div class="badge-pop-nom">${sfx} rejoint ${APP_NOM} grâce à toi.<br>Tu répands les ondes positives ! 🤝🌍</div>
     </div>`;
   document.body.appendChild(ov);
   if (typeof confettis === "function") confettis();
@@ -77,7 +77,7 @@ function modaleParrainage() {
     <div class="pin-carte parrain-modale">
       <button class="modale-fermer" aria-label="Fermer">✕</button>
       <div class="pin-titre">🎁 Inviter une famille amie</div>
-      <p class="note">Offre KidsPositifs à des amis : ils créeront <strong>leur propre famille</strong>.</p>
+      <p class="note">Offre ${APP_NOM} à des amis : ils créeront <strong>leur propre famille</strong>.</p>
       <p id="pm-quota" class="note">Vérification de ton quota…</p>
       <div id="pm-zone"></div>
       <button id="pm-creer" class="gros-bouton planete">🎁 Créer un lien de parrainage</button>
@@ -101,8 +101,8 @@ function modaleParrainage() {
     bCreer.textContent = "🎁 Créer un lien de parrainage";
     if (lien) {
       montrerLienInvitation(zone, lien, "Partage ce lien : ton ami créera sa propre famille. 💛", {
-        sujet: "Je t'offre KidsPositifs 🌟",
-        corps: "Coucou !\n\nJe te parraine sur KidsPositifs, une appli bienveillante qui aide nos enfants à adopter de bons gestes (avatar à faire évoluer 💛 et écosystème vivant à bâtir 🌍).\n\nOuvre ce lien pour créer ta propre famille :\n{lien}\n\nÀ très vite ! 🤝"
+        sujet: "Je t'offre " + APP_NOM + " 🌟",
+        corps: "Coucou !\n\nJe te parraine sur " + APP_NOM + ", une appli bienveillante qui aide toute la famille à instaurer une ambiance positive et à s'aligner sur les tâches de la maison et la protection de la planète (avatar à faire évoluer 💛 et écosystème vivant à bâtir 🌍).\n\nOuvre ce lien pour créer ta propre famille :\n{lien}\n\nÀ très vite ! 🤝"
       });
     }
     majQuota();
@@ -116,7 +116,7 @@ function initSquelette() {
 
     <header class="topbar">
       <button id="pastille-inviter" class="pastille-inviter" title="Inviter une autre famille">🎁</button>
-      <div class="logo">🌟 KidsPositifs <span id="sync-etat" class="sync-etat" title="État de la synchronisation">…</span></div>
+      <div class="logo">🌟 ${APP_NOM} <span id="sync-etat" class="sync-etat" title="État de la synchronisation">…</span></div>
       <div id="selecteur-enfant" class="selecteur"></div>
     </header>
 
@@ -230,6 +230,7 @@ function rendre() {
 
   const c = $("#contenu");
   c.innerHTML = "";
+  c.setAttribute("data-vue", etat.vue);   // pilote la mise en page responsive
   switch (etat.vue) {
     case "accueil":  vueAccueil(c);  break;
     case "famille":  vueMissions(c, "famille"); break;
@@ -269,6 +270,13 @@ function rendreSelecteur() {
 function vueAccueil(c) {
   const enf = enfantActif();
 
+  // Disposition 2 colonnes sur grand écran, empilée sur mobile/tablette.
+  const layout = el("div", "accueil-layout");
+  const colA = el("div", "acc-col acc-col-a"); // profil + dodo (latéral sur desktop)
+  const colB = el("div", "acc-col acc-col-b"); // missions, écosystème, badges
+  layout.appendChild(colA); layout.appendChild(colB);
+  c.appendChild(layout);
+
   const carte = el("section", "carte-accueil");
   carte.style.setProperty("--c", enf.couleur);
   carte.innerHTML = `
@@ -278,10 +286,10 @@ function vueAccueil(c) {
       <div class="compteur"><span class="big">💛 ${enf.coeurs}</span><span>Cœurs à dépenser</span></div>
       <div class="compteur"><span class="big">💧 ${enf.gouttes}</span><span>Gouttes de vie</span></div>
     </div>`;
-  c.appendChild(carte);
+  colA.appendChild(carte);
 
   // Bandeau "dodo" : ambiance selon l'heure + mission coucher à l'heure
-  c.appendChild(bandeauDodo(enf));
+  colA.appendChild(bandeauDodo(enf));
 
   // Missions Famille (directement sur la page de l'enfant)
   const titreFam = el("section", "carte titre-cat");
@@ -290,8 +298,8 @@ function vueAccueil(c) {
   const lienFam = el("button", "lien-cat", "Voir tout →");
   lienFam.onclick = () => { etat.vue = "famille"; ecrireCache(); rendre(); };
   titreFam.querySelector("h2").appendChild(lienFam);
-  c.appendChild(titreFam);
-  c.appendChild(grilleMissions("famille"));
+  colB.appendChild(titreFam);
+  colB.appendChild(grilleMissions("famille"));
 
   // Missions Planète (directement sur la page de l'enfant)
   const titrePla = el("section", "carte titre-cat");
@@ -300,8 +308,8 @@ function vueAccueil(c) {
   const lienPla = el("button", "lien-cat", "Voir tout →");
   lienPla.onclick = () => { etat.vue = "planete"; ecrireCache(); rendre(); };
   titrePla.querySelector("h2").appendChild(lienPla);
-  c.appendChild(titrePla);
-  c.appendChild(grilleMissions("planete"));
+  colB.appendChild(titrePla);
+  colB.appendChild(grilleMissions("planete"));
 
   // Aperçu écosystème
   const ecoCarte = el("section", "carte");
@@ -309,14 +317,14 @@ function vueAccueil(c) {
   ecoCarte.innerHTML = `<h2>🌱 Mon écosystème</h2>
     <div class="eco-mini">${apercu || "🌱 Ta nature attend tes premières plantes…"}</div>
     <p class="eco-statut">${nbTotalEspeces(enf)} êtres vivants</p>`;
-  c.appendChild(ecoCarte);
+  colB.appendChild(ecoCarte);
 
   // Badges
   if (enf.badges.length) {
     const bCarte = el("section", "carte");
     bCarte.innerHTML = `<h2>🏆 Mes badges</h2>
       <div class="badges">${enf.badges.map(b => `<span class="badge">${b.emoji} ${b.nom}</span>`).join("")}</div>`;
-    c.appendChild(bCarte);
+    colB.appendChild(bCarte);
   }
 }
 
@@ -872,7 +880,7 @@ function vueReglages(c) {
   // ----- Parrainage : inviter une famille amie à créer la sienne -----
   const par = el("section", "carte");
   par.innerHTML = `<h2>🎁 Parrainer une famille amie</h2>
-    <p class="note">Offre KidsPositifs à des amis : avec ton lien de parrainage, ils
+    <p class="note">Offre ${APP_NOM} à des amis : avec ton lien de parrainage, ils
     créeront <strong>leur propre famille</strong>. Tu peux parrainer
     <strong>3 familles par semaine</strong>. Plus on est nombreux, plus on répand
     les ondes positives ! 🤝</p>
@@ -892,8 +900,8 @@ function vueReglages(c) {
     bPar.textContent = "🎁 Créer un lien de parrainage";
     if (lien) {
       const mailto = {
-        sujet: "Je t'offre KidsPositifs 🌟",
-        corps: "Coucou !\n\nJe te parraine sur KidsPositifs, une appli bienveillante qui aide nos enfants à adopter de bons gestes (avatar à faire évoluer 💛 et écosystème vivant à bâtir 🌍).\n\nOuvre ce lien pour créer ta propre famille :\n{lien}\n\nÀ très vite ! 🤝"
+        sujet: "Je t'offre " + APP_NOM + " 🌟",
+        corps: "Coucou !\n\nJe te parraine sur " + APP_NOM + ", une appli bienveillante qui aide toute la famille à instaurer une ambiance positive et à s'aligner sur les tâches de la maison et la protection de la planète (avatar à faire évoluer 💛 et écosystème vivant à bâtir 🌍).\n\nOuvre ce lien pour créer ta propre famille :\n{lien}\n\nÀ très vite ! 🤝"
       };
       montrerLienInvitation(par, lien, "Partage ce lien : ton ami créera sa propre famille. 💛", mailto);
       parrainageRestant().then(n => {

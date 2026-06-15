@@ -1,4 +1,7 @@
-# 🌟 KidsPositifs
+# 🌟 FamiTeam
+
+> Site : **https://famiteam.com** (alias du déploiement Vercel).
+
 
 Un programme **évolutif et ludique** pour aider les enfants de **2 à 7 ans** à
 adopter des comportements positifs — et à se détourner des négatifs — dans
@@ -40,9 +43,9 @@ L'authentification et la base de données reposent sur **Supabase** :
 3. Dans **Project Settings → API**, copie *Project URL* et la clé *anon public*,
    et renseigne-les dans `js/config.js` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`).
    Ces valeurs sont publiques par conception (la sécurité est assurée par RLS).
-4. Dans **Authentication → URL Configuration**, ajoute l'URL du site
-   (https://kids-positifs.vercel.app/) aux *Redirect URLs* (pour les liens
-   magiques), puis déploie.
+4. Dans **Authentication → URL Configuration**, ajoute les URL du site
+   (https://famiteam.com/ et https://kids-positifs.vercel.app/) aux
+   *Redirect URLs* (pour les liens magiques), puis déploie.
 
 Tant que `js/config.js` n'est pas renseigné, l'appli affiche un écran de
 configuration expliquant la marche à suivre.
@@ -54,7 +57,7 @@ Ouvre simplement le fichier `index.html` dans un navigateur.
 Pour une utilisation sur tablette, tu peux aussi servir le dossier localement :
 
 ```bash
-cd KidsPositifs
+cd FamiTeam
 python3 -m http.server 8000
 # puis ouvre http://localhost:8000
 ```

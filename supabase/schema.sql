@@ -1,5 +1,5 @@
 -- =====================================================================
--- KidsPositifs — Schéma Supabase (à exécuter dans l'éditeur SQL Supabase)
+-- FamiTeam — Schéma Supabase (à exécuter dans l'éditeur SQL Supabase)
 -- ---------------------------------------------------------------------
 -- Comptes (auth.users gérés par Supabase) + familles multi-membres,
 -- invitations par lien, état de jeu par famille, et ancrages d'abonnement.

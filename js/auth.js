@@ -1,5 +1,5 @@
 /* =====================================================================
- * KidsPositifs — Authentification, familles, invitations & synchro
+ * FamiTeam — Authentification, familles, invitations & synchro
  * ---------------------------------------------------------------------
  * Utilise Supabase (Auth e-mail : lien magique + mot de passe) et une base
  * Postgres protégée par RLS (voir supabase/schema.sql).
@@ -311,7 +311,7 @@ function ecranConfig() {
 function ecranAuth() {
   const parrain = localStorage.getItem(PARRAIN_KEY);
   carteEcran(`
-    <div class="code-logo">🌟</div><h1>KidsPositifs</h1>
+    <div class="code-logo">🌟</div><h1>${APP_NOM}</h1>
     <div id="parrain-banniere"></div>
     <p id="auth-titre">Connecte-toi pour retrouver ta famille sur tous tes appareils.</p>
     <input id="email" type="email" inputmode="email" placeholder="ton@email.com" autocomplete="email">
@@ -327,12 +327,12 @@ function ecranAuth() {
     <hr style="border:none;border-top:1px solid #e3edf5;margin:14px 0">
     <button id="b-demo" class="btn-secondaire">🧪 Découvrir en démo (sans compte)</button>
     <div class="concept-bloc">
-      <h2>🎁 Une aventure qui se partage</h2>
-      <p>KidsPositifs aide les enfants à grandir dans la <strong>bienveillance</strong> :
-      petits gestes du quotidien, avatar à faire évoluer 💛 et écosystème vivant à
-      bâtir 🌍. L'accès se fait <strong>sur invitation</strong> : chaque famille peut
-      <strong>parrainer 3 familles amies par semaine</strong> — un geste positif de plus,
-      transmis de famille en famille. 🤝</p>
+      <h2>🎁 Toute la famille, dans la même équipe</h2>
+      <p>${APP_NOM} aide les parents à instaurer une <strong>ambiance positive</strong> à
+      la maison et à <strong>aligner toute la famille</strong> sur les tâches du quotidien 🏡
+      et la protection de la planète 🌍 — en douceur, par l'encouragement (avatar à faire
+      évoluer 💛 et écosystème vivant à bâtir). L'accès se fait <strong>sur invitation</strong> :
+      chaque famille peut <strong>parrainer 3 familles amies par semaine</strong>. 🤝</p>
     </div>`);
 
   // Bannière personnalisée si on arrive via un lien de parrainage.
@@ -343,7 +343,7 @@ function ecranAuth() {
       infoParrainage(parrain).then(info => {
         if (info && info.parrain_name) {
           b.querySelector(".parrain-carte").innerHTML =
-            `🎁 <strong>${echapper(info.parrain_name)}</strong> t'invite à découvrir KidsPositifs ! Crée ton compte pour lancer <strong>ta propre famille</strong>.`;
+            `🎁 <strong>${echapper(info.parrain_name)}</strong> t'invite à découvrir ${APP_NOM} ! Crée ton compte pour lancer <strong>ta propre famille</strong>.`;
         }
       });
     }
