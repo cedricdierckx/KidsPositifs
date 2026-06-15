@@ -346,40 +346,41 @@ function ecranConfig() {
 
 function ecranAuth() {
   const parrain = localStorage.getItem(PARRAIN_KEY);
+  const opts = Object.keys(LANGUES).map(l =>
+    `<option value="${l}"${l === langue ? " selected" : ""}>${LANGUES[l]}</option>`).join("");
   carteEcran(`
+    <div class="choix-langue"><select id="sel-langue" title="${t("langue")}">${opts}</select></div>
     <div class="code-logo">🌟</div><h1>${APP_NOM}</h1>
     <div id="parrain-banniere"></div>
-    <p id="auth-titre">Connecte-toi pour retrouver ta famille sur tous tes appareils.</p>
-    <input id="email" type="email" inputmode="email" placeholder="ton@email.com" autocomplete="email">
-    <input id="mdp" type="password" placeholder="Mot de passe" autocomplete="current-password">
-    <button id="b-principal" class="gros-bouton planete">Se connecter</button>
-    <button id="b-toggle" class="btn-secondaire">Utiliser un lien magique ✨</button>
-    <button id="b-signup" class="btn-secondaire">Pas de compte ? Créer un compte</button>
+    <p id="auth-titre">${t("auth.tagline")}</p>
+    <input id="email" type="email" inputmode="email" placeholder="${t("auth.email_ph")}" autocomplete="email">
+    <input id="mdp" type="password" placeholder="${t("auth.mdp_ph")}" autocomplete="current-password">
+    <button id="b-principal" class="gros-bouton planete">${t("auth.connexion")}</button>
+    <button id="b-toggle" class="btn-secondaire">${t("auth.lien_magique")}</button>
+    <button id="b-signup" class="btn-secondaire">${t("auth.pas_compte")}</button>
     <div id="attente-bloc">
-      <p class="note">✨ Les inscriptions sont actuellement <strong>sur invitation uniquement</strong>. Demande un lien à une famille déjà inscrite, ou laisse ton e-mail pour être prévenu·e dès l'ouverture.</p>
-      <button id="b-waitlist" class="btn-secondaire">📝 Rejoindre la liste d'attente</button>
+      <p class="note">${t("auth.attente_note")}</p>
+      <button id="b-waitlist" class="btn-secondaire">${t("auth.rejoindre_attente")}</button>
     </div>
     <p class="note" id="auth-msg"></p>
     <hr style="border:none;border-top:1px solid #e3edf5;margin:14px 0">
-    <button id="b-demo" class="btn-secondaire">🧪 Découvrir en démo (sans compte)</button>
+    <button id="b-demo" class="btn-secondaire">${t("auth.demo")}</button>
     <div class="concept-bloc">
-      <h2>🎁 Toute la famille, dans la même équipe</h2>
-      <p>${APP_NOM} aide les parents à instaurer une <strong>ambiance positive</strong> à
-      la maison et à <strong>aligner toute la famille</strong> sur les tâches du quotidien 🏡
-      et la protection de la planète 🌍 — en douceur, par l'encouragement (avatar à faire
-      évoluer 💛 et écosystème vivant à bâtir). L'accès se fait <strong>sur invitation</strong> :
-      chaque famille peut <strong>parrainer 3 familles amies par semaine</strong>. 🤝</p>
+      <h2>${t("auth.concept_titre")}</h2>
+      <p>${t("auth.concept_texte", { app: APP_NOM })}</p>
     </div>`);
+
+  document.getElementById("sel-langue").onchange = (e) => { definirLangue(e.target.value); ecranAuth(); };
 
   // Bannière personnalisée si on arrive via un lien de parrainage.
   if (parrain) {
     const b = document.getElementById("parrain-banniere");
     if (b) {
-      b.innerHTML = `<div class="parrain-carte">🎁 Tu as été <strong>parrainé·e</strong> ! Crée ton compte pour lancer <strong>ta propre famille</strong>.</div>`;
+      b.innerHTML = `<div class="parrain-carte">${t("auth.parrain_generique")}</div>`;
       infoParrainage(parrain).then(info => {
         if (info && info.parrain_name) {
           b.querySelector(".parrain-carte").innerHTML =
-            `🎁 <strong>${echapper(info.parrain_name)}</strong> t'invite à découvrir ${APP_NOM} ! Crée ton compte pour lancer <strong>ta propre famille</strong>.`;
+            t("auth.parrain_nomme", { nom: echapper(info.parrain_name), app: APP_NOM });
         }
       });
     }
@@ -400,39 +401,39 @@ function ecranAuth() {
     // L'inscription n'est proposée que sur invitation/parrainage.
     bSignup.style.display = (modeMdp && peutSinscrire) ? "block" : "none";
     blocAttente.style.display = peutSinscrire ? "none" : "block";
-    bToggle.textContent = modeMdp ? "Utiliser un lien magique ✨" : "Utiliser un mot de passe";
-    bPrinc.textContent = !modeMdp ? "Recevoir un lien magique ✨"
-                        : (inscriptionMode ? "Créer mon compte" : "Se connecter");
-    bSignup.textContent = inscriptionMode ? "← J'ai déjà un compte" : "Pas de compte ? Créer un compte";
+    bToggle.textContent = modeMdp ? t("auth.lien_magique") : t("auth.mot_de_passe");
+    bPrinc.textContent = !modeMdp ? t("auth.recevoir_lien")
+                        : (inscriptionMode ? t("auth.creer_compte") : t("auth.connexion"));
+    bSignup.textContent = inscriptionMode ? t("auth.deja_compte") : t("auth.pas_compte");
   };
   bToggle.onclick = () => { modeMdp = !modeMdp; inscriptionMode = false; rafraichir(); };
   bSignup.onclick = () => { inscriptionMode = !inscriptionMode; rafraichir(); };
   bPrinc.onclick = async () => {
     const email = elEmail.value.trim();
-    if (!email) return setMsg("Entre ton adresse e-mail.");
+    if (!email) return setMsg(t("auth.msg_entre_email"));
     bPrinc.disabled = true;
     try {
       if (!modeMdp) {
         const err = await connexionLienMagique(email);
-        setMsg(err ? "Erreur : " + err.message : "📧 E-mail envoyé ! Clique sur le lien reçu pour te connecter.");
+        setMsg(err ? t("auth.erreur", { msg: err.message }) : t("auth.msg_email_envoye"));
       } else if (inscriptionMode) {
-        if (!peutSinscrire) { setMsg("Inscription sur invitation uniquement. Rejoins la liste d'attente ci-dessous."); return; }
+        if (!peutSinscrire) { setMsg(t("auth.msg_invitation_only")); return; }
         const err = await inscription(email, elMdp.value);
-        if (err) setMsg("Erreur : " + err.message);
-        else setMsg("Compte créé. Vérifie ta boîte mail si une confirmation est demandée.");
+        if (err) setMsg(t("auth.erreur", { msg: err.message }));
+        else setMsg(t("auth.msg_compte_cree"));
       } else {
         const err = await connexionMotDePasse(email, elMdp.value);
-        if (err) setMsg("Erreur : " + err.message);
+        if (err) setMsg(t("auth.erreur", { msg: err.message }));
       }
     } finally { bPrinc.disabled = false; }
   };
   bWaitlist.onclick = async () => {
     const email = elEmail.value.trim();
-    if (!email) return setMsg("Entre ton e-mail pour rejoindre la liste d'attente.");
+    if (!email) return setMsg(t("auth.msg_attente_email"));
     bWaitlist.disabled = true;
     const err = await rejoindreListeAttente(email);
     bWaitlist.disabled = false;
-    setMsg(err ? "Erreur : " + err.message : "🎉 Merci ! Tu es sur la liste d'attente. On te préviendra dès qu'une place se libère.");
+    setMsg(err ? t("auth.erreur", { msg: err.message }) : t("auth.msg_attente_ok"));
   };
   document.getElementById("b-demo").onclick = demarrerDemo;
   rafraichir();

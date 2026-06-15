@@ -123,11 +123,11 @@ function initSquelette() {
     <main id="contenu"></main>
 
     <nav class="navbar">
-      <button data-vue="accueil"  class="nav-btn">🏠<span>Accueil</span></button>
-      <button data-vue="famille"  class="nav-btn">🏡<span>Famille</span></button>
-      <button data-vue="planete"  class="nav-btn">🌍<span>Planète</span></button>
-      <button data-vue="avatar"   class="nav-btn">🎨<span>Avatar</span></button>
-      <button data-vue="reglages" class="nav-btn">⚙️<span>Parents</span></button>
+      <button data-vue="accueil"  class="nav-btn">🏠<span>${t("nav.accueil")}</span></button>
+      <button data-vue="famille"  class="nav-btn">🏡<span>${t("nav.famille")}</span></button>
+      <button data-vue="planete"  class="nav-btn">🌍<span>${t("nav.planete")}</span></button>
+      <button data-vue="avatar"   class="nav-btn">🎨<span>${t("nav.avatar")}</span></button>
+      <button data-vue="reglages" class="nav-btn">⚙️<span>${t("nav.parents")}</span></button>
     </nav>`;
 
   // Navigation : choix d'affichage local (non synchronisé entre appareils).

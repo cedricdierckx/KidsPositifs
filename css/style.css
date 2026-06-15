@@ -207,6 +207,11 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .btn-mail{display:block; text-align:center; text-decoration:none; margin-top:8px}
 .parrain-pop{background:linear-gradient(135deg,#fff3d6,#ffe0ec)}
 
+/* Sélecteur de langue (écran d'accueil public) */
+.choix-langue{text-align:right; margin:-4px 0 4px}
+.choix-langue select{border:2px solid #e3edf5; border-radius:10px; padding:6px 10px;
+  font-family:inherit; font-size:13px; font-weight:700; background:#fff; cursor:pointer}
+
 /* Saisie du code PIN (masqué + clavier numérique) */
 .pin-modal{position:fixed; inset:0; z-index:1000; display:flex; align-items:center;
   justify-content:center; background:rgba(20,30,50,.45); padding:20px}
