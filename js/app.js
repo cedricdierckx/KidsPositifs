@@ -256,7 +256,7 @@ function validerMission(mission) {
   if (dejaFait >= 1) {
     decrediterMission(enf, mission, jour);
     const cat = CATEGORIES[mission.cat];
-    toast(`Annulé : −${mission.points} ${cat.monnaieEmoji}`, "info");
+    toast(t("toast.annule", { points: mission.points, emoji: cat.monnaieEmoji }), "info");
     sauver(); rendre();
     return;
   }
@@ -265,7 +265,7 @@ function validerMission(mission) {
   if (etat.reglages.validationParentale && !modeParents) {
     enf.enAttente.push({ missionId: mission.id, cat: mission.cat, points: mission.points,
                          titre: mission.titre, emoji: mission.emoji, jour, ts: Date.now() });
-    toast("Bravo ! 🎉 À faire valider par un parent ⏳", "info");
+    toast(t("toast.en_attente"), "info");
     sauver(); rendre();
     return;
   }
@@ -289,7 +289,7 @@ function trouverMission(id) {
 // Ajoute une mission personnalisée (mode parents).
 function ajouterMissionPerso(cat, titre, emoji, points) {
   titre = (titre || "").trim();
-  if (!titre) { toast("Donne un nom à la mission.", "info"); return; }
+  if (!titre) { toast(t("toast.nom_requis"), "info"); return; }
   if (!Array.isArray(etat.missionsPerso)) etat.missionsPerso = [];
   const id = "perso_" + Date.now().toString(36) + Math.floor(Math.random() * 1000);
   etat.missionsPerso.push({
@@ -378,7 +378,7 @@ function confirmerAttente(enf, idx) {
                   { id: a.missionId, cat: a.cat, points: a.points, titre: a.titre };
   crediterMission(enf, mission, a.jour);
   enf.enAttente.splice(idx, 1);
-  toast(`Validé : ${a.emoji || ""} ${a.titre} (+${a.points})`, "succes");
+  toast(t("toast.valide", { emoji: a.emoji || "", titre: trData("mission", a.missionId, a.titre), points: a.points }), "succes");
   confettis();
   sauver();
   rendre();
@@ -394,7 +394,7 @@ function defiReparation(defi) {
   const enf = enfantActif();
   enf.coeurs += defi.bonus;
   enf.coeursTotal += defi.bonus;
-  toast(`Bravo d'avoir réparé ! +${defi.bonus} 💛`, "succes");
+  toast(t("toast.repare", { bonus: defi.bonus }), "succes");
   sauver();
   rendre();
 }
@@ -404,12 +404,12 @@ function acheterOption(categorie, option) {
   const cle = `${categorie}:${option.id}`;
   if (!enf.debloque.includes(cle) && option.cout > 0) {
     if (enf.coeurs < option.cout) {
-      toast("Pas encore assez de Cœurs 💛 — continue tes belles actions !", "info");
+      toast(t("toast.pas_assez_coeurs"), "info");
       return;
     }
     enf.coeurs -= option.cout;
     enf.debloque.push(cle);
-    toast(`Débloqué : ${option.nom} ! 🎉`, "succes");
+    toast(t("toast.debloque", { nom: trData("avatar." + categorie, option.id, option.nom) }), "succes");
   }
   // équiper
   enf.avatar[categorie] = option.id;
@@ -464,21 +464,21 @@ function creerEspece(tier, espece) {
   const manquants = prereqManquants(enf, espece);
   if (manquants.length) {
     const liste = manquants.map(m => {
-      const n = m.info ? m.info.sp.nom.toLowerCase() : "?";
+      const n = m.info ? trData("espece", m.info.sp.id, m.info.sp.nom).toLowerCase() : "?";
       const e = m.info ? m.info.sp.emoji : "";
       return `${m.requis - m.possede} ${n} ${e}`;
     }).join(", ");
-    toast(`Pour créer ${espece.emoji} ${espece.nom}, il manque : ${liste}.`, "info");
+    toast(t("toast.manque_prereq", { emoji: espece.emoji, nom: trData("espece", espece.id, espece.nom), liste }), "info");
     return;
   }
   if (enf.gouttes < espece.cout) {
-    toast("Pas encore assez de Gouttes 💧 — continue tes gestes pour la planète !", "info");
+    toast(t("toast.pas_assez_gouttes"), "info");
     return;
   }
   enf.gouttes -= espece.cout;
   const coll = enf.ecosysteme[tier.id];
   coll[espece.id] = (coll[espece.id] || 0) + 1;
-  toast(`${espece.emoji} Un(e) ${espece.nom} rejoint ton écosystème ! 🌍`, "succes");
+  toast(t("toast.nouvel_etre", { emoji: espece.emoji, nom: trData("espece", espece.id, espece.nom) }), "succes");
   confettis();
   verifierBadges(enf);
   sauver();
@@ -491,9 +491,10 @@ function verifierBadges(enf) {
   const ajoute = (id, nom, emoji) => {
     if (enf.badgesRetires.includes(id)) return; // retiré par un parent : on ne le redonne pas
     if (!enf.badges.find(b => b.id === id)) {
+      const nomTr = trData("badge", id, nom);
       enf.badges.push({ id, nom, emoji });
-      if (typeof animationBadge === "function") animationBadge(emoji, nom);
-      else toast(`Nouveau badge : ${emoji} ${nom} !`, "succes");
+      if (typeof animationBadge === "function") animationBadge(emoji, nomTr);
+      else toast(t("toast.nouveau_badge", { emoji, nom: nomTr }), "succes");
     }
   };
   if (enf.coeursTotal >= 10) ajoute("coeur10", "Cœur d'or", "💛");
@@ -511,7 +512,8 @@ function verifierBadges(enf) {
 /* ---------- Feedback ---------- */
 function feterGain(mission) {
   const cat = CATEGORIES[mission.cat];
-  toast(`${cat.monnaieEmoji} +${mission.points} ${cat.monnaie} — ${aleatoire(ENCOURAGEMENTS)}`, "succes");
+  const idx = Math.floor(Math.random() * ENCOURAGEMENTS.length);
+  toast(t("toast.gain", { emoji: cat.monnaieEmoji, points: mission.points, monnaie: t("cat." + mission.cat + ".monnaie"), phrase: trData("encour", idx, ENCOURAGEMENTS[idx]) }), "succes");
   confettis();
 }
 

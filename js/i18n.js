@@ -150,6 +150,15 @@ function t(cle, vars) {
   return s;
 }
 
+// Traduit un libellé de contenu (mission, espèce, option d'avatar...) dont la
+// donnée de base (data.js) est en français. Cherche "prefix.id" dans la
+// langue courante ; si absent (ou en français), retombe sur `fallback`.
+function trData(prefix, id, fallback) {
+  const table = I18N[langue];
+  const k = prefix + "." + id;
+  return (table && table[k]) || fallback;
+}
+
 /* ---- Phase E2 : écrans enfant (accueil, missions, écosystème, dodo) ---- */
 Object.assign(I18N.fr, {
   "home.salut": "Salut {prenom} !", "home.ans": "{age} ans",
@@ -342,7 +351,19 @@ Object.assign(I18N.fr, {
   "common.creation": "Création…", "common.chargement": "Chargement…",
   "toast.mission_ajoutee": "Mission ajoutée ✨", "toast.sauv_restauree": "Sauvegarde restaurée ✅",
   "lien.copier": "📋 Copier le lien", "lien.copie": "✅ Copié !",
-  "lien.envoyer_mail": "✉️ Envoyer par e-mail", "lien.valable": "Ce lien est valable 14 jours."
+  "lien.envoyer_mail": "✉️ Envoyer par e-mail", "lien.valable": "Ce lien est valable 14 jours.",
+  "cat.famille.monnaie": "Cœurs", "cat.planete.monnaie": "Gouttes",
+  "toast.annule": "Annulé : −{points} {emoji}",
+  "toast.en_attente": "Bravo ! 🎉 À faire valider par un parent ⏳",
+  "toast.nom_requis": "Donne un nom à la mission.",
+  "toast.repare": "Bravo d'avoir réparé ! +{bonus} 💛",
+  "toast.pas_assez_coeurs": "Pas encore assez de Cœurs 💛 — continue tes belles actions !",
+  "toast.debloque": "Débloqué : {nom} ! 🎉",
+  "toast.manque_prereq": "Pour créer {emoji} {nom}, il manque : {liste}.",
+  "toast.pas_assez_gouttes": "Pas encore assez de Gouttes 💧 — continue tes gestes pour la planète !",
+  "toast.nouvel_etre": "{emoji} Un(e) {nom} rejoint ton écosystème ! 🌍",
+  "toast.nouveau_badge": "Nouveau badge : {emoji} {nom} !",
+  "toast.gain": "{emoji} +{points} {monnaie} — {phrase}"
 });
 
 Object.assign(I18N.en, {
@@ -430,7 +451,19 @@ Object.assign(I18N.en, {
   "common.creation": "Creating…", "common.chargement": "Loading…",
   "toast.mission_ajoutee": "Mission added ✨", "toast.sauv_restauree": "Backup restored ✅",
   "lien.copier": "📋 Copy link", "lien.copie": "✅ Copied!",
-  "lien.envoyer_mail": "✉️ Send by email", "lien.valable": "This link is valid for 14 days."
+  "lien.envoyer_mail": "✉️ Send by email", "lien.valable": "This link is valid for 14 days.",
+  "cat.famille.monnaie": "Hearts", "cat.planete.monnaie": "Drops",
+  "toast.annule": "Cancelled: −{points} {emoji}",
+  "toast.en_attente": "Well done! 🎉 Waiting for a parent's approval ⏳",
+  "toast.nom_requis": "Give the mission a name.",
+  "toast.repare": "Well done for making it right! +{bonus} 💛",
+  "toast.pas_assez_coeurs": "Not enough Hearts yet 💛 — keep up your good deeds!",
+  "toast.debloque": "Unlocked: {nom}! 🎉",
+  "toast.manque_prereq": "To create {emoji} {nom}, you still need: {liste}.",
+  "toast.pas_assez_gouttes": "Not enough Drops yet 💧 — keep up your good deeds for the planet!",
+  "toast.nouvel_etre": "{emoji} A {nom} joins your ecosystem! 🌍",
+  "toast.nouveau_badge": "New badge: {emoji} {nom}!",
+  "toast.gain": "{emoji} +{points} {monnaie} — {phrase}"
 });
 
 Object.assign(I18N.nl, {
@@ -518,7 +551,19 @@ Object.assign(I18N.nl, {
   "common.creation": "Aanmaken…", "common.chargement": "Laden…",
   "toast.mission_ajoutee": "Missie toegevoegd ✨", "toast.sauv_restauree": "Backup herstelden ✅",
   "lien.copier": "📋 Link kopiëren", "lien.copie": "✅ Gekopieerd!",
-  "lien.envoyer_mail": "✉️ Per e-mail versturen", "lien.valable": "Deze link is 14 dagen geldig."
+  "lien.envoyer_mail": "✉️ Per e-mail versturen", "lien.valable": "Deze link is 14 dagen geldig.",
+  "cat.famille.monnaie": "Hartjes", "cat.planete.monnaie": "Druppels",
+  "toast.annule": "Geannuleerd: −{points} {emoji}",
+  "toast.en_attente": "Bravo! 🎉 Wacht op goedkeuring door een ouder ⏳",
+  "toast.nom_requis": "Geef de missie een naam.",
+  "toast.repare": "Goed gedaan om het goed te maken! +{bonus} 💛",
+  "toast.pas_assez_coeurs": "Nog niet genoeg hartjes 💛 — ga door met je mooie acties!",
+  "toast.debloque": "Ontgrendeld: {nom}! 🎉",
+  "toast.manque_prereq": "Om {emoji} {nom} te maken, ontbreekt nog: {liste}.",
+  "toast.pas_assez_gouttes": "Nog niet genoeg druppels 💧 — ga door met je acties voor de planeet!",
+  "toast.nouvel_etre": "{emoji} Een {nom} sluit zich aan bij je ecosysteem! 🌍",
+  "toast.nouveau_badge": "Nieuwe badge: {emoji} {nom}!",
+  "toast.gain": "{emoji} +{points} {monnaie} — {phrase}"
 });
 
 Object.assign(I18N.de, {
@@ -606,5 +651,17 @@ Object.assign(I18N.de, {
   "common.creation": "Wird erstellt…", "common.chargement": "Wird geladen…",
   "toast.mission_ajoutee": "Mission hinzugefügt ✨", "toast.sauv_restauree": "Sicherung wiederherstellt ✅",
   "lien.copier": "📋 Link kopieren", "lien.copie": "✅ Kopiert!",
-  "lien.envoyer_mail": "✉️ Per E-Mail senden", "lien.valable": "Dieser Link ist 14 Tage gültig."
+  "lien.envoyer_mail": "✉️ Per E-Mail senden", "lien.valable": "Dieser Link ist 14 Tage gültig.",
+  "cat.famille.monnaie": "Herzen", "cat.planete.monnaie": "Tropfen",
+  "toast.annule": "Abgebrochen: −{points} {emoji}",
+  "toast.en_attente": "Bravo! 🎉 Wartet auf die Genehmigung eines Elternteils ⏳",
+  "toast.nom_requis": "Gib der Mission einen Namen.",
+  "toast.repare": "Gut gemacht, dass du es wiedergutgemacht hast! +{bonus} 💛",
+  "toast.pas_assez_coeurs": "Noch nicht genug Herzen 💛 — mach weiter mit deinen guten Taten!",
+  "toast.debloque": "Freigeschaltet: {nom}! 🎉",
+  "toast.manque_prereq": "Um {emoji} {nom} zu erschaffen, fehlt noch: {liste}.",
+  "toast.pas_assez_gouttes": "Noch nicht genug Tropfen 💧 — mach weiter mit deinen Taten für den Planeten!",
+  "toast.nouvel_etre": "{emoji} Ein(e) {nom} schließt sich deinem Ökosystem an! 🌍",
+  "toast.nouveau_badge": "Neues Abzeichen: {emoji} {nom}!",
+  "toast.gain": "{emoji} +{points} {monnaie} — {phrase}"
 });

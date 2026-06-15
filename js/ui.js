@@ -368,7 +368,7 @@ function bandeauDodo(enf) {
   sec.id = "dodo-bandeau";
   sec.innerHTML = `
     <div class="dodo-etoiles">✦ ✧ ⭐ ✦ ✧ ✦ ✧</div>
-    <div class="dodo-txt"><strong>${m.emoji} ${m.titre}</strong><small>🛏️ ${m.heure}</small></div>
+    <div class="dodo-txt"><strong>${m.emoji} ${trData("mission", m.id, m.titre)}</strong><small>🛏️ ${m.heure}</small></div>
     <div class="dodo-chemin" title="${t("dodo.title")}">
       <span class="dc-bout">☀️</span>
       <div class="dc-piste"><div class="dc-rempli" style="width:${m.progress}%"></div>
@@ -401,7 +401,7 @@ function grilleMissions(catId) {
     const carte = el("button", "mission" + (fait ? " fait" : "") + (enAttente ? " attente" : ""));
     carte.innerHTML = `
       <span class="m-emoji">${m.emoji}</span>
-      <span class="m-titre">${m.titre}</span>
+      <span class="m-titre">${trData("mission", m.id, m.titre)}</span>
       <span class="m-points">${fait ? "✅" : (enAttente ? "⏳" : `+${m.points} ${cat.monnaieEmoji}`)}</span>`;
     carte.onclick = () => validerMission(m);
     liste.appendChild(carte);
@@ -453,7 +453,7 @@ function renduSceneEco(enf) {
     t.especes.forEach(sp => {
       const n = (enf.ecosysteme[t.id] || {})[sp.id] || 0;
       for (let i = 0; i < n; i++)
-        html += `<span class="eco-item" title="${sp.nom}">${sp.emoji}</span>`;
+        html += `<span class="eco-item" title="${trData("espece", sp.id, sp.nom)}">${sp.emoji}</span>`;
     });
   });
   return html;
@@ -471,8 +471,8 @@ function vueEcosysteme(enf) {
     const bloc = el("div", "eco-tier");
     const compte = nbTier(enf, tier.id);
     bloc.innerHTML = `<div class="eco-tier-tete"><span class="t-emoji">${tier.emoji}</span>
-      <span class="t-nom">${tier.nom}</span><span class="t-compte">${compte}</span></div>
-      <p class="t-lecon">${tier.lecon}</p>`;
+      <span class="t-nom">${trData("tier", tier.id, tier.nom)}</span><span class="t-compte">${compte}</span></div>
+      <p class="t-lecon">${trData("lecon", tier.id, tier.lecon)}</p>`;
 
     const grille = el("div", "eco-cartes");
     tier.especes.forEach(sp => {
@@ -513,7 +513,7 @@ function carteEspece(enf, tier, sp) {
   carte.innerHTML = `
     <span class="ec-coin">${possede ? "×" + possede : ""}</span>
     <span class="ec-emoji">${sp.emoji}</span>
-    <span class="ec-nom">${sp.nom}</span>
+    <span class="ec-nom">${trData("espece", sp.id, sp.nom)}</span>
     <span class="ec-cout ${assezGouttes ? "" : "manque"}">${sp.cout} 💧</span>
     ${prereqHtml}
     <span class="ec-etat">${creable ? t("eco.creer") : (prereqOk ? t("eco.plus_gouttes") : t("eco.verrouille"))}</span>`;
@@ -548,7 +548,7 @@ function vueAvatar(c) {
       const o = el("button", "option" + (equipe ? " equipe" : "") + (dispo ? "" : " verrou"));
       o.innerHTML = `
         <span class="o-apercu">${apercuOption(enf, categorie, opt)}</span>
-        <span class="o-nom">${opt.nom}</span>
+        <span class="o-nom">${trData("avatar." + categorie, opt.id, opt.nom)}</span>
         <span class="o-cout">${dispo ? (equipe ? "Porté ✅" : "Choisir") : `🔒 ${opt.cout} 💛`}</span>`;
       o.onclick = () => acheterOption(categorie, opt);
       grille.appendChild(o);
@@ -605,7 +605,7 @@ function blocMissionsDuJour(enf) {
       const cb = el("input"); cb.type = "checkbox"; cb.checked = inclus;
       cb.onchange = () => basculerPlan(enf, jour, m.id);
       ligne.appendChild(cb);
-      ligne.appendChild(el("span", null, `${m.emoji} ${m.titre} (${cat.monnaieEmoji}${m.points})${m.perso ? " ✏️" : ""}`));
+      ligne.appendChild(el("span", null, `${m.emoji} ${trData("mission", m.id, m.titre)} (${cat.monnaieEmoji}${m.points})${m.perso ? " ✏️" : ""}`));
       if (m.perso) {
         const sup = el("button", "mini-btn danger", "🗑️");
         sup.title = t("mdj.suppr_perso");
@@ -671,7 +671,7 @@ function blocCorrections(enf) {
     const n = journalJour[m.id] || 0;
     const ligne = el("div", "hist-ligne" + (n ? " valide" : ""));
     const cat = CATEGORIES[m.cat];
-    ligne.innerHTML = `<span class="h-info">${m.emoji} ${m.titre} <small>${cat.monnaieEmoji}${m.points}</small></span>
+    ligne.innerHTML = `<span class="h-info">${m.emoji} ${trData("mission", m.id, m.titre)} <small>${cat.monnaieEmoji}${m.points}</small></span>
       <span class="h-compte">${n}</span>`;
     const moins = el("button", "mini-btn", "−"); moins.onclick = () => modifierHistorique(enf, jour, m, -1);
     const plus = el("button", "mini-btn", "+"); plus.onclick = () => modifierHistorique(enf, jour, m, +1);
@@ -713,17 +713,17 @@ function blocEcoReference() {
     <p class="note">${t("ecoref.note")}</p>`;
   TIERS_ECO.forEach(tier => {
     const grp = el("div", "eco-ref-tier");
-    grp.innerHTML = `<h3 class="eco-ref-titre">${tier.emoji} ${tier.nom}</h3>`;
+    grp.innerHTML = `<h3 class="eco-ref-titre">${tier.emoji} ${trData("tier", tier.id, tier.nom)}</h3>`;
     tier.especes.forEach(sp => {
       const entrees = Object.keys(sp.prereq || {});
       const prereq = entrees.length
         ? entrees.map(id => {
             const info = spInfo(id);
-            return `${sp.prereq[id]}× ${info ? info.sp.emoji + " " + info.sp.nom : id}`;
+            return `${sp.prereq[id]}× ${info ? info.sp.emoji + " " + trData("espece", info.sp.id, info.sp.nom) : id}`;
           }).join(", ")
         : t("ecoref.aucun");
       const ligne = el("div", "eco-ref-ligne");
-      ligne.innerHTML = `<span class="erl-nom">${sp.emoji} ${sp.nom}</span>
+      ligne.innerHTML = `<span class="erl-nom">${sp.emoji} ${trData("espece", sp.id, sp.nom)}</span>
         <span class="erl-cout">${sp.cout} 💧</span>
         <span class="erl-prereq">${prereq}</span>`;
       grp.appendChild(ligne);
@@ -774,7 +774,7 @@ function vueReglages(c) {
       enf.enAttente.forEach((a, idx) => {
         const cat = CATEGORIES[a.cat];
         const ligne = el("div", "attente-ligne");
-        ligne.innerHTML = `<span class="att-info">${enf.emoji} <strong>${enf.prenom}</strong> — ${a.emoji || ""} ${a.titre}
+        ligne.innerHTML = `<span class="att-info">${enf.emoji} <strong>${enf.prenom}</strong> — ${a.emoji || ""} ${trData("mission", a.missionId, a.titre)}
           <small>(${a.jour}) +${a.points} ${cat ? cat.monnaieEmoji : ""}</small></span>`;
         const ok = el("button", "mini-btn ok", "✅");
         ok.onclick = () => confirmerAttente(enf, idx);
