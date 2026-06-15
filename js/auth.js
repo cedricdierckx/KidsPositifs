@@ -91,6 +91,7 @@ async function ouvrirFamille(f) {
   abonnerRealtime();
   document.removeEventListener("visibilitychange", auRetour);
   document.addEventListener("visibilitychange", auRetour);
+  verifierParrainages();                  // féliciter le parrain si un filleul a rejoint
 }
 function auRetour() { if (!document.hidden) { tirerEtat(); if (typeof majDodo === "function") majDodo(); } }
 
@@ -217,6 +218,20 @@ async function infoParrainage(token) {
     const info = Array.isArray(data) ? data[0] : data;
     return info || null;
   } catch { return null; }
+}
+async function nbFilleuls() {
+  const { data, error } = await sb.rpc("referral_accepted_count", { p_family: familleId });
+  return error ? 0 : (data || 0);
+}
+// Félicite le parrain dès qu'un nouveau filleul a créé sa famille.
+async function verifierParrainages() {
+  if (modeDemo || !familleId) return;
+  const cle = "kp_filleuls_vus_" + familleId;
+  const nb = await nbFilleuls();
+  const vus = parseInt(localStorage.getItem(cle) || "", 10);
+  if (isNaN(vus)) { localStorage.setItem(cle, String(nb)); return; } // 1ère fois : on calibre
+  if (nb > vus && typeof feterParrainage === "function") feterParrainage(nb - vus);
+  if (nb !== vus) localStorage.setItem(cle, String(nb));
 }
 
 function changerFamille() { ecranFamilles({}); }

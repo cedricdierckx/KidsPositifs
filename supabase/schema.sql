@@ -219,6 +219,15 @@ begin
     where token = p_token and accepted_at is null;
 end; $$;
 
+-- Nombre de filleuls qui ont déjà créé leur famille (pour féliciter le parrain).
+create or replace function public.referral_accepted_count(p_family uuid)
+returns integer language plpgsql security definer set search_path = public as $$
+begin
+  if not is_family_member(p_family) and not is_admin() then raise exception 'Accès refusé'; end if;
+  return (select count(*) from referrals
+          where family_id = p_family and accepted_at is not null);
+end; $$;
+
 -- ---------- RPC admin : lister toutes les familles ----------
 create or replace function public.admin_list_families()
 returns table(id uuid, name text, plan text, plan_status text,
@@ -252,6 +261,7 @@ grant execute on function public.referral_quota(uuid)           to authenticated
 grant execute on function public.create_referral(uuid)          to authenticated;
 grant execute on function public.referral_info(uuid)            to anon, authenticated;
 grant execute on function public.claim_referral(uuid, uuid)     to authenticated;
+grant execute on function public.referral_accepted_count(uuid)  to authenticated;
 grant execute on function public.is_admin()                     to authenticated;
 grant execute on function public.admin_list_families()          to authenticated;
 grant execute on function public.admin_set_plan(uuid, text)     to authenticated;

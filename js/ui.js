@@ -22,6 +22,23 @@ function animationBadge(emoji, nom) {
   setTimeout(fermer, 2800);
 }
 
+// Félicite et remercie le parrain quand un·e filleul·e a créé sa famille.
+function feterParrainage(nb) {
+  const ov = el("div", "badge-pop");
+  const sfx = nb > 1 ? `${nb} familles ont` : "Une famille a";
+  ov.innerHTML = `
+    <div class="badge-pop-carte parrain-pop">
+      <div class="badge-pop-rayons">🎉</div>
+      <div class="badge-pop-titre">Merci & bravo ! 💛</div>
+      <div class="badge-pop-nom">${sfx} rejoint KidsPositifs grâce à toi.<br>Tu répands les ondes positives ! 🤝🌍</div>
+    </div>`;
+  document.body.appendChild(ov);
+  if (typeof confettis === "function") confettis();
+  const fermer = () => ov.remove();
+  ov.addEventListener("click", fermer);
+  setTimeout(fermer, 4200);
+}
+
 function initSquelette() {
   document.body.innerHTML = `
     <div id="confettis"></div>
@@ -86,7 +103,7 @@ function blocAdmin() {
 }
 
 // Affiche un lien d'invitation copiable.
-function montrerLienInvitation(conteneur, lien, note) {
+function montrerLienInvitation(conteneur, lien, note, mailto) {
   let box = conteneur.querySelector(".invite-box");
   if (!box) { box = el("div", "invite-box"); conteneur.appendChild(box); }
   box.innerHTML = "";
@@ -99,6 +116,13 @@ function montrerLienInvitation(conteneur, lien, note) {
     setTimeout(() => (copier.textContent = "📋 Copier le lien"), 1500);
   };
   box.appendChild(inp); box.appendChild(copier);
+  // Option : envoyer le lien directement par e-mail (ouvre le client mail).
+  if (mailto) {
+    const mail = el("a", "btn-secondaire btn-mail", "✉️ Envoyer par e-mail");
+    const corps = (mailto.corps || "").replace("{lien}", lien);
+    mail.href = `mailto:?subject=${encodeURIComponent(mailto.sujet || "")}&body=${encodeURIComponent(corps)}`;
+    box.appendChild(mail);
+  }
   box.appendChild(el("p", "note", note || "Ce lien est valable 14 jours."));
 }
 
@@ -750,7 +774,11 @@ function vueReglages(c) {
     const lien = await creerParrainage();
     bPar.textContent = "🎁 Créer un lien de parrainage";
     if (lien) {
-      montrerLienInvitation(par, lien, "Partage ce lien : ton ami créera sa propre famille. 💛");
+      const mailto = {
+        sujet: "Je t'offre KidsPositifs 🌟",
+        corps: "Coucou !\n\nJe te parraine sur KidsPositifs, une appli bienveillante qui aide nos enfants à adopter de bons gestes (avatar à faire évoluer 💛 et écosystème vivant à bâtir 🌍).\n\nOuvre ce lien pour créer ta propre famille :\n{lien}\n\nÀ très vite ! 🤝"
+      };
+      montrerLienInvitation(par, lien, "Partage ce lien : ton ami créera sa propre famille. 💛", mailto);
       parrainageRestant().then(n => {
         const q = par.querySelector("#par-quota");
         if (estAdmin) { q.innerHTML = "👑 Compte administrateur : parrainages <strong>illimités</strong>."; bPar.disabled = false; }
