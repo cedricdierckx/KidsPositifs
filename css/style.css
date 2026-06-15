@@ -190,6 +190,14 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .eco-ref-ligne .erl-cout{color:var(--planete); font-weight:800; min-width:46px}
 .eco-ref-ligne .erl-prereq{color:var(--doux); flex:1}
 
+/* Parrainage & concept (page d'accueil publique) */
+.concept-bloc{margin-top:16px; text-align:left; background:linear-gradient(135deg,#fff6e9,#eef9f3);
+  border:2px solid #ffe6c2; border-radius:16px; padding:14px}
+.concept-bloc h2{font-size:16px; margin:0 0 6px}
+.concept-bloc p{font-size:13px; margin:0; line-height:1.5; color:var(--texte)}
+.parrain-carte{background:linear-gradient(135deg,#ffe9b8,#ffd1e0); border-radius:14px;
+  padding:12px 14px; margin:6px 0 12px; font-size:14px; line-height:1.4; text-align:left}
+
 /* ---- Avatar (SVG) ---- */
 .avatar-scene{width:150px; height:150px; margin:0 auto}
 .avatar-scene .av-svg{width:100%; height:100%; display:block}

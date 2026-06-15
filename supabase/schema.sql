@@ -158,6 +158,67 @@ begin
   return i.family_id;
 end; $$;
 
+-- ---------- Parrainage : inviter un AMI à créer SA propre famille ----------
+-- (différent des invitations qui font rejoindre une famille existante)
+create table if not exists public.referrals (
+  token uuid primary key default gen_random_uuid(),
+  family_id uuid not null references public.families(id) on delete cascade,    -- parrain
+  created_by uuid references auth.users(id),
+  created_at timestamptz default now(),
+  accepted_at timestamptz,
+  accepted_family uuid references public.families(id) on delete set null       -- filleul
+);
+alter table public.referrals enable row level security;
+drop policy if exists "members read referrals" on public.referrals;
+create policy "members read referrals" on public.referrals
+  for select using (is_family_member(family_id) or is_admin());
+
+-- Quota hebdomadaire restant (3 / semaine ; illimité pour les admins).
+create or replace function public.referral_quota(p_family uuid)
+returns integer language plpgsql security definer set search_path = public as $$
+declare utilises integer;
+begin
+  if is_admin() then return 999; end if;
+  if not is_family_member(p_family) then raise exception 'Accès refusé'; end if;
+  select count(*) into utilises from referrals
+    where family_id = p_family and created_at > now() - interval '7 days';
+  return greatest(0, 3 - utilises);
+end; $$;
+
+-- Crée un lien de parrainage (respecte le quota, sauf admin).
+create or replace function public.create_referral(p_family uuid)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare t uuid; utilises integer;
+begin
+  if not is_family_member(p_family) and not is_admin() then raise exception 'Accès refusé'; end if;
+  if not is_admin() then
+    select count(*) into utilises from referrals
+      where family_id = p_family and created_at > now() - interval '7 days';
+    if utilises >= 3 then raise exception 'Quota atteint : 3 invitations par semaine.'; end if;
+  end if;
+  insert into referrals(family_id, created_by) values (p_family, auth.uid()) returning token into t;
+  return t;
+end; $$;
+
+-- Infos d'un parrainage (page d'accueil, avant même d'avoir un compte).
+create or replace function public.referral_info(p_token uuid)
+returns table(parrain_name text, valid boolean)
+language plpgsql security definer set search_path = public as $$
+begin
+  return query
+    select f.name::text, (r.accepted_at is null)
+    from referrals r join families f on f.id = r.family_id
+    where r.token = p_token;
+end; $$;
+
+-- Marque un parrainage comme utilisé (lie la famille filleule).
+create or replace function public.claim_referral(p_token uuid, p_family uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  update referrals set accepted_at = now(), accepted_family = p_family
+    where token = p_token and accepted_at is null;
+end; $$;
+
 -- ---------- RPC admin : lister toutes les familles ----------
 create or replace function public.admin_list_families()
 returns table(id uuid, name text, plan text, plan_status text,
@@ -187,6 +248,10 @@ grant execute on function public.create_family(text)            to authenticated
 grant execute on function public.create_invite(uuid, text)      to authenticated;
 grant execute on function public.invite_info(uuid)              to authenticated;
 grant execute on function public.accept_invite(uuid)            to authenticated;
+grant execute on function public.referral_quota(uuid)           to authenticated;
+grant execute on function public.create_referral(uuid)          to authenticated;
+grant execute on function public.referral_info(uuid)            to anon, authenticated;
+grant execute on function public.claim_referral(uuid, uuid)     to authenticated;
 grant execute on function public.is_admin()                     to authenticated;
 grant execute on function public.admin_list_families()          to authenticated;
 grant execute on function public.admin_set_plan(uuid, text)     to authenticated;

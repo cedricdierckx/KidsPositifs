@@ -19,6 +19,10 @@ L'authentification et la base de données reposent sur **Supabase** :
   famille a ses propres enfants, points, avatars et écosystèmes.
 - **Lien d'invitation** : depuis l'espace parents, on génère un lien à envoyer
   à l'autre parent ; en l'ouvrant (après connexion), il rejoint la famille.
+- **Lien de parrainage** 🎁 : chaque famille peut **parrainer 3 familles amies
+  par semaine** (illimité pour le compte administrateur). L'ami qui ouvre le lien
+  crée **sa propre famille** ; le parrainage est tracé (table `referrals`). Le
+  concept est présenté de façon attractive sur la page d'accueil publique.
 - **Sécurité** : chaque famille n'est accessible qu'à ses membres (règles RLS).
 - **Abonnement** : le modèle de données prévoit déjà un `plan` par famille
   (`free` / `premium`) pour brancher **Stripe** plus tard, sans refonte.

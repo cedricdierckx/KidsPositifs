@@ -86,7 +86,7 @@ function blocAdmin() {
 }
 
 // Affiche un lien d'invitation copiable.
-function montrerLienInvitation(conteneur, lien) {
+function montrerLienInvitation(conteneur, lien, note) {
   let box = conteneur.querySelector(".invite-box");
   if (!box) { box = el("div", "invite-box"); conteneur.appendChild(box); }
   box.innerHTML = "";
@@ -99,7 +99,7 @@ function montrerLienInvitation(conteneur, lien) {
     setTimeout(() => (copier.textContent = "📋 Copier le lien"), 1500);
   };
   box.appendChild(inp); box.appendChild(copier);
-  box.appendChild(el("p", "note", "Ce lien est valable 14 jours."));
+  box.appendChild(el("p", "note", note || "Ce lien est valable 14 jours."));
 }
 
 function rendre() {
@@ -727,6 +727,37 @@ function vueReglages(c) {
   bSwitch.onclick = changerFamille;
   fam.appendChild(bSwitch);
   c.appendChild(fam);
+
+  // ----- Parrainage : inviter une famille amie à créer la sienne -----
+  const par = el("section", "carte");
+  par.innerHTML = `<h2>🎁 Parrainer une famille amie</h2>
+    <p class="note">Offre KidsPositifs à des amis : avec ton lien de parrainage, ils
+    créeront <strong>leur propre famille</strong>. Tu peux parrainer
+    <strong>3 familles par semaine</strong>. Plus on est nombreux, plus on répand
+    les ondes positives ! 🤝</p>
+    <p id="par-quota" class="note">Vérification de ton quota…</p>`;
+  const bPar = el("button", "btn-secondaire", "🎁 Créer un lien de parrainage");
+  par.appendChild(bPar);
+  c.appendChild(par);
+  // Quota affiché de façon asynchrone.
+  parrainageRestant().then(n => {
+    const q = par.querySelector("#par-quota");
+    if (estAdmin) { q.innerHTML = "👑 Compte administrateur : parrainages <strong>illimités</strong>."; }
+    else { q.innerHTML = `Il te reste <strong>${n}</strong> parrainage(s) cette semaine.`; bPar.disabled = n <= 0; }
+  });
+  bPar.onclick = async () => {
+    bPar.disabled = true; bPar.textContent = "Création…";
+    const lien = await creerParrainage();
+    bPar.textContent = "🎁 Créer un lien de parrainage";
+    if (lien) {
+      montrerLienInvitation(par, lien, "Partage ce lien : ton ami créera sa propre famille. 💛");
+      parrainageRestant().then(n => {
+        const q = par.querySelector("#par-quota");
+        if (estAdmin) { q.innerHTML = "👑 Compte administrateur : parrainages <strong>illimités</strong>."; bPar.disabled = false; }
+        else { q.innerHTML = `Il te reste <strong>${n}</strong> parrainage(s) cette semaine.`; bPar.disabled = n <= 0; }
+      });
+    } else { bPar.disabled = false; }
+  };
 
   // ----- Abonnement (masqué provisoirement : early adopters = gratuit) -----
   if (AFFICHER_ABONNEMENT) {

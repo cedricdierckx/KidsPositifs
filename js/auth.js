@@ -21,6 +21,7 @@ let canalRealtime = null;      // abonnement temps réel
 
 const FAMILLE_KEY = "kp_famille_active";
 const INVITE_KEY = "kp_pending_invite";
+const PARRAIN_KEY = "kp_pending_parrain";   // parrainage : créer SA propre famille
 
 document.addEventListener("DOMContentLoaded", demarrer);
 
@@ -35,6 +36,9 @@ async function demarrer() {
   const params = new URLSearchParams(location.search);
   const inv = params.get("invite");
   if (inv) { localStorage.setItem(INVITE_KEY, inv); nettoyerUrl(); }
+  // Lien de parrainage (?parrain=...) : l'ami créera SA propre famille.
+  const par = params.get("parrain");
+  if (par) { localStorage.setItem(PARRAIN_KEY, par); nettoyerUrl(); }
 
   const { data } = await sb.auth.getSession();
   session = data.session;
@@ -188,6 +192,31 @@ async function creerFamille(nom, nbEnfants) {
     ajusterNombreEnfantsCreation(nbEnfants);
     vueAccueilAine(); rendre();
   }
+  // Si l'utilisateur a été parrainé, on relie sa nouvelle famille au parrain.
+  const par = localStorage.getItem(PARRAIN_KEY);
+  if (par && data) {
+    try { await sb.rpc("claim_referral", { p_token: par, p_family: data }); } catch {}
+    localStorage.removeItem(PARRAIN_KEY);
+  }
+}
+
+/* ---------- Parrainage (inviter un ami à créer sa propre famille) ---------- */
+async function creerParrainage() {
+  const { data, error } = await sb.rpc("create_referral", { p_family: familleId });
+  if (error) { toast("Erreur : " + error.message, "info"); return null; }
+  return location.origin + location.pathname + "?parrain=" + data;
+}
+async function parrainageRestant() {
+  if (estAdmin) return 999;
+  const { data, error } = await sb.rpc("referral_quota", { p_family: familleId });
+  return error ? 0 : (data || 0);
+}
+async function infoParrainage(token) {
+  try {
+    const { data } = await sb.rpc("referral_info", { p_token: token });
+    const info = Array.isArray(data) ? data[0] : data;
+    return info || null;
+  } catch { return null; }
 }
 
 function changerFamille() { ecranFamilles({}); }
@@ -243,8 +272,10 @@ function ecranConfig() {
 }
 
 function ecranAuth() {
+  const parrain = localStorage.getItem(PARRAIN_KEY);
   carteEcran(`
     <div class="code-logo">🌟</div><h1>KidsPositifs</h1>
+    <div id="parrain-banniere"></div>
     <p id="auth-titre">Connecte-toi pour retrouver ta famille sur tous tes appareils.</p>
     <input id="email" type="email" inputmode="email" placeholder="ton@email.com" autocomplete="email">
     <input id="mdp" type="password" placeholder="Mot de passe" autocomplete="current-password">
@@ -253,9 +284,31 @@ function ecranAuth() {
     <button id="b-signup" class="btn-secondaire">Pas de compte ? Créer un compte</button>
     <p class="note" id="auth-msg"></p>
     <hr style="border:none;border-top:1px solid #e3edf5;margin:14px 0">
-    <button id="b-demo" class="btn-secondaire">🧪 Découvrir en démo (sans compte)</button>`);
+    <button id="b-demo" class="btn-secondaire">🧪 Découvrir en démo (sans compte)</button>
+    <div class="concept-bloc">
+      <h2>🎁 Une aventure qui se partage</h2>
+      <p>KidsPositifs aide les enfants à grandir dans la <strong>bienveillance</strong> :
+      petits gestes du quotidien, avatar à faire évoluer 💛 et écosystème vivant à
+      bâtir 🌍. Chaque famille qui adopte l'appli peut <strong>parrainer 3 familles
+      amies par semaine</strong> : un geste positif de plus, transmis de famille en
+      famille. 🤝</p>
+    </div>`);
 
-  let modeMdp = true, inscriptionMode = false;
+  // Bannière personnalisée si on arrive via un lien de parrainage.
+  if (parrain) {
+    const b = document.getElementById("parrain-banniere");
+    if (b) {
+      b.innerHTML = `<div class="parrain-carte">🎁 Tu as été <strong>parrainé·e</strong> ! Crée ton compte pour lancer <strong>ta propre famille</strong>.</div>`;
+      infoParrainage(parrain).then(info => {
+        if (info && info.parrain_name) {
+          b.querySelector(".parrain-carte").innerHTML =
+            `🎁 <strong>${echapper(info.parrain_name)}</strong> t'invite à découvrir KidsPositifs ! Crée ton compte pour lancer <strong>ta propre famille</strong>.`;
+        }
+      });
+    }
+  }
+
+  let modeMdp = true, inscriptionMode = !!parrain;   // parrainage → création de compte
   const elEmail = document.getElementById("email");
   const elMdp = document.getElementById("mdp");
   const bPrinc = document.getElementById("b-principal");
