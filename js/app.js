@@ -10,8 +10,22 @@ const ETAT_VERSION = 2;                    // version du schéma d'état (migrat
 /* ---------- État ---------- */
 let etat = etatVierge();      // remplacé au démarrage par les données de la famille
 let familleId = null;         // id de la famille active (défini par auth.js)
+let familleEtat = null;       // id de la famille à laquelle `etat` est RÉELLEMENT lié
 let modeParents = false;      // mode parents actif (session, non synchronisé)
 let modeDemo = false;         // mode démonstration (hors-ligne, sans compte)
+
+// Lie `etat` à la famille active. À utiliser à CHAQUE (ré)assignation de etat
+// pour une famille : c'est ce lien qui empêche d'écrire les données d'une
+// famille dans une autre (garde-fou anti-corruption).
+function lierEtat(nouvelEtat) {
+  etat = nouvelEtat;
+  familleEtat = familleId;
+  return etat;
+}
+// Vrai si `etat` contient au moins un enfant (sécurité anti-écrasement vide).
+function etatNonVide(e) {
+  return !!(e && e.enfants && Object.keys(e.enfants).length);
+}
 
 /* ---------- Cache local (par famille, pour le hors-ligne) ---------- */
 function cleCache() { return STORAGE_KEY + ":" + (familleId || "_local"); }
@@ -701,7 +715,7 @@ function majEnfant(id, champ, valeur) {
 }
 function reinitialiser() {
   if (confirm("Tout effacer et recommencer à zéro ? (Cœurs, gouttes, avatars, écosystèmes)")) {
-    etat = etatVierge();
+    lierEtat(etatVierge());
     sauver();
     rendre();
   }
@@ -745,7 +759,7 @@ function restaurerSauvegarde(brutJson) {
   if (!data || !data.enfants || !Object.keys(data.enfants).length) {
     toast("Cette sauvegarde ne contient aucun enfant.", "info"); return false;
   }
-  etat = normaliser(data);
+  lierEtat(normaliser(data));     // lie ces données à la famille actuellement ouverte
   etat.maj = Date.now();          // force la priorité sur la version distante
   vueAccueilAine();
   sauver();                       // écrit dans le cache ET dans le cloud de la famille actuelle

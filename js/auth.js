@@ -93,9 +93,9 @@ async function ouvrirFamille(f) {
   initSquelette();
   // On repart d'un état vierge pour ne JAMAIS conserver les données de la
   // famille précédente, puis on charge le cache local de CETTE famille s'il existe.
-  etat = etatVierge();
+  lierEtat(etatVierge());
   const cache = lireCache();
-  if (cache) etat = cache;                // affichage instantané / hors-ligne
+  if (cache) lierEtat(cache);             // affichage instantané / hors-ligne
   await chargerEtatFamille();
   vueAccueilAine();                       // toujours démarrer sur l'accueil de l'aîné
   rendre();
@@ -113,10 +113,10 @@ async function chargerEtatFamille() {
     .select("data").eq("family_id", familleId).maybeSingle();
   if (!error && data && data.data && data.data.enfants) {
     const distant = normaliser(data.data);
-    if ((distant.maj || 0) >= (etat.maj || 0)) { etat = distant; ecrireCache(); }
+    if ((distant.maj || 0) >= (etat.maj || 0)) { lierEtat(distant); ecrireCache(); }
     else await sauvegardeCloud();
   } else {
-    if (!etat || !etat.enfants) etat = etatVierge();
+    if (!etatNonVide(etat)) lierEtat(etatVierge());
     await sauvegardeCloud();              // initialise la ligne distante
   }
   majBadgeSync("✅");
@@ -127,7 +127,7 @@ async function tirerEtat() {
   const { data, error } = await sb.from("family_state")
     .select("data").eq("family_id", familleId).maybeSingle();
   if (!error && data && data.data && data.data.enfants && (data.data.maj || 0) > (etat.maj || 0)) {
-    etat = normaliser(data.data); ecrireCache(); rendre();
+    lierEtat(normaliser(data.data)); ecrireCache(); rendre();
   }
 }
 
@@ -139,6 +139,16 @@ function planifierSauvegardeCloud() {
 }
 async function sauvegardeCloud() {
   if (!sb || !familleId) return;
+  // GARDE-FOU 1 : ne jamais écrire l'état d'une famille dans une autre.
+  if (familleEtat && familleEtat !== familleId) {
+    console.warn("Sauvegarde annulée : l'état chargé appartient à une autre famille.");
+    majBadgeSync("🛑"); return;
+  }
+  // GARDE-FOU 2 : ne jamais écraser une famille avec un état sans aucun enfant.
+  if (!etatNonVide(etat)) {
+    console.warn("Sauvegarde annulée : état vide (aucun enfant).");
+    majBadgeSync("🛑"); return;
+  }
   try {
     majBadgeSync("⏫");
     const { error } = await sb.from("family_state")
@@ -155,7 +165,7 @@ function abonnerRealtime() {
         payload => {
           const d = payload.new && payload.new.data;
           if (d && d.enfants && (d.maj || 0) > (etat.maj || 0)) {
-            etat = normaliser(d); ecrireCache(); rendre();
+            lierEtat(normaliser(d)); ecrireCache(); rendre();
           }
         })
     .subscribe();
@@ -420,7 +430,7 @@ function demarrerDemo() {
   familleActive = { id: "_demo", name: "Famille démo", plan: "free", role: "owner" };
   familleId = "_demo";
   estAdmin = false;
-  etat = etatDemo();
+  lierEtat(etatDemo());
   initSquelette();
   vueAccueilAine();
   rendre();
