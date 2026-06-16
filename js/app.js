@@ -5,7 +5,7 @@
  * ===================================================================== */
 
 const STORAGE_KEY = "kidspositifs_state"; // préfixe du cache local (par famille)
-const ETAT_VERSION = 2;                    // version du schéma d'état (migrations additives)
+const ETAT_VERSION = 3;                    // version du schéma d'état (migrations additives)
 
 /* ---------- État ---------- */
 let etat = etatVierge();      // remplacé au démarrage par les données de la famille
@@ -53,6 +53,8 @@ function etatValide(e) {
     if (enf.ecosysteme !== undefined && (typeof enf.ecosysteme !== "object" || enf.ecosysteme === null))
       return { ok: false, raison: `ecosysteme invalide pour ${id}` };
   }
+  if (e.cartesSurprises !== undefined && !Array.isArray(e.cartesSurprises))
+    return { ok: false, raison: "cartesSurprises invalides" };
   return { ok: true };
 }
 
@@ -99,8 +101,16 @@ function etatVierge() {
     enfants, enfantActif: ENFANTS_DEFAUT[0].id, vue: "accueil", maj: 0,
     version: ETAT_VERSION,
     missionsPerso: [],     // missions personnalisées ajoutées par les parents
+    cartesSurprises: cartesSurprisesNeuves(),  // objectifs d'équipe (activités famille)
     reglages: { validationParentale: false, codeParent: "" }
   };
+}
+
+// Cartes surprises neuves (copie des modèles, sans progression).
+function cartesSurprisesNeuves() {
+  return CARTES_SURPRISES_DEFAUT.map(c => ({
+    ...c, recolte: 0, dons: {}, debloquee: false, debloqueeLe: null, faite: false, faiteLe: null
+  }));
 }
 
 // État d'une "famille démo" pré-remplie (mode découverte, hors-ligne).
@@ -121,6 +131,13 @@ function etatDemo() {
   const b = e.enfants[ids[1]];
   b.coeurs = 9; b.coeursTotal = 9; b.gouttes = 5; b.gouttesTotal = 5;
   b.ecosysteme.plantes = { trefle: 2 };
+
+  // Carte surprise déjà bien entamée par l'équipe (démonstration).
+  if (e.cartesSurprises[0]) {
+    const c0 = e.cartesSurprises[0];
+    c0.recolte = Math.min(c0.cout, 10);
+    c0.dons = { [ids[0]]: 7, [ids[1]]: 3 };
+  }
 
   e.maj = Date.now();
   return e;
@@ -175,6 +192,17 @@ function normaliser(e) {
   });
   if (e.maj === undefined) e.maj = 0;
   if (!Array.isArray(e.missionsPerso)) e.missionsPerso = [];
+  // Cartes surprises (objectifs d'équipe) : seedées par défaut pour les
+  // familles existantes, et chaque carte reçoit ses champs de progression.
+  if (!Array.isArray(e.cartesSurprises)) e.cartesSurprises = cartesSurprisesNeuves();
+  else e.cartesSurprises.forEach(c => {
+    if (typeof c.recolte !== "number" || c.recolte < 0) c.recolte = 0;
+    if (!c.dons || typeof c.dons !== "object") c.dons = {};
+    if (typeof c.cout !== "number" || c.cout < 1) c.cout = 10;
+    c.debloquee = !!c.debloquee;
+    c.faite = !!c.faite;
+    if (!c.emoji) c.emoji = "🎁";
+  });
   if (!e.reglages) e.reglages = { validationParentale: false, codeParent: "" };
   // Estampille de version : les migrations ci-dessus sont *additives* (on ne
   // supprime jamais de données existantes), garantissant qu'une mise à jour de
@@ -448,6 +476,91 @@ function acheterOption(categorie, option) {
 
 function estDebloque(enf, categorie, option) {
   return option.cout === 0 || enf.debloque.includes(`${categorie}:${option.id}`);
+}
+
+/* ---------- Cartes surprises (objectifs d'équipe) ----------
+ * Activités à faire en famille, débloquées ENSEMBLE : chaque enfant donne
+ * volontairement des Cœurs 💛 à une carte commune jusqu'à atteindre son prix.
+ * Les Cœurs donnés sont dépensés (comme pour l'avatar) mais le total cumulé
+ * (coeursTotal, statistiques/badges) n'est jamais réduit. */
+function cartesSurprises() {
+  return Array.isArray(etat.cartesSurprises) ? etat.cartesSurprises : [];
+}
+function trouverCarteSurprise(id) {
+  return cartesSurprises().find(c => c.id === id) || null;
+}
+
+// Un enfant donne des Cœurs 💛 à une carte surprise commune.
+function donnerCarte(carteId, montant) {
+  const enf = enfantActif();
+  const carte = trouverCarteSurprise(carteId);
+  if (!carte || carte.debloquee) return;
+  montant = Math.max(1, parseInt(montant, 10) || 1);
+  if (enf.coeurs < montant) { toast(t("toast.pas_assez_coeurs"), "info"); return; }
+  // On ne donne jamais plus que ce qui reste à récolter.
+  montant = Math.min(montant, carte.cout - carte.recolte);
+  if (montant <= 0) return;
+  enf.coeurs -= montant;
+  carte.recolte += montant;
+  carte.dons[enf.id] = (carte.dons[enf.id] || 0) + montant;
+  if (carte.recolte >= carte.cout) {
+    carte.recolte = carte.cout;
+    carte.debloquee = true;
+    carte.debloqueeLe = aujourdHui();
+    toast(t("toast.carte_debloquee", { emoji: carte.emoji, titre: trData("carte", carte.id, carte.titre) }), "succes");
+    confettis();
+  } else {
+    toast(t("toast.carte_don", { montant, emoji: "💛" }), "succes");
+  }
+  sauver();
+  rendre();
+}
+
+/* ---------- Cartes surprises : gestion par les parents ---------- */
+function ajouterCarteSurprise(emoji, titre, activite, cout) {
+  titre = (titre || "").trim();
+  if (!titre) { toast(t("toast.nom_requis"), "info"); return; }
+  if (!Array.isArray(etat.cartesSurprises)) etat.cartesSurprises = [];
+  etat.cartesSurprises.push({
+    id: "cs_" + Date.now().toString(36) + Math.floor(Math.random() * 1000),
+    emoji: (emoji || "").trim() || "🎁",
+    titre, activite: (activite || "").trim(),
+    cout: Math.max(1, parseInt(cout, 10) || 10),
+    recolte: 0, dons: {}, debloquee: false, debloqueeLe: null, faite: false, faiteLe: null
+  });
+  sauver();
+  toast(t("toast.carte_ajoutee"), "succes");
+  rendre();
+}
+function modifierCarteSurprise(id, champ, valeur) {
+  const c = trouverCarteSurprise(id);
+  if (!c) return;
+  if (champ === "cout") c.cout = Math.max(1, parseInt(valeur, 10) || 1);
+  else c[champ] = valeur;
+  sauver();
+  rendre();
+}
+function supprimerCarteSurprise(id) {
+  if (!Array.isArray(etat.cartesSurprises)) return;
+  etat.cartesSurprises = etat.cartesSurprises.filter(c => c.id !== id);
+  sauver();
+  rendre();
+}
+// Réinitialise la récolte d'une carte (pour la rejouer en équipe).
+function reinitCarteSurprise(id) {
+  const c = trouverCarteSurprise(id);
+  if (!c) return;
+  c.recolte = 0; c.dons = {}; c.debloquee = false; c.debloqueeLe = null; c.faite = false; c.faiteLe = null;
+  sauver();
+  rendre();
+}
+// Marque l'activité d'une carte débloquée comme réalisée en famille.
+function marquerCarteFaite(id) {
+  const c = trouverCarteSurprise(id);
+  if (!c || !c.debloquee) return;
+  c.faite = true; c.faiteLe = aujourdHui();
+  sauver();
+  rendre();
 }
 
 /* ---------- Écosystème (chaîne alimentaire) ---------- */

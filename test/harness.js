@@ -94,6 +94,10 @@ function construireContexte() {
       confirmerAttente, refuserAttente,
       // écosystème
       nbTier, nbTotalEspeces, spInfo, nbEspece, prereqManquants, especeDebloquee, creerEspece,
+      // cartes surprises (objectifs d'équipe)
+      cartesSurprises, trouverCarteSurprise, donnerCarte,
+      ajouterCarteSurprise, modifierCarteSurprise, supprimerCarteSurprise,
+      reinitCarteSurprise, marquerCarteFaite,
       // badges & divers
       verifierBadges, acheterOption, estDebloque, age, ageDepuis,
       // couche de données isolée (Phase D)

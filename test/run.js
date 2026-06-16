@@ -238,6 +238,118 @@ test("creerEspece dépense les gouttes et ajoute l'être vivant", () => {
   assert.strictEqual(enf.gouttes, 5);
 });
 
+/* ---------- Cartes surprises (objectifs d'équipe) ---------- */
+test("un état vierge contient les cartes surprises par défaut (sans progression)", () => {
+  const { api } = construireContexte();
+  const cartes = api.etatVierge().cartesSurprises;
+  assert.ok(Array.isArray(cartes) && cartes.length >= 3);
+  assert.strictEqual(cartes[0].recolte, 0);
+  assert.strictEqual(cartes[0].debloquee, false);
+});
+
+test("normaliser seede les cartes surprises pour une famille existante", () => {
+  const { api } = construireContexte();
+  const n = api.normaliser({ enfants: { x: { prenom: "Z" } } });
+  assert.ok(Array.isArray(n.cartesSurprises) && n.cartesSurprises.length >= 3);
+});
+
+test("donnerCarte dépense les cœurs et fait progresser la récolte commune", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  api.lierEtat(api.etatVierge());
+  const enf = api.enfantActif();
+  enf.coeurs = 10;
+  const carte = api.cartesSurprises()[0];
+  api.donnerCarte(carte.id, 4);
+  assert.strictEqual(enf.coeurs, 6);
+  assert.strictEqual(api.trouverCarteSurprise(carte.id).recolte, 4);
+  assert.strictEqual(api.trouverCarteSurprise(carte.id).dons[enf.id], 4);
+});
+
+test("donnerCarte ne dépense pas le total cumulé (coeursTotal)", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  api.lierEtat(api.etatVierge());
+  const enf = api.enfantActif();
+  enf.coeurs = 10; enf.coeursTotal = 20;
+  api.donnerCarte(api.cartesSurprises()[0].id, 5);
+  assert.strictEqual(enf.coeursTotal, 20);
+});
+
+test("donnerCarte refuse au-delà des cœurs disponibles", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  api.lierEtat(api.etatVierge());
+  const enf = api.enfantActif();
+  enf.coeurs = 2;
+  const carte = api.cartesSurprises()[0];
+  api.donnerCarte(carte.id, 5);
+  assert.strictEqual(enf.coeurs, 2);
+  assert.strictEqual(api.trouverCarteSurprise(carte.id).recolte, 0);
+});
+
+test("donnerCarte plafonne au prix et débloque la carte", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  api.lierEtat(api.etatVierge());
+  const enf = api.enfantActif();
+  const carte = api.cartesSurprises()[0];
+  enf.coeurs = carte.cout + 10;
+  api.donnerCarte(carte.id, carte.cout + 10);   // on essaie de trop donner
+  const c = api.trouverCarteSurprise(carte.id);
+  assert.strictEqual(c.recolte, carte.cout);    // plafonné au prix
+  assert.strictEqual(c.debloquee, true);
+  assert.strictEqual(enf.coeurs, 10);           // seul le nécessaire a été pris
+});
+
+test("plusieurs enfants contribuent à la même carte (collaboration)", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  const etat = api.etatVierge();
+  api.lierEtat(etat);
+  const ids = Object.keys(etat.enfants);
+  const carte = api.cartesSurprises()[0];
+  etat.enfants[ids[0]].coeurs = 5;
+  etat.enfants[ids[1]].coeurs = 5;
+  etat.enfantActif = ids[0]; api.donnerCarte(carte.id, 5);
+  etat.enfantActif = ids[1]; api.donnerCarte(carte.id, 3);
+  const c = api.trouverCarteSurprise(carte.id);
+  assert.strictEqual(c.recolte, 8);
+  assert.strictEqual(c.dons[ids[0]], 5);
+  assert.strictEqual(c.dons[ids[1]], 3);
+});
+
+test("les parents peuvent ajouter, modifier et supprimer une carte", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  api.lierEtat(api.etatVierge());
+  const avant = api.cartesSurprises().length;
+  api.ajouterCarteSurprise("🎲", "Soirée jeux", "On sort les jeux de société", 12);
+  assert.strictEqual(api.cartesSurprises().length, avant + 1);
+  const ajoutee = api.cartesSurprises()[api.cartesSurprises().length - 1];
+  assert.strictEqual(ajoutee.cout, 12);
+  api.modifierCarteSurprise(ajoutee.id, "cout", 20);
+  assert.strictEqual(api.trouverCarteSurprise(ajoutee.id).cout, 20);
+  api.supprimerCarteSurprise(ajoutee.id);
+  assert.strictEqual(api.cartesSurprises().length, avant);
+});
+
+test("reinitCarteSurprise remet la carte à zéro pour la rejouer", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  api.lierEtat(api.etatVierge());
+  const enf = api.enfantActif();
+  const carte = api.cartesSurprises()[0];
+  enf.coeurs = carte.cout;
+  api.donnerCarte(carte.id, carte.cout);
+  assert.strictEqual(api.trouverCarteSurprise(carte.id).debloquee, true);
+  api.reinitCarteSurprise(carte.id);
+  const c = api.trouverCarteSurprise(carte.id);
+  assert.strictEqual(c.recolte, 0);
+  assert.strictEqual(c.debloquee, false);
+  assert.deepStrictEqual(Object.keys(c.dons), []);
+});
+
 /* ---------- Badges ---------- */
 test("verifierBadges attribue le badge cœur dès 10 cœurs cumulés", () => {
   const { api } = construireContexte();
