@@ -865,7 +865,7 @@ function blocCartesSurprisesParents() {
     <input class="csp-activite" id="csp-new-activite" placeholder="${t("cs.f_activite")}">
     <div class="csp-ligne">
       <label class="csp-coutlbl">${t("cs.prix_label")}
-        <input class="csp-cout" id="csp-new-cout" type="number" min="1" inputmode="numeric" value="15"></label>
+        <input class="csp-cout" id="csp-new-cout" type="number" min="1" inputmode="numeric" value="${50 * Object.keys(etat.enfants).length}"></label>
       <button class="btn-secondaire" id="csp-add">${t("cs.f_ajouter")}</button>
     </div>
   </div>`;
