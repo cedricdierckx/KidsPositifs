@@ -328,11 +328,8 @@ function vueAccueil(c) {
   // Badges (toujours affichés : gagnés + à débloquer, pour motiver)
   colB.appendChild(blocBadges(enf));
 
-  // ----- En bas de page : défis réparation + teaser "ça arrive" -----
+  // ----- En bas de page : défis réparation ("Oups, ça arrive…") -----
   colB.appendChild(blocReparation());
-  const soon = el("section", "carte bientot");
-  soon.innerHTML = `<h2>${t("soon.titre")}</h2><p>${t("soon.texte")}</p>`;
-  colB.appendChild(soon);
 }
 
 // Rafraîchit en continu le bandeau dodo (l'ambiance suit l'heure réelle).
@@ -1200,6 +1197,8 @@ function vueReglages(c) {
 
   /* ===== ONGLET : Mon compte & données ===== */
   if (ongletParent === "compte") {
+  // Module bug/suggestion : early adopters uniquement.
+  if (typeof estEarlyAdopter !== "function" || estEarlyAdopter()) c.appendChild(blocFeedback());
   if (typeof modeDemo !== "undefined" && modeDemo) {
     c.appendChild(bandeauDemo());
   } else {
@@ -1229,6 +1228,40 @@ function vueReglages(c) {
 
   } /* fin sinon-démo */
   } /* fin onglet compte */
+}
+
+// Module de signalement (bug / suggestion) — réservé aux early adopters.
+// Transmet par e-mail (mailto) à l'adresse de support.
+const FEEDBACK_EMAIL = "cedric.dierckx@gmail.com";
+function blocFeedback() {
+  const sec = el("section", "carte feedback-carte");
+  sec.innerHTML = `<h2>${t("fb.titre")}</h2><p class="note">${t("fb.sous")}</p>`;
+  const selType = el("select", "fb-type");
+  selType.innerHTML = `<option value="bug">${t("fb.type_bug")}</option>
+    <option value="suggestion">${t("fb.type_suggestion")}</option>`;
+  const ta = el("textarea", "fb-message");
+  ta.placeholder = t("fb.message_ph"); ta.rows = 4;
+  const b = el("button", "btn-secondaire", t("fb.envoyer"));
+  b.onclick = () => {
+    const msg = ta.value.trim();
+    if (!msg) { toast(t("fb.vide"), "info"); return; }
+    const u = (typeof utilisateurCourant === "function") ? utilisateurCourant() : null;
+    const type = selType.value === "bug" ? "Bug" : "Suggestion";
+    const contexte = [
+      "App: " + APP_NOM, "Type: " + type,
+      "Email: " + (u && u.email ? u.email : "—"),
+      "Famille: " + (familleActive ? familleActive.name : "—"),
+      "Langue: " + langue, "Version état: " + ETAT_VERSION,
+      "Date: " + new Date().toISOString(),
+      "Navigateur: " + (navigator.userAgent || "—")
+    ].join("\n");
+    const sujet = encodeURIComponent(`${APP_NOM} — ${type}`);
+    const corps = encodeURIComponent(`${msg}\n\n--- Contexte technique ---\n${contexte}`);
+    location.href = `mailto:${FEEDBACK_EMAIL}?subject=${sujet}&body=${corps}`;
+    toast(t("fb.merci"), "succes");
+  };
+  sec.appendChild(selType); sec.appendChild(ta); sec.appendChild(b);
+  return sec;
 }
 
 // Outil de récupération : restaurer une sauvegarde locale ou un fichier JSON.
