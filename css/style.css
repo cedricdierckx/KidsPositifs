@@ -383,6 +383,19 @@ main{max-width:680px; margin:0 auto; padding:14px}
   font-weight:800; text-transform:uppercase; letter-spacing:.5px; color:var(--doux)}
 .grp-titre:first-of-type{margin-top:10px}
 
+/* ---- Espace parents : sous-menu (onglets) ---- */
+.sous-nav{display:flex; gap:8px; overflow-x:auto; padding:4px 2px 8px; margin-bottom:6px;
+  -webkit-overflow-scrolling:touch}
+.sous-nav-btn{position:relative; flex:0 0 auto; border:2px solid #e3edf5; background:#fff;
+  border-radius:14px; padding:10px 14px; font-size:14px; font-weight:800; cursor:pointer;
+  font-family:inherit; color:var(--doux); white-space:nowrap; transition:.12s}
+.sous-nav-btn.actif{background:var(--famille); border-color:var(--famille); color:#fff;
+  box-shadow:0 3px 8px rgba(246,166,35,.3)}
+.sous-nav-btn:active{transform:scale(.96)}
+.sous-nav-pin{position:absolute; top:-6px; right:-6px; background:#e26d9b; color:#fff;
+  font-size:11px; font-weight:800; min-width:18px; height:18px; line-height:18px;
+  border-radius:9px; text-align:center; padding:0 4px}
+
 /* ---- Barre de navigation ---- */
 .navbar{position:fixed; bottom:0; left:0; right:0; background:#fff;
   box-shadow:0 -4px 16px rgba(40,60,90,.10); display:flex; z-index:30}

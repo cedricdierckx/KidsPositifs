@@ -931,9 +931,17 @@ function blocCartesSurprisesParents() {
   return sec;
 }
 
-// Titre de groupe (séparateur visuel pour structurer l'espace parents).
-function titreGroupe(txt) {
-  return el("h2", "grp-titre", txt);
+// Onglet actif de l'espace parents (session, non synchronisé).
+let ongletParent = "quotidien";
+
+// Bandeau "mode démo" (remplace les sections compte/famille en démo).
+function bandeauDemo() {
+  const d = el("section", "carte");
+  d.innerHTML = `<h2>${t("demo.titre")}</h2><p>${t("demo.desc")}</p>`;
+  const bq = el("button", "gros-bouton planete", t("demo.creer"));
+  bq.onclick = () => location.reload();
+  d.appendChild(bq);
+  return d;
 }
 
 function vueReglages(c) {
@@ -969,8 +977,28 @@ function vueReglages(c) {
   banniere.appendChild(lLang);
   c.appendChild(banniere);
 
-  /* ===== GROUPE : Au quotidien ===== */
-  c.appendChild(titreGroupe(t("grp.quotidien")));
+  // ----- Sous-menu (onglets) pour organiser l'espace parents -----
+  const onglets = [
+    ["quotidien", t("grp.quotidien")],
+    ["activites", t("grp.activites")],
+    ["enfants",   t("grp.enfants")],
+    ["famille",   t("grp.famille")],
+    ["compte",    t("grp.compte")]
+  ];
+  const nav = el("nav", "sous-nav");
+  onglets.forEach(([id, label]) => {
+    const b = el("button", "sous-nav-btn" + (ongletParent === id ? " actif" : ""), label);
+    if (id === "quotidien" && totalAttente) {
+      const pin = el("span", "sous-nav-pin", String(totalAttente));
+      b.appendChild(pin);
+    }
+    b.onclick = () => { ongletParent = id; rendre(); };
+    nav.appendChild(b);
+  });
+  c.appendChild(nav);
+
+  /* ===== ONGLET : Au quotidien ===== */
+  if (ongletParent === "quotidien") {
 
   // ----- Validations en attente (affichées seulement s'il y en a) -----
   if (totalAttente) {
@@ -999,8 +1027,10 @@ function vueReglages(c) {
   // ----- Corrections pour l'enfant sélectionné -----
   c.appendChild(blocCorrections(enfantActif()));
 
-  /* ===== GROUPE : Activités & règles du jeu ===== */
-  c.appendChild(titreGroupe(t("grp.activites")));
+  } /* fin onglet quotidien */
+
+  /* ===== ONGLET : Activités & règles du jeu ===== */
+  if (ongletParent === "activites") {
 
   // ----- Cartes surprises (activités famille) -----
   c.appendChild(blocCartesSurprisesParents());
@@ -1024,8 +1054,10 @@ function vueReglages(c) {
   // ----- Référence : prérequis de chaque espèce de l'écosystème -----
   c.appendChild(blocEcoReference());
 
-  /* ===== GROUPE : Les enfants ===== */
-  c.appendChild(titreGroupe(t("grp.enfants")));
+  } /* fin onglet activités */
+
+  /* ===== ONGLET : Les enfants ===== */
+  if (ongletParent === "enfants") {
 
   // ----- Profils -----
   Object.values(etat.enfants).forEach(enf => {
@@ -1090,20 +1122,13 @@ function vueReglages(c) {
   bAjout.onclick = () => { ajouterEnfant(); rendre(); };
   c.appendChild(bAjout);
 
-  // ----- Mode démo : bandeau au lieu des sections compte/famille -----
-  if (typeof modeDemo !== "undefined" && modeDemo) {
-    const d = el("section", "carte");
-    d.innerHTML = `<h2>${t("demo.titre")}</h2>
-      <p>${t("demo.desc")}</p>`;
-    const bq = el("button", "gros-bouton planete", t("demo.creer"));
-    bq.onclick = () => location.reload();
-    d.appendChild(bq);
-    c.appendChild(d);
-    return; // pas de famille/abonnement/compte/admin en démo
-  }
+  } /* fin onglet enfants */
 
-  /* ===== GROUPE : Famille & invitations ===== */
-  c.appendChild(titreGroupe(t("grp.famille")));
+  /* ===== ONGLET : Famille & invitations ===== */
+  if (ongletParent === "famille") {
+  if (typeof modeDemo !== "undefined" && modeDemo) {
+    c.appendChild(bandeauDemo());   // pas de famille/abonnement/admin en démo
+  } else {
 
   // ----- Famille & invitations -----
   const fam = el("section", "carte");
@@ -1170,8 +1195,14 @@ function vueReglages(c) {
   // ----- Administration (réservé aux admins) -----
   if (typeof estAdmin !== "undefined" && estAdmin) c.appendChild(blocAdmin());
 
-  /* ===== GROUPE : Mon compte & données ===== */
-  c.appendChild(titreGroupe(t("grp.compte")));
+  } /* fin sinon-démo */
+  } /* fin onglet famille */
+
+  /* ===== ONGLET : Mon compte & données ===== */
+  if (ongletParent === "compte") {
+  if (typeof modeDemo !== "undefined" && modeDemo) {
+    c.appendChild(bandeauDemo());
+  } else {
 
   // ----- Compte -----
   const cpt = el("section", "carte");
@@ -1195,6 +1226,9 @@ function vueReglages(c) {
 
   // ----- 🛟 Récupération de données -----
   c.appendChild(blocRecuperation());
+
+  } /* fin sinon-démo */
+  } /* fin onglet compte */
 }
 
 // Outil de récupération : restaurer une sauvegarde locale ou un fichier JSON.
