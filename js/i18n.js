@@ -1388,3 +1388,9 @@ Object.assign(I18N.de, {
   "stats.moyenne": "{n} Pkt/aktiver T", "stats.depuis": "vor {n} T", "stats.actif_auj": "Heute aktiv",
   "stats.equilibre": "Balance Helfen 💛 / Planet 💧", "stats.top": "Lieblingsmissionen"
 });
+
+/* ---- Écosystème : niveaux de décor ---- */
+Object.assign(I18N.fr, { "eco.niveau_desert": "🏜️ Désert", "eco.niveau_prairie": "🌳 Prairie", "eco.niveau_foret": "🌲 Forêt luxuriante" });
+Object.assign(I18N.en, { "eco.niveau_desert": "🏜️ Desert", "eco.niveau_prairie": "🌳 Meadow", "eco.niveau_foret": "🌲 Lush forest" });
+Object.assign(I18N.nl, { "eco.niveau_desert": "🏜️ Woestijn", "eco.niveau_prairie": "🌳 Weide", "eco.niveau_foret": "🌲 Weelderig bos" });
+Object.assign(I18N.de, { "eco.niveau_desert": "🏜️ Wüste", "eco.niveau_prairie": "🌳 Wiese", "eco.niveau_foret": "🌲 Üppiger Wald" });

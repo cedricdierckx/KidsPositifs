@@ -717,19 +717,34 @@ function sceneVivante(enf) {
     });
   });
   const total = ciel.length + sol.length;
+  // Le décor évolue avec la richesse de l'écosystème : désert → prairie → forêt.
+  let niveau = "desert";
+  if (total >= 20) niveau = "foret"; else if (total >= 8) niveau = "prairie";
+  const FONDS = {
+    desert:  ["🌵", "🪨", "🌵", "🪨"],
+    prairie: ["🌼", "🌿", "🌷", "🌼", "🌿"],
+    foret:   ["🌲", "🌳", "🌲", "🍄", "🌳", "🌲"]
+  };
+  const fond = FONDS[niveau];
+
   const sec = el("section", "carte eco-monde-carte");
-  let html = `<h2>${t("eco.monde_titre")}</h2>
-    <div class="ecomonde">
+  let html = `<h2>${t("eco.monde_titre")} <span class="ecomonde-niveau">${t("eco.niveau_" + niveau)}</span></h2>
+    <div class="ecomonde niveau-${niveau}">
       <div class="ecomonde-ciel">
         <span class="ecomonde-soleil">☀️</span>
         <span class="ecomonde-nuage c1">☁️</span>
         <span class="ecomonde-nuage c2">☁️</span>`;
   ciel.forEach((e, i) => { html += `<span class="ecomonde-vol" style="--i:${i}">${e}</span>`; });
-  html += `</div><div class="ecomonde-sol">`;
+  html += `</div><div class="ecomonde-sol">
+        <div class="ecomonde-fond">` +
+        fond.map((e, i) => `<span class="ecomonde-plante" style="--i:${i}">${e}</span>`).join("") +
+        `</div>`;
   if (!total) {
     html += `<span class="ecomonde-vide">${t("eco.monde_vide")}</span>`;
   } else {
-    sol.forEach((e, i) => { html += `<span class="ecomonde-etre" style="--i:${i}">${e}</span>`; });
+    sol.forEach((e, i) => {
+      html += `<span class="ecomonde-etre" style="--i:${i}"><span class="ecomonde-corps">${e}</span></span>`;
+    });
   }
   html += `</div></div>
     <p class="eco-statut">${t("home.etres_vivants", { n: total })}</p>`;
