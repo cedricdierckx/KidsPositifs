@@ -253,8 +253,8 @@ function rendre() {
   c.setAttribute("data-vue", etat.vue);   // pilote la mise en page responsive
   switch (etat.vue) {
     case "accueil":  vueAccueil(c);  break;
-    case "famille":  vueMissions(c, "famille"); break;
-    case "planete":  vueMissions(c, "planete"); break;
+    case "famille":  vueFamille(c);  break;
+    case "planete":  vuePlanete(c);  break;
     case "avatar":   vueAvatar(c);   break;
     case "reglages": vueReglages(c); break;
   }
@@ -311,36 +311,22 @@ function vueAccueil(c) {
   // Bandeau "dodo" : ambiance selon l'heure + mission coucher à l'heure
   colA.appendChild(bandeauDodo(enf));
 
-  // Missions Famille (directement sur la page de l'enfant)
+  // Missions Famille (directement sur la page d'accueil de l'enfant)
   const titreFam = el("section", "carte titre-cat");
   titreFam.style.setProperty("--c", CATEGORIES.famille.couleur);
   titreFam.innerHTML = `<h2>${t("home.missions_famille")} <span class="solde-inline">💛 ${enf.coeurs}</span></h2>`;
-  const lienFam = el("button", "lien-cat", t("home.voir_tout"));
-  lienFam.onclick = () => { etat.vue = "famille"; ecrireCache(); rendre(); };
-  titreFam.querySelector("h2").appendChild(lienFam);
   colB.appendChild(titreFam);
   colB.appendChild(grilleMissions("famille"));
 
-  // Missions Planète (directement sur la page de l'enfant)
+  // Défis réparation (alternative bienveillante à la punition)
+  colB.appendChild(blocReparation());
+
+  // Missions Planète (directement sur la page d'accueil de l'enfant)
   const titrePla = el("section", "carte titre-cat");
   titrePla.style.setProperty("--c", CATEGORIES.planete.couleur);
   titrePla.innerHTML = `<h2>${t("home.missions_planete")} <span class="solde-inline">💧 ${enf.gouttes}</span></h2>`;
-  const lienPla = el("button", "lien-cat", t("home.voir_tout"));
-  lienPla.onclick = () => { etat.vue = "planete"; ecrireCache(); rendre(); };
-  titrePla.querySelector("h2").appendChild(lienPla);
   colB.appendChild(titrePla);
   colB.appendChild(grilleMissions("planete"));
-
-  // Cartes surprises (objectif d'équipe, partagé par toute la famille)
-  colB.appendChild(blocCartesSurprises(enf));
-
-  // Aperçu écosystème
-  const ecoCarte = el("section", "carte");
-  const apercu = renduSceneEco(enf);
-  ecoCarte.innerHTML = `<h2>${t("home.mon_ecosysteme")}</h2>
-    <div class="eco-mini">${apercu || t("home.eco_vide")}</div>
-    <p class="eco-statut">${t("home.etres_vivants", { n: nbTotalEspeces(enf) })}</p>`;
-  colB.appendChild(ecoCarte);
 
   // Badges
   if (enf.badges.length) {
@@ -469,40 +455,57 @@ function blocCartesSurprises(enf) {
 }
 
 /* ---------- Vue Missions (famille / planète) ---------- */
-function vueMissions(c, catId) {
+// Défis réparation (alternative bienveillante à la punition).
+function blocReparation() {
+  const rep = el("section", "carte reparation");
+  rep.innerHTML = `<h2>${t("rep.titre")}</h2><p>${t("rep.texte")}</p>`;
+  const g = el("div", "missions");
+  DEFIS_REPARATION.forEach(d => {
+    const b = el("button", "mission rep");
+    b.innerHTML = `<span class="m-emoji">${d.emoji}</span>
+      <span class="m-titre">${trData("defi", d.id, d.titre)}</span>
+      <span class="m-points">+${d.bonus} 💛</span>`;
+    b.onclick = () => defiReparation(d);
+    g.appendChild(b);
+  });
+  rep.appendChild(g);
+  return rep;
+}
+
+/* ---------- Vue Famille : activités d'équipe (cartes surprises) ---------- */
+function vueFamille(c) {
   const enf = enfantActif();
-  const cat = CATEGORIES[catId];
-  const jour = aujourdHui();
-  const journalJour = enf.journal[jour] || {};
+  const cat = CATEGORIES.famille;
 
   const entete = el("section", "carte entete-cat");
   entete.style.setProperty("--c", cat.couleur);
-  entete.innerHTML = `<h1>${cat.emoji} ${t("cat." + catId + ".nom")}</h1>
-    <p>${t("cat." + catId + ".desc")}</p>
-    <p class="solde">${cat.monnaieEmoji} <strong>${catId === "famille" ? enf.coeurs : enf.gouttes}</strong> ${t("money." + (catId === "famille" ? "coeurs" : "gouttes"))}</p>`;
+  entete.innerHTML = `<h1>${cat.emoji} ${t("cat.famille.nom")}</h1>
+    <p class="solde">${cat.monnaieEmoji} <strong>${enf.coeurs}</strong> ${t("money.coeurs")}</p>`;
   c.appendChild(entete);
 
-  // Aperçu de la récompense liée
-  if (catId === "planete") c.appendChild(vueEcosysteme(enf));
+  // Cartes surprises : objectif d'équipe à débloquer ensemble.
+  c.appendChild(blocCartesSurprises(enf));
 
-  // Liste des missions adaptées à l'âge
-  c.appendChild(grilleMissions(catId));
+  // Teaser : d'autres surprises famille arrivent.
+  const soon = el("section", "carte bientot");
+  soon.innerHTML = `<h2>${t("soon.titre")}</h2><p>${t("soon.texte")}</p>`;
+  c.appendChild(soon);
+}
 
-  // Section famille : défis réparation (alternative à la punition)
-  if (catId === "famille") {
-    const rep = el("section", "carte reparation");
-    rep.innerHTML = `<h2>${t("rep.titre")}</h2>
-      <p>${t("rep.texte")}</p>`;
-    const g = el("div", "missions");
-    DEFIS_REPARATION.forEach(d => {
-      const b = el("button", "mission rep");
-      b.innerHTML = `<span class="m-emoji">${d.emoji}</span><span class="m-titre">${d.titre}</span><span class="m-points">+${d.bonus} 💛</span>`;
-      b.onclick = () => defiReparation(d);
-      g.appendChild(b);
-    });
-    rep.appendChild(g);
-    c.appendChild(rep);
-  }
+/* ---------- Vue Planète : écosystème ---------- */
+function vuePlanete(c) {
+  const enf = enfantActif();
+  const cat = CATEGORIES.planete;
+
+  const entete = el("section", "carte entete-cat");
+  entete.style.setProperty("--c", cat.couleur);
+  entete.innerHTML = `<h1>${cat.emoji} ${t("cat.planete.nom")}</h1>
+    <p>${t("cat.planete.desc")}</p>
+    <p class="solde">${cat.monnaieEmoji} <strong>${enf.gouttes}</strong> ${t("money.gouttes")}</p>`;
+  c.appendChild(entete);
+
+  // Écosystème détaillé (chaîne alimentaire).
+  c.appendChild(vueEcosysteme(enf));
 }
 
 /* ---------- Scène : tous les êtres vivants créés ---------- */

@@ -1060,3 +1060,9 @@ Object.assign(I18N.de, {
   "carteAct.cs_picnic": "Wir packen einen Snack ein und spielen zusammen draußen.",
   "carteAct.cs_sortie": "Ein besonderer Ausflug zusammen gewählt (Zoo, Park, Schwimmbad…)."
 });
+
+/* ---- Réorganisation des onglets : teaser "ça arrive" ---- */
+Object.assign(I18N.fr, { "soon.titre": "Oups, ça arrive ! 🚧", "soon.texte": "D'autres surprises pour la famille arrivent bientôt. Reste connecté·e ! 🎉" });
+Object.assign(I18N.en, { "soon.titre": "Oops, coming soon! 🚧", "soon.texte": "More family surprises are on the way. Stay tuned! 🎉" });
+Object.assign(I18N.nl, { "soon.titre": "Oeps, komt eraan! 🚧", "soon.texte": "Meer gezinsverrassingen zijn onderweg. Blijf kijken! 🎉" });
+Object.assign(I18N.de, { "soon.titre": "Hoppla, kommt bald! 🚧", "soon.texte": "Weitere Familienüberraschungen sind unterwegs. Bleib dran! 🎉" });
