@@ -397,12 +397,14 @@ main{max-width:680px; margin:0 auto; padding:14px}
   .compteur .big{font-size:28px}
   .compteur span:not(.big){font-size:13px}
 
-  /* Missions : grandes tuiles bien espacées */
-  .missions{grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px}
-  .mission{padding:18px 12px; border-radius:22px; min-height:132px; justify-content:center}
-  .mission .m-emoji{font-size:48px}
-  .mission .m-titre{font-size:16px}
-  .mission .m-points{font-size:16px}
+  /* Missions : une seule colonne, grands boutons horizontaux (emoji à
+     gauche, intitulé au centre, points à droite) — faciles à viser. */
+  .missions{grid-template-columns:1fr; gap:12px}
+  .mission{flex-direction:row; align-items:center; gap:14px; text-align:left;
+    padding:16px 18px; border-radius:22px; min-height:86px}
+  .mission .m-emoji{font-size:44px; flex:0 0 auto; line-height:1}
+  .mission .m-titre{font-size:18px; flex:1 1 auto}
+  .mission .m-points{font-size:17px; flex:0 0 auto; white-space:nowrap}
 
   /* Gros boutons d'action (raccourcis, écrans) */
   .gros-bouton{padding:22px; font-size:20px}
