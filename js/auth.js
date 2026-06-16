@@ -287,27 +287,51 @@ function ecranAuth() {
   const parrain = localStorage.getItem(PARRAIN_KEY);
   const opts = Object.keys(LANGUES).map(l =>
     `<option value="${l}"${l === langue ? " selected" : ""}>${LANGUES[l]}</option>`).join("");
-  carteEcran(`
-    <div class="choix-langue"><select id="sel-langue" title="${t("langue")}">${opts}</select></div>
-    <div class="code-logo">🌟</div><h1>${APP_NOM}</h1>
-    <div id="parrain-banniere"></div>
-    <p id="auth-titre">${t("auth.tagline")}</p>
-    <input id="email" type="email" inputmode="email" placeholder="${t("auth.email_ph")}" autocomplete="email">
-    <input id="mdp" type="password" placeholder="${t("auth.mdp_ph")}" autocomplete="current-password">
-    <button id="b-principal" class="gros-bouton planete">${t("auth.connexion")}</button>
-    <button id="b-toggle" class="btn-secondaire">${t("auth.lien_magique")}</button>
-    <button id="b-signup" class="btn-secondaire">${t("auth.pas_compte")}</button>
-    <div id="attente-bloc">
-      <p class="note">${t("auth.attente_note")}</p>
-      <button id="b-waitlist" class="btn-secondaire">${t("auth.rejoindre_attente")}</button>
-    </div>
-    <p class="note" id="auth-msg"></p>
-    <hr style="border:none;border-top:1px solid #e3edf5;margin:14px 0">
-    <button id="b-demo" class="btn-secondaire">${t("auth.demo")}</button>
-    <div class="concept-bloc">
-      <h2>${t("auth.concept_titre")}</h2>
-      <p>${t("auth.concept_texte", { app: APP_NOM })}</p>
-    </div>`);
+
+  const features = [
+    ["🎯", t("auth.feat1_t"), t("auth.feat1_d")],
+    ["🎁", t("auth.feat2_t"), t("auth.feat2_d")],
+    ["🌍", t("auth.feat3_t"), t("auth.feat3_d")],
+    ["🏆", t("auth.feat4_t"), t("auth.feat4_d")]
+  ].map(([e, ti, de]) => `<div class="feat"><span class="feat-emoji">${e}</span>
+      <div><strong>${ti}</strong><span>${de}</span></div></div>`).join("");
+
+  document.body.innerHTML = `
+    <div class="landing">
+      <section class="landing-hero">
+        <div class="choix-langue"><select id="sel-langue" title="${t("langue")}">${opts}</select></div>
+        <div class="hero-logo">🌟</div>
+        <h1 class="hero-nom">${APP_NOM}</h1>
+        <p class="hero-titre">${t("auth.hero_titre")}</p>
+        <p class="hero-sous">${t("auth.hero_sous", { app: APP_NOM })}</p>
+        <div class="hero-features">${features}</div>
+        <div class="hero-steps">
+          <h2>${t("auth.comment_titre")}</h2>
+          <ol>
+            <li>${t("auth.etape1")}</li>
+            <li>${t("auth.etape2")}</li>
+            <li>${t("auth.etape3")}</li>
+          </ol>
+        </div>
+      </section>
+      <section class="landing-form">
+        <div class="carte code-carte">
+          <div id="parrain-banniere"></div>
+          <h2 class="form-titre">${t("auth.form_titre")}</h2>
+          <input id="email" type="email" inputmode="email" placeholder="${t("auth.email_ph")}" autocomplete="email">
+          <input id="mdp" type="password" placeholder="${t("auth.mdp_ph")}" autocomplete="current-password">
+          <button id="b-principal" class="gros-bouton planete">${t("auth.connexion")}</button>
+          <button id="b-signup" class="btn-secondaire">${t("auth.pas_compte")}</button>
+          <div id="attente-bloc">
+            <p class="note">${t("auth.attente_note")}</p>
+            <button id="b-waitlist" class="btn-secondaire">${t("auth.rejoindre_attente")}</button>
+          </div>
+          <p class="note" id="auth-msg"></p>
+          <hr style="border:none;border-top:1px solid #e3edf5;margin:14px 0">
+          <button id="b-demo" class="btn-secondaire">${t("auth.demo")}</button>
+        </div>
+      </section>
+    </div>`;
 
   document.getElementById("sel-langue").onchange = (e) => { definirLangue(e.target.value); ecranAuth(); };
 
@@ -326,36 +350,27 @@ function ecranAuth() {
   }
 
   const peutSinscrire = inscriptionAutorisee();      // inscription sur invitation seulement
-  let modeMdp = true, inscriptionMode = !!parrain;   // parrainage → création de compte
+  let inscriptionMode = !!parrain;                   // parrainage → création de compte
   const elEmail = document.getElementById("email");
   const elMdp = document.getElementById("mdp");
   const bPrinc = document.getElementById("b-principal");
-  const bToggle = document.getElementById("b-toggle");
   const bSignup = document.getElementById("b-signup");
   const blocAttente = document.getElementById("attente-bloc");
   const bWaitlist = document.getElementById("b-waitlist");
 
   const rafraichir = () => {
-    elMdp.style.display = modeMdp ? "block" : "none";
-    // L'inscription n'est proposée que sur invitation/parrainage.
-    bSignup.style.display = (modeMdp && peutSinscrire) ? "block" : "none";
+    bSignup.style.display = peutSinscrire ? "block" : "none";
     blocAttente.style.display = peutSinscrire ? "none" : "block";
-    bToggle.textContent = modeMdp ? t("auth.lien_magique") : t("auth.mot_de_passe");
-    bPrinc.textContent = !modeMdp ? t("auth.recevoir_lien")
-                        : (inscriptionMode ? t("auth.creer_compte") : t("auth.connexion"));
+    bPrinc.textContent = inscriptionMode ? t("auth.creer_compte") : t("auth.connexion");
     bSignup.textContent = inscriptionMode ? t("auth.deja_compte") : t("auth.pas_compte");
   };
-  bToggle.onclick = () => { modeMdp = !modeMdp; inscriptionMode = false; rafraichir(); };
   bSignup.onclick = () => { inscriptionMode = !inscriptionMode; rafraichir(); };
   bPrinc.onclick = async () => {
     const email = elEmail.value.trim();
     if (!email) return setMsg(t("auth.msg_entre_email"));
     bPrinc.disabled = true;
     try {
-      if (!modeMdp) {
-        const err = await connexionLienMagique(email);
-        setMsg(err ? t("auth.erreur", { msg: err.message }) : t("auth.msg_email_envoye"));
-      } else if (inscriptionMode) {
+      if (inscriptionMode) {
         if (!peutSinscrire) { setMsg(t("auth.msg_invitation_only")); return; }
         const err = await inscription(email, elMdp.value);
         if (err) setMsg(t("auth.erreur", { msg: err.message }));

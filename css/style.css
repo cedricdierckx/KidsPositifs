@@ -549,6 +549,39 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* ---- Synchro ---- */
 .sync-etat{font-size:14px; opacity:.8; margin-left:4px}
 
+/* ---- Page d'accueil publique (landing) ---- */
+.landing{max-width:1080px; margin:0 auto; padding:24px 16px 40px;
+  display:grid; grid-template-columns:1fr; gap:22px; align-items:start}
+.landing-hero{order:2}
+.landing-form{order:1}
+.landing-form .code-carte{max-width:none; width:100%; text-align:center; margin:0}
+.hero-logo{font-size:54px; text-align:center}
+.hero-nom{font-size:34px; margin:.1em 0; text-align:center}
+.hero-titre{font-size:22px; font-weight:800; color:var(--texte); margin:.2em 0; text-align:center}
+.hero-sous{font-size:15px; color:var(--doux); line-height:1.5; margin:.4em 0 1em; text-align:center}
+.hero-features{display:grid; grid-template-columns:1fr; gap:10px}
+.feat{display:flex; align-items:flex-start; gap:12px; background:#fff; border:2px solid #eef2f7;
+  border-radius:16px; padding:12px 14px; box-shadow:var(--ombre)}
+.feat-emoji{font-size:30px; flex:0 0 auto; line-height:1}
+.feat strong{display:block; font-size:15px}
+.feat span{font-size:13px; color:var(--doux); line-height:1.4}
+.hero-steps{background:linear-gradient(135deg,#fff6e9,#eef9f3); border:2px solid #ffe6c2;
+  border-radius:16px; padding:14px 16px 14px; margin-top:14px}
+.hero-steps h2{font-size:17px; margin:0 0 6px}
+.hero-steps ol{margin:0; padding-left:20px}
+.hero-steps li{font-size:14px; line-height:1.5; margin:4px 0; color:var(--texte)}
+.form-titre{margin:.2em 0 .6em}
+
+@media(min-width:860px){
+  .landing{grid-template-columns:1.25fr 380px; gap:32px; padding:34px 22px 50px; align-items:center}
+  .landing-hero{order:1}
+  .landing-form{order:2; position:sticky; top:24px}
+  .hero-logo,.hero-nom,.hero-titre,.hero-sous{text-align:left}
+  .hero-nom{font-size:40px}
+  .hero-titre{font-size:26px}
+  .hero-features{grid-template-columns:1fr 1fr}
+}
+
 /* ---- Écran code famille ---- */
 .ecran-code{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:18px}
 .code-carte{max-width:380px; text-align:center}

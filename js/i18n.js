@@ -1394,3 +1394,57 @@ Object.assign(I18N.fr, { "eco.niveau_desert": "🏜️ Désert", "eco.niveau_pra
 Object.assign(I18N.en, { "eco.niveau_desert": "🏜️ Desert", "eco.niveau_prairie": "🌳 Meadow", "eco.niveau_foret": "🌲 Lush forest" });
 Object.assign(I18N.nl, { "eco.niveau_desert": "🏜️ Woestijn", "eco.niveau_prairie": "🌳 Weide", "eco.niveau_foret": "🌲 Weelderig bos" });
 Object.assign(I18N.de, { "eco.niveau_desert": "🏜️ Wüste", "eco.niveau_prairie": "🌳 Wiese", "eco.niveau_foret": "🌲 Üppiger Wald" });
+
+/* ---- Page d'accueil publique (landing) ---- */
+Object.assign(I18N.fr, {
+  "auth.form_titre": "Se connecter",
+  "auth.hero_titre": "Toute la famille dans la même équipe 💛",
+  "auth.hero_sous": "{app} transforme les tâches du quotidien et la protection de la planète en une aventure positive, douce et motivante pour vos enfants.",
+  "auth.feat1_t": "Des missions rigolotes", "auth.feat1_d": "Chacun gagne des Cœurs 💛 en aidant à la maison et des Gouttes 💧 en protégeant la nature.",
+  "auth.feat2_t": "Des cartes surprises", "auth.feat2_d": "Les enfants coopèrent pour débloquer ensemble de vraies activités en famille.",
+  "auth.feat3_t": "Un écosystème vivant", "auth.feat3_d": "Leurs efforts font grandir un petit monde, des plantes jusqu'aux animaux.",
+  "auth.feat4_t": "Que du positif", "auth.feat4_d": "Badges, encouragements et « défis réparation » : jamais de punition, on valorise l'effort.",
+  "auth.comment_titre": "Comment ça marche ?",
+  "auth.etape1": "Crée ta famille et ajoute tes enfants.",
+  "auth.etape2": "Les enfants réalisent leurs missions et gagnent des récompenses.",
+  "auth.etape3": "Vous débloquez ensemble de beaux moments en famille."
+});
+Object.assign(I18N.en, {
+  "auth.form_titre": "Sign in",
+  "auth.hero_titre": "The whole family on the same team 💛",
+  "auth.hero_sous": "{app} turns everyday chores and protecting the planet into a positive, gentle and motivating adventure for your children.",
+  "auth.feat1_t": "Fun missions", "auth.feat1_d": "Everyone earns Hearts 💛 by helping at home and Drops 💧 by protecting nature.",
+  "auth.feat2_t": "Surprise cards", "auth.feat2_d": "Children cooperate to unlock real family activities together.",
+  "auth.feat3_t": "A living ecosystem", "auth.feat3_d": "Their efforts grow a little world, from plants to animals.",
+  "auth.feat4_t": "All positive", "auth.feat4_d": "Badges, encouragement and 'repair challenges': no punishment, we value effort.",
+  "auth.comment_titre": "How does it work?",
+  "auth.etape1": "Create your family and add your children.",
+  "auth.etape2": "Children complete their missions and earn rewards.",
+  "auth.etape3": "Together you unlock lovely family moments."
+});
+Object.assign(I18N.nl, {
+  "auth.form_titre": "Aanmelden",
+  "auth.hero_titre": "Het hele gezin in hetzelfde team 💛",
+  "auth.hero_sous": "{app} maakt van dagelijkse taken en het beschermen van de planeet een positief, zacht en motiverend avontuur voor je kinderen.",
+  "auth.feat1_t": "Leuke missies", "auth.feat1_d": "Iedereen verdient Hartjes 💛 door thuis te helpen en Druppels 💧 door de natuur te beschermen.",
+  "auth.feat2_t": "Verrassingskaarten", "auth.feat2_d": "Kinderen werken samen om echte gezinsactiviteiten vrij te spelen.",
+  "auth.feat3_t": "Een levend ecosysteem", "auth.feat3_d": "Hun inspanningen laten een kleine wereld groeien, van planten tot dieren.",
+  "auth.feat4_t": "Alleen positief", "auth.feat4_d": "Badges, aanmoediging en 'herstel-uitdagingen': geen straf, we waarderen inzet.",
+  "auth.comment_titre": "Hoe werkt het?",
+  "auth.etape1": "Maak je gezin aan en voeg je kinderen toe.",
+  "auth.etape2": "Kinderen voltooien hun missies en verdienen beloningen.",
+  "auth.etape3": "Samen ontgrendelen jullie mooie gezinsmomenten."
+});
+Object.assign(I18N.de, {
+  "auth.form_titre": "Anmelden",
+  "auth.hero_titre": "Die ganze Familie in einem Team 💛",
+  "auth.hero_sous": "{app} verwandelt Alltagsaufgaben und den Schutz des Planeten in ein positives, sanftes und motivierendes Abenteuer für deine Kinder.",
+  "auth.feat1_t": "Lustige Missionen", "auth.feat1_d": "Jeder verdient Herzen 💛 durch Helfen zu Hause und Tropfen 💧 durch Naturschutz.",
+  "auth.feat2_t": "Überraschungskarten", "auth.feat2_d": "Kinder arbeiten zusammen, um echte Familienaktivitäten freizuschalten.",
+  "auth.feat3_t": "Ein lebendiges Ökosystem", "auth.feat3_d": "Ihre Mühe lässt eine kleine Welt wachsen, von Pflanzen bis zu Tieren.",
+  "auth.feat4_t": "Nur Positives", "auth.feat4_d": "Abzeichen, Ermutigung und 'Wiedergutmachungs-Challenges': keine Strafe, wir würdigen den Einsatz.",
+  "auth.comment_titre": "Wie funktioniert es?",
+  "auth.etape1": "Erstelle deine Familie und füge deine Kinder hinzu.",
+  "auth.etape2": "Kinder erfüllen ihre Missionen und verdienen Belohnungen.",
+  "auth.etape3": "Gemeinsam schaltet ihr schöne Familienmomente frei."
+});
