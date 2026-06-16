@@ -318,9 +318,6 @@ function vueAccueil(c) {
   colB.appendChild(titreFam);
   colB.appendChild(grilleMissions("famille"));
 
-  // Défis réparation (alternative bienveillante à la punition)
-  colB.appendChild(blocReparation());
-
   // Missions Planète (directement sur la page d'accueil de l'enfant)
   const titrePla = el("section", "carte titre-cat");
   titrePla.style.setProperty("--c", CATEGORIES.planete.couleur);
@@ -335,6 +332,12 @@ function vueAccueil(c) {
       <div class="badges">${enf.badges.map(b => `<span class="badge">${b.emoji} ${b.nom}</span>`).join("")}</div>`;
     colB.appendChild(bCarte);
   }
+
+  // ----- En bas de page : défis réparation + teaser "ça arrive" -----
+  colB.appendChild(blocReparation());
+  const soon = el("section", "carte bientot");
+  soon.innerHTML = `<h2>${t("soon.titre")}</h2><p>${t("soon.texte")}</p>`;
+  colB.appendChild(soon);
 }
 
 // Rafraîchit en continu le bandeau dodo (l'ambiance suit l'heure réelle).
@@ -485,11 +488,6 @@ function vueFamille(c) {
 
   // Cartes surprises : objectif d'équipe à débloquer ensemble.
   c.appendChild(blocCartesSurprises(enf));
-
-  // Teaser : d'autres surprises famille arrivent.
-  const soon = el("section", "carte bientot");
-  soon.innerHTML = `<h2>${t("soon.titre")}</h2><p>${t("soon.texte")}</p>`;
-  c.appendChild(soon);
 }
 
 /* ---------- Vue Planète : écosystème ---------- */
