@@ -325,11 +325,8 @@ function vueAccueil(c) {
   colB.appendChild(titrePla);
   colB.appendChild(grilleMissions("planete"));
 
-  // Badges (toujours affichés : gagnés + à débloquer, pour motiver)
+  // Badges (seuls les badges réalisés sont affichés)
   colB.appendChild(blocBadges(enf));
-
-  // ----- En bas de page : défis réparation ("Oups, ça arrive…") -----
-  colB.appendChild(blocReparation());
 }
 
 // Rafraîchit en continu le bandeau dodo (l'ambiance suit l'heure réelle).
@@ -522,7 +519,55 @@ function statsJournalieres(enf, nbJours) {
   return out;
 }
 
-// Espace statistiques : évolution de chaque enfant (résumé + graphe 14 jours).
+// Ensemble des dates actives (clés du journal).
+function joursActifsSet(enf) { return new Set(Object.keys(enf.journal || {})); }
+// Série actuelle de jours consécutifs actifs (jusqu'à aujourd'hui/hier).
+function serieActuelle(enf) {
+  const set = joursActifsSet(enf);
+  const base = new Date(aujourdHui() + "T00:00:00");
+  // On tolère un démarrage hier (si rien fait aujourd'hui encore).
+  let depart = 0;
+  if (!set.has(base.toISOString().slice(0, 10))) depart = 1;
+  let streak = 0;
+  const d = new Date(base); d.setDate(base.getDate() - depart);
+  while (set.has(d.toISOString().slice(0, 10))) { streak++; d.setDate(d.getDate() - 1); }
+  return streak;
+}
+// Plus longue série de jours consécutifs jamais réalisée.
+function meilleureSerie(enf) {
+  const dates = Object.keys(enf.journal || {}).sort();
+  let best = 0, cur = 0, prev = null;
+  dates.forEach(c => {
+    if (prev) { const diff = (new Date(c) - new Date(prev)) / 86400000; cur = diff === 1 ? cur + 1 : 1; }
+    else cur = 1;
+    best = Math.max(best, cur); prev = c;
+  });
+  return best;
+}
+// Nombre de jours actifs sur les n derniers jours (régularité).
+function actifsDerniers(enf, n) {
+  const set = joursActifsSet(enf);
+  const base = new Date(aujourdHui() + "T00:00:00");
+  let cpt = 0;
+  for (let i = 0; i < n; i++) { const d = new Date(base); d.setDate(base.getDate() - i); if (set.has(d.toISOString().slice(0, 10))) cpt++; }
+  return cpt;
+}
+// Missions les plus réalisées (toutes périodes) : [[id, n], ...].
+function topMissions(enf, k) {
+  const cpt = {};
+  Object.values(enf.journal || {}).forEach(j => Object.keys(j).forEach(mid => cpt[mid] = (cpt[mid] || 0) + j[mid]));
+  return Object.entries(cpt).sort((a, b) => b[1] - a[1]).slice(0, k);
+}
+// Jours écoulés depuis la dernière activité (null si jamais).
+function joursDepuisActivite(enf) {
+  const dates = Object.keys(enf.journal || {}).sort();
+  if (!dates.length) return null;
+  const last = new Date(dates[dates.length - 1] + "T00:00:00");
+  return Math.round((new Date(aujourdHui() + "T00:00:00") - last) / 86400000);
+}
+
+// Espace statistiques : évolution de chaque enfant (utile aussi pour un suivi
+// psychologique : régularité, persévérance, équilibre prosocial/écologique).
 function blocStatistiques() {
   const wrap = el("div");
   const intro = el("section", "carte");
@@ -533,14 +578,32 @@ function blocStatistiques() {
   Object.values(etat.enfants).forEach(enf => {
     const sec = el("section", "carte stat-enfant");
     sec.style.setProperty("--c", enf.couleur);
+    const joursActifs = Object.keys(enf.journal).length;
+
+    if (!joursActifs) {
+      sec.innerHTML = `<h3 class="stat-nom">${enf.emoji} ${echapper(enf.prenom)}</h3>
+        <p class="note">${t("stats.aucune")}</p>`;
+      wrap.appendChild(sec);
+      return;
+    }
+
     const jours = statsJournalieres(enf, NB);
     const max = Math.max(1, ...jours.map(d => d.total));
-    const joursActifs = Object.keys(enf.journal).length;
     const semaine = jours.slice(7).reduce((s, d) => s + d.total, 0);
     const semainePrec = jours.slice(0, 7).reduce((s, d) => s + d.total, 0);
     const diff = semaine - semainePrec;
     const tendance = diff > 0 ? `▲ +${diff}` : (diff < 0 ? `▼ ${diff}` : "→ =");
     const tendCls = diff > 0 ? "up" : (diff < 0 ? "down" : "flat");
+
+    // Indicateurs de suivi.
+    const serie = serieActuelle(enf);
+    const record = meilleureSerie(enf);
+    const reg30 = actifsDerniers(enf, 30);
+    const totalPts = enf.coeursTotal + enf.gouttesTotal;
+    const moyenne = Math.round(totalPts / joursActifs);
+    const depuis = joursDepuisActivite(enf);
+    const pctFam = totalPts ? Math.round((enf.coeursTotal / totalPts) * 100) : 50;
+    const pctPla = 100 - pctFam;
 
     let html = `<h3 class="stat-nom">${enf.emoji} ${echapper(enf.prenom)} <small>(${t("home.ans", { age: age(enf) })})</small></h3>
       <div class="stat-chiffres">
@@ -548,21 +611,40 @@ function blocStatistiques() {
         <span class="stat-puce">💧 ${enf.gouttesTotal}</span>
         <span class="stat-puce">🏆 ${enf.badges.length}</span>
         <span class="stat-puce">🌳 ${nbTotalEspeces(enf)}</span>
-        <span class="stat-puce">📅 ${t("stats.jours_actifs", { n: joursActifs })}</span>
+        <span class="stat-puce">🔥 ${t("stats.serie", { n: serie, r: record })}</span>
+        <span class="stat-puce">📅 ${t("stats.regularite", { n: reg30 })}</span>
+        <span class="stat-puce">📈 ${t("stats.moyenne", { n: moyenne })}</span>
+        <span class="stat-puce">⏱️ ${depuis === 0 ? t("stats.actif_auj") : t("stats.depuis", { n: depuis })}</span>
       </div>
+
       <p class="stat-graph-titre">${t("stats.points_14j")}
         <span class="stat-tendance ${tendCls}">${tendance}</span></p>
       <div class="stat-graph">`;
     jours.forEach(d => {
       const h = Math.round((d.total / max) * 100);
-      const jour = d.cle.slice(8, 10);
       html += `<div class="stat-col" title="${d.cle} · ${d.total} pts (💛${d.coeurs} 💧${d.gouttes})">
-        <div class="stat-bar" style="height:${h}%"></div><span class="stat-jour">${jour}</span></div>`;
+        <div class="stat-bar" style="height:${h}%"></div><span class="stat-jour">${d.cle.slice(8, 10)}</span></div>`;
     });
     html += `</div>
-      <p class="note stat-compare">${t("stats.compare", { s: semaine, p: semainePrec })}</p>`;
-    if (!joursActifs) html = `<h3 class="stat-nom">${enf.emoji} ${echapper(enf.prenom)}</h3>
-      <p class="note">${t("stats.aucune")}</p>`;
+      <p class="note stat-compare">${t("stats.compare", { s: semaine, p: semainePrec })}</p>
+
+      <p class="stat-graph-titre">${t("stats.equilibre")}</p>
+      <div class="stat-balance">
+        <div class="stat-balance-fam" style="width:${pctFam}%">💛 ${pctFam}%</div>
+        <div class="stat-balance-pla" style="width:${pctPla}%">💧 ${pctPla}%</div>
+      </div>`;
+
+    const top = topMissions(enf, 3);
+    if (top.length) {
+      html += `<p class="stat-graph-titre">${t("stats.top")}</p><div class="stat-top">`;
+      top.forEach(([mid, n]) => {
+        const m = (typeof trouverMission === "function") ? trouverMission(mid) : null;
+        const emoji = m ? m.emoji : "•";
+        const nom = m ? trData("mission", m.id, m.titre) : mid;
+        html += `<div class="stat-top-ligne"><span>${emoji} ${echapper(nom)}</span><span class="stat-top-n">×${n}</span></div>`;
+      });
+      html += `</div>`;
+    }
     sec.innerHTML = html;
     wrap.appendChild(sec);
   });
@@ -1136,6 +1218,9 @@ function vueReglages(c) {
 
   // ----- Corrections pour l'enfant sélectionné -----
   c.appendChild(blocCorrections(enfantActif()));
+
+  // ----- Défis réparation ("Oups, ça arrive…") : déclenchés par un parent -----
+  c.appendChild(blocReparation());
 
   } /* fin onglet quotidien */
 

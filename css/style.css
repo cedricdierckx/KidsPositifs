@@ -439,6 +439,14 @@ main{max-width:680px; margin:0 auto; padding:14px}
   background:linear-gradient(180deg,#ffd25e,#f6a623)}
 .stat-jour{font-size:10px; color:var(--doux)}
 .stat-compare{margin-top:8px!important}
+.stat-balance{display:flex; height:26px; border-radius:13px; overflow:hidden; margin:2px 0 4px;
+  font-size:12px; font-weight:800; color:#fff}
+.stat-balance-fam{background:var(--famille); display:flex; align-items:center; justify-content:center; min-width:fit-content; padding:0 6px}
+.stat-balance-pla{background:var(--planete); display:flex; align-items:center; justify-content:center; min-width:fit-content; padding:0 6px}
+.stat-top{display:grid; gap:4px}
+.stat-top-ligne{display:flex; justify-content:space-between; font-size:14px; padding:4px 0;
+  border-bottom:1px solid #eef2f7}
+.stat-top-n{font-weight:800; color:var(--planete)}
 
 /* ---- Espace parents : sous-menu (onglets) ---- */
 .sous-nav{display:flex; gap:8px; overflow-x:auto; padding:4px 2px 8px; margin-bottom:6px;

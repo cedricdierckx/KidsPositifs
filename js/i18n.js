@@ -1366,3 +1366,25 @@ Object.assign(I18N.fr, { "eco.monde_titre": "🌍 Mon petit monde vivant", "eco.
 Object.assign(I18N.en, { "eco.monde_titre": "🌍 My little living world", "eco.monde_vide": "🌱 Your world is still empty… Create your first plant below!" });
 Object.assign(I18N.nl, { "eco.monde_titre": "🌍 Mijn kleine levende wereld", "eco.monde_vide": "🌱 Je wereld is nog leeg… Maak hieronder je eerste plant!" });
 Object.assign(I18N.de, { "eco.monde_titre": "🌍 Meine kleine lebendige Welt", "eco.monde_vide": "🌱 Deine Welt ist noch leer… Erschaffe unten deine erste Pflanze!" });
+
+/* ---- Statistiques complémentaires (suivi) ---- */
+Object.assign(I18N.fr, {
+  "stats.serie": "Série {n} j (record {r})", "stats.regularite": "{n}/30 j actifs",
+  "stats.moyenne": "{n} pts/j actif", "stats.depuis": "Il y a {n} j", "stats.actif_auj": "Actif aujourd'hui",
+  "stats.equilibre": "Équilibre entraide 💛 / planète 💧", "stats.top": "Missions préférées"
+});
+Object.assign(I18N.en, {
+  "stats.serie": "Streak {n} d (best {r})", "stats.regularite": "{n}/30 active d",
+  "stats.moyenne": "{n} pts/active d", "stats.depuis": "{n} d ago", "stats.actif_auj": "Active today",
+  "stats.equilibre": "Balance helping 💛 / planet 💧", "stats.top": "Favourite missions"
+});
+Object.assign(I18N.nl, {
+  "stats.serie": "Reeks {n} d (record {r})", "stats.regularite": "{n}/30 actieve d",
+  "stats.moyenne": "{n} ptn/actieve d", "stats.depuis": "{n} d geleden", "stats.actif_auj": "Vandaag actief",
+  "stats.equilibre": "Balans helpen 💛 / planeet 💧", "stats.top": "Favoriete missies"
+});
+Object.assign(I18N.de, {
+  "stats.serie": "Serie {n} T (Rekord {r})", "stats.regularite": "{n}/30 aktive T",
+  "stats.moyenne": "{n} Pkt/aktiver T", "stats.depuis": "vor {n} T", "stats.actif_auj": "Heute aktiv",
+  "stats.equilibre": "Balance Helfen 💛 / Planet 💧", "stats.top": "Lieblingsmissionen"
+});
