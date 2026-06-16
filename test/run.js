@@ -99,6 +99,38 @@ test("etatValide rejette des structures essentielles du mauvais type", () => {
   assert.strictEqual(api.etatValide(e).ok, false);
 });
 
+/* ---------- Couche de données isolée : garde-fous d'écriture (Phase D) ---------- */
+test("Store.ecritureAutorisee autorise un état lié, peuplé et valide", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  assert.strictEqual(api.Store.ecritureAutorisee().ok, true);
+});
+
+test("Store.ecritureAutorisee bloque un état d'une autre famille", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());   // familleEtat = f1
+  api.familleId = "f2";             // on bascule de famille sans relier
+  assert.strictEqual(api.Store.ecritureAutorisee().ok, false);
+});
+
+test("Store.ecritureAutorisee bloque un état vide", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat({ enfants: {} });
+  assert.strictEqual(api.Store.ecritureAutorisee().ok, false);
+});
+
+test("Store.ecritureAutorisee bloque un état au schéma corrompu", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const e = api.etatVierge();
+  e.enfants[Object.keys(e.enfants)[0]].coeurs = -1;
+  api.lierEtat(e);
+  assert.strictEqual(api.Store.ecritureAutorisee().ok, false);
+});
+
 /* ---------- Crédit / décrédit de mission ---------- */
 test("crediterMission ajoute points et journal (catégorie famille = cœurs)", () => {
   const { api } = construireContexte();

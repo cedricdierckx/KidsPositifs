@@ -96,11 +96,13 @@ function construireContexte() {
       nbTier, nbTotalEspeces, spInfo, nbEspece, prereqManquants, especeDebloquee, creerEspece,
       // badges & divers
       verifierBadges, acheterOption, estDebloque, age, ageDepuis,
+      // couche de données isolée (Phase D)
+      Store,
       // données de référence
       CATEGORIES, MISSIONS, TIERS_ECO, ENFANTS_DEFAUT, ETAT_VERSION,
     };
   `;
-  const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/app.js"), epilogue].join("\n;\n");
+  const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/app.js"), lire("js/store.js"), epilogue].join("\n;\n");
   vm.runInContext(source, contexte, { filename: "famiteam-bundle.js" });
   return { contexte, api: contexte.contexteExports };
 }

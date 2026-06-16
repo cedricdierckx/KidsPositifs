@@ -54,11 +54,14 @@ Chaque phase est **indépendante**, livrable seule, et **réversible**.
   `ui/avatar.js`, `ui/parents.js`, `ui/recovery.js`.
 - Avantage : lisibilité, moins d'effets de bord globaux. **Nécessite la Phase A.**
 
-### Phase D — Couche de données isolée (risque moyen)
-- Regrouper toute la sync dans un seul module `store.js` (lecture/écriture,
-  cache, realtime, garde-fous) avec une API claire : `store.charger(famille)`,
-  `store.sauver()`, `store.restaurer(data)`.
-- Le reste de l'app ne touche plus jamais Supabase directement.
+### Phase D — Couche de données isolée (risque moyen) ✅ FAIT
+- Toute la sync `family_state(_history)` (lecture/écriture, realtime, garde-fous)
+  est regroupée dans `js/store.js`, objet global `Store` à API claire :
+  `Store.charger()`, `Store.sauver()`, `Store.planifierSauver()`, `Store.tirer()`,
+  `Store.historique()`, `Store.abonnerRealtime()`, `Store.ecritureAutorisee()`.
+- Les trois garde-fous d'écriture (anti inter-familles, anti-état-vide,
+  validation de schéma) sont centralisés dans `Store.ecritureAutorisee()`.
+- `auth.js` ne garde que de fines délégations (compatibilité des appelants).
 
 ### Phase E — Internationalisation (FR/EN/NL/DE) (risque faible, gros travail)
 - Externaliser tous les textes dans `i18n/{fr,en,nl,de}.js` + helper `t("clé")`.

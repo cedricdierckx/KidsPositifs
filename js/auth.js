@@ -16,8 +16,7 @@ let session = null, utilisateur = null;
 let mesFamilles = [];          // familles de l'utilisateur
 let familleActive = null;      // { id, name, plan, plan_status, role }
 let estAdmin = false;          // l'utilisateur est-il administrateur de l'app ?
-let cloudTimer = null;         // anti-rebond sauvegarde
-let canalRealtime = null;      // abonnement temps réel
+// (anti-rebond sauvegarde et abonnement temps réel : gérés par Store, Phase D)
 
 const FAMILLE_KEY = "kp_famille_active";
 const INVITE_KEY = "kp_pending_invite";
@@ -36,6 +35,7 @@ async function demarrer() {
     return ecranConfig();
   }
   sb = supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+  Store.init(sb);                          // couche de données isolée (Phase D)
 
   // Jeton d'invitation éventuellement présent dans l'URL (?invite=...)
   const params = new URLSearchParams(location.search);
@@ -85,7 +85,7 @@ async function chargerFamilles() {
 async function ouvrirFamille(f) {
   // On annule toute sauvegarde différée de la famille précédente (sinon elle
   // risquerait d'écraser la nouvelle famille avec l'ancien état).
-  clearTimeout(cloudTimer);
+  Store.annulerSauverDiffere();
   familleActive = { ...f, role: f.owner_id === utilisateur.id ? "owner" : "parent" };
   familleId = f.id;                       // variable globale (app.js) pour le cache
   localStorage.setItem(FAMILLE_KEY, f.id);
@@ -106,97 +106,18 @@ async function ouvrirFamille(f) {
 }
 function auRetour() { if (!document.hidden) { tirerEtat(); if (typeof majDodo === "function") majDodo(); } }
 
-/* ---------- Synchronisation de l'état de jeu ---------- */
-async function chargerEtatFamille() {
-  majBadgeSync("⏬");
-  const { data, error } = await sb.from("family_state")
-    .select("data").eq("family_id", familleId).maybeSingle();
-  if (!error && data && data.data && data.data.enfants) {
-    const distant = normaliser(data.data);
-    if ((distant.maj || 0) >= (etat.maj || 0)) { lierEtat(distant); ecrireCache(); }
-    else await sauvegardeCloud();
-  } else {
-    if (!etatNonVide(etat)) lierEtat(etatVierge());
-    await sauvegardeCloud();              // initialise la ligne distante
-  }
-  majBadgeSync("✅");
-}
-
-async function tirerEtat() {
-  if (!sb || !familleId) return;
-  const { data, error } = await sb.from("family_state")
-    .select("data").eq("family_id", familleId).maybeSingle();
-  if (!error && data && data.data && data.data.enfants && (data.data.maj || 0) > (etat.maj || 0)) {
-    lierEtat(normaliser(data.data)); ecrireCache(); rendre();
-  }
-}
-
-function planifierSauvegardeCloud() {
-  if (modeDemo) return;                 // la démo ne synchronise rien
-  if (!sb || !familleId) return;
-  clearTimeout(cloudTimer);
-  cloudTimer = setTimeout(sauvegardeCloud, 700);
-}
-async function sauvegardeCloud() {
-  if (!sb || !familleId) return;
-  // GARDE-FOU 1 : ne jamais écrire l'état d'une famille dans une autre.
-  if (familleEtat && familleEtat !== familleId) {
-    console.warn("Sauvegarde annulée : l'état chargé appartient à une autre famille.");
-    majBadgeSync("🛑"); return;
-  }
-  // GARDE-FOU 2 : ne jamais écraser une famille avec un état sans aucun enfant.
-  if (!etatNonVide(etat)) {
-    console.warn("Sauvegarde annulée : état vide (aucun enfant).");
-    majBadgeSync("🛑"); return;
-  }
-  // GARDE-FOU 3 (Phase B) : valider le schéma avant écriture distante.
-  if (typeof etatValide === "function") {
-    const v = etatValide(etat);
-    if (!v.ok) {
-      console.warn("Sauvegarde annulée : état invalide —", v.raison);
-      majBadgeSync("🛑"); return;
-    }
-  }
-  try {
-    majBadgeSync("⏫");
-    const { error } = await sb.from("family_state")
-      .upsert({ family_id: familleId, data: etat, updated_at: new Date().toISOString() });
-    majBadgeSync(error ? "⚠️" : "✅");
-  } catch { majBadgeSync("📴"); }
-}
-
-// Liste les instantanés (sauvegardes automatiques) de la famille courante.
-async function listerHistoriqueCloud() {
-  if (!sb || !familleId || modeDemo) return [];
-  const { data, error } = await sb.from("family_state_history")
-    .select("id,saved_at,data").eq("family_id", familleId)
-    .order("saved_at", { ascending: false }).limit(40);
-  if (error) return [];
-  return (data || []).map(r => {
-    const enfants = (r.data && r.data.enfants) ? Object.values(r.data.enfants) : [];
-    return { id: r.id, saved_at: r.saved_at, nb: enfants.length,
-             prenoms: enfants.map(e => e.prenom), data: r.data };
-  });
-}
-
-function abonnerRealtime() {
-  if (canalRealtime) { sb.removeChannel(canalRealtime); canalRealtime = null; }
-  canalRealtime = sb.channel("fs:" + familleId)
-    .on("postgres_changes",
-        { event: "UPDATE", schema: "public", table: "family_state", filter: "family_id=eq." + familleId },
-        payload => {
-          const d = payload.new && payload.new.data;
-          if (d && d.enfants && (d.maj || 0) > (etat.maj || 0)) {
-            lierEtat(normaliser(d)); ecrireCache(); rendre();
-          }
-        })
-    .subscribe();
-}
-
-function majBadgeSync(symbole) {
-  const b = document.querySelector("#sync-etat");
-  if (b) b.textContent = symbole;
-}
+/* ---------- Synchronisation de l'état de jeu ----------
+ * Toute la logique d'accès aux tables `family_state(_history)` et au temps
+ * réel vit désormais dans js/store.js (couche de données isolée, Phase D).
+ * Les fonctions ci-dessous ne sont que de fines délégations conservées pour
+ * compatibilité avec les appelants existants (app.js, ui.js). */
+async function chargerEtatFamille() { return Store.charger(); }
+async function tirerEtat()          { return Store.tirer(); }
+function planifierSauvegardeCloud() { return Store.planifierSauver(); }
+async function sauvegardeCloud()    { return Store.sauver(); }
+async function listerHistoriqueCloud() { return Store.historique(); }
+function abonnerRealtime()          { return Store.abonnerRealtime(); }
+function majBadgeSync(symbole)      { return Store.badge(symbole); }
 
 /* ---------- Authentification ---------- */
 async function connexionLienMagique(email) {
@@ -218,7 +139,7 @@ async function inscription(email, mdp) {
   return error;
 }
 async function deconnexion() {
-  if (canalRealtime) sb.removeChannel(canalRealtime);
+  Store.fermerRealtime();
   localStorage.removeItem(FAMILLE_KEY);
   await sb.auth.signOut();
   location.reload();
