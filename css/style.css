@@ -399,7 +399,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
 
   /* Missions : une seule colonne, grands boutons horizontaux (emoji à
      gauche, intitulé au centre, points à droite) — faciles à viser. */
-  .missions{grid-template-columns:1fr; gap:12px}
+  .missions{grid-template-columns:1fr !important; gap:12px}
   .mission{flex-direction:row; align-items:center; gap:14px; text-align:left;
     padding:16px 18px; border-radius:22px; min-height:86px}
   .mission .m-emoji{font-size:44px; flex:0 0 auto; line-height:1}
