@@ -1066,3 +1066,9 @@ Object.assign(I18N.fr, { "soon.titre": "Oups, ça arrive ! 🚧", "soon.texte": 
 Object.assign(I18N.en, { "soon.titre": "Oops, coming soon! 🚧", "soon.texte": "More family surprises are on the way. Stay tuned! 🎉" });
 Object.assign(I18N.nl, { "soon.titre": "Oeps, komt eraan! 🚧", "soon.texte": "Meer gezinsverrassingen zijn onderweg. Blijf kijken! 🎉" });
 Object.assign(I18N.de, { "soon.titre": "Hoppla, kommt bald! 🚧", "soon.texte": "Weitere Familienüberraschungen sind unterwegs. Bleib dran! 🎉" });
+
+/* ---- Cartes surprises : mode mystère + don de 10 ---- */
+Object.assign(I18N.fr, { "cs.mystere": "Carte mystère", "cs.mystere_sous": "Remplissez la jauge ensemble pour la découvrir ! 🎁", "cs.donner10": "Donner 10 💛" });
+Object.assign(I18N.en, { "cs.mystere": "Mystery card", "cs.mystere_sous": "Fill the bar together to reveal it! 🎁", "cs.donner10": "Give 10 💛" });
+Object.assign(I18N.nl, { "cs.mystere": "Mysteriekaart", "cs.mystere_sous": "Vul samen de balk om hem te onthullen! 🎁", "cs.donner10": "Geef 10 💛" });
+Object.assign(I18N.de, { "cs.mystere": "Geheimniskarte", "cs.mystere_sous": "Füllt zusammen den Balken, um sie zu enthüllen! 🎁", "cs.donner10": "10 💛 geben" });

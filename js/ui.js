@@ -417,31 +417,50 @@ function blocCartesSurprises(enf) {
   cartes.forEach(c => {
     const titre = trData("carte", c.id, c.titre);
     const activite = trData("carteAct", c.id, c.activite);
-    const pct = Math.min(100, Math.round((c.recolte / c.cout) * 100));
+    const pct = Math.max(0, Math.min(100, Math.round((c.recolte / c.cout) * 100)));
     const reste = Math.max(0, c.cout - c.recolte);
     // Contributions des enfants (esprit d'équipe).
     const dons = Object.keys(c.dons || {})
       .filter(id => etat.enfants[id] && c.dons[id] > 0)
-      .map(id => `${etat.enfants[id].emoji || "🙂"} ${c.dons[id]}`)
-      .join("  ");
-    html += `<div class="cs-carte${c.debloquee ? " ouverte" : ""}${c.faite ? " faite" : ""}">
-      <div class="cs-tete"><span class="cs-emoji">${c.emoji}</span>
-        <span class="cs-titre">${echapper(titre)}</span>
-        <span class="cs-prix">${c.debloquee ? t("cs.debloquee") : t("cs.recolte", { recolte: c.recolte, cout: c.cout })}</span></div>
-      <div class="progress"><div class="progress-bar cs-bar" style="width:${pct}%"></div></div>`;
+      .map(id => `<span class="cs-contrib-item">${etat.enfants[id].emoji || "🙂"} ${c.dons[id]}</span>`)
+      .join("");
+    // Jauge très visuelle : piste colorée + coureur qui avance vers le cadeau.
+    const jauge = `<div class="cs-jauge">
+        <div class="cs-jauge-piste">
+          <div class="cs-jauge-rempli" style="width:${pct}%"></div>
+          <span class="cs-jauge-token" style="left:${pct}%">${c.debloquee ? "🎉" : "🏃"}</span>
+          <span class="cs-jauge-but">${c.debloquee ? "🎁" : "🔒"}</span>
+        </div>
+        <div class="cs-jauge-bas"><span class="cs-jauge-chiffres">${c.recolte} / ${c.cout} 💛</span>
+          <span class="cs-jauge-pct">${pct}%</span></div>
+      </div>`;
+
+    html += `<div class="cs-carte${c.debloquee ? " ouverte" : " mystere"}${c.faite ? " faite" : ""}">`;
     if (c.debloquee) {
-      html += `<p class="cs-activite">${echapper(activite)}</p>
+      // Carte RÉVÉLÉE (jauge pleine) : on dévoile l'activité.
+      html += `<div class="cs-tete"><span class="cs-emoji">${c.emoji}</span>
+          <span class="cs-titre">${echapper(titre)}</span>
+          <span class="cs-prix">${t("cs.debloquee")}</span></div>
+        ${jauge}
+        <p class="cs-activite">${echapper(activite)}</p>
         <p class="cs-afaire">${t("cs.a_faire")}</p>`;
       if (c.faite) html += `<p class="cs-faite-tag">${t("cs.faite")}</p>`;
       else html += `<button class="btn-secondaire cs-faite-btn" data-faite="${c.id}">${t("cs.faite_btn")}</button>`;
     } else {
-      html += `<p class="cs-reste">${t("cs.reste", { reste })}</p>
+      // Carte MYSTÈRE (cachée tant que la jauge n'est pas pleine).
+      html += `<div class="cs-tete"><span class="cs-emoji cs-mystere-emoji">🎁</span>
+          <span class="cs-titre">${t("cs.mystere")}</span>
+          <span class="cs-prix">❓</span></div>
+        <p class="cs-mystere-sous">${t("cs.mystere_sous")}</p>
+        ${jauge}
+        <p class="cs-reste">${t("cs.reste", { reste })}</p>
         <div class="cs-dons">
           <button class="cs-don" data-don="${c.id}" data-montant="1">${t("cs.donner1")}</button>
           <button class="cs-don" data-don="${c.id}" data-montant="5">${t("cs.donner5")}</button>
+          <button class="cs-don" data-don="${c.id}" data-montant="10">${t("cs.donner10")}</button>
         </div>`;
     }
-    if (dons) html += `<p class="cs-contrib">${dons}</p>`;
+    if (dons) html += `<div class="cs-contrib">${dons}</div>`;
     html += `</div>`;
   });
   html += `</div>`;
