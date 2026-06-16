@@ -325,13 +325,8 @@ function vueAccueil(c) {
   colB.appendChild(titrePla);
   colB.appendChild(grilleMissions("planete"));
 
-  // Badges
-  if (enf.badges.length) {
-    const bCarte = el("section", "carte");
-    bCarte.innerHTML = `<h2>${t("home.mes_badges")}</h2>
-      <div class="badges">${enf.badges.map(b => `<span class="badge">${b.emoji} ${b.nom}</span>`).join("")}</div>`;
-    colB.appendChild(bCarte);
-  }
+  // Badges (toujours affichés : gagnés + à débloquer, pour motiver)
+  colB.appendChild(blocBadges(enf));
 
   // ----- En bas de page : défis réparation + teaser "ça arrive" -----
   colB.appendChild(blocReparation());
@@ -473,6 +468,28 @@ function blocCartesSurprises(enf) {
   });
   sec.querySelectorAll(".cs-faite-btn").forEach(b =>
     b.onclick = () => marquerCarteFaite(b.dataset.faite));
+  return sec;
+}
+
+// Badges : médailles colorées, gagnées + à débloquer (motivation enfants).
+function blocBadges(enf) {
+  const gagnes = new Set((enf.badges || []).map(b => b.id));
+  const total = BADGES_CATALOGUE.length;
+  const nb = BADGES_CATALOGUE.filter(b => gagnes.has(b.id)).length;
+  const sec = el("section", "carte badges-carte");
+  let html = `<h2>${t("home.mes_badges")} <span class="badges-compteur">${nb}/${total}</span></h2>
+    <div class="badges-grid">`;
+  BADGES_CATALOGUE.forEach(b => {
+    const ok = gagnes.has(b.id);
+    const nom = trData("badge", b.id, b.nom);
+    const sous = ok ? nom : trData("badgeC", b.id, b.comment);
+    html += `<div class="badge-fun${ok ? " gagne" : " bloque"}" title="${echapper(nom)}">
+      <div class="badge-medaille"><span class="badge-emoji">${ok ? b.emoji : "🔒"}</span></div>
+      <div class="badge-nom">${echapper(ok ? nom : sous)}</div>
+    </div>`;
+  });
+  html += `</div>`;
+  sec.innerHTML = html;
   return sec;
 }
 

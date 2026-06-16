@@ -1072,3 +1072,23 @@ Object.assign(I18N.fr, { "cs.mystere": "Carte mystère", "cs.mystere_sous": "Rem
 Object.assign(I18N.en, { "cs.mystere": "Mystery card", "cs.mystere_sous": "Fill the bar together to reveal it! 🎁", "cs.donner10": "Give 10 💛" });
 Object.assign(I18N.nl, { "cs.mystere": "Mysteriekaart", "cs.mystere_sous": "Vul samen de balk om hem te onthullen! 🎁", "cs.donner10": "Geef 10 💛" });
 Object.assign(I18N.de, { "cs.mystere": "Geheimniskarte", "cs.mystere_sous": "Füllt zusammen den Balken, um sie zu enthüllen! 🎁", "cs.donner10": "10 💛 geben" });
+
+/* ---- Badges : "comment l'obtenir" (FR via data.js) ---- */
+Object.assign(I18N.en, {
+  "badgeC.coeur10": "Earn 10 Hearts in total", "badgeC.coeur50": "Earn 50 Hearts in total",
+  "badgeC.eco_p": "Create your 1st plant", "badgeC.eco_h": "Create your 1st herbivore",
+  "badgeC.eco_c": "Create your 1st carnivore", "badgeC.eco_chaine": "A plant, a herbivore and a carnivore",
+  "badgeC.semaine": "Be active on 7 different days"
+});
+Object.assign(I18N.nl, {
+  "badgeC.coeur10": "Verdien 10 Hartjes in totaal", "badgeC.coeur50": "Verdien 50 Hartjes in totaal",
+  "badgeC.eco_p": "Maak je 1e plant", "badgeC.eco_h": "Maak je 1e planteneter",
+  "badgeC.eco_c": "Maak je 1e vleeseter", "badgeC.eco_chaine": "Een plant, een planteneter en een vleeseter",
+  "badgeC.semaine": "Wees 7 verschillende dagen actief"
+});
+Object.assign(I18N.de, {
+  "badgeC.coeur10": "Verdiene 10 Herzen insgesamt", "badgeC.coeur50": "Verdiene 50 Herzen insgesamt",
+  "badgeC.eco_p": "Erschaffe deine 1. Pflanze", "badgeC.eco_h": "Erschaffe deinen 1. Pflanzenfresser",
+  "badgeC.eco_c": "Erschaffe deinen 1. Fleischfresser", "badgeC.eco_chaine": "Eine Pflanze, ein Pflanzenfresser und ein Fleischfresser",
+  "badgeC.semaine": "Sei an 7 verschiedenen Tagen aktiv"
+});

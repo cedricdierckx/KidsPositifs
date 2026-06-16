@@ -333,6 +333,19 @@ const ENCOURAGEMENTS = [
   "Ton cœur est rempli de gentillesse ! 💖"
 ];
 
+/* ---- Catalogue des badges (pour l'affichage : gagnés + à débloquer) ----
+ * Doit rester synchronisé avec les conditions d'attribution dans
+ * app.js → verifierBadges(). 'comment' = comment l'obtenir (motivation). */
+const BADGES_CATALOGUE = [
+  { id: "coeur10",    emoji: "💛", nom: "Cœur d'or",                   comment: "Gagne 10 Cœurs en tout" },
+  { id: "coeur50",    emoji: "🏅", nom: "Super entraide",             comment: "Gagne 50 Cœurs en tout" },
+  { id: "eco_p",      emoji: "🌱", nom: "Jardinier en herbe",        comment: "Crée ta 1ʳᵉ plante" },
+  { id: "eco_h",      emoji: "🐰", nom: "Ami des herbivores",        comment: "Crée ton 1ᵉʳ herbivore" },
+  { id: "eco_c",      emoji: "🦊", nom: "Protecteur des prédateurs", comment: "Crée ton 1ᵉʳ carnivore" },
+  { id: "eco_chaine", emoji: "🔗", nom: "Chaîne alimentaire complète", comment: "Une plante, un herbivore et un carnivore" },
+  { id: "semaine",    emoji: "📅", nom: "Une semaine d'efforts",     comment: "Sois actif 7 jours différents" }
+];
+
 /* ---- Cartes surprises (objectifs d'équipe) ------------------------
  * Activités à faire EN FAMILLE, débloquées ensemble : les enfants
  * donnent volontairement des Cœurs 💛 à une carte commune jusqu'à
