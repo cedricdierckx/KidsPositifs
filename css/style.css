@@ -389,6 +389,37 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .feedback-carte .fb-message{width:100%; padding:12px; border:2px solid #e3edf5; border-radius:12px;
   font-family:inherit; font-size:15px; resize:vertical; box-sizing:border-box}
 
+/* ---- Écosystème : scène vivante (petit monde) ---- */
+.eco-monde-carte{background:linear-gradient(180deg,#eaf7ff,#f4fff6)}
+.ecomonde{position:relative; border-radius:18px; overflow:hidden; border:3px solid #d4ecff;
+  margin:6px 0 4px}
+.ecomonde-ciel{position:relative; height:120px;
+  background:linear-gradient(180deg,#bfe6ff,#e8f7ff)}
+.ecomonde-soleil{position:absolute; top:10px; right:14px; font-size:40px;
+  animation:eco-soleil 6s ease-in-out infinite}
+@keyframes eco-soleil{0%,100%{transform:rotate(0) scale(1)}50%{transform:rotate(20deg) scale(1.08)}}
+.ecomonde-nuage{position:absolute; font-size:34px; opacity:.95}
+.ecomonde-nuage.c1{top:14px; left:-40px; animation:eco-nuage 22s linear infinite}
+.ecomonde-nuage.c2{top:50px; left:-40px; font-size:26px; animation:eco-nuage 32s linear infinite 4s}
+@keyframes eco-nuage{from{transform:translateX(0)}to{transform:translateX(140vw)}}
+.ecomonde-vol{position:absolute; top:calc(14px + (var(--i) * 17px) % 70px); left:8%; font-size:26px;
+  animation:eco-vol 9s ease-in-out infinite; animation-delay:calc(var(--i) * -1.3s)}
+@keyframes eco-vol{0%{transform:translateX(0) translateY(0)}
+  25%{transform:translateX(40vw) translateY(-10px)}
+  50%{transform:translateX(75vw) translateY(6px)}
+  75%{transform:translateX(40vw) translateY(-6px)}
+  100%{transform:translateX(0) translateY(0)}}
+.ecomonde-sol{position:relative; min-height:90px; padding:10px 10px 14px;
+  background:linear-gradient(180deg,#aee59a,#7fcf6b);
+  display:flex; flex-wrap:wrap; align-items:flex-end; gap:2px 4px}
+.ecomonde-sol::before{content:""; position:absolute; top:-8px; left:0; right:0; height:14px;
+  background:radial-gradient(circle at 10px -2px,#7fcf6b 8px,transparent 9px) repeat-x;
+  background-size:20px 14px}
+.ecomonde-etre{font-size:30px; line-height:1; animation:eco-bob 2.8s ease-in-out infinite;
+  animation-delay:calc(var(--i) * -0.2s)}
+@keyframes eco-bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-5px) rotate(3deg)}}
+.ecomonde-vide{font-size:15px; font-weight:700; color:#3a7a2c; padding:14px; text-align:center; width:100%}
+
 /* ---- Statistiques (espace parents) ---- */
 .stat-enfant{border-left:6px solid var(--c)}
 .stat-nom{margin:.1em 0 .4em; font-size:18px}

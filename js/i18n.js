@@ -1360,3 +1360,9 @@ Object.assign(I18N.de, {
   "stats.compare": "Diese Woche: {s} Pkt · Vorwoche: {p} Pkt",
   "stats.aucune": "Noch keine Aktivität. Der erste Fortschritt erscheint hier! ✨"
 });
+
+/* ---- Écosystème : scène vivante (vue d'ensemble fun) ---- */
+Object.assign(I18N.fr, { "eco.monde_titre": "🌍 Mon petit monde vivant", "eco.monde_vide": "🌱 Ton monde est encore vide… Crée ta première plante en bas !" });
+Object.assign(I18N.en, { "eco.monde_titre": "🌍 My little living world", "eco.monde_vide": "🌱 Your world is still empty… Create your first plant below!" });
+Object.assign(I18N.nl, { "eco.monde_titre": "🌍 Mijn kleine levende wereld", "eco.monde_vide": "🌱 Je wereld is nog leeg… Maak hieronder je eerste plant!" });
+Object.assign(I18N.de, { "eco.monde_titre": "🌍 Meine kleine lebendige Welt", "eco.monde_vide": "🌱 Deine Welt ist noch leer… Erschaffe unten deine erste Pflanze!" });

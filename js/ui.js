@@ -614,8 +614,45 @@ function vuePlanete(c) {
     <p class="solde">${cat.monnaieEmoji} <strong>${enf.gouttes}</strong> ${t("money.gouttes")}</p>`;
   c.appendChild(entete);
 
+  // Scène vivante (vue d'ensemble fun, pour les petits).
+  c.appendChild(sceneVivante(enf));
+
   // Écosystème détaillé (chaîne alimentaire).
   c.appendChild(vueEcosysteme(enf));
+}
+
+/* ---------- Scène vivante : l'écosystème comme un petit monde ---------- */
+function sceneVivante(enf) {
+  // On rassemble tous les êtres créés, en distinguant ceux "du ciel".
+  const VOLANTS = ["coccinelle", "abeille", "papillon", "hibou", "aigle"];
+  const ciel = [], sol = [];
+  TIERS_ECO.forEach(tier => {
+    tier.especes.forEach(sp => {
+      const n = (enf.ecosysteme[tier.id] || {})[sp.id] || 0;
+      for (let k = 0; k < n; k++) {
+        (VOLANTS.includes(sp.id) ? ciel : sol).push(sp.emoji);
+      }
+    });
+  });
+  const total = ciel.length + sol.length;
+  const sec = el("section", "carte eco-monde-carte");
+  let html = `<h2>${t("eco.monde_titre")}</h2>
+    <div class="ecomonde">
+      <div class="ecomonde-ciel">
+        <span class="ecomonde-soleil">☀️</span>
+        <span class="ecomonde-nuage c1">☁️</span>
+        <span class="ecomonde-nuage c2">☁️</span>`;
+  ciel.forEach((e, i) => { html += `<span class="ecomonde-vol" style="--i:${i}">${e}</span>`; });
+  html += `</div><div class="ecomonde-sol">`;
+  if (!total) {
+    html += `<span class="ecomonde-vide">${t("eco.monde_vide")}</span>`;
+  } else {
+    sol.forEach((e, i) => { html += `<span class="ecomonde-etre" style="--i:${i}">${e}</span>`; });
+  }
+  html += `</div></div>
+    <p class="eco-statut">${t("home.etres_vivants", { n: total })}</p>`;
+  sec.innerHTML = html;
+  return sec;
 }
 
 /* ---------- Scène : tous les êtres vivants créés ---------- */
@@ -634,10 +671,8 @@ function renduSceneEco(enf) {
 /* ---------- Écosystème détaillé (chaîne alimentaire, cartes) ---------- */
 function vueEcosysteme(enf) {
   const sec = el("section", "carte eco-carte");
-  const scene = renduSceneEco(enf);
   sec.innerHTML = `<h2>${t("eco.titre")}</h2>
-    <p class="note">${t("eco.intro")}</p>
-    <div class="eco-scene">${scene || `<span class='eco-vide'>${t("eco.vide_court")}</span>`}</div>`;
+    <p class="note">${t("eco.intro")}</p>`;
 
   TIERS_ECO.forEach(tier => {
     const bloc = el("div", "eco-tier");
