@@ -83,7 +83,7 @@ function construireContexte() {
     contexteExports = {
       // état & garde-fous
       get etat() { return etat; }, set etat(v) { etat = v; },
-      lierEtat, etatNonVide, etatVierge, etatDemo, normaliser,
+      lierEtat, etatNonVide, etatValide, etatVierge, etatDemo, normaliser,
       get familleId() { return familleId; }, set familleId(v) { familleId = v; },
       get familleEtat() { return familleEtat; },
       // missions

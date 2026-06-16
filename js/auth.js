@@ -149,6 +149,14 @@ async function sauvegardeCloud() {
     console.warn("Sauvegarde annulée : état vide (aucun enfant).");
     majBadgeSync("🛑"); return;
   }
+  // GARDE-FOU 3 (Phase B) : valider le schéma avant écriture distante.
+  if (typeof etatValide === "function") {
+    const v = etatValide(etat);
+    if (!v.ok) {
+      console.warn("Sauvegarde annulée : état invalide —", v.raison);
+      majBadgeSync("🛑"); return;
+    }
+  }
   try {
     majBadgeSync("⏫");
     const { error } = await sb.from("family_state")

@@ -27,6 +27,35 @@ function etatNonVide(e) {
   return !!(e && e.enfants && Object.keys(e.enfants).length);
 }
 
+// Validation de schéma avant écriture (Phase B). Renforce les garde-fous :
+// on refuse d'enregistrer un état manifestement corrompu (mauvais types,
+// monnaies non numériques, structures essentielles manquantes). Renvoie
+// { ok: true } ou { ok: false, raison: "..." } pour journalisation/alerte.
+// Volontairement tolérant : ne bloque que ce qui trahit une vraie corruption,
+// jamais une simple variante de données légitimes.
+function etatValide(e) {
+  if (!e || typeof e !== "object") return { ok: false, raison: "état absent ou non-objet" };
+  if (!e.enfants || typeof e.enfants !== "object") return { ok: false, raison: "champ enfants absent ou invalide" };
+  const ids = Object.keys(e.enfants);
+  if (!ids.length) return { ok: false, raison: "aucun enfant" };
+  for (const id of ids) {
+    const enf = e.enfants[id];
+    if (!enf || typeof enf !== "object") return { ok: false, raison: `enfant ${id} invalide` };
+    for (const champ of ["coeurs", "coeursTotal", "gouttes", "gouttesTotal"]) {
+      const v = enf[champ];
+      if (v !== undefined && (typeof v !== "number" || !isFinite(v) || v < 0))
+        return { ok: false, raison: `${champ} invalide pour ${id}` };
+    }
+    if (enf.journal !== undefined && (typeof enf.journal !== "object" || enf.journal === null))
+      return { ok: false, raison: `journal invalide pour ${id}` };
+    if (enf.badges !== undefined && !Array.isArray(enf.badges))
+      return { ok: false, raison: `badges invalides pour ${id}` };
+    if (enf.ecosysteme !== undefined && (typeof enf.ecosysteme !== "object" || enf.ecosysteme === null))
+      return { ok: false, raison: `ecosysteme invalide pour ${id}` };
+  }
+  return { ok: true };
+}
+
 /* ---------- Cache local (par famille, pour le hors-ligne) ---------- */
 function cleCache() { return STORAGE_KEY + ":" + (familleId || "_local"); }
 function lireCache() {

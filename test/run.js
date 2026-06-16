@@ -66,6 +66,39 @@ test("normaliser sur null renvoie un état vierge valide", () => {
   assert.strictEqual(n.version, api.ETAT_VERSION);
 });
 
+/* ---------- Validation de schéma (Phase B) ---------- */
+test("etatValide accepte un état vierge et un état normalisé", () => {
+  const { api } = construireContexte();
+  assert.strictEqual(api.etatValide(api.etatVierge()).ok, true);
+  assert.strictEqual(api.etatValide(api.normaliser({ enfants: { x: { prenom: "Z" } } })).ok, true);
+});
+
+test("etatValide rejette un état vide ou non-objet", () => {
+  const { api } = construireContexte();
+  assert.strictEqual(api.etatValide(null).ok, false);
+  assert.strictEqual(api.etatValide({}).ok, false);
+  assert.strictEqual(api.etatValide({ enfants: {} }).ok, false);
+});
+
+test("etatValide rejette des monnaies corrompues", () => {
+  const { api } = construireContexte();
+  const e = api.etatVierge();
+  const id = Object.keys(e.enfants)[0];
+  e.enfants[id].coeurs = -5;
+  assert.strictEqual(api.etatValide(e).ok, false);
+  const e2 = api.etatVierge();
+  e2.enfants[Object.keys(e2.enfants)[0]].gouttes = NaN;
+  assert.strictEqual(api.etatValide(e2).ok, false);
+});
+
+test("etatValide rejette des structures essentielles du mauvais type", () => {
+  const { api } = construireContexte();
+  const e = api.etatVierge();
+  const id = Object.keys(e.enfants)[0];
+  e.enfants[id].badges = "oops";
+  assert.strictEqual(api.etatValide(e).ok, false);
+});
+
 /* ---------- Crédit / décrédit de mission ---------- */
 test("crediterMission ajoute points et journal (catégorie famille = cœurs)", () => {
   const { api } = construireContexte();
