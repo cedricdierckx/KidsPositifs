@@ -265,6 +265,46 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .btn-secondaire{background:#e8f0fb; color:#2b3445}
 .btn-danger{background:#ffe3e3; color:#c0392b}
 
+/* ---- Cartes surprises (objectif d'équipe) ---- */
+.cartes-surprises{background:linear-gradient(180deg,#fff6e9,#ffeef4)}
+.cs-sous{font-size:13px; margin:.2em 0 .6em!important}
+.cs-liste{display:grid; gap:12px}
+.cs-carte{background:#fff; border:2px solid #ffe2a8; border-radius:16px; padding:12px}
+.cs-carte.ouverte{border-color:#bfe9da; background:#f3fbf7}
+.cs-carte.faite{opacity:.75}
+.cs-tete{display:flex; align-items:center; gap:8px}
+.cs-tete .cs-emoji{font-size:30px; line-height:1}
+.cs-tete .cs-titre{font-weight:800; flex:1; font-size:16px}
+.cs-tete .cs-prix{font-weight:800; color:var(--famille); font-size:14px; white-space:nowrap}
+.cs-carte.ouverte .cs-prix{color:var(--planete)}
+.cs-bar{background:var(--famille)}
+.cs-carte.ouverte .cs-bar{background:var(--planete)}
+.cs-reste{font-size:13px; color:var(--doux)!important; margin:2px 0 8px!important}
+.cs-activite{font-size:14px; color:var(--texte)!important; margin:6px 0 2px!important}
+.cs-afaire{font-weight:800; color:var(--planete)!important; margin:2px 0!important}
+.cs-faite-tag{font-weight:800; color:var(--doux)!important}
+.cs-dons{display:flex; gap:8px; flex-wrap:wrap}
+.cs-don{flex:1; min-width:120px; border:none; border-radius:14px; padding:14px;
+  font-size:15px; font-weight:800; cursor:pointer; font-family:inherit;
+  background:var(--famille); color:#fff}
+.cs-don:active{transform:scale(.97)}
+.cs-don:disabled{opacity:.4; cursor:default}
+.cs-faite-btn{margin-top:8px}
+.cs-contrib{font-size:13px; color:var(--doux)!important; margin:8px 0 0!important; letter-spacing:1px}
+
+/* Gestion des cartes surprises (espace parents) */
+.csp-liste{display:grid; gap:12px; margin-top:6px}
+.csp-carte{border:2px solid #eef2f7; border-radius:14px; padding:10px; display:grid; gap:8px}
+.csp-ajout{border:2px dashed #ffd9a8; border-radius:14px; padding:10px; margin-top:12px; display:grid; gap:8px}
+.csp-ligne{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+.csp-emoji{width:60px; text-align:center; padding:10px; border:2px solid #e3edf5; border-radius:10px; font-family:inherit; font-size:16px}
+.csp-titre{flex:1; min-width:140px; padding:10px; border:2px solid #e3edf5; border-radius:10px; font-family:inherit; font-size:15px}
+.csp-activite{width:100%; padding:10px; border:2px solid #e3edf5; border-radius:10px; font-family:inherit; font-size:14px}
+.csp-coutlbl{font-size:13px; font-weight:700; color:var(--doux); display:flex; align-items:center; gap:6px}
+.csp-cout{width:80px; padding:10px; border:2px solid #e3edf5; border-radius:10px; font-family:inherit; font-size:15px; text-align:center}
+.csp-prog{font-size:13px; font-weight:800; color:var(--famille); margin-left:auto}
+.csp-actions{display:flex; gap:8px}
+
 /* ---- Barre de navigation ---- */
 .navbar{position:fixed; bottom:0; left:0; right:0; background:#fff;
   box-shadow:0 -4px 16px rgba(40,60,90,.10); display:flex; z-index:30}

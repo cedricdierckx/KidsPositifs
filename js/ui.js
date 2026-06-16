@@ -331,6 +331,9 @@ function vueAccueil(c) {
   colB.appendChild(titrePla);
   colB.appendChild(grilleMissions("planete"));
 
+  // Cartes surprises (objectif d'équipe, partagé par toute la famille)
+  colB.appendChild(blocCartesSurprises(enf));
+
   // Aperçu écosystème
   const ecoCarte = el("section", "carte");
   const apercu = renduSceneEco(enf);
@@ -407,6 +410,62 @@ function grilleMissions(catId) {
     liste.appendChild(carte);
   });
   return liste;
+}
+
+/* ---------- Cartes surprises (objectif d'équipe) ----------
+ * Activités à faire en famille, débloquées ensemble par les dons de Cœurs
+ * 💛 de tous les enfants. Partagées : le même bloc s'affiche pour chacun. */
+function blocCartesSurprises(enf) {
+  const sec = el("section", "carte cartes-surprises");
+  const cartes = (etat.cartesSurprises || []);
+  let html = `<h2>${t("cs.titre")}</h2><p class="cs-sous">${t("cs.sous")}</p>`;
+  if (!cartes.length) {
+    html += `<p class="note">${t("cs.aucune")}</p>`;
+    sec.innerHTML = html;
+    return sec;
+  }
+  html += `<div class="cs-liste">`;
+  cartes.forEach(c => {
+    const titre = trData("carte", c.id, c.titre);
+    const activite = trData("carteAct", c.id, c.activite);
+    const pct = Math.min(100, Math.round((c.recolte / c.cout) * 100));
+    const reste = Math.max(0, c.cout - c.recolte);
+    // Contributions des enfants (esprit d'équipe).
+    const dons = Object.keys(c.dons || {})
+      .filter(id => etat.enfants[id] && c.dons[id] > 0)
+      .map(id => `${etat.enfants[id].emoji || "🙂"} ${c.dons[id]}`)
+      .join("  ");
+    html += `<div class="cs-carte${c.debloquee ? " ouverte" : ""}${c.faite ? " faite" : ""}">
+      <div class="cs-tete"><span class="cs-emoji">${c.emoji}</span>
+        <span class="cs-titre">${echapper(titre)}</span>
+        <span class="cs-prix">${c.debloquee ? t("cs.debloquee") : t("cs.recolte", { recolte: c.recolte, cout: c.cout })}</span></div>
+      <div class="progress"><div class="progress-bar cs-bar" style="width:${pct}%"></div></div>`;
+    if (c.debloquee) {
+      html += `<p class="cs-activite">${echapper(activite)}</p>
+        <p class="cs-afaire">${t("cs.a_faire")}</p>`;
+      if (c.faite) html += `<p class="cs-faite-tag">${t("cs.faite")}</p>`;
+      else html += `<button class="btn-secondaire cs-faite-btn" data-faite="${c.id}">${t("cs.faite_btn")}</button>`;
+    } else {
+      html += `<p class="cs-reste">${t("cs.reste", { reste })}</p>
+        <div class="cs-dons">
+          <button class="cs-don" data-don="${c.id}" data-montant="1">${t("cs.donner1")}</button>
+          <button class="cs-don" data-don="${c.id}" data-montant="5">${t("cs.donner5")}</button>
+        </div>`;
+    }
+    if (dons) html += `<p class="cs-contrib">${dons}</p>`;
+    html += `</div>`;
+  });
+  html += `</div>`;
+  sec.innerHTML = html;
+  // Actions : dons (limités aux Cœurs disponibles de l'enfant actif) + "fait".
+  sec.querySelectorAll(".cs-don").forEach(b => {
+    const montant = parseInt(b.dataset.montant, 10);
+    if (enf.coeurs < montant) b.disabled = true;
+    b.onclick = () => donnerCarte(b.dataset.don, montant);
+  });
+  sec.querySelectorAll(".cs-faite-btn").forEach(b =>
+    b.onclick = () => marquerCarteFaite(b.dataset.faite));
+  return sec;
 }
 
 /* ---------- Vue Missions (famille / planète) ---------- */
@@ -733,6 +792,64 @@ function blocEcoReference() {
   return sec;
 }
 
+// Gestion des cartes surprises par les parents (créer / modifier / supprimer).
+function blocCartesSurprisesParents() {
+  const sec = el("section", "carte cartes-surprises-parents");
+  const cartes = (etat.cartesSurprises || []);
+  let html = `<h2>${t("cs.gestion_titre")}</h2><p class="note">${t("cs.gestion_sous")}</p>`;
+  html += `<div class="csp-liste">`;
+  cartes.forEach(c => {
+    const titre = trData("carte", c.id, c.titre);
+    const activite = trData("carteAct", c.id, c.activite);
+    html += `<div class="csp-carte">
+      <div class="csp-ligne">
+        <input class="csp-emoji" data-champ="emoji" data-id="${c.id}" value="${echapper(c.emoji)}" maxlength="3">
+        <input class="csp-titre" data-champ="titre" data-id="${c.id}" value="${echapper(titre)}" placeholder="${t("cs.f_titre")}">
+      </div>
+      <input class="csp-activite" data-champ="activite" data-id="${c.id}" value="${echapper(activite)}" placeholder="${t("cs.f_activite")}">
+      <div class="csp-ligne">
+        <label class="csp-coutlbl">${t("cs.prix_label")}
+          <input class="csp-cout" type="number" min="1" inputmode="numeric" data-champ="cout" data-id="${c.id}" value="${c.cout}"></label>
+        <span class="csp-prog">${t("cs.recolte", { recolte: c.recolte, cout: c.cout })}</span>
+      </div>
+      <div class="csp-actions">
+        <button class="mini-btn" data-reinit="${c.id}">${t("cs.reinit")}</button>
+        <button class="mini-btn danger" data-suppr="${c.id}">${t("cs.supprimer")}</button>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+  // Formulaire d'ajout.
+  html += `<div class="csp-ajout">
+    <div class="csp-ligne">
+      <input class="csp-emoji" id="csp-new-emoji" value="🎁" maxlength="3">
+      <input class="csp-titre" id="csp-new-titre" placeholder="${t("cs.f_titre")}">
+    </div>
+    <input class="csp-activite" id="csp-new-activite" placeholder="${t("cs.f_activite")}">
+    <div class="csp-ligne">
+      <label class="csp-coutlbl">${t("cs.prix_label")}
+        <input class="csp-cout" id="csp-new-cout" type="number" min="1" inputmode="numeric" value="15"></label>
+      <button class="btn-secondaire" id="csp-add">${t("cs.f_ajouter")}</button>
+    </div>
+  </div>`;
+  sec.innerHTML = html;
+
+  // Édition en direct (on enregistre à la sortie du champ).
+  sec.querySelectorAll("[data-champ]").forEach(inp =>
+    inp.onchange = () => modifierCarteSurprise(inp.dataset.id, inp.dataset.champ, inp.value));
+  sec.querySelectorAll("[data-reinit]").forEach(b =>
+    b.onclick = () => reinitCarteSurprise(b.dataset.reinit));
+  sec.querySelectorAll("[data-suppr]").forEach(b =>
+    b.onclick = () => supprimerCarteSurprise(b.dataset.suppr));
+  const add = sec.querySelector("#csp-add");
+  if (add) add.onclick = () => ajouterCarteSurprise(
+    sec.querySelector("#csp-new-emoji").value,
+    sec.querySelector("#csp-new-titre").value,
+    sec.querySelector("#csp-new-activite").value,
+    sec.querySelector("#csp-new-cout").value);
+  return sec;
+}
+
 function vueReglages(c) {
   const totalAttente = Object.values(etat.enfants).reduce((s, e) => s + e.enAttente.length, 0);
 
@@ -808,6 +925,9 @@ function vueReglages(c) {
 
   // ----- Corrections pour l'enfant sélectionné -----
   c.appendChild(blocCorrections(enfantActif()));
+
+  // ----- Cartes surprises (activités famille) -----
+  c.appendChild(blocCartesSurprisesParents());
 
   // ----- Profils -----
   Object.values(etat.enfants).forEach(enf => {
