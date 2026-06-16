@@ -253,6 +253,31 @@ test("normaliser seede les cartes surprises pour une famille existante", () => {
   assert.ok(Array.isArray(n.cartesSurprises) && n.cartesSurprises.length >= 3);
 });
 
+test("le prix par défaut des cartes = nb d'enfants × 50/200/1000", () => {
+  const { api } = construireContexte();
+  // Famille de 2 enfants.
+  const n = api.normaliser({ enfants: { a: { prenom: "A" }, b: { prenom: "B" } } });
+  const couts = n.cartesSurprises.map(c => c.cout);
+  assert.strictEqual(couts[0], 100);
+  assert.strictEqual(couts[1], 400);
+  assert.strictEqual(couts[2], 2000);
+});
+
+test("migration douce : un ancien prix par défaut non utilisé est recalculé", () => {
+  const { api } = construireContexte();
+  const brut = { enfants: { a: { prenom: "A" }, b: { prenom: "B" } },
+    cartesSurprises: [{ id: "cs_cine", emoji: "🍿", titre: "x", activite: "y", cout: 15, recolte: 0, dons: {}, debloquee: false }] };
+  const n = api.normaliser(brut);
+  assert.strictEqual(n.cartesSurprises[0].cout, 100); // 2 enfants × 50
+});
+
+test("migration douce : un prix personnalisé ou entamé n'est PAS recalculé", () => {
+  const { api } = construireContexte();
+  const brut = { enfants: { a: { prenom: "A" } },
+    cartesSurprises: [{ id: "cs_cine", emoji: "🍿", titre: "x", activite: "y", cout: 99, recolte: 0, dons: {}, debloquee: false }] };
+  assert.strictEqual(api.normaliser(brut).cartesSurprises[0].cout, 99);
+});
+
 test("donnerCarte dépense les cœurs et fait progresser la récolte commune", () => {
   const { api } = construireContexte();
   api.familleId = "f";

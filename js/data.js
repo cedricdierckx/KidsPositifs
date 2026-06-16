@@ -339,9 +339,11 @@ const ENCOURAGEMENTS = [
  * atteindre son prix. Les parents peuvent les modifier dans l'espace
  * parents. Prix échelonnés : petit / moyen / grand.
  * ------------------------------------------------------------------- */
+// coutParEnfant : le prix par défaut est calculé = coutParEnfant × nombre
+// d'enfants de la famille (petit / moyen / grand objectif d'équipe).
 const CARTES_SURPRISES_DEFAUT = [
-  { id: "cs_cine",     emoji: "🍿", titre: "Soirée cinéma maison",   activite: "On choisit un film tous ensemble, avec popcorn et couverture !", cout: 15 },
-  { id: "cs_picnic",   emoji: "🧺", titre: "Pique-nique au parc",    activite: "On prépare un goûter et on va jouer dehors en famille.",        cout: 30 },
-  { id: "cs_sortie",   emoji: "🎢", titre: "Grande sortie surprise", activite: "Une sortie spéciale choisie ensemble (zoo, parc, piscine…).",   cout: 60 }
+  { id: "cs_cine",     emoji: "🍿", titre: "Soirée cinéma maison",   activite: "On choisit un film tous ensemble, avec popcorn et couverture !", coutParEnfant: 50 },
+  { id: "cs_picnic",   emoji: "🧺", titre: "Pique-nique au parc",    activite: "On prépare un goûter et on va jouer dehors en famille.",        coutParEnfant: 200 },
+  { id: "cs_sortie",   emoji: "🎢", titre: "Grande sortie surprise", activite: "Une sortie spéciale choisie ensemble (zoo, parc, piscine…).",   coutParEnfant: 1000 }
 ];
 

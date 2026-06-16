@@ -101,15 +101,19 @@ function etatVierge() {
     enfants, enfantActif: ENFANTS_DEFAUT[0].id, vue: "accueil", maj: 0,
     version: ETAT_VERSION,
     missionsPerso: [],     // missions personnalisées ajoutées par les parents
-    cartesSurprises: cartesSurprisesNeuves(),  // objectifs d'équipe (activités famille)
+    cartesSurprises: cartesSurprisesNeuves(ENFANTS_DEFAUT.length),  // objectifs d'équipe
     reglages: { validationParentale: false, codeParent: "" }
   };
 }
 
-// Cartes surprises neuves (copie des modèles, sans progression).
-function cartesSurprisesNeuves() {
+// Cartes surprises neuves (copie des modèles, sans progression). Le prix
+// par défaut = coutParEnfant × nombre d'enfants de la famille.
+function cartesSurprisesNeuves(nbEnfants) {
+  const n = Math.max(1, nbEnfants || ENFANTS_DEFAUT.length);
   return CARTES_SURPRISES_DEFAUT.map(c => ({
-    ...c, recolte: 0, dons: {}, debloquee: false, debloqueeLe: null, faite: false, faiteLe: null
+    id: c.id, emoji: c.emoji, titre: c.titre, activite: c.activite,
+    cout: c.coutParEnfant * n,
+    recolte: 0, dons: {}, debloquee: false, debloqueeLe: null, faite: false, faiteLe: null
   }));
 }
 
@@ -194,15 +198,26 @@ function normaliser(e) {
   if (!Array.isArray(e.missionsPerso)) e.missionsPerso = [];
   // Cartes surprises (objectifs d'équipe) : seedées par défaut pour les
   // familles existantes, et chaque carte reçoit ses champs de progression.
-  if (!Array.isArray(e.cartesSurprises)) e.cartesSurprises = cartesSurprisesNeuves();
-  else e.cartesSurprises.forEach(c => {
-    if (typeof c.recolte !== "number" || c.recolte < 0) c.recolte = 0;
-    if (!c.dons || typeof c.dons !== "object") c.dons = {};
-    if (typeof c.cout !== "number" || c.cout < 1) c.cout = 10;
-    c.debloquee = !!c.debloquee;
-    c.faite = !!c.faite;
-    if (!c.emoji) c.emoji = "🎁";
-  });
+  const nbEnf = Object.keys(e.enfants).length || ENFANTS_DEFAUT.length;
+  if (!Array.isArray(e.cartesSurprises)) e.cartesSurprises = cartesSurprisesNeuves(nbEnf);
+  else {
+    // Anciens prix par défaut (avant le calcul × nb d'enfants).
+    const anciensDefauts = { cs_cine: 15, cs_picnic: 30, cs_sortie: 60 };
+    e.cartesSurprises.forEach(c => {
+      if (typeof c.recolte !== "number" || c.recolte < 0) c.recolte = 0;
+      if (!c.dons || typeof c.dons !== "object") c.dons = {};
+      if (typeof c.cout !== "number" || c.cout < 1) c.cout = 10;
+      c.debloquee = !!c.debloquee;
+      c.faite = !!c.faite;
+      if (!c.emoji) c.emoji = "🎁";
+      // Migration douce : si une carte par défaut a encore son ancien prix et
+      // n'a jamais été utilisée, on applique le nouveau calcul (× nb d'enfants).
+      const def = CARTES_SURPRISES_DEFAUT.find(d => d.id === c.id);
+      if (def && c.recolte === 0 && anciensDefauts[c.id] === c.cout) {
+        c.cout = def.coutParEnfant * nbEnf;
+      }
+    });
+  }
   if (!e.reglages) e.reglages = { validationParentale: false, codeParent: "" };
   // Estampille de version : les migrations ci-dessus sont *additives* (on ne
   // supprime jamais de données existantes), garantissant qu'une mise à jour de
