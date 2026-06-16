@@ -1104,3 +1104,69 @@ Object.assign(I18N.fr, { "cs.revele_label": "Activité visible par les enfants (
 Object.assign(I18N.en, { "cs.revele_label": "Activity visible to children (otherwise: mystery surprise 🎁)" });
 Object.assign(I18N.nl, { "cs.revele_label": "Activiteit zichtbaar voor kinderen (anders: mysterieverrassing 🎁)" });
 Object.assign(I18N.de, { "cs.revele_label": "Aktivität für Kinder sichtbar (sonst: Geheimnis-Überraschung 🎁)" });
+
+/* ---- Cartes surprises : bibliothèque d'idées (parentalité positive) ---- */
+Object.assign(I18N.fr, {
+  "cs.idees_titre": "💡 Idées d'activités (parentalité positive)",
+  "cs.idees_sous": "Inspirées de Papa Positive et de psychologues. Touche ＋ pour l'ajouter.",
+  "cs.taille_petite": "🟢 Petites (rapides, quotidiennes)",
+  "cs.taille_moyenne": "🟡 Moyennes (sorties & projets)",
+  "cs.taille_grande": "🔴 Grandes (grandes expériences)"
+});
+Object.assign(I18N.en, {
+  "cs.idees_titre": "💡 Activity ideas (positive parenting)",
+  "cs.idees_sous": "Inspired by positive-parenting experts and psychologists. Tap ＋ to add.",
+  "cs.taille_petite": "🟢 Small (quick, everyday)",
+  "cs.taille_moyenne": "🟡 Medium (outings & projects)",
+  "cs.taille_grande": "🔴 Big (big experiences)",
+  "idee.idc_histoire": "Special bedtime story", "ideeAct.idc_histoire": "Each child picks a book and we read all snuggled up together.",
+  "idee.idc_cuisine": "Little chef workshop", "ideeAct.idc_cuisine": "We bake a snack or cookies together and enjoy them.",
+  "idee.idc_jeux": "Board game night", "ideeAct.idc_jeux": "We get out the games and play all together (screen-free).",
+  "idee.idc_boum": "Living-room dance party", "ideeAct.idc_boum": "Everyone picks a song and we dance like crazy!",
+  "idee.idc_cabane": "Blanket fort adventure", "ideeAct.idc_cabane": "We build a fort (cushions/tent) and spend the evening in it.",
+  "idee.idc_creatif": "Big arts & crafts session", "ideeAct.idc_creatif": "Painting, crafts, modelling clay: we create all together.",
+  "idee.idc_velo": "Bike ride / nature walk", "ideeAct.idc_velo": "A bike ride or a walk to explore nature.",
+  "idee.idc_picnic": "Picnic in the park", "ideeAct.idc_picnic": "We pack a basket and go play and eat outside.",
+  "idee.idc_parc": "Theme park day", "ideeAct.idc_parc": "A big day of adventure and rides as a family.",
+  "idee.idc_zoo": "Zoo or aquarium", "ideeAct.idc_zoo": "We go watch the animals and discover lots of things.",
+  "idee.idc_eau": "Pool / beach day", "ideeAct.idc_eau": "Swimming, water games and sandcastles together.",
+  "idee.idc_cine": "Cinema + a bite to eat", "ideeAct.idc_cine": "A movie at the cinema followed by a meal the kids choose."
+});
+Object.assign(I18N.nl, {
+  "cs.idees_titre": "💡 Activiteitenideeën (positief opvoeden)",
+  "cs.idees_sous": "Geïnspireerd door positief-opvoedexperts en psychologen. Tik op ＋ om toe te voegen.",
+  "cs.taille_petite": "🟢 Klein (snel, dagelijks)",
+  "cs.taille_moyenne": "🟡 Middel (uitjes & projecten)",
+  "cs.taille_grande": "🔴 Groot (grote ervaringen)",
+  "idee.idc_histoire": "Speciaal verhaaltje voor het slapen", "ideeAct.idc_histoire": "Elk kind kiest een boek en we lezen lekker samen knus.",
+  "idee.idc_cuisine": "Kleine-chef workshop", "ideeAct.idc_cuisine": "We bakken samen een hapje of koekjes en smullen ervan.",
+  "idee.idc_jeux": "Bordspelavond", "ideeAct.idc_jeux": "We pakken de spellen en spelen samen (zonder scherm).",
+  "idee.idc_boum": "Dansfeest in de woonkamer", "ideeAct.idc_boum": "Iedereen kiest een liedje en we dansen als gekken!",
+  "idee.idc_cabane": "Hut & avontuurnacht", "ideeAct.idc_cabane": "We bouwen een hut (kussens/tent) en brengen er de avond door.",
+  "idee.idc_creatif": "Grote knutselsessie", "ideeAct.idc_creatif": "Schilderen, knutselen, klei: we maken samen iets.",
+  "idee.idc_velo": "Fietstocht / natuurwandeling", "ideeAct.idc_velo": "Een fietstocht of wandeling om de natuur te ontdekken.",
+  "idee.idc_picnic": "Picknick in het park", "ideeAct.idc_picnic": "We maken een mand klaar en gaan buiten spelen en eten.",
+  "idee.idc_parc": "Pretparkdag", "ideeAct.idc_parc": "Een grote dag vol avontuur en attracties met het gezin.",
+  "idee.idc_zoo": "Dierentuin of aquarium", "ideeAct.idc_zoo": "We gaan dieren bekijken en ontdekken van alles.",
+  "idee.idc_eau": "Zwembad- / stranddag", "ideeAct.idc_eau": "Zwemmen, waterspelletjes en zandkastelen samen.",
+  "idee.idc_cine": "Bioscoop + hapje eten", "ideeAct.idc_cine": "Een film in de bioscoop en daarna een maaltijd gekozen door de kinderen."
+});
+Object.assign(I18N.de, {
+  "cs.idees_titre": "💡 Aktivitätsideen (positive Erziehung)",
+  "cs.idees_sous": "Inspiriert von Experten für positive Erziehung und Psychologen. Tippe auf ＋ zum Hinzufügen.",
+  "cs.taille_petite": "🟢 Klein (schnell, täglich)",
+  "cs.taille_moyenne": "🟡 Mittel (Ausflüge & Projekte)",
+  "cs.taille_grande": "🔴 Groß (große Erlebnisse)",
+  "idee.idc_histoire": "Besondere Gute-Nacht-Geschichte", "ideeAct.idc_histoire": "Jedes Kind wählt ein Buch und wir lesen alle zusammen gekuschelt.",
+  "idee.idc_cuisine": "Kleiner-Koch-Werkstatt", "ideeAct.idc_cuisine": "Wir backen zusammen einen Snack oder Kekse und genießen sie.",
+  "idee.idc_jeux": "Brettspielabend", "ideeAct.idc_jeux": "Wir holen die Spiele raus und spielen zusammen (ohne Bildschirm).",
+  "idee.idc_boum": "Tanzparty im Wohnzimmer", "ideeAct.idc_boum": "Jeder wählt ein Lied und wir tanzen wie verrückt!",
+  "idee.idc_cabane": "Höhle & Abenteuernacht", "ideeAct.idc_cabane": "Wir bauen eine Höhle (Kissen/Zelt) und verbringen den Abend darin.",
+  "idee.idc_creatif": "Großer Bastel-Workshop", "ideeAct.idc_creatif": "Malen, basteln, Knete: wir gestalten zusammen.",
+  "idee.idc_velo": "Radtour / Naturspaziergang", "ideeAct.idc_velo": "Eine Radtour oder ein Spaziergang, um die Natur zu entdecken.",
+  "idee.idc_picnic": "Picknick im Park", "ideeAct.idc_picnic": "Wir packen einen Korb und gehen draußen spielen und essen.",
+  "idee.idc_parc": "Freizeitpark-Tag", "ideeAct.idc_parc": "Ein großer Tag voller Abenteuer und Fahrgeschäfte als Familie.",
+  "idee.idc_zoo": "Zoo oder Aquarium", "ideeAct.idc_zoo": "Wir beobachten Tiere und entdecken viele Dinge.",
+  "idee.idc_eau": "Schwimmbad- / Strandtag", "ideeAct.idc_eau": "Schwimmen, Wasserspiele und Sandburgen zusammen.",
+  "idee.idc_cine": "Kino + Essen gehen", "ideeAct.idc_cine": "Ein Kinofilm und danach ein Essen, das die Kinder auswählen."
+});

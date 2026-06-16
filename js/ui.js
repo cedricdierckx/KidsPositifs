@@ -881,7 +881,37 @@ function blocCartesSurprisesParents() {
       <button class="btn-secondaire" id="csp-add">${t("cs.f_ajouter")}</button>
     </div>
   </div>`;
+  // Bibliothèque d'idées (parentalité positive) groupées par taille.
+  const nbEnf = Object.keys(etat.enfants).length || 1;
+  html += `<div class="csp-idees"><h3 class="csp-idees-titre">${t("cs.idees_titre")}</h3>
+    <p class="note">${t("cs.idees_sous")}</p>`;
+  ["petite", "moyenne", "grande"].forEach(taille => {
+    const lot = IDEES_CARTES.filter(i => i.taille === taille);
+    if (!lot.length) return;
+    html += `<div class="csp-idees-groupe"><h4 class="csp-taille">${t("cs.taille_" + taille)}
+      <span class="csp-taille-prix">${50 * (taille === "petite" ? 1 : taille === "moyenne" ? 4 : 20) * nbEnf} 💛</span></h4>
+      <div class="csp-idees-liste">`;
+    lot.forEach(i => {
+      const titre = trData("idee", i.id, i.titre);
+      const activite = trData("ideeAct", i.id, i.activite);
+      html += `<button class="csp-idee" data-idee="${i.id}" title="${echapper(activite)}">
+        <span class="csp-idee-emoji">${i.emoji}</span>
+        <span class="csp-idee-txt"><strong>${echapper(titre)}</strong><small>${echapper(activite)}</small></span>
+        <span class="csp-idee-plus">＋</span></button>`;
+    });
+    html += `</div></div>`;
+  });
+  html += `</div>`;
+
   sec.innerHTML = html;
+
+  // Ajout en un clic depuis une idée proposée.
+  sec.querySelectorAll("[data-idee]").forEach(b =>
+    b.onclick = () => {
+      const idee = IDEES_CARTES.find(i => i.id === b.dataset.idee);
+      if (idee) ajouterCarteSurprise(idee.emoji, trData("idee", idee.id, idee.titre),
+        trData("ideeAct", idee.id, idee.activite), idee.coutParEnfant * nbEnf, false);
+    });
 
   // Édition en direct (on enregistre à la sortie du champ).
   sec.querySelectorAll("[data-champ]").forEach(inp =>

@@ -360,3 +360,27 @@ const CARTES_SURPRISES_DEFAUT = [
   { id: "cs_sortie",   emoji: "🎢", titre: "Grande sortie surprise", activite: "Une sortie spéciale choisie ensemble (zoo, parc, piscine…).",   coutParEnfant: 1000 }
 ];
 
+/* ---- Idées d'activités à proposer aux parents ---------------------
+ * Inspirées de la parentalité positive (Papa Positive, Faber & Mazlish)
+ * et des recommandations de psychologues : du temps de qualité, de la
+ * connexion, sans écran, qui crée des souvenirs. Les parents les ajoutent
+ * en un clic. taille → coût par enfant : petite 50 / moyenne 200 / grande 1000.
+ * ------------------------------------------------------------------- */
+const IDEES_CARTES = [
+  // Petites : connexion du quotidien, rapides, gratuites.
+  { id: "idc_histoire", taille: "petite", emoji: "📖", coutParEnfant: 50,  titre: "Histoire du soir spéciale", activite: "Chaque enfant choisit un livre et on lit tous ensemble, bien blottis." },
+  { id: "idc_cuisine",  taille: "petite", emoji: "🍪", coutParEnfant: 50,  titre: "Atelier petit chef",        activite: "On prépare un goûter ou des biscuits ensemble, et on se régale." },
+  { id: "idc_jeux",     taille: "petite", emoji: "🧩", coutParEnfant: 50,  titre: "Soirée jeux de société",    activite: "On sort les jeux et on joue tous ensemble (sans écran)." },
+  { id: "idc_boum",     taille: "petite", emoji: "💃", coutParEnfant: 50,  titre: "Boum dans le salon",        activite: "Chacun choisit une chanson et on danse comme des fous !" },
+  // Moyennes : projets et sorties de proximité.
+  { id: "idc_cabane",   taille: "moyenne", emoji: "🏕️", coutParEnfant: 200,  titre: "Cabane & nuit aventure",   activite: "On construit une cabane (coussins/tente) et on y passe la soirée." },
+  { id: "idc_creatif",  taille: "moyenne", emoji: "🎨", coutParEnfant: 200,  titre: "Grand atelier créatif",    activite: "Peinture, bricolage, pâte à modeler : on crée tous ensemble." },
+  { id: "idc_velo",     taille: "moyenne", emoji: "🚲", coutParEnfant: 200,  titre: "Balade vélo / nature",     activite: "Une sortie à vélo ou une balade pour explorer la nature." },
+  { id: "idc_picnic",   taille: "moyenne", emoji: "🧺", coutParEnfant: 200,  titre: "Pique-nique au parc",      activite: "On prépare un panier et on va jouer et manger dehors." },
+  // Grandes : grandes expériences mémorables.
+  { id: "idc_parc",     taille: "grande", emoji: "🎢", coutParEnfant: 1000, titre: "Journée parc d'attractions", activite: "Une grande journée d'aventure et de manèges en famille." },
+  { id: "idc_zoo",      taille: "grande", emoji: "🦁", coutParEnfant: 1000, titre: "Zoo ou aquarium",           activite: "On part observer les animaux et découvrir plein de choses." },
+  { id: "idc_eau",      taille: "grande", emoji: "🏊", coutParEnfant: 1000, titre: "Journée piscine / plage",   activite: "Baignade, jeux d'eau et châteaux de sable en famille." },
+  { id: "idc_cine",     taille: "grande", emoji: "🎬", coutParEnfant: 1000, titre: "Cinéma + petit restau",     activite: "Un film au cinéma suivi d'un repas choisi par les enfants." }
+];
+

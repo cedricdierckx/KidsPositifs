@@ -357,6 +357,26 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .csp-cout{width:80px; padding:10px; border:2px solid #e3edf5; border-radius:10px; font-family:inherit; font-size:15px; text-align:center}
 .csp-prog{font-size:13px; font-weight:800; color:var(--famille); margin-left:auto}
 .csp-actions{display:flex; gap:8px}
+.csp-revele{font-size:13px; margin:2px 0!important}
+
+/* Bibliothèque d'idées */
+.csp-idees{margin-top:16px; border-top:2px solid #eef2f7; padding-top:12px}
+.csp-idees-titre{font-size:16px; margin:0 0 2px}
+.csp-idees-groupe{margin-top:10px}
+.csp-taille{font-size:14px; margin:8px 0 6px; display:flex; align-items:center; gap:8px}
+.csp-taille-prix{margin-left:auto; font-weight:800; color:var(--famille)}
+.csp-idees-liste{display:grid; gap:8px}
+.csp-idee{display:flex; align-items:center; gap:10px; text-align:left; width:100%;
+  border:2px solid #e6eef5; border-radius:14px; padding:10px 12px; background:#fff;
+  cursor:pointer; font-family:inherit; transition:.12s}
+.csp-idee:active{transform:scale(.98)}
+.csp-idee-emoji{font-size:28px; flex:0 0 auto}
+.csp-idee-txt{flex:1; display:flex; flex-direction:column}
+.csp-idee-txt strong{font-size:14px}
+.csp-idee-txt small{font-size:12px; color:var(--doux)}
+.csp-idee-plus{flex:0 0 auto; width:34px; height:34px; border-radius:50%;
+  background:var(--planete); color:#fff; font-size:20px; font-weight:800;
+  display:flex; align-items:center; justify-content:center}
 
 /* ---- Espace parents : titres de groupes ---- */
 .grp-titre{max-width:680px; margin:22px auto 6px; padding:0 4px; font-size:15px;
