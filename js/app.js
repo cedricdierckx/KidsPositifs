@@ -530,6 +530,7 @@ function donnerCarte(carteId, montant) {
   } else {
     toast(t("toast.carte_don", { montant, emoji: "💛" }), "succes");
   }
+  verifierBadges(enf);   // badges d'esprit d'équipe (don / carte aidée)
   sauver();
   rendre();
 }
@@ -659,16 +660,28 @@ function verifierBadges(enf) {
       else toast(t("toast.nouveau_badge", { emoji, nom: nomTr }), "succes");
     }
   };
-  if (enf.coeursTotal >= 10) ajoute("coeur10", "Cœur d'or", "💛");
-  if (enf.coeursTotal >= 50) ajoute("coeur50", "Super entraide", "🏅");
+  if (enf.coeursTotal >= 10)  ajoute("coeur10", "Cœur d'or", "💛");
+  if (enf.coeursTotal >= 50)  ajoute("coeur50", "Super entraide", "🏅");
+  if (enf.coeursTotal >= 100) ajoute("coeur100", "Trésor du cœur", "💖");
+  if (enf.gouttesTotal >= 10) ajoute("goutte10", "Petite source", "💧");
+  if (enf.gouttesTotal >= 50) ajoute("goutte50", "Grande rivière", "🌊");
   if (nbTier(enf, "plantes") >= 1)    ajoute("eco_p", "Jardinier en herbe", "🌱");
   if (nbTier(enf, "herbivores") >= 1) ajoute("eco_h", "Ami des herbivores", "🐰");
   if (nbTier(enf, "carnivores") >= 1) ajoute("eco_c", "Protecteur des prédateurs", "🦊");
   if (nbTier(enf, "plantes") >= 1 && nbTier(enf, "herbivores") >= 1 && nbTier(enf, "carnivores") >= 1)
     ajoute("eco_chaine", "Chaîne alimentaire complète", "🔗");
+  if (nbTotalEspeces(enf) >= 10) ajoute("eco_10", "Petit monde vivant", "🌳");
+  if (nbTotalEspeces(enf) >= 25) ajoute("eco_25", "Gardien de la nature", "🏞️");
   // série de jours actifs
   const jours = Object.keys(enf.journal).length;
-  if (jours >= 7) ajoute("semaine", "Une semaine d'efforts", "📅");
+  if (jours >= 7)  ajoute("semaine", "Une semaine d'efforts", "📅");
+  if (jours >= 30) ajoute("mois", "Un mois d'efforts", "🗓️");
+  // esprit d'équipe (cartes surprises)
+  const cartes = Array.isArray(etat.cartesSurprises) ? etat.cartesSurprises : [];
+  const totalDons = cartes.reduce((s, c) => s + ((c.dons && c.dons[enf.id]) || 0), 0);
+  if (totalDons >= 1) ajoute("don_coeur", "Cœur partageur", "🎁");
+  if (cartes.some(c => c.debloquee && c.dons && c.dons[enf.id] > 0))
+    ajoute("equipe", "Esprit d'équipe", "🤝");
 }
 
 /* ---------- Feedback ---------- */

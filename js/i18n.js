@@ -1170,3 +1170,32 @@ Object.assign(I18N.de, {
   "idee.idc_eau": "Schwimmbad- / Strandtag", "ideeAct.idc_eau": "Schwimmen, Wasserspiele und Sandburgen zusammen.",
   "idee.idc_cine": "Kino + Essen gehen", "ideeAct.idc_cine": "Ein Kinofilm und danach ein Essen, das die Kinder auswählen."
 });
+
+/* ---- Nouveaux badges (noms + indices) ---- */
+Object.assign(I18N.en, {
+  "badge.coeur100": "Heart treasure", "badge.goutte10": "Little spring", "badge.goutte50": "Mighty river",
+  "badge.eco_10": "Living little world", "badge.eco_25": "Nature guardian", "badge.mois": "A month of effort",
+  "badge.don_coeur": "Sharing heart", "badge.equipe": "Team spirit",
+  "badgeC.coeur100": "Earn 100 Hearts in total", "badgeC.goutte10": "Earn 10 Drops in total",
+  "badgeC.goutte50": "Earn 50 Drops in total", "badgeC.eco_10": "Create 10 living beings",
+  "badgeC.eco_25": "Create 25 living beings", "badgeC.mois": "Be active on 30 different days",
+  "badgeC.don_coeur": "Give Hearts to a surprise card", "badgeC.equipe": "Help unlock a surprise card"
+});
+Object.assign(I18N.nl, {
+  "badge.coeur100": "Hartenschat", "badge.goutte10": "Klein bronnetje", "badge.goutte50": "Grote rivier",
+  "badge.eco_10": "Kleine levende wereld", "badge.eco_25": "Natuurbeschermer", "badge.mois": "Een maand inzet",
+  "badge.don_coeur": "Deelhart", "badge.equipe": "Teamgeest",
+  "badgeC.coeur100": "Verdien 100 Hartjes in totaal", "badgeC.goutte10": "Verdien 10 Druppels in totaal",
+  "badgeC.goutte50": "Verdien 50 Druppels in totaal", "badgeC.eco_10": "Maak 10 levende wezens",
+  "badgeC.eco_25": "Maak 25 levende wezens", "badgeC.mois": "Wees 30 verschillende dagen actief",
+  "badgeC.don_coeur": "Geef Hartjes aan een verrassingskaart", "badgeC.equipe": "Help een verrassingskaart vrij te spelen"
+});
+Object.assign(I18N.de, {
+  "badge.coeur100": "Herzschatz", "badge.goutte10": "Kleine Quelle", "badge.goutte50": "Großer Fluss",
+  "badge.eco_10": "Kleine lebendige Welt", "badge.eco_25": "Naturhüter", "badge.mois": "Ein Monat Einsatz",
+  "badge.don_coeur": "Teilendes Herz", "badge.equipe": "Teamgeist",
+  "badgeC.coeur100": "Verdiene 100 Herzen insgesamt", "badgeC.goutte10": "Verdiene 10 Tropfen insgesamt",
+  "badgeC.goutte50": "Verdiene 50 Tropfen insgesamt", "badgeC.eco_10": "Erschaffe 10 Lebewesen",
+  "badgeC.eco_25": "Erschaffe 25 Lebewesen", "badgeC.mois": "Sei an 30 verschiedenen Tagen aktiv",
+  "badgeC.don_coeur": "Gib Herzen für eine Überraschungskarte", "badgeC.equipe": "Hilf, eine Überraschungskarte freizuschalten"
+});

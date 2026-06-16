@@ -337,13 +337,26 @@ const ENCOURAGEMENTS = [
  * Doit rester synchronisé avec les conditions d'attribution dans
  * app.js → verifierBadges(). 'comment' = comment l'obtenir (motivation). */
 const BADGES_CATALOGUE = [
+  // Cœurs (famille)
   { id: "coeur10",    emoji: "💛", nom: "Cœur d'or",                   comment: "Gagne 10 Cœurs en tout" },
   { id: "coeur50",    emoji: "🏅", nom: "Super entraide",             comment: "Gagne 50 Cœurs en tout" },
+  { id: "coeur100",   emoji: "💖", nom: "Trésor du cœur",            comment: "Gagne 100 Cœurs en tout" },
+  // Gouttes (planète)
+  { id: "goutte10",   emoji: "💧", nom: "Petite source",             comment: "Gagne 10 Gouttes en tout" },
+  { id: "goutte50",   emoji: "🌊", nom: "Grande rivière",            comment: "Gagne 50 Gouttes en tout" },
+  // Écosystème
   { id: "eco_p",      emoji: "🌱", nom: "Jardinier en herbe",        comment: "Crée ta 1ʳᵉ plante" },
   { id: "eco_h",      emoji: "🐰", nom: "Ami des herbivores",        comment: "Crée ton 1ᵉʳ herbivore" },
   { id: "eco_c",      emoji: "🦊", nom: "Protecteur des prédateurs", comment: "Crée ton 1ᵉʳ carnivore" },
   { id: "eco_chaine", emoji: "🔗", nom: "Chaîne alimentaire complète", comment: "Une plante, un herbivore et un carnivore" },
-  { id: "semaine",    emoji: "📅", nom: "Une semaine d'efforts",     comment: "Sois actif 7 jours différents" }
+  { id: "eco_10",     emoji: "🌳", nom: "Petit monde vivant",        comment: "Crée 10 êtres vivants" },
+  { id: "eco_25",     emoji: "🏞️", nom: "Gardien de la nature",      comment: "Crée 25 êtres vivants" },
+  // Régularité
+  { id: "semaine",    emoji: "📅", nom: "Une semaine d'efforts",     comment: "Sois actif 7 jours différents" },
+  { id: "mois",       emoji: "🗓️", nom: "Un mois d'efforts",         comment: "Sois actif 30 jours différents" },
+  // Esprit d'équipe (cartes surprises)
+  { id: "don_coeur",  emoji: "🎁", nom: "Cœur partageur",            comment: "Donne des Cœurs à une carte surprise" },
+  { id: "equipe",     emoji: "🤝", nom: "Esprit d'équipe",          comment: "Aide à débloquer une carte surprise" }
 ];
 
 /* ---- Cartes surprises (objectifs d'équipe) ------------------------
