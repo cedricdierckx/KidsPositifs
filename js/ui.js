@@ -1186,11 +1186,11 @@ function vueReglages(c) {
   // ----- Sous-menu (onglets) pour organiser l'espace parents -----
   const onglets = [
     ["quotidien", t("grp.quotidien")],
-    ["stats",     t("grp.stats")],
     ["activites", t("grp.activites")],
     ["enfants",   t("grp.enfants")],
     ["famille",   t("grp.famille")],
-    ["compte",    t("grp.compte")]
+    ["compte",    t("grp.compte")],
+    ["stats",     t("grp.stats")]
   ];
   const nav = el("nav", "sous-nav");
   onglets.forEach(([id, label]) => {
