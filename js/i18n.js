@@ -1316,3 +1316,9 @@ Object.assign(I18N.fr, { "cs.monter": "Monter", "cs.descendre": "Descendre" });
 Object.assign(I18N.en, { "cs.monter": "Move up", "cs.descendre": "Move down" });
 Object.assign(I18N.nl, { "cs.monter": "Omhoog", "cs.descendre": "Omlaag" });
 Object.assign(I18N.de, { "cs.monter": "Nach oben", "cs.descendre": "Nach unten" });
+
+/* ---- Badges : aucun encore gagné ---- */
+Object.assign(I18N.fr, { "badges.aucun": "Pas encore de badge… Continue tes belles actions pour en gagner ! ✨" });
+Object.assign(I18N.en, { "badges.aucun": "No badge yet… Keep up your great actions to earn some! ✨" });
+Object.assign(I18N.nl, { "badges.aucun": "Nog geen badge… Blijf mooie dingen doen om er te verdienen! ✨" });
+Object.assign(I18N.de, { "badges.aucun": "Noch kein Abzeichen… Mach weiter so, um welche zu verdienen! ✨" });

@@ -476,21 +476,24 @@ function blocCartesSurprises(enf) {
   return sec;
 }
 
-// Badges : médailles colorées, gagnées + à débloquer (motivation enfants).
+// Badges : médailles colorées — seuls les badges RÉALISÉS sont affichés.
 function blocBadges(enf) {
   const gagnes = new Set((enf.badges || []).map(b => b.id));
-  const total = BADGES_CATALOGUE.length;
-  const nb = BADGES_CATALOGUE.filter(b => gagnes.has(b.id)).length;
+  // On suit l'ordre du catalogue, mais on ne garde que les badges obtenus.
+  const obtenus = BADGES_CATALOGUE.filter(b => gagnes.has(b.id));
   const sec = el("section", "carte badges-carte");
-  let html = `<h2>${t("home.mes_badges")} <span class="badges-compteur">${nb}/${total}</span></h2>
-    <div class="badges-grid">`;
-  BADGES_CATALOGUE.forEach(b => {
-    const ok = gagnes.has(b.id);
+  let html = `<h2>${t("home.mes_badges")} <span class="badges-compteur">${obtenus.length}</span></h2>`;
+  if (!obtenus.length) {
+    html += `<p class="note">${t("badges.aucun")}</p>`;
+    sec.innerHTML = html;
+    return sec;
+  }
+  html += `<div class="badges-grid">`;
+  obtenus.forEach(b => {
     const nom = trData("badge", b.id, b.nom);
-    const sous = ok ? nom : trData("badgeC", b.id, b.comment);
-    html += `<div class="badge-fun${ok ? " gagne" : " bloque"}" title="${echapper(nom)}">
-      <div class="badge-medaille"><span class="badge-emoji">${ok ? b.emoji : "🔒"}</span></div>
-      <div class="badge-nom">${echapper(ok ? nom : sous)}</div>
+    html += `<div class="badge-fun gagne" title="${echapper(nom)}">
+      <div class="badge-medaille"><span class="badge-emoji">${b.emoji}</span></div>
+      <div class="badge-nom">${echapper(nom)}</div>
     </div>`;
   });
   html += `</div>`;
