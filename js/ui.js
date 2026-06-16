@@ -1207,6 +1207,9 @@ function vueReglages(c) {
   /* ===== ONGLET : Au quotidien ===== */
   if (ongletParent === "quotidien") {
 
+  // ----- Défis réparation ("Oups, ça arrive…") : accès rapide, tout en haut -----
+  c.appendChild(blocReparation());
+
   // ----- Validations en attente (affichées seulement s'il y en a) -----
   if (totalAttente) {
     const att = el("section", "carte");
@@ -1233,9 +1236,6 @@ function vueReglages(c) {
 
   // ----- Corrections pour l'enfant sélectionné -----
   c.appendChild(blocCorrections(enfantActif()));
-
-  // ----- Défis réparation ("Oups, ça arrive…") : déclenchés par un parent -----
-  c.appendChild(blocReparation());
 
   } /* fin onglet quotidien */
 
