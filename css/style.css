@@ -358,6 +358,11 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .csp-prog{font-size:13px; font-weight:800; color:var(--famille); margin-left:auto}
 .csp-actions{display:flex; gap:8px}
 
+/* ---- Espace parents : titres de groupes ---- */
+.grp-titre{max-width:680px; margin:22px auto 6px; padding:0 4px; font-size:15px;
+  font-weight:800; text-transform:uppercase; letter-spacing:.5px; color:var(--doux)}
+.grp-titre:first-of-type{margin-top:10px}
+
 /* ---- Barre de navigation ---- */
 .navbar{position:fixed; bottom:0; left:0; right:0; background:#fff;
   box-shadow:0 -4px 16px rgba(40,60,90,.10); display:flex; z-index:30}

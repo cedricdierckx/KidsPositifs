@@ -1092,3 +1092,9 @@ Object.assign(I18N.de, {
   "badgeC.eco_c": "Erschaffe deinen 1. Fleischfresser", "badgeC.eco_chaine": "Eine Pflanze, ein Pflanzenfresser und ein Fleischfresser",
   "badgeC.semaine": "Sei an 7 verschiedenen Tagen aktiv"
 });
+
+/* ---- Espace parents : titres de groupes ---- */
+Object.assign(I18N.fr, { "grp.quotidien": "📋 Au quotidien", "grp.activites": "🎯 Activités & règles du jeu", "grp.enfants": "👧 Les enfants", "grp.famille": "👪 Famille & invitations", "grp.compte": "⚙️ Mon compte & données" });
+Object.assign(I18N.en, { "grp.quotidien": "📋 Daily", "grp.activites": "🎯 Activities & game rules", "grp.enfants": "👧 The children", "grp.famille": "👪 Family & invitations", "grp.compte": "⚙️ My account & data" });
+Object.assign(I18N.nl, { "grp.quotidien": "📋 Dagelijks", "grp.activites": "🎯 Activiteiten & spelregels", "grp.enfants": "👧 De kinderen", "grp.famille": "👪 Gezin & uitnodigingen", "grp.compte": "⚙️ Mijn account & gegevens" });
+Object.assign(I18N.de, { "grp.quotidien": "📋 Täglich", "grp.activites": "🎯 Aktivitäten & Spielregeln", "grp.enfants": "👧 Die Kinder", "grp.famille": "👪 Familie & Einladungen", "grp.compte": "⚙️ Mein Konto & Daten" });

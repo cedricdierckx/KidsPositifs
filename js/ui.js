@@ -887,6 +887,11 @@ function blocCartesSurprisesParents() {
   return sec;
 }
 
+// Titre de groupe (séparateur visuel pour structurer l'espace parents).
+function titreGroupe(txt) {
+  return el("h2", "grp-titre", txt);
+}
+
 function vueReglages(c) {
   const totalAttente = Object.values(etat.enfants).reduce((s, e) => s + e.enAttente.length, 0);
 
@@ -920,6 +925,9 @@ function vueReglages(c) {
   banniere.appendChild(lLang);
   c.appendChild(banniere);
 
+  /* ===== GROUPE : Au quotidien ===== */
+  c.appendChild(titreGroupe(t("grp.quotidien")));
+
   // ----- Validations en attente (affichées seulement s'il y en a) -----
   if (totalAttente) {
     const att = el("section", "carte");
@@ -941,7 +949,19 @@ function vueReglages(c) {
     c.appendChild(att);
   }
 
-  // ----- Réglages du programme -----
+  // ----- Missions du jour (sélection par les parents) -----
+  c.appendChild(blocMissionsDuJour(enfantActif()));
+
+  // ----- Corrections pour l'enfant sélectionné -----
+  c.appendChild(blocCorrections(enfantActif()));
+
+  /* ===== GROUPE : Activités & règles du jeu ===== */
+  c.appendChild(titreGroupe(t("grp.activites")));
+
+  // ----- Cartes surprises (activités famille) -----
+  c.appendChild(blocCartesSurprisesParents());
+
+  // ----- Réglages du programme (validation parentale + code PIN) -----
   const prog = el("section", "carte");
   prog.innerHTML = `<h2>${t("par.prog.titre")}</h2>`;
   const lVal = el("label", "switch-ligne");
@@ -957,14 +977,11 @@ function vueReglages(c) {
     prog.appendChild(el("p", "note", t("par.prog.astuce_pin")));
   c.appendChild(prog);
 
-  // ----- Missions du jour (sélection par les parents) -----
-  c.appendChild(blocMissionsDuJour(enfantActif()));
+  // ----- Référence : prérequis de chaque espèce de l'écosystème -----
+  c.appendChild(blocEcoReference());
 
-  // ----- Corrections pour l'enfant sélectionné -----
-  c.appendChild(blocCorrections(enfantActif()));
-
-  // ----- Cartes surprises (activités famille) -----
-  c.appendChild(blocCartesSurprisesParents());
+  /* ===== GROUPE : Les enfants ===== */
+  c.appendChild(titreGroupe(t("grp.enfants")));
 
   // ----- Profils -----
   Object.values(etat.enfants).forEach(enf => {
@@ -1029,9 +1046,6 @@ function vueReglages(c) {
   bAjout.onclick = () => { ajouterEnfant(); rendre(); };
   c.appendChild(bAjout);
 
-  // ----- Référence : prérequis de chaque espèce de l'écosystème -----
-  c.appendChild(blocEcoReference());
-
   // ----- Mode démo : bandeau au lieu des sections compte/famille -----
   if (typeof modeDemo !== "undefined" && modeDemo) {
     const d = el("section", "carte");
@@ -1043,6 +1057,9 @@ function vueReglages(c) {
     c.appendChild(d);
     return; // pas de famille/abonnement/compte/admin en démo
   }
+
+  /* ===== GROUPE : Famille & invitations ===== */
+  c.appendChild(titreGroupe(t("grp.famille")));
 
   // ----- Famille & invitations -----
   const fam = el("section", "carte");
@@ -1108,6 +1125,9 @@ function vueReglages(c) {
 
   // ----- Administration (réservé aux admins) -----
   if (typeof estAdmin !== "undefined" && estAdmin) c.appendChild(blocAdmin());
+
+  /* ===== GROUPE : Mon compte & données ===== */
+  c.appendChild(titreGroupe(t("grp.compte")));
 
   // ----- Compte -----
   const cpt = el("section", "carte");
