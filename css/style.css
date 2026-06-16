@@ -372,6 +372,75 @@ main{max-width:680px; margin:0 auto; padding:14px}
 }
 
 /* =====================================================================
+ * Smartphone : cibles tactiles agrandies pour une utilisation autonome
+ * par de jeunes enfants. Gros boutons, gros emojis, texte bien lisible,
+ * et zones de tap confortables (≥ ~56 px). N'affecte pas l'ordinateur
+ * (tout est repris dans le bloc min-width:820px ci-dessous).
+ * ===================================================================== */
+@media(max-width:819px){
+  /* On laisse de la place sous le contenu pour la barre de nav agrandie
+     (y compris l'encoche/zone sûre des téléphones récents). */
+  body{padding-bottom:calc(98px + env(safe-area-inset-bottom, 0px))}
+  main{padding:12px}
+
+  .carte h1{font-size:26px}
+  .carte h2{font-size:21px}
+
+  /* Sélecteur d'enfant : grandes pastilles faciles à toucher */
+  .pastille{min-width:78px; padding:9px 12px; border-radius:18px}
+  .pastille .pastille-emoji{font-size:32px}
+  .pastille .pastille-nom{font-size:13px; max-width:78px}
+
+  /* Avatar d'accueil plus présent + compteurs plus gros */
+  .accueil-avatar .avatar-scene{width:132px; height:132px}
+  .compteur{min-width:130px; padding:12px 16px}
+  .compteur .big{font-size:28px}
+  .compteur span:not(.big){font-size:13px}
+
+  /* Missions : grandes tuiles bien espacées */
+  .missions{grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px}
+  .mission{padding:18px 12px; border-radius:22px; min-height:132px; justify-content:center}
+  .mission .m-emoji{font-size:48px}
+  .mission .m-titre{font-size:16px}
+  .mission .m-points{font-size:16px}
+
+  /* Gros boutons d'action (raccourcis, écrans) */
+  .gros-bouton{padding:22px; font-size:20px}
+
+  /* Bandeau dodo : bouton large */
+  .dodo-btn{padding:16px; font-size:17px}
+
+  /* Lien « voir tout » et titres de catégorie : plus faciles à viser */
+  .lien-cat{padding:10px 14px; font-size:14px; border-radius:12px}
+  .titre-cat h2{font-size:19px}
+
+  /* Écosystème : cartes d'espèces plus grandes */
+  .eco-cartes{grid-template-columns:repeat(auto-fill,minmax(118px,1fr)); gap:10px}
+  .eco-carte-sp{padding:14px 8px 10px; min-height:120px; border-radius:16px}
+  .eco-carte-sp .ec-emoji{font-size:42px}
+  .eco-carte-sp .ec-nom{font-size:14px}
+  .eco-carte-sp .ec-cout{font-size:13px}
+  .eco-carte-sp .ec-etat{font-size:12px; padding:4px 10px}
+
+  /* Avatar : options plus grandes */
+  .options{grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:12px}
+  .option{padding:14px 8px; border-radius:18px}
+  .option .o-apercu, .option .o-apercu .av-svg{width:60px; height:60px}
+  .option .o-swatch{width:42px; height:42px}
+  .option .o-nom{font-size:13px}
+  .option .o-cout{font-size:13px}
+
+  /* Barre de navigation : grandes zones tactiles, icônes plus visibles */
+  .navbar{padding-bottom:env(safe-area-inset-bottom, 0px)}
+  .nav-btn{padding:12px 2px 14px; font-size:30px; min-height:62px}
+  .nav-btn span{font-size:12px}
+
+  /* Boutons secondaires / mini-boutons : hauteur de tap confortable */
+  .btn-secondaire,.btn-danger{padding:16px; font-size:16px}
+  .mini-btn{min-width:48px; padding:12px; font-size:17px}
+}
+
+/* =====================================================================
  * Accueil : disposition 2 colonnes (desktop) / empilée (mobile)
  * ===================================================================== */
 .accueil-layout{display:block}
