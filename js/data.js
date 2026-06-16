@@ -394,6 +394,35 @@ const IDEES_CARTES = [
   { id: "idc_parc",     taille: "grande", emoji: "🎢", coutParEnfant: 1000, titre: "Journée parc d'attractions", activite: "Une grande journée d'aventure et de manèges en famille." },
   { id: "idc_zoo",      taille: "grande", emoji: "🦁", coutParEnfant: 1000, titre: "Zoo ou aquarium",           activite: "On part observer les animaux et découvrir plein de choses." },
   { id: "idc_eau",      taille: "grande", emoji: "🏊", coutParEnfant: 1000, titre: "Journée piscine / plage",   activite: "Baignade, jeux d'eau et châteaux de sable en famille." },
-  { id: "idc_cine",     taille: "grande", emoji: "🎬", coutParEnfant: 1000, titre: "Cinéma + petit restau",     activite: "Un film au cinéma suivi d'un repas choisi par les enfants." }
+  { id: "idc_cine",     taille: "grande", emoji: "🎬", coutParEnfant: 1000, titre: "Cinéma + petit restau",     activite: "Un film au cinéma suivi d'un repas choisi par les enfants." },
+
+  // ----- Petites (suite) -----
+  { id: "idc_dessin",    taille: "petite", emoji: "🖍️", coutParEnfant: 50, titre: "Concours de dessin rigolo", activite: "On dessine sur un thème rigolo et on expose nos chefs-d'œuvre." },
+  { id: "idc_chasse",    taille: "petite", emoji: "🔎", coutParEnfant: 50, titre: "Chasse au trésor maison",   activite: "Les parents cachent des indices et on cherche un petit trésor." },
+  { id: "idc_massage",   taille: "petite", emoji: "💆", coutParEnfant: 50, titre: "Moment câlin & massage",    activite: "Petits massages doux et gros câlins sur une musique calme." },
+  { id: "idc_yoga",      taille: "petite", emoji: "🧘", coutParEnfant: 50, titre: "Yoga des animaux",          activite: "On imite les animaux en faisant des postures de yoga rigolotes." },
+  { id: "idc_photo",     taille: "petite", emoji: "📸", coutParEnfant: 50, titre: "Séance photos rigolotes",   activite: "On fait des grimaces et des poses pour des photos souvenirs." },
+  { id: "idc_gratitude", taille: "petite", emoji: "🙏", coutParEnfant: 50, titre: "Cercle des mercis",         activite: "Chacun dit ce dont il est fier et remercie quelqu'un de la famille." },
+  { id: "idc_pyjama",    taille: "petite", emoji: "🛌", coutParEnfant: 50, titre: "Soirée pyjama & cocooning", activite: "Tout le monde en pyjama, chocolat chaud et petites histoires." },
+  { id: "idc_bulles",    taille: "petite", emoji: "🫧", coutParEnfant: 50, titre: "Bataille de bulles",        activite: "On souffle des bulles de savon et on essaie de les attraper." },
+
+  // ----- Moyennes (suite) -----
+  { id: "idc_cinemaison", taille: "moyenne", emoji: "🍿", coutParEnfant: 200, titre: "Soirée cinéma maison",   activite: "On choisit un film tous ensemble, avec popcorn et couverture." },
+  { id: "idc_jardin",     taille: "moyenne", emoji: "🌻", coutParEnfant: 200, titre: "Plantons ensemble",      activite: "On plante des graines ou on s'occupe du jardin et des plantes." },
+  { id: "idc_patisserie", taille: "moyenne", emoji: "🧁", coutParEnfant: 200, titre: "Grande pâtisserie",      activite: "On prépare un gâteau ou des cupcakes à décorer ensemble." },
+  { id: "idc_musee",      taille: "moyenne", emoji: "🖼️", coutParEnfant: 200, titre: "Visite d'un musée",      activite: "On découvre un musée adapté aux enfants." },
+  { id: "idc_ferme",      taille: "moyenne", emoji: "🐮", coutParEnfant: 200, titre: "Visite d'une ferme",     activite: "On va voir et nourrir les animaux de la ferme." },
+  { id: "idc_oiseaux",    taille: "moyenne", emoji: "🐦", coutParEnfant: 200, titre: "Cabane à oiseaux",       activite: "On bricole un nichoir ou une mangeoire pour les oiseaux." },
+  { id: "idc_spectacle",  taille: "moyenne", emoji: "🎭", coutParEnfant: 200, titre: "Spectacle maison",       activite: "On prépare un petit spectacle (danse, théâtre, magie) et on le joue." },
+  { id: "idc_bowling",    taille: "moyenne", emoji: "🎳", coutParEnfant: 200, titre: "Après-midi bowling",     activite: "On va faire une partie de bowling tous ensemble." },
+  { id: "idc_patinoire",  taille: "moyenne", emoji: "⛸️", coutParEnfant: 200, titre: "Patinoire en famille",   activite: "On chausse les patins et on glisse tous ensemble." },
+
+  // ----- Grandes (suite) -----
+  { id: "idc_mer",        taille: "grande", emoji: "🏖️", coutParEnfant: 1000, titre: "Journée à la mer",      activite: "Une grande journée à la plage : châteaux, baignade et glaces." },
+  { id: "idc_rando",      taille: "grande", emoji: "🥾", coutParEnfant: 1000, titre: "Rando nature & pique-nique", activite: "Une grande balade en forêt ou en montagne, avec pique-nique." },
+  { id: "idc_safari",     taille: "grande", emoji: "🦒", coutParEnfant: 1000, titre: "Parc animalier / safari", activite: "On part observer de plus grands animaux dans un parc." },
+  { id: "idc_trampoline", taille: "grande", emoji: "🤸", coutParEnfant: 1000, titre: "Parc de trampolines",    activite: "Une journée à sauter et grimper dans un parc indoor." },
+  { id: "idc_train",      taille: "grande", emoji: "🚂", coutParEnfant: 1000, titre: "Aventure en train",      activite: "On prend le train pour découvrir une nouvelle ville." },
+  { id: "idc_hotel",      taille: "grande", emoji: "🏨", coutParEnfant: 1000, titre: "Nuit aventure ailleurs", activite: "Une nuit spéciale à l'hôtel ou en camping, en aventure familiale." }
 ];
 
