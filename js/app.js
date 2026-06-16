@@ -567,6 +567,19 @@ function supprimerCarteSurprise(id) {
   sauver();
   rendre();
 }
+// Déplace une carte dans la liste (sens = -1 monter, +1 descendre).
+function deplacerCarteSurprise(id, sens) {
+  const arr = etat.cartesSurprises;
+  if (!Array.isArray(arr)) return;
+  const i = arr.findIndex(c => c.id === id);
+  if (i < 0) return;
+  const j = i + (sens < 0 ? -1 : 1);
+  if (j < 0 || j >= arr.length) return;
+  const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+  sauver();
+  rendre();
+}
+
 // Réinitialise la récolte d'une carte (pour la rejouer en équipe).
 function reinitCarteSurprise(id) {
   const c = trouverCarteSurprise(id);

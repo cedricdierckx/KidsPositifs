@@ -97,7 +97,7 @@ function construireContexte() {
       // cartes surprises (objectifs d'équipe)
       cartesSurprises, trouverCarteSurprise, donnerCarte,
       ajouterCarteSurprise, modifierCarteSurprise, supprimerCarteSurprise,
-      reinitCarteSurprise, marquerCarteFaite,
+      reinitCarteSurprise, marquerCarteFaite, deplacerCarteSurprise,
       // badges & divers
       verifierBadges, acheterOption, estDebloque, age, ageDepuis,
       // couche de données isolée (Phase D)

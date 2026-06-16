@@ -384,6 +384,27 @@ test("ajouterCarteSurprise respecte le paramètre revele", () => {
   assert.strictEqual(c.revele, true);
 });
 
+test("deplacerCarteSurprise change l'ordre des cartes", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  api.lierEtat(api.etatVierge());
+  const ids = api.cartesSurprises().map(c => c.id);
+  api.deplacerCarteSurprise(ids[0], 1);        // descendre la 1ʳᵉ
+  assert.strictEqual(api.cartesSurprises()[0].id, ids[1]);
+  assert.strictEqual(api.cartesSurprises()[1].id, ids[0]);
+  api.deplacerCarteSurprise(ids[0], -1);       // la remonter
+  assert.strictEqual(api.cartesSurprises()[0].id, ids[0]);
+});
+
+test("deplacerCarteSurprise ignore les déplacements hors limites", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  api.lierEtat(api.etatVierge());
+  const ids = api.cartesSurprises().map(c => c.id);
+  api.deplacerCarteSurprise(ids[0], -1);       // déjà en haut : pas de changement
+  assert.strictEqual(api.cartesSurprises()[0].id, ids[0]);
+});
+
 test("reinitCarteSurprise remet la carte à zéro pour la rejouer", () => {
   const { api } = construireContexte();
   api.familleId = "f";

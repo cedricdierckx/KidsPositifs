@@ -1310,3 +1310,9 @@ Object.assign(I18N.de, {
   "idee.idc_train": "Zug-Abenteuer", "ideeAct.idc_train": "Wir nehmen den Zug, um eine neue Stadt zu entdecken.",
   "idee.idc_hotel": "Abenteuernacht woanders", "ideeAct.idc_hotel": "Eine besondere Nacht im Hotel oder Camping, ein Familienabenteuer."
 });
+
+/* ---- Cartes surprises : réordonner ---- */
+Object.assign(I18N.fr, { "cs.monter": "Monter", "cs.descendre": "Descendre" });
+Object.assign(I18N.en, { "cs.monter": "Move up", "cs.descendre": "Move down" });
+Object.assign(I18N.nl, { "cs.monter": "Omhoog", "cs.descendre": "Omlaag" });
+Object.assign(I18N.de, { "cs.monter": "Nach oben", "cs.descendre": "Nach unten" });

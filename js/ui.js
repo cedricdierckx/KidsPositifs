@@ -840,7 +840,7 @@ function blocCartesSurprisesParents() {
   const cartes = (etat.cartesSurprises || []);
   let html = `<h2>${t("cs.gestion_titre")}</h2><p class="note">${t("cs.gestion_sous")}</p>`;
   html += `<div class="csp-liste">`;
-  cartes.forEach(c => {
+  cartes.forEach((c, idx) => {
     const titre = trData("carte", c.id, c.titre);
     const activite = trData("carteAct", c.id, c.activite);
     html += `<div class="csp-carte">
@@ -859,6 +859,8 @@ function blocCartesSurprisesParents() {
         <span>${t("cs.revele_label")}</span>
       </label>
       <div class="csp-actions">
+        <button class="mini-btn" data-monter="${c.id}" title="${t("cs.monter")}"${idx === 0 ? " disabled" : ""}>▲</button>
+        <button class="mini-btn" data-descendre="${c.id}" title="${t("cs.descendre")}"${idx === cartes.length - 1 ? " disabled" : ""}>▼</button>
         <button class="mini-btn" data-reinit="${c.id}">${t("cs.reinit")}</button>
         <button class="mini-btn danger" data-suppr="${c.id}">${t("cs.supprimer")}</button>
       </div>
@@ -915,6 +917,10 @@ function blocCartesSurprisesParents() {
     inp.onchange = () => modifierCarteSurprise(inp.dataset.id, inp.dataset.champ, inp.value));
   sec.querySelectorAll("[data-revele]").forEach(cb =>
     cb.onchange = () => modifierCarteSurprise(cb.dataset.revele, "revele", cb.checked));
+  sec.querySelectorAll("[data-monter]").forEach(b =>
+    b.onclick = () => deplacerCarteSurprise(b.dataset.monter, -1));
+  sec.querySelectorAll("[data-descendre]").forEach(b =>
+    b.onclick = () => deplacerCarteSurprise(b.dataset.descendre, 1));
   sec.querySelectorAll("[data-reinit]").forEach(b =>
     b.onclick = () => reinitCarteSurprise(b.dataset.reinit));
   sec.querySelectorAll("[data-suppr]").forEach(b =>
