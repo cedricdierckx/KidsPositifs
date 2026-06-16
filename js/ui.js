@@ -430,9 +430,10 @@ function blocCartesSurprises(enf) {
           <span class="cs-jauge-pct">${pct}%</span></div>
       </div>`;
 
-    html += `<div class="cs-carte${c.debloquee ? " ouverte" : " mystere"}${c.faite ? " faite" : ""}">`;
+    const visible = c.debloquee || c.revele;   // carte montrée (sinon : mystère)
+    html += `<div class="cs-carte${c.debloquee ? " ouverte" : (visible ? " visible" : " mystere")}${c.faite ? " faite" : ""}">`;
     if (c.debloquee) {
-      // Carte RÉVÉLÉE (jauge pleine) : on dévoile l'activité.
+      // Carte DÉBLOQUÉE (jauge pleine) : activité + invitation à la faire.
       html += `<div class="cs-tete"><span class="cs-emoji">${c.emoji}</span>
           <span class="cs-titre">${echapper(titre)}</span>
           <span class="cs-prix">${t("cs.debloquee")}</span></div>
@@ -442,12 +443,19 @@ function blocCartesSurprises(enf) {
       if (c.faite) html += `<p class="cs-faite-tag">${t("cs.faite")}</p>`;
       else html += `<button class="btn-secondaire cs-faite-btn" data-faite="${c.id}">${t("cs.faite_btn")}</button>`;
     } else {
-      // Carte MYSTÈRE (cachée tant que la jauge n'est pas pleine).
-      html += `<div class="cs-tete"><span class="cs-emoji cs-mystere-emoji">🎁</span>
+      // Carte EN COURS : soit visible (objectif montré), soit mystère (caché).
+      if (visible) {
+        html += `<div class="cs-tete"><span class="cs-emoji">${c.emoji}</span>
+          <span class="cs-titre">${echapper(titre)}</span>
+          <span class="cs-prix">❓</span></div>
+          <p class="cs-mystere-sous">${echapper(activite)}</p>`;
+      } else {
+        html += `<div class="cs-tete"><span class="cs-emoji cs-mystere-emoji">🎁</span>
           <span class="cs-titre">${t("cs.mystere")}</span>
           <span class="cs-prix">❓</span></div>
-        <p class="cs-mystere-sous">${t("cs.mystere_sous")}</p>
-        ${jauge}
+          <p class="cs-mystere-sous">${t("cs.mystere_sous")}</p>`;
+      }
+      html += `${jauge}
         <p class="cs-reste">${t("cs.reste", { reste })}</p>
         <div class="cs-dons">
           <button class="cs-don" data-don="${c.id}" data-montant="1">${t("cs.donner1")}</button>
@@ -849,6 +857,10 @@ function blocCartesSurprisesParents() {
           <input class="csp-cout" type="number" min="1" inputmode="numeric" data-champ="cout" data-id="${c.id}" value="${c.cout}"></label>
         <span class="csp-prog">${t("cs.recolte", { recolte: c.recolte, cout: c.cout })}</span>
       </div>
+      <label class="switch-ligne csp-revele">
+        <input type="checkbox" data-revele="${c.id}"${c.revele ? " checked" : ""}>
+        <span>${t("cs.revele_label")}</span>
+      </label>
       <div class="csp-actions">
         <button class="mini-btn" data-reinit="${c.id}">${t("cs.reinit")}</button>
         <button class="mini-btn danger" data-suppr="${c.id}">${t("cs.supprimer")}</button>
@@ -874,6 +886,8 @@ function blocCartesSurprisesParents() {
   // Édition en direct (on enregistre à la sortie du champ).
   sec.querySelectorAll("[data-champ]").forEach(inp =>
     inp.onchange = () => modifierCarteSurprise(inp.dataset.id, inp.dataset.champ, inp.value));
+  sec.querySelectorAll("[data-revele]").forEach(cb =>
+    cb.onchange = () => modifierCarteSurprise(cb.dataset.revele, "revele", cb.checked));
   sec.querySelectorAll("[data-reinit]").forEach(b =>
     b.onclick = () => reinitCarteSurprise(b.dataset.reinit));
   sec.querySelectorAll("[data-suppr]").forEach(b =>

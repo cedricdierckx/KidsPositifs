@@ -1098,3 +1098,9 @@ Object.assign(I18N.fr, { "grp.quotidien": "📋 Au quotidien", "grp.activites": 
 Object.assign(I18N.en, { "grp.quotidien": "📋 Daily", "grp.activites": "🎯 Activities & game rules", "grp.enfants": "👧 The children", "grp.famille": "👪 Family & invitations", "grp.compte": "⚙️ My account & data" });
 Object.assign(I18N.nl, { "grp.quotidien": "📋 Dagelijks", "grp.activites": "🎯 Activiteiten & spelregels", "grp.enfants": "👧 De kinderen", "grp.famille": "👪 Gezin & uitnodigingen", "grp.compte": "⚙️ Mijn account & gegevens" });
 Object.assign(I18N.de, { "grp.quotidien": "📋 Täglich", "grp.activites": "🎯 Aktivitäten & Spielregeln", "grp.enfants": "👧 Die Kinder", "grp.famille": "👪 Familie & Einladungen", "grp.compte": "⚙️ Mein Konto & Daten" });
+
+/* ---- Cartes surprises : visible/mystère ---- */
+Object.assign(I18N.fr, { "cs.revele_label": "Activité visible par les enfants (sinon : surprise mystère 🎁)" });
+Object.assign(I18N.en, { "cs.revele_label": "Activity visible to children (otherwise: mystery surprise 🎁)" });
+Object.assign(I18N.nl, { "cs.revele_label": "Activiteit zichtbaar voor kinderen (anders: mysterieverrassing 🎁)" });
+Object.assign(I18N.de, { "cs.revele_label": "Aktivität für Kinder sichtbar (sonst: Geheimnis-Überraschung 🎁)" });

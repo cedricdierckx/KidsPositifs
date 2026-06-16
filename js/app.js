@@ -113,6 +113,7 @@ function cartesSurprisesNeuves(nbEnfants) {
   return CARTES_SURPRISES_DEFAUT.map(c => ({
     id: c.id, emoji: c.emoji, titre: c.titre, activite: c.activite,
     cout: c.coutParEnfant * n,
+    revele: false,   // mystère par défaut (révélé seulement jauge pleine)
     recolte: 0, dons: {}, debloquee: false, debloqueeLe: null, faite: false, faiteLe: null
   }));
 }
@@ -209,6 +210,8 @@ function normaliser(e) {
       if (typeof c.cout !== "number" || c.cout < 1) c.cout = 10;
       c.debloquee = !!c.debloquee;
       c.faite = !!c.faite;
+      if (c.revele === undefined) c.revele = false;
+      else c.revele = !!c.revele;
       if (!c.emoji) c.emoji = "🎁";
       // Migration douce : si une carte par défaut a encore son ancien prix et
       // n'a jamais été utilisée, on applique le nouveau calcul (× nb d'enfants).
@@ -532,7 +535,7 @@ function donnerCarte(carteId, montant) {
 }
 
 /* ---------- Cartes surprises : gestion par les parents ---------- */
-function ajouterCarteSurprise(emoji, titre, activite, cout) {
+function ajouterCarteSurprise(emoji, titre, activite, cout, revele) {
   titre = (titre || "").trim();
   if (!titre) { toast(t("toast.nom_requis"), "info"); return; }
   if (!Array.isArray(etat.cartesSurprises)) etat.cartesSurprises = [];
@@ -541,6 +544,7 @@ function ajouterCarteSurprise(emoji, titre, activite, cout) {
     emoji: (emoji || "").trim() || "🎁",
     titre, activite: (activite || "").trim(),
     cout: Math.max(1, parseInt(cout, 10) || 10),
+    revele: !!revele,
     recolte: 0, dons: {}, debloquee: false, debloqueeLe: null, faite: false, faiteLe: null
   });
   sauver();
@@ -551,6 +555,7 @@ function modifierCarteSurprise(id, champ, valeur) {
   const c = trouverCarteSurprise(id);
   if (!c) return;
   if (champ === "cout") c.cout = Math.max(1, parseInt(valeur, 10) || 1);
+  else if (champ === "revele") c.revele = !!valeur;
   else c[champ] = valeur;
   sauver();
   rendre();

@@ -359,6 +359,31 @@ test("les parents peuvent ajouter, modifier et supprimer une carte", () => {
   assert.strictEqual(api.cartesSurprises().length, avant);
 });
 
+test("les cartes sont en mode mystère (revele=false) par défaut", () => {
+  const { api } = construireContexte();
+  assert.strictEqual(api.etatVierge().cartesSurprises[0].revele, false);
+});
+
+test("on peut rendre une carte visible (revele) puis la remasquer", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  api.lierEtat(api.etatVierge());
+  const id = api.cartesSurprises()[0].id;
+  api.modifierCarteSurprise(id, "revele", true);
+  assert.strictEqual(api.trouverCarteSurprise(id).revele, true);
+  api.modifierCarteSurprise(id, "revele", false);
+  assert.strictEqual(api.trouverCarteSurprise(id).revele, false);
+});
+
+test("ajouterCarteSurprise respecte le paramètre revele", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  api.lierEtat(api.etatVierge());
+  api.ajouterCarteSurprise("🎲", "Soirée jeux", "desc", 12, true);
+  const c = api.cartesSurprises()[api.cartesSurprises().length - 1];
+  assert.strictEqual(c.revele, true);
+});
+
 test("reinitCarteSurprise remet la carte à zéro pour la rejouer", () => {
   const { api } = construireContexte();
   api.familleId = "f";
