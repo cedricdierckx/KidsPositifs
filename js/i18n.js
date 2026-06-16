@@ -1322,3 +1322,41 @@ Object.assign(I18N.fr, { "badges.aucun": "Pas encore de badge… Continue tes be
 Object.assign(I18N.en, { "badges.aucun": "No badge yet… Keep up your great actions to earn some! ✨" });
 Object.assign(I18N.nl, { "badges.aucun": "Nog geen badge… Blijf mooie dingen doen om er te verdienen! ✨" });
 Object.assign(I18N.de, { "badges.aucun": "Noch kein Abzeichen… Mach weiter so, um welche zu verdienen! ✨" });
+
+/* ---- Espace parents : statistiques ---- */
+Object.assign(I18N.fr, {
+  "grp.stats": "📊 Statistiques",
+  "stats.titre": "📊 Évolution des enfants",
+  "stats.sous": "Suis les progrès de chacun : points gagnés, badges, écosystème et régularité.",
+  "stats.jours_actifs": "{n} j actifs",
+  "stats.points_14j": "Points gagnés (14 derniers jours)",
+  "stats.compare": "Cette semaine : {s} pts · semaine précédente : {p} pts",
+  "stats.aucune": "Pas encore d'activité enregistrée. Les premiers progrès apparaîtront ici ! ✨"
+});
+Object.assign(I18N.en, {
+  "grp.stats": "📊 Statistics",
+  "stats.titre": "📊 Children's progress",
+  "stats.sous": "Track everyone's progress: points earned, badges, ecosystem and consistency.",
+  "stats.jours_actifs": "{n} active days",
+  "stats.points_14j": "Points earned (last 14 days)",
+  "stats.compare": "This week: {s} pts · previous week: {p} pts",
+  "stats.aucune": "No activity recorded yet. First progress will appear here! ✨"
+});
+Object.assign(I18N.nl, {
+  "grp.stats": "📊 Statistieken",
+  "stats.titre": "📊 Vooruitgang van de kinderen",
+  "stats.sous": "Volg ieders vooruitgang: verdiende punten, badges, ecosysteem en regelmaat.",
+  "stats.jours_actifs": "{n} actieve dgn",
+  "stats.points_14j": "Verdiende punten (laatste 14 dagen)",
+  "stats.compare": "Deze week: {s} ptn · vorige week: {p} ptn",
+  "stats.aucune": "Nog geen activiteit. De eerste vooruitgang verschijnt hier! ✨"
+});
+Object.assign(I18N.de, {
+  "grp.stats": "📊 Statistiken",
+  "stats.titre": "📊 Fortschritt der Kinder",
+  "stats.sous": "Verfolge den Fortschritt aller: verdiente Punkte, Abzeichen, Ökosystem und Regelmäßigkeit.",
+  "stats.jours_actifs": "{n} aktive Tage",
+  "stats.points_14j": "Verdiente Punkte (letzte 14 Tage)",
+  "stats.compare": "Diese Woche: {s} Pkt · Vorwoche: {p} Pkt",
+  "stats.aucune": "Noch keine Aktivität. Der erste Fortschritt erscheint hier! ✨"
+});

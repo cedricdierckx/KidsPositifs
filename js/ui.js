@@ -501,6 +501,74 @@ function blocBadges(enf) {
   return sec;
 }
 
+/* ---------- Statistiques (espace parents) ---------- */
+// Points gagnés par jour sur les `nbJours` derniers jours, à partir du journal.
+function statsJournalieres(enf, nbJours) {
+  const out = [];
+  const base = new Date(aujourdHui() + "T00:00:00");
+  for (let i = nbJours - 1; i >= 0; i--) {
+    const d = new Date(base); d.setDate(base.getDate() - i);
+    const cle = d.toISOString().slice(0, 10);
+    const j = enf.journal[cle] || {};
+    let coeurs = 0, gouttes = 0;
+    Object.keys(j).forEach(mid => {
+      const m = (typeof trouverMission === "function") ? trouverMission(mid) : null;
+      if (!m) return;
+      const pts = (m.points || 0) * j[mid];
+      if (m.cat === "planete") gouttes += pts; else coeurs += pts;
+    });
+    out.push({ cle, coeurs, gouttes, total: coeurs + gouttes });
+  }
+  return out;
+}
+
+// Espace statistiques : évolution de chaque enfant (résumé + graphe 14 jours).
+function blocStatistiques() {
+  const wrap = el("div");
+  const intro = el("section", "carte");
+  intro.innerHTML = `<h2>${t("stats.titre")}</h2><p class="note">${t("stats.sous")}</p>`;
+  wrap.appendChild(intro);
+
+  const NB = 14;
+  Object.values(etat.enfants).forEach(enf => {
+    const sec = el("section", "carte stat-enfant");
+    sec.style.setProperty("--c", enf.couleur);
+    const jours = statsJournalieres(enf, NB);
+    const max = Math.max(1, ...jours.map(d => d.total));
+    const joursActifs = Object.keys(enf.journal).length;
+    const semaine = jours.slice(7).reduce((s, d) => s + d.total, 0);
+    const semainePrec = jours.slice(0, 7).reduce((s, d) => s + d.total, 0);
+    const diff = semaine - semainePrec;
+    const tendance = diff > 0 ? `▲ +${diff}` : (diff < 0 ? `▼ ${diff}` : "→ =");
+    const tendCls = diff > 0 ? "up" : (diff < 0 ? "down" : "flat");
+
+    let html = `<h3 class="stat-nom">${enf.emoji} ${echapper(enf.prenom)} <small>(${t("home.ans", { age: age(enf) })})</small></h3>
+      <div class="stat-chiffres">
+        <span class="stat-puce">💛 ${enf.coeursTotal}</span>
+        <span class="stat-puce">💧 ${enf.gouttesTotal}</span>
+        <span class="stat-puce">🏆 ${enf.badges.length}</span>
+        <span class="stat-puce">🌳 ${nbTotalEspeces(enf)}</span>
+        <span class="stat-puce">📅 ${t("stats.jours_actifs", { n: joursActifs })}</span>
+      </div>
+      <p class="stat-graph-titre">${t("stats.points_14j")}
+        <span class="stat-tendance ${tendCls}">${tendance}</span></p>
+      <div class="stat-graph">`;
+    jours.forEach(d => {
+      const h = Math.round((d.total / max) * 100);
+      const jour = d.cle.slice(8, 10);
+      html += `<div class="stat-col" title="${d.cle} · ${d.total} pts (💛${d.coeurs} 💧${d.gouttes})">
+        <div class="stat-bar" style="height:${h}%"></div><span class="stat-jour">${jour}</span></div>`;
+    });
+    html += `</div>
+      <p class="note stat-compare">${t("stats.compare", { s: semaine, p: semainePrec })}</p>`;
+    if (!joursActifs) html = `<h3 class="stat-nom">${enf.emoji} ${echapper(enf.prenom)}</h3>
+      <p class="note">${t("stats.aucune")}</p>`;
+    sec.innerHTML = html;
+    wrap.appendChild(sec);
+  });
+  return wrap;
+}
+
 /* ---------- Vue Missions (famille / planète) ---------- */
 // Défis réparation (alternative bienveillante à la punition).
 function blocReparation() {
@@ -986,6 +1054,7 @@ function vueReglages(c) {
   // ----- Sous-menu (onglets) pour organiser l'espace parents -----
   const onglets = [
     ["quotidien", t("grp.quotidien")],
+    ["stats",     t("grp.stats")],
     ["activites", t("grp.activites")],
     ["enfants",   t("grp.enfants")],
     ["famille",   t("grp.famille")],
@@ -1034,6 +1103,11 @@ function vueReglages(c) {
   c.appendChild(blocCorrections(enfantActif()));
 
   } /* fin onglet quotidien */
+
+  /* ===== ONGLET : Statistiques ===== */
+  if (ongletParent === "stats") {
+    c.appendChild(blocStatistiques());
+  }
 
   /* ===== ONGLET : Activités & règles du jeu ===== */
   if (ongletParent === "activites") {
