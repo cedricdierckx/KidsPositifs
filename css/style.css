@@ -432,39 +432,44 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .niveau-desert .ecomonde-sol::before{color:#e3c587}
 .niveau-foret .ecomonde-sol::before{color:#3fa85a}
 
-/* Décor de fond (flore) selon le niveau */
-.ecomonde-fond{position:absolute; left:0; right:0; bottom:6px; display:flex; justify-content:space-around;
-  pointer-events:none; opacity:.85}
-.ecomonde-plante{font-size:30px; transform-origin:bottom center;
-  animation:eco-pousse .6s cubic-bezier(.2,1.6,.4,1) both, eco-balance 4s ease-in-out infinite;
-  animation-delay:calc(var(--i) * .12s), calc(var(--i) * .3s)}
-@keyframes eco-pousse{0%{transform:scale(0) translateY(8px)}100%{transform:scale(1) translateY(0)}}
-@keyframes eco-balance{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+/* Plantes : créées par l'enfant, IMMOBILES (elles ne bougent pas) */
+.ecomonde-flore{position:relative; z-index:1; font-size:38px; line-height:1; display:inline-block;
+  transform-origin:bottom center; filter:drop-shadow(0 3px 2px rgba(0,0,0,.18))}
 
-/* Êtres au sol : déplacement (va-et-vient) + saut Pixar (squash & stretch) */
-.ecomonde-etre{position:relative; z-index:2; font-size:38px; line-height:1; display:inline-block;
+/* Animaux au sol : va-et-vient + saut « Pixar » (anticipation, squash & stretch) */
+.ecomonde-etre{position:relative; z-index:2; font-size:40px; line-height:1; display:inline-block;
   transform-origin:bottom center;
-  animation:eco-marche calc(5s + (var(--i) * 0.7s)) ease-in-out infinite;
+  animation:eco-marche calc(5.5s + (var(--i) * 0.7s)) cubic-bezier(.45,0,.55,1) infinite;
   animation-delay:calc(var(--i) * -0.6s)}
+/* Petite ombre de contact au sol */
+.ecomonde-etre::after{content:""; position:absolute; left:50%; bottom:-3px; transform:translateX(-50%);
+  width:26px; height:7px; border-radius:50%; background:rgba(0,0,0,.16); z-index:-1;
+  animation:eco-ombre calc(1.15s + (var(--i) * 0.13s)) cubic-bezier(.3,.1,.3,1) infinite;
+  animation-delay:calc(var(--i) * -0.25s)}
 .ecomonde-corps{display:inline-block; transform-origin:bottom center;
-  animation:eco-saut calc(1.1s + (var(--i) * 0.13s)) cubic-bezier(.3,.1,.3,1) infinite;
+  filter:drop-shadow(0 4px 3px rgba(0,0,0,.22));
+  animation:eco-saut calc(1.15s + (var(--i) * 0.13s)) cubic-bezier(.3,.05,.4,1) infinite;
   animation-delay:calc(var(--i) * -0.25s)}
 @keyframes eco-marche{
-  0%{transform:translateX(0)}
-  24%{transform:translateX(26px) scaleX(1)}
-  25%{transform:translateX(26px) scaleX(-1)}
-  74%{transform:translateX(-22px) scaleX(-1)}
-  75%{transform:translateX(-22px) scaleX(1)}
-  100%{transform:translateX(0) scaleX(1)}}
+  0%{transform:translateX(0) scaleX(1)}
+  48%{transform:translateX(30px) scaleX(1)}
+  50%{transform:translateX(30px) scaleX(-1)}
+  98%{transform:translateX(-26px) scaleX(-1)}
+  100%{transform:translateX(-26px) scaleX(1)}}
 @keyframes eco-saut{
-  0%,100%{transform:translateY(0) scale(1.05,.92)}
-  20%{transform:translateY(-14px) scale(.9,1.12)}
-  45%{transform:translateY(0) scale(1.08,.9)}
-  60%{transform:translateY(-4px) scale(.98,1.03)}
-  80%{transform:translateY(0) scale(1.02,.98)}}
+  0%,100%{transform:translateY(0) scale(1,1)}
+  10%{transform:translateY(0) scale(1.14,.84)}     /* anticipation : on s'écrase */
+  38%{transform:translateY(-18px) scale(.88,1.16)} /* envol : on s'étire */
+  56%{transform:translateY(0) scale(1.12,.88)}     /* atterrissage : squash */
+  72%{transform:translateY(-5px) scale(.97,1.05)}  /* petit rebond */
+  88%{transform:translateY(0) scale(1.03,.98)}}
+@keyframes eco-ombre{
+  0%,100%{transform:translateX(-50%) scale(1); opacity:.16}
+  38%{transform:translateX(-50%) scale(.55); opacity:.08}  /* l'ombre rétrécit au saut */
+  56%{transform:translateX(-50%) scale(1.05); opacity:.18}}
 .ecomonde-vide{font-size:15px; font-weight:700; color:#3a7a2c; padding:16px; text-align:center; width:100%; z-index:2}
 @media(prefers-reduced-motion:reduce){
-  .ecomonde-soleil,.ecomonde-nuage,.ecomonde-vol,.ecomonde-plante,.ecomonde-etre,.ecomonde-corps{animation:none}
+  .ecomonde-soleil,.ecomonde-nuage,.ecomonde-vol,.ecomonde-etre,.ecomonde-corps,.ecomonde-etre::after{animation:none}
 }
 
 /* ---- Statistiques (espace parents) ---- */

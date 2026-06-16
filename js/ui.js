@@ -707,25 +707,21 @@ function vuePlanete(c) {
 function sceneVivante(enf) {
   // On rassemble tous les êtres créés, en distinguant ceux "du ciel".
   const VOLANTS = ["coccinelle", "abeille", "papillon", "hibou", "aigle"];
-  const ciel = [], sol = [];
+  const ciel = [], plantes = [], animaux = [];
   TIERS_ECO.forEach(tier => {
     tier.especes.forEach(sp => {
       const n = (enf.ecosysteme[tier.id] || {})[sp.id] || 0;
       for (let k = 0; k < n; k++) {
-        (VOLANTS.includes(sp.id) ? ciel : sol).push(sp.emoji);
+        if (VOLANTS.includes(sp.id)) ciel.push(sp.emoji);          // vole dans le ciel
+        else if (tier.id === "plantes") plantes.push(sp.emoji);    // immobile au sol
+        else animaux.push(sp.emoji);                               // se déplace au sol
       }
     });
   });
-  const total = ciel.length + sol.length;
-  // Le décor évolue avec la richesse de l'écosystème : désert → prairie → forêt.
+  const total = ciel.length + plantes.length + animaux.length;
+  // Le décor (couleurs uniquement) évolue : désert → prairie → forêt.
   let niveau = "desert";
   if (total >= 20) niveau = "foret"; else if (total >= 8) niveau = "prairie";
-  const FONDS = {
-    desert:  ["🌵", "🪨", "🌵", "🪨"],
-    prairie: ["🌼", "🌿", "🌷", "🌼", "🌿"],
-    foret:   ["🌲", "🌳", "🌲", "🍄", "🌳", "🌲"]
-  };
-  const fond = FONDS[niveau];
 
   const sec = el("section", "carte eco-monde-carte");
   let html = `<h2>${t("eco.monde_titre")} <span class="ecomonde-niveau">${t("eco.niveau_" + niveau)}</span></h2>
@@ -735,14 +731,14 @@ function sceneVivante(enf) {
         <span class="ecomonde-nuage c1">☁️</span>
         <span class="ecomonde-nuage c2">☁️</span>`;
   ciel.forEach((e, i) => { html += `<span class="ecomonde-vol" style="--i:${i}">${e}</span>`; });
-  html += `</div><div class="ecomonde-sol">
-        <div class="ecomonde-fond">` +
-        fond.map((e, i) => `<span class="ecomonde-plante" style="--i:${i}">${e}</span>`).join("") +
-        `</div>`;
+  html += `</div><div class="ecomonde-sol">`;
   if (!total) {
     html += `<span class="ecomonde-vide">${t("eco.monde_vide")}</span>`;
   } else {
-    sol.forEach((e, i) => {
+    // Plantes : immobiles (elles ne bougent pas).
+    plantes.forEach(e => { html += `<span class="ecomonde-flore">${e}</span>`; });
+    // Animaux : se déplacent au sol (marche + saut « Pixar »).
+    animaux.forEach((e, i) => {
       html += `<span class="ecomonde-etre" style="--i:${i}"><span class="ecomonde-corps">${e}</span></span>`;
     });
   }
