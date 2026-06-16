@@ -1199,3 +1199,37 @@ Object.assign(I18N.de, {
   "badgeC.eco_25": "Erschaffe 25 Lebewesen", "badgeC.mois": "Sei an 30 verschiedenen Tagen aktiv",
   "badgeC.don_coeur": "Gib Herzen für eine Überraschungskarte", "badgeC.equipe": "Hilf, eine Überraschungskarte freizuschalten"
 });
+
+/* ---- Module signalement bug / suggestion (early adopters) ---- */
+Object.assign(I18N.fr, {
+  "fb.titre": "🐞 Signaler un bug / 💡 Suggestion",
+  "fb.sous": "Réservé aux premiers utilisateurs. Merci de nous aider à améliorer FamiTeam !",
+  "fb.type_bug": "🐞 Bug", "fb.type_suggestion": "💡 Suggestion",
+  "fb.message_ph": "Décris le bug ou ta suggestion…",
+  "fb.envoyer": "✉️ Envoyer par e-mail",
+  "fb.vide": "Écris d'abord ton message.", "fb.merci": "Merci ! Ton e-mail va s'ouvrir."
+});
+Object.assign(I18N.en, {
+  "fb.titre": "🐞 Report a bug / 💡 Suggestion",
+  "fb.sous": "Available to early adopters. Thanks for helping us improve FamiTeam!",
+  "fb.type_bug": "🐞 Bug", "fb.type_suggestion": "💡 Suggestion",
+  "fb.message_ph": "Describe the bug or your suggestion…",
+  "fb.envoyer": "✉️ Send by email",
+  "fb.vide": "Write your message first.", "fb.merci": "Thanks! Your email app will open."
+});
+Object.assign(I18N.nl, {
+  "fb.titre": "🐞 Bug melden / 💡 Suggestie",
+  "fb.sous": "Voor early adopters. Bedankt dat je FamiTeam helpt verbeteren!",
+  "fb.type_bug": "🐞 Bug", "fb.type_suggestion": "💡 Suggestie",
+  "fb.message_ph": "Beschrijf de bug of je suggestie…",
+  "fb.envoyer": "✉️ Verstuur per e-mail",
+  "fb.vide": "Schrijf eerst je bericht.", "fb.merci": "Bedankt! Je e-mailapp gaat open."
+});
+Object.assign(I18N.de, {
+  "fb.titre": "🐞 Fehler melden / 💡 Vorschlag",
+  "fb.sous": "Für Early Adopters. Danke, dass du FamiTeam verbessern hilfst!",
+  "fb.type_bug": "🐞 Fehler", "fb.type_suggestion": "💡 Vorschlag",
+  "fb.message_ph": "Beschreibe den Fehler oder deinen Vorschlag…",
+  "fb.envoyer": "✉️ Per E-Mail senden",
+  "fb.vide": "Schreibe zuerst deine Nachricht.", "fb.merci": "Danke! Deine E-Mail-App öffnet sich."
+});

@@ -59,6 +59,16 @@ function nettoyerUrl() {
 }
 function utilisateurCourant() { return utilisateur; }
 
+// Early adopters : comptes actuels + créés avant le 1er août 2026. Eux seuls
+// ont accès au module de signalement de bug / suggestion.
+const EARLY_ADOPTER_LIMITE = "2026-08-01T00:00:00Z";
+function estEarlyAdopter() {
+  if (typeof modeDemo !== "undefined" && modeDemo) return true; // démo : module visible
+  const u = utilisateur;
+  if (!u || !u.created_at) return true;   // par prudence si la date est inconnue
+  return new Date(u.created_at) < new Date(EARLY_ADOPTER_LIMITE);
+}
+
 /* ---------- Après connexion : invitation, familles ---------- */
 async function apresConnexion() {
   try { const { data } = await sb.rpc("is_admin"); estAdmin = !!data; } catch { estAdmin = false; }
