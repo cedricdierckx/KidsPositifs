@@ -1107,11 +1107,15 @@ const AVATAR_LIBELLES = {
 
 function vueAvatar(c) {
   const enf = enfantActif();
+  const jeune = estJeune(enf);
 
   const apercu = el("section", "carte avatar-apercu");
+  const soldeAv = jeune
+    ? `<span class="solde-pips">${repeterEmoji(enf.coeurs, "💛", 12)}</span>`
+    : `💛 <strong>${enf.coeurs}</strong> Cœurs à dépenser`;
   apercu.innerHTML = `<h1>🎨 Mon avatar</h1>
     <div class="avatar-grand">${renduAvatar(enf)}</div>
-    <p class="solde">💛 <strong>${enf.coeurs}</strong> Cœurs à dépenser</p>`;
+    <p class="solde">${soldeAv}</p>`;
   c.appendChild(apercu);
 
   Object.keys(AVATAR_OPTIONS).forEach(categorie => {
@@ -1122,10 +1126,13 @@ function vueAvatar(c) {
       const dispo = estDebloque(enf, categorie, opt);
       const equipe = enf.avatar[categorie] === opt.id;
       const o = el("button", "option" + (equipe ? " equipe" : "") + (dispo ? "" : " verrou"));
+      let cout;
+      if (dispo) cout = equipe ? (jeune ? "✅" : "Porté ✅") : (jeune ? "👆" : "Choisir");
+      else cout = jeune ? `🔒 ${repeterEmoji(opt.cout, "💛", 6)}` : `🔒 ${opt.cout} 💛`;
       o.innerHTML = `
         <span class="o-apercu">${apercuOption(enf, categorie, opt)}</span>
         <span class="o-nom">${trData("avatar." + categorie, opt.id, opt.nom)}</span>
-        <span class="o-cout">${dispo ? (equipe ? "Porté ✅" : "Choisir") : `🔒 ${opt.cout} 💛`}</span>`;
+        <span class="o-cout">${cout}</span>`;
       o.onclick = () => acheterOption(categorie, opt);
       grille.appendChild(o);
     });
