@@ -1765,33 +1765,46 @@ function blocFeedback() {
   const ta = el("textarea", "fb-message");
   ta.placeholder = t("fb.message_ph"); ta.rows = 4;
   const b = el("button", "btn-secondaire", t("fb.envoyer"));
-  b.onclick = () => {
+  b.onclick = async () => {
     const msg = ta.value.trim();
     if (!msg) { toast(t("fb.vide"), "info"); return; }
     const u = (typeof utilisateurCourant === "function") ? utilisateurCourant() : null;
     const type = selType.value === "bug" ? "Bug" : "Suggestion";
-    const contexte = [
-      "App: " + APP_NOM, "Type: " + type,
-      "Email: " + (u && u.email ? u.email : "—"),
-      "Famille: " + (familleActive ? familleActive.name : "—"),
-      "Langue: " + langue, "Version état: " + ETAT_VERSION,
-      "Date: " + new Date().toISOString(),
-      "Navigateur: " + (navigator.userAgent || "—")
-    ].join("\n");
-    // Stockage côté base (best-effort, ne bloque pas l'e-mail).
-    try {
-      if (typeof sb !== "undefined" && sb && !(typeof modeDemo !== "undefined" && modeDemo)) {
-        sb.rpc("submit_feedback", {
-          p_type: selType.value, p_message: msg,
-          p_context: { langue, version: ETAT_VERSION, ua: navigator.userAgent || "" },
-          p_family: (typeof familleId !== "undefined" ? familleId : null)
+    const ctxObj = {
+      famille: familleActive ? familleActive.name : null,
+      langue, version: ETAT_VERSION, ua: navigator.userAgent || ""
+    };
+    const demo = (typeof modeDemo !== "undefined" && modeDemo);
+    let envoye = false;
+    b.disabled = true; b.textContent = t("common.creation");
+    if (typeof sb !== "undefined" && sb && !demo) {
+      // 1) Envoi automatique par e-mail (depuis hello@fami.team via Resend).
+      try {
+        const { error } = await sb.functions.invoke("send-feedback", {
+          body: { type: selType.value, message: msg, context: ctxObj, email: u ? u.email : null }
         });
-      }
-    } catch (e) { /* on garde l'e-mail comme repli */ }
-    const sujet = encodeURIComponent(`${APP_NOM} — ${type}`);
-    const corps = encodeURIComponent(`${msg}\n\n--- Contexte technique ---\n${contexte}`);
-    location.href = `mailto:${emailSupport()}?subject=${sujet}&body=${corps}`;
-    toast(t("fb.merci"), "succes");
+        if (!error) envoye = true;
+      } catch (e) { /* repli mailto plus bas */ }
+      // 2) Stockage en base (best-effort).
+      try {
+        sb.rpc("submit_feedback", { p_type: selType.value, p_message: msg, p_context: ctxObj,
+          p_family: (typeof familleId !== "undefined" ? familleId : null) });
+      } catch (e) { /* ignore */ }
+    }
+    b.disabled = false; b.textContent = t("fb.envoyer");
+    if (envoye) {
+      ta.value = "";
+      toast(t("fb.merci"), "succes");
+    } else {
+      // Repli : on ouvre le client mail de l'utilisateur.
+      const contexte = `App: ${APP_NOM}\nType: ${type}\nEmail: ${u && u.email ? u.email : "—"}\n` +
+        `Famille: ${familleActive ? familleActive.name : "—"}\nLangue: ${langue}\n` +
+        `Version: ${ETAT_VERSION}\nDate: ${new Date().toISOString()}\nNavigateur: ${navigator.userAgent || "—"}`;
+      const sujet = encodeURIComponent(`${APP_NOM} — ${type}`);
+      const corps = encodeURIComponent(`${msg}\n\n--- Contexte technique ---\n${contexte}`);
+      location.href = `mailto:${emailSupport()}?subject=${sujet}&body=${corps}`;
+      toast(t("fb.merci"), "succes");
+    }
   };
   sec.appendChild(selType); sec.appendChild(ta); sec.appendChild(b);
   return sec;
