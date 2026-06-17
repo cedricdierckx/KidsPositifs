@@ -30,6 +30,10 @@ create table if not exists public.family_members (
   created_at timestamptz default now(),
   primary key (family_id, user_id)
 );
+-- Index de passage à l'échelle (milliers de familles) :
+-- accélère « quelles familles pour cet utilisateur » et les contrôles RLS.
+create index if not exists idx_fm_user on public.family_members(user_id);
+create index if not exists idx_families_owner on public.families(owner_id);
 
 create table if not exists public.family_state (
   family_id uuid primary key references public.families(id) on delete cascade,
@@ -209,6 +213,8 @@ create table if not exists public.referrals (
   accepted_at timestamptz,
   accepted_family uuid references public.families(id) on delete set null       -- filleul
 );
+-- Index : quotas de parrainage par famille (fenêtre glissante de 7 jours).
+create index if not exists idx_referrals_family on public.referrals(family_id, created_at desc);
 alter table public.referrals enable row level security;
 drop policy if exists "members read referrals" on public.referrals;
 create policy "members read referrals" on public.referrals
