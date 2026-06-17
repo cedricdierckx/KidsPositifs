@@ -1606,3 +1606,9 @@ Object.assign(I18N.de, {
   "eval.bien": "Gut", "eval.moyen": "Okay", "eval.mauvais": "Nicht so gut",
   "stats.autoeval": "Selbsteinschätzung (30 T)", "stats.evalparent": "Elternbewertung (30 T)"
 });
+
+/* ---- Stats : frise ressenti enfant/parent ---- */
+Object.assign(I18N.fr, { "stats.ressenti": "Ressenti jour par jour (14 j) — 🧒 enfant / 👤 parent" });
+Object.assign(I18N.en, { "stats.ressenti": "Daily mood (14 d) — 🧒 child / 👤 parent" });
+Object.assign(I18N.nl, { "stats.ressenti": "Dagelijks gevoel (14 d) — 🧒 kind / 👤 ouder" });
+Object.assign(I18N.de, { "stats.ressenti": "Tägliches Gefühl (14 T) — 🧒 Kind / 👤 Eltern" });

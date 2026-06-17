@@ -754,6 +754,28 @@ function blocStatistiques() {
     if (pe.bien + pe.moyen + pe.mauvais > 0)
       html += `<p class="note stat-compare">${t("stats.evalparent")} : 😀 ${pe.bien} · 😐 ${pe.moyen} · 🙁 ${pe.mauvais}</p>`;
 
+    // Frise jour par jour : ressenti de l'enfant vs du parent (14 jours).
+    const aDesEvals = (Object.keys(enf.autoEval || {}).length + Object.keys(enf.evalParent || {}).length) > 0;
+    if (aDesEvals) {
+      const EMO = { bien: "😀", moyen: "😐", mauvais: "🙁" };
+      const base = new Date(aujourdHui() + "T00:00:00");
+      let cE = "", cP = "", cJ = "";
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date(base); d.setDate(base.getDate() - i);
+        const cle = d.toISOString().slice(0, 10);
+        const ve = (enf.autoEval || {})[cle], vp = (enf.evalParent || {})[cle];
+        cE += `<span class="stat-eval-c">${ve ? EMO[ve] : "·"}</span>`;
+        cP += `<span class="stat-eval-c">${vp ? EMO[vp] : "·"}</span>`;
+        cJ += `<span class="stat-eval-c stat-eval-j">${cle.slice(8, 10)}</span>`;
+      }
+      html += `<p class="stat-graph-titre">${t("stats.ressenti")}</p>
+        <div class="stat-eval-grid">
+          <div class="stat-eval-row"><span class="stat-eval-lbl">🧒</span>${cE}</div>
+          <div class="stat-eval-row"><span class="stat-eval-lbl">👤</span>${cP}</div>
+          <div class="stat-eval-row"><span class="stat-eval-lbl"></span>${cJ}</div>
+        </div>`;
+    }
+
     sec.innerHTML = html;
     wrap.appendChild(sec);
   });
