@@ -25,9 +25,20 @@ const Store = (() => {
   let client = null;          // client Supabase
   let cloudTimer = null;      // anti-rebond sauvegarde
   let canal = null;           // abonnement temps réel
+  let pollTimer = null;       // repli : interrogation périodique
+
+  // Intervalle d'interrogation (ms) quand le temps réel est désactivé.
+  const POLL_MS = 30000;
 
   function init(sbClient) { client = sbClient; }
   function pret() { return !!(client && typeof familleId !== "undefined" && familleId); }
+
+  // Temps réel actif ? On peut le couper globalement via KP_CONFIG.REALTIME = false
+  // (repli sur interrogation périodique) pour économiser les connexions
+  // persistantes quand on approche des milliers d'appareils simultanés.
+  function realtimeActif() {
+    return !(typeof window !== "undefined" && window.KP_CONFIG && window.KP_CONFIG.REALTIME === false);
+  }
 
   function badge(symbole) {
     const b = document.querySelector("#sync-etat");
@@ -115,7 +126,9 @@ const Store = (() => {
 
   function abonnerRealtime() {
     if (!pret()) return;
-    if (canal) { client.removeChannel(canal); canal = null; }
+    fermerRealtime();   // on repart propre (canal + polleur)
+    // Repli : si le temps réel est coupé, on interroge périodiquement.
+    if (!realtimeActif()) { demarrerPolleur(); return; }
     canal = client.channel("fs:" + familleId)
       .on("postgres_changes",
           { event: "UPDATE", schema: "public", table: "family_state", filter: "family_id=eq." + familleId },
@@ -128,10 +141,19 @@ const Store = (() => {
       .subscribe();
   }
 
+  // Polleur de repli : récupère l'état distant à intervalle régulier, mais
+  // seulement quand l'onglet est visible (économie de requêtes et de batterie).
+  function demarrerPolleur() {
+    pollTimer = setInterval(() => {
+      if (typeof document === "undefined" || !document.hidden) tirer();
+    }, POLL_MS);
+  }
+
   function fermerRealtime() {
     if (canal && client) { client.removeChannel(canal); canal = null; }
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
   }
 
   return { init, charger, tirer, planifierSauver, annulerSauverDiffere, sauver,
-           historique, abonnerRealtime, fermerRealtime, badge, ecritureAutorisee };
+           historique, abonnerRealtime, fermerRealtime, badge, ecritureAutorisee, realtimeActif };
 })();
