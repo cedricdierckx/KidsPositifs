@@ -736,10 +736,11 @@ function definirAutoEval(valeur) {
   rendre();
 }
 // Un parent évalue (facultativement) la journée d'un enfant.
-function definirEvalParent(enf, valeur) {
+// `jour` permet de compléter les jours récents (défaut : aujourd'hui).
+function definirEvalParent(enf, valeur, jour) {
   if (!EVAL_VALEURS.includes(valeur) || !enf) return;
   if (!enf.evalParent) enf.evalParent = {};
-  const jour = aujourdHui();
+  jour = jour || aujourdHui();
   if (enf.evalParent[jour] === valeur) delete enf.evalParent[jour];
   else enf.evalParent[jour] = valeur;
   sauver();

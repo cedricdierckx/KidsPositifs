@@ -353,17 +353,40 @@ function vueAccueil(c) {
 // Widget d'évaluation de la journée (Bien / Moyen / Pas top).
 // mode "enfant" = auto-évaluation ; mode "parent" = évaluation par un parent.
 function blocEval(enf, mode) {
-  const today = aujourdHui();
-  const courant = mode === "parent" ? (enf.evalParent || {})[today] : (enf.autoEval || {})[today];
   const sec = el("section", "carte eval-carte");
-  sec.innerHTML = `<h2>${mode === "parent" ? t("eval.titre_parent", { prenom: echapper(enf.prenom) }) : t("eval.titre_enfant")}</h2>`;
-  const row = el("div", "eval-choix");
-  [["bien", "😀"], ["moyen", "😐"], ["mauvais", "🙁"]].forEach(([v, e]) => {
-    const b = el("button", "eval-btn eval-" + v + (courant === v ? " actif" : ""), `${e} ${t("eval." + v)}`);
-    b.onclick = () => (mode === "parent" ? definirEvalParent(enf, v) : definirAutoEval(v));
-    row.appendChild(b);
-  });
-  sec.appendChild(row);
+  const CHOIX = [["bien", "😀"], ["moyen", "😐"], ["mauvais", "🙁"]];
+  // Construit une ligne de choix pour un jour donné.
+  const ligneChoix = (courant, onPick) => {
+    const row = el("div", "eval-choix");
+    CHOIX.forEach(([v, e]) => {
+      const b = el("button", "eval-btn eval-" + v + (courant === v ? " actif" : ""), `${e} ${t("eval." + v)}`);
+      b.onclick = () => onPick(v);
+      row.appendChild(b);
+    });
+    return row;
+  };
+
+  if (mode === "parent") {
+    sec.innerHTML = `<h2>${t("eval.titre_parent", { prenom: echapper(enf.prenom) })}</h2>`;
+    // Aujourd'hui + les 2 jours précédents (pour compléter ce qui manque).
+    const base = new Date(aujourdHui() + "T00:00:00");
+    const labels = [t("eval.aujourdhui"), t("eval.hier"), t("eval.avant_hier")];
+    for (let i = 0; i < 3; i++) {
+      const d = new Date(base); d.setDate(base.getDate() - i);
+      const cle = d.toISOString().slice(0, 10);
+      const courant = (enf.evalParent || {})[cle];
+      const ligne = el("div", "eval-jour");
+      ligne.appendChild(el("span", "eval-jour-lbl", labels[i] + (courant ? " ✓" : "")));
+      ligne.appendChild(ligneChoix(courant, v => definirEvalParent(enf, v, cle)));
+      sec.appendChild(ligne);
+    }
+    return sec;
+  }
+
+  // Enfant : uniquement aujourd'hui.
+  sec.innerHTML = `<h2>${t("eval.titre_enfant")}</h2>`;
+  const courant = (enf.autoEval || {})[aujourdHui()];
+  sec.appendChild(ligneChoix(courant, v => definirAutoEval(v)));
   return sec;
 }
 

@@ -508,6 +508,8 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* ---- Auto-évaluation de la journée ---- */
 .eval-carte{background:linear-gradient(160deg,#f4f7ff,#fff4f8)}
 .eval-choix{display:flex; gap:8px}
+.eval-jour{margin-top:10px}
+.eval-jour-lbl{display:block; font-size:13px; font-weight:800; color:var(--doux); margin-bottom:4px}
 .eval-btn{flex:1; border:2px solid #e3edf5; background:#fff; border-radius:16px; padding:14px 6px;
   font-size:15px; font-weight:800; cursor:pointer; font-family:inherit; transition:.12s}
 .eval-btn:active{transform:scale(.96)}

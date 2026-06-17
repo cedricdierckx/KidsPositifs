@@ -1630,3 +1630,9 @@ Object.assign(I18N.de, {
   "eval.titre_enfant": "Wie habe ich mich heute verhalten?",
   "eval.titre_parent": "{prenom}s Verhalten heute (optional)"
 });
+
+/* ---- Évaluation parent : libellés des 3 derniers jours ---- */
+Object.assign(I18N.fr, { "eval.aujourdhui": "Aujourd'hui", "eval.hier": "Hier", "eval.avant_hier": "Avant-hier" });
+Object.assign(I18N.en, { "eval.aujourdhui": "Today", "eval.hier": "Yesterday", "eval.avant_hier": "2 days ago" });
+Object.assign(I18N.nl, { "eval.aujourdhui": "Vandaag", "eval.hier": "Gisteren", "eval.avant_hier": "Eergisteren" });
+Object.assign(I18N.de, { "eval.aujourdhui": "Heute", "eval.hier": "Gestern", "eval.avant_hier": "Vorgestern" });
