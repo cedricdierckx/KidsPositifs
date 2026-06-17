@@ -92,6 +92,8 @@ function construireContexte() {
       missionsDefautCat, idsDefaut, enfantActif,
       // attente / validation parentale
       confirmerAttente, refuserAttente,
+      // défis réparation
+      defiReparation, reparationActive, DEFIS_REPARATION,
       // écosystème
       nbTier, nbTotalEspeces, spInfo, nbEspece, prereqManquants, especeDebloquee, creerEspece,
       // cartes surprises (objectifs d'équipe)

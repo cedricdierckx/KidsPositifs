@@ -98,7 +98,8 @@ function etatVierge() {
       badges: [],           // récompenses symboliques
       badgesRetires: [],    // badges retirés par les parents (non re-attribués)
       autoEval: {},         // auto-évaluation de l'enfant : { "2026-06-17": "bien"|"moyen"|"mauvais" }
-      evalParent: {}        // évaluation par un parent (facultative)
+      evalParent: {},       // évaluation par un parent (facultative)
+      reparations: {}       // défis réparation actifs : { defiId: timestamp } (toggle 1 h)
     };
   });
   return {
@@ -200,6 +201,7 @@ function normaliser(e) {
     ["taches", "pilosite", "boucles"].forEach(k => { if (enf.avatar[k] === undefined) enf.avatar[k] = "rien"; });
     if (!enf.autoEval || typeof enf.autoEval !== "object") enf.autoEval = {};
     if (!enf.evalParent || typeof enf.evalParent !== "object") enf.evalParent = {};
+    if (!enf.reparations || typeof enf.reparations !== "object") enf.reparations = {};
     if (!Array.isArray(enf.badgesRetires)) enf.badgesRetires = [];
     if (!Array.isArray(enf.badges)) enf.badges = [];
     if (!enf.planJour || typeof enf.planJour !== "object") enf.planJour = {};
@@ -478,11 +480,30 @@ function refuserAttente(enf, idx) {
   rendre();
 }
 
+// Vrai si un défi réparation est "actif" (crédité il y a moins d'une heure).
+const REPARATION_FENETRE = 60 * 60 * 1000; // 1 heure
+function reparationActive(enf, defiId) {
+  const ts = enf.reparations && enf.reparations[defiId];
+  return !!(ts && (Date.now() - ts) < REPARATION_FENETRE);
+}
+// Toggle comme une mission : 1er clic crédite, 2e clic (dans l'heure) annule.
+// Après 1 h, le défi redevient disponible pour gagner de nouveaux points.
 function defiReparation(defi) {
   const enf = enfantActif();
-  enf.coeurs += defi.bonus;
-  enf.coeursTotal += defi.bonus;
-  toast(t("toast.repare", { bonus: defi.bonus }), "succes");
+  if (!enf.reparations) enf.reparations = {};
+  if (reparationActive(enf, defi.id)) {
+    // Annulation dans l'heure : on retire le bonus.
+    enf.coeurs = Math.max(0, enf.coeurs - defi.bonus);
+    enf.coeursTotal = Math.max(0, enf.coeursTotal - defi.bonus);
+    delete enf.reparations[defi.id];
+    toast(t("toast.annule", { points: defi.bonus, emoji: "💛" }), "info");
+  } else {
+    enf.coeurs += defi.bonus;
+    enf.coeursTotal += defi.bonus;
+    enf.reparations[defi.id] = Date.now();
+    verifierBadges(enf);
+    toast(t("toast.repare", { bonus: defi.bonus }), "succes");
+  }
   sauver();
   rendre();
 }
@@ -896,7 +917,7 @@ function enfantVierge(modele) {
     ecosysteme: { plantes: {}, herbivores: {}, carnivores: {} },
     avatar: avatarParDefaut(base), debloque: [], heureCoucher: "19:30",
     journal: {}, planJour: {}, enAttente: [], badges: [], badgesRetires: [],
-    autoEval: {}, evalParent: {}
+    autoEval: {}, evalParent: {}, reparations: {}
   };
 }
 // Ajoute un enfant à la famille et l'active.

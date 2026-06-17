@@ -915,14 +915,17 @@ function blocDon() {
 
 // Défis réparation (alternative bienveillante à la punition).
 function blocReparation() {
+  const enf = enfantActif();
+  const jeune = estJeune(enf);
   const rep = el("section", "carte reparation");
   rep.innerHTML = `<h2>${t("rep.titre")}</h2><p>${t("rep.texte")}</p>`;
   const g = el("div", "missions");
   DEFIS_REPARATION.forEach(d => {
-    const b = el("button", "mission rep");
+    const actif = reparationActive(enf, d.id);
+    const b = el("button", "mission rep" + (actif ? " fait" : ""));
     b.innerHTML = `<span class="m-emoji">${d.emoji}</span>
       <span class="m-titre">${trData("defi", d.id, d.titre)}</span>
-      <span class="m-points">+${d.bonus} 💛</span>`;
+      <span class="m-points">${actif ? "✅" : pointsVisuels(d.bonus, "💛", jeune)}</span>`;
     b.onclick = () => defiReparation(d);
     g.appendChild(b);
   });

@@ -454,6 +454,36 @@ test("reinitCarteSurprise remet la carte à zéro pour la rejouer", () => {
   assert.deepStrictEqual(Object.keys(c.dons), []);
 });
 
+/* ---------- Défis réparation (toggle 1 h) ---------- */
+test("un défi réparation crédite puis s'annule (toggle) dans l'heure", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  api.lierEtat(api.etatVierge());
+  const enf = api.enfantActif();
+  const d = api.DEFIS_REPARATION[0];
+  const avant = enf.coeurs;
+  api.defiReparation(d);
+  assert.strictEqual(enf.coeurs, avant + d.bonus);
+  assert.strictEqual(api.reparationActive(enf, d.id), true);
+  api.defiReparation(d);   // 2e clic dans l'heure = annulation
+  assert.strictEqual(enf.coeurs, avant);
+  assert.strictEqual(api.reparationActive(enf, d.id), false);
+});
+
+test("après une heure, le défi réparation est de nouveau disponible", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  api.lierEtat(api.etatVierge());
+  const enf = api.enfantActif();
+  const d = api.DEFIS_REPARATION[0];
+  api.defiReparation(d);                 // crédite (bonus une 1re fois)
+  enf.reparations[d.id] = Date.now() - 2 * 60 * 60 * 1000;  // simulate 2 h plus tard
+  assert.strictEqual(api.reparationActive(enf, d.id), false);
+  const avant = enf.coeurs;
+  api.defiReparation(d);                 // re-crédite de nouveaux points
+  assert.strictEqual(enf.coeurs, avant + d.bonus);
+});
+
 /* ---------- Badges ---------- */
 test("verifierBadges attribue le badge cœur dès 10 cœurs cumulés", () => {
   const { api } = construireContexte();
