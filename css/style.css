@@ -539,6 +539,31 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .eval-btn.actif.eval-moyen{border-color:#ffd98a; background:#fff6e6}
 .eval-btn.actif.eval-mauvais{border-color:#f2b8c6; background:#fdeef2}
 
+/* Version enfant : mise en avant, gros choix expressifs */
+.eval-enfant{background:linear-gradient(160deg,#fff7e0,#ffe9f2); border:3px solid #ffe0b0}
+.eval-enfant h2{font-size:20px; text-align:center}
+.eval-choix-grand{display:flex; gap:10px}
+.eval-gros{flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;
+  border:3px solid #e3edf5; background:#fff; border-radius:20px; padding:16px 6px 12px;
+  cursor:pointer; font-family:inherit; transition:.15s}
+.eval-gros:active{transform:scale(.95)}
+.eval-gros-emoji{font-size:52px; line-height:1}
+.eval-gros-lbl{font-size:15px; font-weight:800}
+/* "Bien" rayonne la joie */
+.eval-gros.eval-bien .eval-gros-emoji{animation:eval-joie 1.6s ease-in-out infinite}
+@keyframes eval-joie{0%,100%{transform:scale(1) rotate(-4deg)}50%{transform:scale(1.18) rotate(4deg)}}
+.eval-gros.eval-bien.actif{border-color:#39c0a0; background:#eafaf3;
+  box-shadow:0 0 0 4px rgba(57,192,160,.25), 0 0 22px rgba(255,210,90,.7)}
+/* "Pas top" renvoie de la colère */
+.eval-gros.eval-moyen.actif{border-color:#f6a623; background:#fff6e6}
+.eval-gros.eval-mauvais.actif .eval-gros-emoji{animation:eval-colere .4s ease-in-out infinite}
+@keyframes eval-colere{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-3px) rotate(-7deg)}75%{transform:translateX(3px) rotate(7deg)}}
+.eval-gros.eval-mauvais.actif{border-color:#e2433f; background:#fdeceb;
+  box-shadow:0 0 0 4px rgba(226,67,63,.25)}
+@media(prefers-reduced-motion:reduce){
+  .eval-gros.eval-bien .eval-gros-emoji,.eval-gros.eval-mauvais.actif .eval-gros-emoji{animation:none}
+}
+
 /* Frise ressenti enfant/parent */
 .stat-eval-grid{display:grid; gap:3px; margin:2px 0 6px}
 .stat-eval-row{display:flex; align-items:center; gap:1px}

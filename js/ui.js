@@ -360,6 +360,9 @@ function vueAccueil(c) {
     </div>`;
   colA.appendChild(carte);
 
+  // Auto-évaluation de la journée (mise en avant, juste sous le profil)
+  colA.appendChild(blocEval(enf, "enfant"));
+
   // Bandeau "dodo" : ambiance selon l'heure + mission coucher à l'heure
   colA.appendChild(bandeauDodo(enf));
 
@@ -377,9 +380,6 @@ function vueAccueil(c) {
   colB.appendChild(titrePla);
   colB.appendChild(grilleMissions("planete"));
 
-  // Auto-évaluation de la journée (par l'enfant)
-  colB.appendChild(blocEval(enf, "enfant"));
-
   // Badges (seuls les badges réalisés sont affichés)
   colB.appendChild(blocBadges(enf));
 }
@@ -388,7 +388,8 @@ function vueAccueil(c) {
 // mode "enfant" = auto-évaluation ; mode "parent" = évaluation par un parent.
 function blocEval(enf, mode) {
   const sec = el("section", "carte eval-carte");
-  const CHOIX = [["bien", "😀"], ["moyen", "😐"], ["mauvais", "🙁"]];
+  // 😄 rayonne la joie · 😐 neutre · 😠 colère
+  const CHOIX = [["bien", "😄"], ["moyen", "😐"], ["mauvais", "😠"]];
   // Construit une ligne de choix pour un jour donné.
   const ligneChoix = (courant, onPick) => {
     const row = el("div", "eval-choix");
@@ -417,10 +418,18 @@ function blocEval(enf, mode) {
     return sec;
   }
 
-  // Enfant : uniquement aujourd'hui.
+  // Enfant : uniquement aujourd'hui, en grand et expressif.
+  sec.className = "carte eval-carte eval-enfant";
   sec.innerHTML = `<h2>${t("eval.titre_enfant")}</h2>`;
   const courant = (enf.autoEval || {})[aujourdHui()];
-  sec.appendChild(ligneChoix(courant, v => definirAutoEval(v)));
+  const row = el("div", "eval-choix-grand");
+  CHOIX.forEach(([v, e]) => {
+    const b = el("button", "eval-gros eval-" + v + (courant === v ? " actif" : ""));
+    b.innerHTML = `<span class="eval-gros-emoji">${e}</span><span class="eval-gros-lbl">${t("eval." + v)}</span>`;
+    b.onclick = () => definirAutoEval(v);
+    row.appendChild(b);
+  });
+  sec.appendChild(row);
   return sec;
 }
 
