@@ -276,10 +276,22 @@ function montrerLienInvitation(conteneur, lien, note, mailto) {
   };
   box.appendChild(inp); box.appendChild(copier);
   // Option : envoyer le lien directement par e-mail (ouvre le client mail).
+  // On demande l'adresse du destinataire car mailto: ne peut pas la pré-remplir seul.
   if (mailto) {
-    const mail = el("a", "btn-secondaire btn-mail", t("lien.envoyer_mail"));
+    const destinataire = el("input", "aj-val");
+    destinataire.type = "email"; destinataire.style.width = "100%";
+    destinataire.placeholder = t("lien.email_dest_ph");
     const corps = (mailto.corps || "").replace("{lien}", lien);
-    mail.href = `mailto:${encodeURIComponent(mailto.to || "")}?subject=${encodeURIComponent(mailto.sujet || "")}&body=${encodeURIComponent(corps)}`;
+    const mail = el("a", "btn-secondaire btn-mail", t("lien.envoyer_mail"));
+    const majLien = () => {
+      mail.href = `mailto:${encodeURIComponent(destinataire.value.trim())}?subject=${encodeURIComponent(mailto.sujet || "")}&body=${encodeURIComponent(corps)}`;
+    };
+    destinataire.oninput = majLien;
+    mail.onclick = (e) => {
+      if (!destinataire.value.trim()) { e.preventDefault(); destinataire.focus(); }
+    };
+    majLien();
+    box.appendChild(destinataire);
     box.appendChild(mail);
   }
   box.appendChild(el("p", "note", note || t("lien.valable")));
