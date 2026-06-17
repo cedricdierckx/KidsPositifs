@@ -1349,7 +1349,10 @@ function vueReglages(c) {
   /* ===== ONGLET : Au quotidien ===== */
   if (ongletParent === "quotidien") {
 
-  // ----- Défis réparation ("Oups, ça arrive…") : accès rapide, tout en haut -----
+  // ----- Comportement de l'enfant (évaluation parent) : en 1ʳᵉ place -----
+  c.appendChild(blocEval(enfantActif(), "parent"));
+
+  // ----- Défis réparation ("Oups, ça arrive…") : accès rapide -----
   c.appendChild(blocReparation());
 
   // ----- Soutien (don facultatif) : admins + familles de plus d'une semaine -----
@@ -1381,9 +1384,6 @@ function vueReglages(c) {
 
   // ----- Corrections pour l'enfant sélectionné -----
   c.appendChild(blocCorrections(enfantActif()));
-
-  // ----- Évaluation de la journée par un parent (facultative) -----
-  c.appendChild(blocEval(enfantActif(), "parent"));
 
   } /* fin onglet quotidien */
 
