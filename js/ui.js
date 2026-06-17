@@ -1248,8 +1248,8 @@ function vueReglages(c) {
   // ----- Corrections pour l'enfant sélectionné -----
   c.appendChild(blocCorrections(enfantActif()));
 
-  // ----- Soutien (don facultatif) -----
-  c.appendChild(blocDon());
+  // ----- Soutien (don facultatif) : admins + familles de plus d'une semaine -----
+  if (typeof donDisponible !== "function" || donDisponible()) c.appendChild(blocDon());
 
   } /* fin onglet quotidien */
 

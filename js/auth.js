@@ -69,6 +69,16 @@ function estEarlyAdopter() {
   return new Date(u.created_at) < new Date(EARLY_ADOPTER_LIMITE);
 }
 
+// Bouton de don : visible pour les admins et pour les familles créées il y a
+// plus d'une semaine (fenêtre glissante) — pas tout de suite après l'inscription.
+function donDisponible() {
+  if (typeof modeDemo !== "undefined" && modeDemo) return true;   // aperçu en démo
+  if (estAdmin) return true;
+  const cree = familleActive && familleActive.created_at;
+  if (!cree) return false;
+  return (Date.now() - new Date(cree).getTime()) > 7 * 24 * 60 * 60 * 1000;
+}
+
 /* ---------- Après connexion : invitation, familles ---------- */
 async function apresConnexion() {
   try { const { data } = await sb.rpc("is_admin"); estAdmin = !!data; } catch { estAdmin = false; }
@@ -88,7 +98,7 @@ async function apresConnexion() {
 
 async function chargerFamilles() {
   const { data, error } = await sb.from("families")
-    .select("id,name,plan,plan_status,owner_id").order("created_at");
+    .select("id,name,plan,plan_status,owner_id,created_at").order("created_at");
   mesFamilles = error ? [] : (data || []);
 }
 
