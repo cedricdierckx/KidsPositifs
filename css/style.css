@@ -207,6 +207,11 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .ec-need.ok{background:#e7f7ef; color:#1c8a5b}
 .ec-need.ko{background:#fdeef2; color:#c0395b}
 .ec-libre{font-size:11px; color:var(--doux)}
+/* Prérequis en images (petits enfants) : ex. 2 fleurs côte à côte */
+.ec-need-img{display:inline-flex; gap:1px; padding:2px 5px; border-radius:8px; background:#fdeef2}
+.ec-need-img.ok{background:#e7f7ef}
+.ec-img{font-size:15px}
+.ec-img.ko{filter:grayscale(1); opacity:.45}
 .eco-carte-sp .ec-etat{font-size:11px; font-weight:800; margin-top:2px;
   padding:3px 8px; border-radius:10px}
 .eco-carte-sp.creable{border-color:#bfe9da}
@@ -301,9 +306,9 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .cs-liste{display:grid; gap:18px}
 
 /* Grande carte attirante */
-.cs-carte{background:#fff; border:3px solid #ffd98a; border-radius:24px; padding:18px;
-  box-shadow:0 6px 18px rgba(246,166,35,.15)}
-.cs-carte.mystere{background:linear-gradient(160deg,#fff3d6,#ffe3ef)}
+.cs-carte{background:#fff; border:3px solid var(--cs-c,#ffd98a); border-radius:24px; padding:18px;
+  box-shadow:0 6px 18px rgba(40,60,90,.12)}
+.cs-carte.mystere{background:#fff}
 .cs-carte.ouverte{border-color:#7fd9bd; background:linear-gradient(160deg,#eafaf3,#f3fff8);
   animation:cs-reveal .5s cubic-bezier(.2,1.3,.4,1)}
 @keyframes cs-reveal{0%{transform:scale(.92)}100%{transform:scale(1)}}
@@ -313,17 +318,17 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .cs-mystere-emoji{animation:cs-wiggle 2.5s ease-in-out infinite}
 @keyframes cs-wiggle{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
 .cs-tete .cs-titre{font-weight:800; flex:1; font-size:20px}
-.cs-tete .cs-prix{font-weight:800; color:var(--famille); font-size:20px; white-space:nowrap}
+.cs-tete .cs-prix{font-weight:800; color:var(--cs-c,var(--famille)); font-size:20px; white-space:nowrap}
 .cs-carte.ouverte .cs-prix{color:var(--planete); font-size:16px}
 .cs-mystere-sous{font-size:14px; color:var(--doux)!important; margin:6px 0 2px!important}
 
 /* Jauge très visuelle (piste + coureur vers le cadeau) */
 .cs-jauge{margin:12px 0 8px}
 .cs-jauge-piste{position:relative; height:30px; border-radius:18px;
-  background:#ffe9c2; border:3px solid #ffd98a; overflow:visible}
+  background:#eef2f7; border:3px solid var(--cs-c,#ffd98a); overflow:visible}
 .cs-carte.ouverte .cs-jauge-piste{background:#d9f5ea; border-color:#7fd9bd}
 .cs-jauge-rempli{position:absolute; left:0; top:0; bottom:0; border-radius:14px;
-  background:linear-gradient(90deg,#ffd25e,#f6a623); transition:width .6s cubic-bezier(.2,1,.3,1)}
+  background:var(--cs-c,#f6a623); transition:width .6s cubic-bezier(.2,1,.3,1)}
 .cs-carte.ouverte .cs-jauge-rempli{background:linear-gradient(90deg,#5fe0bb,#39c0a0)}
 .cs-jauge-token{position:absolute; top:50%; transform:translate(-50%,-50%); font-size:26px;
   transition:left .6s cubic-bezier(.2,1,.3,1); filter:drop-shadow(0 1px 2px rgba(0,0,0,.25)); z-index:2}
@@ -331,7 +336,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .cs-carte.ouverte .cs-jauge-but{animation:cs-bounce 1s ease infinite}
 @keyframes cs-bounce{0%,100%{transform:translateY(-50%) scale(1)}50%{transform:translateY(-70%) scale(1.15)}}
 .cs-jauge-bas{display:flex; justify-content:space-between; margin-top:6px}
-.cs-jauge-chiffres{font-size:15px; font-weight:800; color:var(--famille)}
+.cs-jauge-chiffres{font-size:15px; font-weight:800; color:var(--cs-c,var(--famille))}
 .cs-carte.ouverte .cs-jauge-chiffres{color:var(--planete)}
 .cs-jauge-pct{font-size:15px; font-weight:800; color:var(--doux)}
 
@@ -342,7 +347,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .cs-dons{display:flex; gap:8px; flex-wrap:wrap}
 .cs-don{flex:1; min-width:96px; border:none; border-radius:16px; padding:16px 10px;
   font-size:16px; font-weight:800; cursor:pointer; font-family:inherit;
-  background:linear-gradient(135deg,#ffd25e,#f6a623); color:#fff; box-shadow:0 3px 8px rgba(246,166,35,.3)}
+  background:var(--cs-c,#f6a623); color:#fff; box-shadow:0 3px 8px rgba(40,60,90,.2)}
 .cs-don:active{transform:scale(.95)}
 .cs-don:disabled{opacity:.4; cursor:default; box-shadow:none}
 .cs-faite-btn{margin-top:10px}
@@ -472,11 +477,15 @@ main{max-width:680px; margin:0 auto; padding:14px}
   filter:drop-shadow(0 4px 3px rgba(0,0,0,.22));
   animation:eco-saut calc(1.15s + (var(--i) * 0.13s)) cubic-bezier(.3,.05,.4,1) infinite;
   animation-delay:calc(var(--i) * -0.25s)}
-/* Déplacement au sol : simple va-et-vient, SANS miroir (pas d'inversion). */
+/* Déplacement au sol : va-et-vient, l'animal se retourne dans le sens de la
+   marche (flip instantané aux points de demi-tour). */
 @keyframes eco-marche{
-  0%,100%{transform:translateX(0)}
-  25%{transform:translateX(28px)}
-  75%{transform:translateX(-24px)}}
+  0%{transform:translateX(0) scaleX(-1)}
+  25%{transform:translateX(28px) scaleX(-1)}
+  25.01%{transform:translateX(28px) scaleX(1)}
+  75%{transform:translateX(-24px) scaleX(1)}
+  75.01%{transform:translateX(-24px) scaleX(-1)}
+  100%{transform:translateX(0) scaleX(-1)}}
 @keyframes eco-saut{
   0%,100%{transform:translateY(0) scale(1,1)}
   10%{transform:translateY(0) scale(1.14,.84)}     /* anticipation : on s'écrase */

@@ -106,7 +106,7 @@ function etatVierge() {
     version: ETAT_VERSION,
     missionsPerso: [],     // missions personnalisées ajoutées par les parents
     cartesSurprises: cartesSurprisesNeuves(ENFANTS_DEFAUT.length),  // objectifs d'équipe
-    reglages: { validationParentale: false, codeParent: "" }
+    reglages: { validationParentale: false, codeParent: "", seuilVisuel: 5 }
   };
 }
 
@@ -231,7 +231,8 @@ function normaliser(e) {
       }
     });
   }
-  if (!e.reglages) e.reglages = { validationParentale: false, codeParent: "" };
+  if (!e.reglages) e.reglages = { validationParentale: false, codeParent: "", seuilVisuel: 5 };
+  if (typeof e.reglages.seuilVisuel !== "number") e.reglages.seuilVisuel = 5;
   // Estampille de version : les migrations ci-dessus sont *additives* (on ne
   // supprime jamais de données existantes), garantissant qu'une mise à jour de
   // l'application ne fait jamais perdre la progression d'une famille.
@@ -255,6 +256,12 @@ function ageDepuis(dateNaissance) {
   return Math.max(0, ans);
 }
 function age(enfant) { return ageDepuis(enfant.naissance); }
+// "Jeune" = âge ≤ seuil réglé par les parents (défaut 5 ans) : affichage imagé,
+// sans chiffres (compteurs, prérequis de l'écosystème…).
+function seuilVisuel() {
+  return (etat.reglages && typeof etat.reglages.seuilVisuel === "number") ? etat.reglages.seuilVisuel : 5;
+}
+function estJeune(enfant) { return age(enfant) <= seuilVisuel(); }
 function enfantActif() { return etat.enfants[etat.enfantActif]; }
 // Id de l'enfant aîné (date de naissance la plus ancienne).
 function idAine() {

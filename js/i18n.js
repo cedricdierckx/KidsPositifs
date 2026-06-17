@@ -1664,3 +1664,9 @@ Object.assign(I18N.fr, { "admin.don_aide": "↗ Créer un lien de paiement sur S
 Object.assign(I18N.en, { "admin.don_aide": "↗ Create a payment link on Stripe" });
 Object.assign(I18N.nl, { "admin.don_aide": "↗ Maak een betaallink op Stripe" });
 Object.assign(I18N.de, { "admin.don_aide": "↗ Zahlungslink auf Stripe erstellen" });
+
+/* ---- Réglage : seuil d'affichage imagé ---- */
+Object.assign(I18N.fr, { "par.prog.seuil_visuel": "Affichage imagé (sans chiffres) jusqu'à l'âge de" });
+Object.assign(I18N.en, { "par.prog.seuil_visuel": "Picture display (no numbers) up to age" });
+Object.assign(I18N.nl, { "par.prog.seuil_visuel": "Weergave met beeldjes (zonder cijfers) tot de leeftijd van" });
+Object.assign(I18N.de, { "par.prog.seuil_visuel": "Bildanzeige (ohne Zahlen) bis zum Alter von" });

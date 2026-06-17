@@ -348,7 +348,7 @@ function vueAccueil(c) {
   layout.appendChild(colA); layout.appendChild(colB);
   c.appendChild(layout);
 
-  const jeune = age(enf) <= 5;   // ≤ 5 ans : on montre les quantités visuellement
+  const jeune = estJeune(enf);   // affichage imagé (seuil réglable par les parents)
   const carte = el("section", "carte-accueil");
   carte.style.setProperty("--c", enf.couleur);
   carte.innerHTML = `
@@ -485,6 +485,9 @@ function grilleMissions(catId) {
   return liste;
 }
 
+// Palette : une couleur distincte par carte surprise.
+const CS_COULEURS = ["#f6a623", "#e2566d", "#9b6ef3", "#2bb3c0", "#e88b2f", "#5b8def", "#c05fae", "#39c08a"];
+
 /* ---------- Cartes surprises (objectif d'équipe) ----------
  * Activités à faire en famille, débloquées ensemble par les dons de Cœurs
  * 💛 de tous les enfants. Partagées : le même bloc s'affiche pour chacun. */
@@ -498,7 +501,8 @@ function blocCartesSurprises(enf) {
     return sec;
   }
   html += `<div class="cs-liste">`;
-  cartes.forEach(c => {
+  cartes.forEach((c, idx) => {
+    const couleur = CS_COULEURS[idx % CS_COULEURS.length];   // couleur propre à chaque carte
     const titre = trData("carte", c.id, c.titre);
     const activite = trData("carteAct", c.id, c.activite);
     const pct = Math.max(0, Math.min(100, Math.round((c.recolte / c.cout) * 100)));
@@ -520,7 +524,7 @@ function blocCartesSurprises(enf) {
       </div>`;
 
     const visible = c.debloquee || c.revele;   // carte montrée (sinon : mystère)
-    html += `<div class="cs-carte${c.debloquee ? " ouverte" : (visible ? " visible" : " mystere")}${c.faite ? " faite" : ""}">`;
+    html += `<div class="cs-carte${c.debloquee ? " ouverte" : (visible ? " visible" : " mystere")}${c.faite ? " faite" : ""}" style="--cs-c:${couleur}">`;
     if (c.debloquee) {
       // Carte DÉBLOQUÉE (jauge pleine) : activité + invitation à la faire.
       html += `<div class="cs-tete"><span class="cs-emoji">${c.emoji}</span>
@@ -1016,19 +1020,24 @@ function carteEspece(enf, tier, sp) {
   let etatCls = creable ? "creable" : (prereqOk ? "verrou-cout" : "verrou-prereq");
   const carte = el("button", "eco-carte-sp " + etatCls);
 
-  // Liste des prérequis (avec ✓ / compteur).
+  // Prérequis : rien s'il n'y en a pas. Pour les petits (≤ seuil), on les
+  // montre en images (ex. 2 fleurs côte à côte) ; sinon en compteur "x/y".
   let prereqHtml = "";
   const entrees = Object.keys(sp.prereq || {});
+  const jeune = estJeune(enf);
   if (entrees.length) {
     prereqHtml = `<div class="ec-prereq">` + entrees.map(id => {
       const info = spInfo(id);
       const emoji = info ? info.sp.emoji : "?";
       const a = nbEspece(enf, id), req = sp.prereq[id];
       const ok = a >= req;
+      if (jeune) {
+        let imgs = "";
+        for (let i = 0; i < req; i++) imgs += `<span class="ec-img${i < a ? " ok" : " ko"}">${emoji}</span>`;
+        return `<span class="ec-need-img${ok ? " ok" : ""}">${imgs}</span>`;
+      }
       return `<span class="ec-need ${ok ? "ok" : "ko"}">${emoji} ${a}/${req}${ok ? " ✓" : ""}</span>`;
     }).join("") + `</div>`;
-  } else {
-    prereqHtml = `<div class="ec-prereq"><span class="ec-libre">${t("eco.aucun_prereq")}</span></div>`;
   }
 
   carte.innerHTML = `
@@ -1487,6 +1496,17 @@ function vueReglages(c) {
   prog.appendChild(bCp);
   if (!etat.reglages.codeParent)
     prog.appendChild(el("p", "note", t("par.prog.astuce_pin")));
+  // Seuil d'affichage imagé (sans chiffres) pour les jeunes enfants.
+  const lSeuil = el("label", "champ", t("par.prog.seuil_visuel"));
+  const iSeuil = el("input");
+  iSeuil.type = "number"; iSeuil.min = "0"; iSeuil.max = "12"; iSeuil.inputMode = "numeric";
+  iSeuil.value = (typeof etat.reglages.seuilVisuel === "number") ? etat.reglages.seuilVisuel : 5;
+  iSeuil.onchange = () => {
+    const v = Math.max(0, Math.min(12, parseInt(iSeuil.value, 10) || 0));
+    etat.reglages.seuilVisuel = v; iSeuil.value = v; sauver(); rendre();
+  };
+  lSeuil.appendChild(iSeuil);
+  prog.appendChild(lSeuil);
   c.appendChild(prog);
 
   // ----- Référence : prérequis de chaque espèce de l'écosystème -----
