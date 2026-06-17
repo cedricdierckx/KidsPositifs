@@ -471,8 +471,13 @@ function bandeauDodo(enf) {
         <span class="dc-token" style="left:${m.progress}%">⭐</span></div>
       <span class="dc-bout">🌙</span>
     </div>`;
+  const jeune = estJeune(enf);
+  const emojiCat = (CATEGORIES[mission.cat] || {}).monnaieEmoji || "💛";
+  const texteAction = jeune
+    ? `🛏️ ${pointsVisuels(mission.points, emojiCat, true)}`
+    : t("dodo.bouton", { pts: mission.points });
   const b = el("button", "dodo-btn" + (fait ? " fait" : ""),
-    fait ? t("dodo.fait") : (enAttente ? t("dodo.attente") : t("dodo.bouton", { pts: mission.points })));
+    fait ? t("dodo.fait") : (enAttente ? t("dodo.attente") : texteAction));
   b.onclick = () => validerMission(mission);
   sec.appendChild(b);
   return sec;
