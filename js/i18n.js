@@ -1636,3 +1636,25 @@ Object.assign(I18N.fr, { "eval.aujourdhui": "Aujourd'hui", "eval.hier": "Hier", 
 Object.assign(I18N.en, { "eval.aujourdhui": "Today", "eval.hier": "Yesterday", "eval.avant_hier": "2 days ago" });
 Object.assign(I18N.nl, { "eval.aujourdhui": "Vandaag", "eval.hier": "Gisteren", "eval.avant_hier": "Eergisteren" });
 Object.assign(I18N.de, { "eval.aujourdhui": "Heute", "eval.hier": "Gestern", "eval.avant_hier": "Vorgestern" });
+
+/* ---- Dons : ponctuels & mensuels ---- */
+Object.assign(I18N.fr, {
+  "don.ponctuel": "Un geste ponctuel", "don.mensuel": "Soutien mensuel", "don.par_mois": "/mois", "don.mois": "mois",
+  "admin.don_libre": "Lien montant libre (optionnel)",
+  "admin.don_note": "Crée un Payment Link Stripe pour chaque montant (ponctuel ou abonnement mensuel) et colle l'URL correspondante. Les champs vides ne sont pas affichés aux parents."
+});
+Object.assign(I18N.en, {
+  "don.ponctuel": "A one-time gift", "don.mensuel": "Monthly support", "don.par_mois": "/mo", "don.mois": "mo",
+  "admin.don_libre": "Custom-amount link (optional)",
+  "admin.don_note": "Create a Stripe Payment Link for each amount (one-time or monthly subscription) and paste its URL. Empty fields are hidden from parents."
+});
+Object.assign(I18N.nl, {
+  "don.ponctuel": "Een eenmalige gift", "don.mensuel": "Maandelijkse steun", "don.par_mois": "/mnd", "don.mois": "mnd",
+  "admin.don_libre": "Link vrij bedrag (optioneel)",
+  "admin.don_note": "Maak voor elk bedrag een Stripe Payment Link (eenmalig of maandelijks abonnement) en plak de URL. Lege velden worden niet getoond aan ouders."
+});
+Object.assign(I18N.de, {
+  "don.ponctuel": "Eine einmalige Gabe", "don.mensuel": "Monatliche Unterstützung", "don.par_mois": "/Mon.", "don.mois": "Mon.",
+  "admin.don_libre": "Link mit freiem Betrag (optional)",
+  "admin.don_note": "Erstelle für jeden Betrag einen Stripe Payment Link (einmalig oder monatliches Abo) und füge die URL ein. Leere Felder werden Eltern nicht angezeigt."
+});

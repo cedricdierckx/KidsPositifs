@@ -389,6 +389,14 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .don-texte{font-size:14px; line-height:1.5; color:var(--texte)!important}
 .don-bouton{display:block; text-align:center; text-decoration:none;
   background:linear-gradient(135deg,#ffd25e,#f6a623); margin-top:8px}
+.don-sous{font-weight:800; margin:10px 0 4px!important; color:var(--texte)!important}
+.don-options{display:flex; gap:8px; flex-wrap:wrap}
+.don-opt{flex:1; min-width:74px; text-align:center; text-decoration:none; border-radius:14px;
+  padding:14px 8px; font-size:17px; font-weight:800; color:#fff; cursor:pointer;
+  background:linear-gradient(135deg,#ffd25e,#f6a623); box-shadow:0 3px 8px rgba(246,166,35,.3)}
+.don-opt:active{transform:scale(.96)}
+.don-opt.mensuel{background:linear-gradient(135deg,#7fd9bd,#39c0a0); box-shadow:0 3px 8px rgba(57,192,160,.3)}
+.don-opt small{display:block; font-size:11px; font-weight:700; opacity:.9}
 .don-merci{font-size:13px; color:var(--doux)!important; text-align:center; margin:8px 0 0!important}
 
 /* ---- Module bug / suggestion ---- */

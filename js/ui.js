@@ -217,19 +217,35 @@ function blocAdmin() {
   };
   sec.appendChild(bW); sec.appendChild(listeW);
 
-  // ----- Configuration du don Stripe (lien de paiement) -----
+  // ----- Configuration des dons Stripe (un Payment Link par montant) -----
   sec.appendChild(el("h2", null, t("admin.don_titre")));
   sec.appendChild(el("p", "note", t("admin.don_note")));
-  const lDon = el("label", "champ", t("admin.don_label"));
-  const iDon = el("input");
-  iDon.type = "url"; iDon.placeholder = "https://buy.stripe.com/…";
-  iDon.value = (typeof configApp !== "undefined" && configApp.don_stripe_url) || "";
-  lDon.appendChild(iDon);
-  sec.appendChild(lDon);
+  const cfg = (typeof configApp !== "undefined") ? configApp : {};
+  const champsDon = [
+    ["don_once_10", t("don.ponctuel") + " — 10 €"],
+    ["don_once_20", t("don.ponctuel") + " — 20 €"],
+    ["don_once_50", t("don.ponctuel") + " — 50 €"],
+    ["don_sub_1",  t("don.mensuel") + " — 1 €/" + t("don.mois")],
+    ["don_sub_3",  t("don.mensuel") + " — 3 €/" + t("don.mois")],
+    ["don_sub_10", t("don.mensuel") + " — 10 €/" + t("don.mois")],
+    ["don_stripe_url", t("admin.don_libre")]
+  ];
+  const inputsDon = {};
+  champsDon.forEach(([key, label]) => {
+    const l = el("label", "champ", label);
+    const inp = el("input");
+    inp.type = "url"; inp.placeholder = "https://buy.stripe.com/…"; inp.value = cfg[key] || "";
+    l.appendChild(inp); sec.appendChild(l);
+    inputsDon[key] = inp;
+  });
   const bDon = el("button", "btn-secondaire", t("admin.don_enregistrer"));
   bDon.onclick = async () => {
     bDon.disabled = true; bDon.textContent = t("common.creation");
-    const ok = await adminDefinirConfig("don_stripe_url", iDon.value.trim());
+    let ok = true;
+    for (const [key] of champsDon) {
+      const val = inputsDon[key].value.trim();
+      if (val !== (cfg[key] || "")) ok = (await adminDefinirConfig(key, val)) && ok;
+    }
     bDon.disabled = false; bDon.textContent = t("admin.don_enregistrer");
     if (ok) toast(t("admin.don_ok"), "succes");
   };
@@ -806,17 +822,35 @@ function blocStatistiques() {
 }
 
 /* ---------- Vue Missions (famille / planète) ---------- */
+// Options de don configurables (clé app_config → montant affiché).
+const DON_PONCTUELS = [["don_once_10", "10 €"], ["don_once_20", "20 €"], ["don_once_50", "50 €"]];
+const DON_MENSUELS  = [["don_sub_1", "1 €"], ["don_sub_3", "3 €"], ["don_sub_10", "10 €"]];
+
 // Soutien : don 100 % facultatif. L'app est et restera gratuite.
 function blocDon() {
-  const url = (typeof urlDon === "function") ? urlDon() : ((window.KP_CONFIG && window.KP_CONFIG.DON_URL) || "");
+  const cfg = (typeof configApp !== "undefined") ? configApp : {};
   const sec = el("section", "carte don-carte");
   let html = `<h2>${t("don.titre")}</h2>
     <p class="don-gratuit">${t("don.gratuit", { app: APP_NOM })}</p>
     <p class="don-texte">${t("don.texte", { app: APP_NOM })}</p>`;
-  if (url) {
-    html += `<a class="gros-bouton don-bouton" href="${url}" target="_blank" rel="noopener">${t("don.bouton")}</a>
-      <p class="don-merci">${t("don.merci")}</p>`;
+  const ponct = DON_PONCTUELS.filter(([k]) => cfg[k]);
+  const mens = DON_MENSUELS.filter(([k]) => cfg[k]);
+  const libre = cfg.don_stripe_url || ((window.KP_CONFIG && window.KP_CONFIG.DON_URL) || "");
+
+  if (ponct.length) {
+    html += `<p class="don-sous">${t("don.ponctuel")}</p><div class="don-options">` +
+      ponct.map(([k, m]) => `<a class="don-opt" href="${cfg[k]}" target="_blank" rel="noopener">${m}</a>`).join("") +
+      `</div>`;
   }
+  if (mens.length) {
+    html += `<p class="don-sous">${t("don.mensuel")}</p><div class="don-options">` +
+      mens.map(([k, m]) => `<a class="don-opt mensuel" href="${cfg[k]}" target="_blank" rel="noopener">${m}<small>${t("don.par_mois")}</small></a>`).join("") +
+      `</div>`;
+  }
+  if (!ponct.length && !mens.length && libre) {
+    html += `<a class="gros-bouton don-bouton" href="${libre}" target="_blank" rel="noopener">${t("don.bouton")}</a>`;
+  }
+  if (ponct.length || mens.length || libre) html += `<p class="don-merci">${t("don.merci")}</p>`;
   sec.innerHTML = html;
   return sec;
 }
