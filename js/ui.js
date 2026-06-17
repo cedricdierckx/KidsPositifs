@@ -323,6 +323,18 @@ function rendreSelecteur() {
   });
 }
 
+// Compteur de monnaie : chiffre pour les grands, suite d'emojis pour les ≤ 5 ans
+// (qui ne lisent pas encore les chiffres). Plafonné pour rester lisible.
+function compteurVisuel(emoji, n, jeune) {
+  if (!jeune) return `<span class="big">${emoji} ${n}</span>`;
+  const CAP = 12;
+  if (!n) return `<span class="pips"><span class="pip vide">·</span></span>`;
+  let pips = "";
+  for (let i = 0; i < Math.min(n, CAP); i++) pips += `<span class="pip">${emoji}</span>`;
+  if (n > CAP) pips += `<span class="pip-plus">✨</span>`;
+  return `<span class="pips" title="${n}">${pips}</span>`;
+}
+
 /* ---------- Vue Accueil ---------- */
 function vueAccueil(c) {
   const enf = enfantActif();
@@ -334,14 +346,15 @@ function vueAccueil(c) {
   layout.appendChild(colA); layout.appendChild(colB);
   c.appendChild(layout);
 
+  const jeune = age(enf) <= 5;   // ≤ 5 ans : on montre les quantités visuellement
   const carte = el("section", "carte-accueil");
   carte.style.setProperty("--c", enf.couleur);
   carte.innerHTML = `
     <div class="accueil-avatar">${renduAvatar(enf)}</div>
     <h1>${t("home.salut", { prenom: enf.prenom })} <small>(${t("home.ans", { age: age(enf) })})</small></h1>
     <div class="compteurs">
-      <div class="compteur"><span class="big">💛 ${enf.coeurs}</span><span>${t("home.coeurs_label")}</span></div>
-      <div class="compteur"><span class="big">💧 ${enf.gouttes}</span><span>${t("home.gouttes_label")}</span></div>
+      <div class="compteur">${compteurVisuel("💛", enf.coeurs, jeune)}<span>${t("home.coeurs_label")}</span></div>
+      <div class="compteur">${compteurVisuel("💧", enf.gouttes, jeune)}<span>${t("home.gouttes_label")}</span></div>
     </div>`;
   colA.appendChild(carte);
 
@@ -351,14 +364,14 @@ function vueAccueil(c) {
   // Missions Famille (directement sur la page d'accueil de l'enfant)
   const titreFam = el("section", "carte titre-cat");
   titreFam.style.setProperty("--c", CATEGORIES.famille.couleur);
-  titreFam.innerHTML = `<h2>${t("home.missions_famille")} <span class="solde-inline">💛 ${enf.coeurs}</span></h2>`;
+  titreFam.innerHTML = `<h2>${t("home.missions_famille")} <span class="solde-inline">💛${jeune ? "" : " " + enf.coeurs}</span></h2>`;
   colB.appendChild(titreFam);
   colB.appendChild(grilleMissions("famille"));
 
   // Missions Planète (directement sur la page d'accueil de l'enfant)
   const titrePla = el("section", "carte titre-cat");
   titrePla.style.setProperty("--c", CATEGORIES.planete.couleur);
-  titrePla.innerHTML = `<h2>${t("home.missions_planete")} <span class="solde-inline">💧 ${enf.gouttes}</span></h2>`;
+  titrePla.innerHTML = `<h2>${t("home.missions_planete")} <span class="solde-inline">💧${jeune ? "" : " " + enf.gouttes}</span></h2>`;
   colB.appendChild(titrePla);
   colB.appendChild(grilleMissions("planete"));
 
@@ -497,7 +510,7 @@ function blocCartesSurprises(enf) {
     const jauge = `<div class="cs-jauge">
         <div class="cs-jauge-piste">
           <div class="cs-jauge-rempli" style="width:${pct}%"></div>
-          <span class="cs-jauge-token" style="left:${pct}%">${c.debloquee ? "🎉" : "🏃"}</span>
+          <span class="cs-jauge-token" style="left:${pct}%">${c.debloquee ? "🎉" : "⭐"}</span>
           <span class="cs-jauge-but">${c.debloquee ? "🎁" : "🔒"}</span>
         </div>
         <div class="cs-jauge-bas"><span class="cs-jauge-chiffres">${c.recolte} / ${c.cout} 💛</span>

@@ -62,6 +62,11 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .compteur{background:rgba(255,255,255,.9); color:var(--texte);
   border-radius:16px; padding:10px 14px; min-width:120px}
 .compteur .big{display:block; font-size:24px; font-weight:800}
+/* Compteur visuel (≤ 5 ans) : suite d'emojis au lieu d'un chiffre */
+.compteur .pips{display:flex; flex-wrap:wrap; justify-content:center; gap:1px; max-width:150px; line-height:1.1}
+.compteur .pip{font-size:18px}
+.compteur .pip.vide{opacity:.4}
+.compteur .pip-plus{font-size:16px; align-self:center}
 .compteur span:not(.big){font-size:12px; color:var(--doux)}
 
 .eco-mini{font-size:26px; line-height:1.4}
@@ -466,12 +471,11 @@ main{max-width:680px; margin:0 auto; padding:14px}
   filter:drop-shadow(0 4px 3px rgba(0,0,0,.22));
   animation:eco-saut calc(1.15s + (var(--i) * 0.13s)) cubic-bezier(.3,.05,.4,1) infinite;
   animation-delay:calc(var(--i) * -0.25s)}
+/* Déplacement au sol : simple va-et-vient, SANS miroir (pas d'inversion). */
 @keyframes eco-marche{
-  0%{transform:translateX(0) scaleX(1)}
-  48%{transform:translateX(30px) scaleX(1)}
-  50%{transform:translateX(30px) scaleX(-1)}
-  98%{transform:translateX(-26px) scaleX(-1)}
-  100%{transform:translateX(-26px) scaleX(1)}}
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(28px)}
+  75%{transform:translateX(-24px)}}
 @keyframes eco-saut{
   0%,100%{transform:translateY(0) scale(1,1)}
   10%{transform:translateY(0) scale(1.14,.84)}     /* anticipation : on s'écrase */
