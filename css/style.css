@@ -249,7 +249,8 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .pin-titre{font-size:18px; font-weight:800; margin-bottom:4px}
 .pin-sous{font-size:13px; color:var(--doux); margin-bottom:10px}
 .pin-input{width:100%; text-align:center; font-size:28px; letter-spacing:10px;
-  padding:12px; border:2px solid #e3edf5; border-radius:12px; margin:6px 0 14px}
+  padding:12px; border:2px solid #e3edf5; border-radius:12px; margin:6px 0 14px;
+  -webkit-text-security:disc; text-security:disc}   /* masqué sans être un type=password */
 .pin-actions{display:flex; gap:8px}
 .pin-actions .btn-secondaire{flex:1; margin:0}
 .pin-actions .gros-bouton{flex:1; padding:14px}
