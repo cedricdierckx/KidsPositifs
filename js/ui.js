@@ -337,6 +337,15 @@ function compteurVisuel(emoji, n, jeune) {
   return `<span class="pips" title="${n}">${pips}</span>`;
 }
 
+// Répète un emoji `n` fois (plafonné) — pour montrer une quantité aux petits.
+function repeterEmoji(n, emoji, cap) {
+  cap = cap || 6;
+  let s = "";
+  for (let i = 0; i < Math.min(n, cap); i++) s += emoji;
+  if (n > cap) s += "✨";
+  return s || "·";
+}
+
 // Récompense d'une mission : chiffre pour les grands, emojis pour les petits
 // (ex. +2 💛 → 💛💛). Plafonné pour rester lisible.
 function pointsVisuels(points, emoji, jeune) {
@@ -928,8 +937,11 @@ function vueFamille(c) {
 
   const entete = el("section", "carte entete-cat");
   entete.style.setProperty("--c", cat.couleur);
+  const soldeFam = estJeune(enf)
+    ? `<span class="solde-pips">${repeterEmoji(enf.coeurs, cat.monnaieEmoji, 12)}</span>`
+    : `${cat.monnaieEmoji} <strong>${enf.coeurs}</strong> ${t("money.coeurs")}`;
   entete.innerHTML = `<h1>${cat.emoji} ${t("cat.famille.nom")}</h1>
-    <p class="solde">${cat.monnaieEmoji} <strong>${enf.coeurs}</strong> ${t("money.coeurs")}</p>`;
+    <p class="solde">${soldeFam}</p>`;
   c.appendChild(entete);
 
   // Cartes surprises : objectif d'équipe à débloquer ensemble.
@@ -943,9 +955,12 @@ function vuePlanete(c) {
 
   const entete = el("section", "carte entete-cat");
   entete.style.setProperty("--c", cat.couleur);
+  const soldePla = estJeune(enf)
+    ? `<span class="solde-pips">${repeterEmoji(enf.gouttes, cat.monnaieEmoji, 12)}</span>`
+    : `${cat.monnaieEmoji} <strong>${enf.gouttes}</strong> ${t("money.gouttes")}`;
   entete.innerHTML = `<h1>${cat.emoji} ${t("cat.planete.nom")}</h1>
     <p>${t("cat.planete.desc")}</p>
-    <p class="solde">${cat.monnaieEmoji} <strong>${enf.gouttes}</strong> ${t("money.gouttes")}</p>`;
+    <p class="solde">${soldePla}</p>`;
   c.appendChild(entete);
 
   // Scène vivante (vue d'ensemble fun, pour les petits).
@@ -1019,11 +1034,13 @@ function vueEcosysteme(enf) {
   sec.innerHTML = `<h2>${t("eco.titre")}</h2>
     <p class="note">${t("eco.intro")}</p>`;
 
+  const jeune = estJeune(enf);
   TIERS_ECO.forEach(tier => {
     const bloc = el("div", "eco-tier");
     const compte = nbTier(enf, tier.id);
+    const compteAff = jeune ? repeterEmoji(compte, tier.emoji, 5) : compte;
     bloc.innerHTML = `<div class="eco-tier-tete"><span class="t-emoji">${tier.emoji}</span>
-      <span class="t-nom">${trData("tier", tier.id, tier.nom)}</span><span class="t-compte">${compte}</span></div>
+      <span class="t-nom">${trData("tier", tier.id, tier.nom)}</span><span class="t-compte${jeune ? " imgs" : ""}">${compteAff}</span></div>
       <p class="t-lecon">${trData("lecon", tier.id, tier.lecon)}</p>`;
 
     const grille = el("div", "eco-cartes");
@@ -1067,11 +1084,13 @@ function carteEspece(enf, tier, sp) {
     }).join("") + `</div>`;
   }
 
+  const coinAff = jeune ? repeterEmoji(possede, sp.emoji, 5) : (possede ? "×" + possede : "");
+  const coutAff = jeune ? repeterEmoji(sp.cout, "💧", 6) : `${sp.cout} 💧`;
   carte.innerHTML = `
-    <span class="ec-coin">${possede ? "×" + possede : ""}</span>
+    <span class="ec-coin${jeune ? " imgs" : ""}">${possede ? coinAff : ""}</span>
     <span class="ec-emoji">${sp.emoji}</span>
     <span class="ec-nom">${trData("espece", sp.id, sp.nom)}</span>
-    <span class="ec-cout ${assezGouttes ? "" : "manque"}">${sp.cout} 💧</span>
+    <span class="ec-cout ${assezGouttes ? "" : "manque"}">${coutAff}</span>
     ${prereqHtml}
     <span class="ec-etat">${creable ? t("eco.creer") : (prereqOk ? t("eco.plus_gouttes") : t("eco.verrouille"))}</span>`;
   carte.onclick = () => creerEspece(tier, sp);

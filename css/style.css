@@ -108,6 +108,9 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* ---- En-tête catégorie ---- */
 .entete-cat{border-top:6px solid var(--c)}
 .solde{font-size:18px; color:var(--texte)!important}
+.solde-pips{font-size:22px; letter-spacing:1px}
+.t-compte.imgs{background:transparent; color:inherit; padding:0; min-width:auto; font-size:15px}
+.ec-coin.imgs{font-size:12px; line-height:1; max-width:62px; overflow:hidden; white-space:nowrap}
 
 /* ---- Grille de missions ---- */
 .missions{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px}
