@@ -1550,3 +1550,33 @@ Object.assign(I18N.de, {
   "stats.lecture_partage_peu_aide": "{prenom} teilt gern Herzen mit der Gruppe, selbst bei wenigen Hilfsmissionen. Schöne Großzügigkeit! 🎁",
   "stats.lecture_equilibre": "{prenom} zeigt eine schöne Balance zwischen Helfen, Ökologie, Teilen und persönlichem Vergnügen. ⚖️"
 });
+
+/* ---- Admin : configuration du don Stripe ---- */
+Object.assign(I18N.fr, {
+  "admin.don_titre": "💛 Don (Stripe)",
+  "admin.don_note": "Colle ici ton lien de paiement Stripe (Payment Link). Il sera utilisé par le bouton « Soutenir l'aventure ». Laisse vide pour masquer le bouton.",
+  "admin.don_label": "Lien de paiement Stripe",
+  "admin.don_enregistrer": "Enregistrer le lien de don",
+  "admin.don_ok": "Lien de don enregistré ✅"
+});
+Object.assign(I18N.en, {
+  "admin.don_titre": "💛 Donation (Stripe)",
+  "admin.don_note": "Paste your Stripe Payment Link here. It will be used by the 'Support the adventure' button. Leave empty to hide the button.",
+  "admin.don_label": "Stripe payment link",
+  "admin.don_enregistrer": "Save donation link",
+  "admin.don_ok": "Donation link saved ✅"
+});
+Object.assign(I18N.nl, {
+  "admin.don_titre": "💛 Donatie (Stripe)",
+  "admin.don_note": "Plak hier je Stripe Payment Link. Hij wordt gebruikt door de knop 'Steun het avontuur'. Laat leeg om de knop te verbergen.",
+  "admin.don_label": "Stripe-betaallink",
+  "admin.don_enregistrer": "Donatielink opslaan",
+  "admin.don_ok": "Donatielink opgeslagen ✅"
+});
+Object.assign(I18N.de, {
+  "admin.don_titre": "💛 Spende (Stripe)",
+  "admin.don_note": "Füge hier deinen Stripe Payment Link ein. Er wird vom Button „Das Abenteuer unterstützen“ verwendet. Leer lassen, um den Button auszublenden.",
+  "admin.don_label": "Stripe-Zahlungslink",
+  "admin.don_enregistrer": "Spendenlink speichern",
+  "admin.don_ok": "Spendenlink gespeichert ✅"
+});

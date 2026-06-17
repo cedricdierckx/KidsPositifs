@@ -216,6 +216,24 @@ function blocAdmin() {
     });
   };
   sec.appendChild(bW); sec.appendChild(listeW);
+
+  // ----- Configuration du don Stripe (lien de paiement) -----
+  sec.appendChild(el("h2", null, t("admin.don_titre")));
+  sec.appendChild(el("p", "note", t("admin.don_note")));
+  const lDon = el("label", "champ", t("admin.don_label"));
+  const iDon = el("input");
+  iDon.type = "url"; iDon.placeholder = "https://buy.stripe.com/…";
+  iDon.value = (typeof configApp !== "undefined" && configApp.don_stripe_url) || "";
+  lDon.appendChild(iDon);
+  sec.appendChild(lDon);
+  const bDon = el("button", "btn-secondaire", t("admin.don_enregistrer"));
+  bDon.onclick = async () => {
+    bDon.disabled = true; bDon.textContent = t("common.creation");
+    const ok = await adminDefinirConfig("don_stripe_url", iDon.value.trim());
+    bDon.disabled = false; bDon.textContent = t("admin.don_enregistrer");
+    if (ok) toast(t("admin.don_ok"), "succes");
+  };
+  sec.appendChild(bDon);
   return sec;
 }
 
@@ -741,10 +759,10 @@ function blocStatistiques() {
 /* ---------- Vue Missions (famille / planète) ---------- */
 // Soutien : don 100 % facultatif. L'app est et restera gratuite.
 function blocDon() {
-  const url = (window.KP_CONFIG && window.KP_CONFIG.DON_URL) || "";
+  const url = (typeof urlDon === "function") ? urlDon() : ((window.KP_CONFIG && window.KP_CONFIG.DON_URL) || "");
   const sec = el("section", "carte don-carte");
   let html = `<h2>${t("don.titre")}</h2>
-    <p class="don-gratuit">${t("don.gratuit")}</p>
+    <p class="don-gratuit">${t("don.gratuit", { app: APP_NOM })}</p>
     <p class="don-texte">${t("don.texte", { app: APP_NOM })}</p>`;
   if (url) {
     html += `<a class="gros-bouton don-bouton" href="${url}" target="_blank" rel="noopener">${t("don.bouton")}</a>
@@ -1308,6 +1326,9 @@ function vueReglages(c) {
   // ----- Défis réparation ("Oups, ça arrive…") : accès rapide, tout en haut -----
   c.appendChild(blocReparation());
 
+  // ----- Soutien (don facultatif) : admins + familles de plus d'une semaine -----
+  if (typeof donDisponible !== "function" || donDisponible()) c.appendChild(blocDon());
+
   // ----- Validations en attente (affichées seulement s'il y en a) -----
   if (totalAttente) {
     const att = el("section", "carte");
@@ -1334,9 +1355,6 @@ function vueReglages(c) {
 
   // ----- Corrections pour l'enfant sélectionné -----
   c.appendChild(blocCorrections(enfantActif()));
-
-  // ----- Soutien (don facultatif) : admins + familles de plus d'une semaine -----
-  if (typeof donDisponible !== "function" || donDisponible()) c.appendChild(blocDon());
 
   } /* fin onglet quotidien */
 

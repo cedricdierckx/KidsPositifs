@@ -36,6 +36,7 @@ async function demarrer() {
   }
   sb = supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
   Store.init(sb);                          // couche de données isolée (Phase D)
+  chargerConfigApp();                      // réglages globaux (ex. lien de don Stripe)
 
   // Jeton d'invitation éventuellement présent dans l'URL (?invite=...)
   const params = new URLSearchParams(location.search);
@@ -58,6 +59,29 @@ function nettoyerUrl() {
   try { history.replaceState({}, "", location.pathname); } catch {}
 }
 function utilisateurCourant() { return utilisateur; }
+
+// ---------- Configuration globale de l'app (table app_config) ----------
+let configApp = {};
+async function chargerConfigApp() {
+  if (!sb) return;
+  try {
+    const { data } = await sb.from("app_config").select("key,value");
+    configApp = {};
+    (data || []).forEach(r => { configApp[r.key] = r.value; });
+  } catch { configApp = {}; }
+}
+// Lien de don : priorité au lien Stripe configuré par l'admin, sinon config.js.
+function urlDon() {
+  return (configApp && configApp.don_stripe_url) ||
+         (window.KP_CONFIG && window.KP_CONFIG.DON_URL) || "";
+}
+// Écriture d'un réglage global (admin uniquement).
+async function adminDefinirConfig(key, value) {
+  const { error } = await sb.rpc("set_app_config", { p_key: key, p_value: value });
+  if (error) { toast("Erreur : " + error.message, "info"); return false; }
+  configApp[key] = (value || "").trim();
+  return true;
+}
 
 // Early adopters : comptes actuels + créés avant le 1er août 2026. Eux seuls
 // ont accès au module de signalement de bug / suggestion.

@@ -386,8 +386,29 @@ begin
                from feedback f order by f.created_at desc;
 end; $$;
 
+-- ---------- Configuration globale de l'app (éditable par les admins) ----------
+-- Ex. lien de don Stripe. Lecture publique, écriture réservée aux admins.
+create table if not exists public.app_config (
+  key text primary key,
+  value text,
+  updated_at timestamptz default now()
+);
+alter table public.app_config enable row level security;
+drop policy if exists "read config" on public.app_config;
+create policy "read config" on public.app_config for select using (true);
+grant select on public.app_config to anon, authenticated;
+
+create or replace function public.set_app_config(p_key text, p_value text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  insert into app_config(key, value, updated_at) values (p_key, nullif(trim(p_value), ''), now())
+    on conflict (key) do update set value = excluded.value, updated_at = now();
+end; $$;
+
 -- ---------- Droits d'exécution ----------
-grant execute on function public.create_family(text)            to authenticated;grant execute on function public.create_invite(uuid, text)      to authenticated;
+grant execute on function public.create_family(text)            to authenticated;
+grant execute on function public.set_app_config(text, text)     to authenticated;grant execute on function public.create_invite(uuid, text)      to authenticated;
 grant execute on function public.invite_info(uuid)              to authenticated;
 grant execute on function public.accept_invite(uuid)            to authenticated;
 grant execute on function public.referral_quota(uuid)           to authenticated;
