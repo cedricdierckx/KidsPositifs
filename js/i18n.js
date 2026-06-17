@@ -1580,3 +1580,29 @@ Object.assign(I18N.de, {
   "admin.don_enregistrer": "Spendenlink speichern",
   "admin.don_ok": "Spendenlink gespeichert ✅"
 });
+
+/* ---- Auto-évaluation / évaluation de la journée ---- */
+Object.assign(I18N.fr, {
+  "eval.titre_enfant": "Comment s'est passée ta journée ?",
+  "eval.titre_parent": "Ton évaluation de la journée de {prenom} (facultatif)",
+  "eval.bien": "Bien", "eval.moyen": "Moyen", "eval.mauvais": "Pas top",
+  "stats.autoeval": "Auto-évaluation (30 j)", "stats.evalparent": "Évaluation parent (30 j)"
+});
+Object.assign(I18N.en, {
+  "eval.titre_enfant": "How was your day?",
+  "eval.titre_parent": "Your rating of {prenom}'s day (optional)",
+  "eval.bien": "Good", "eval.moyen": "Okay", "eval.mauvais": "Not great",
+  "stats.autoeval": "Self-assessment (30 d)", "stats.evalparent": "Parent rating (30 d)"
+});
+Object.assign(I18N.nl, {
+  "eval.titre_enfant": "Hoe was je dag?",
+  "eval.titre_parent": "Jouw beoordeling van de dag van {prenom} (optioneel)",
+  "eval.bien": "Goed", "eval.moyen": "Oké", "eval.mauvais": "Niet top",
+  "stats.autoeval": "Zelfevaluatie (30 d)", "stats.evalparent": "Ouderbeoordeling (30 d)"
+});
+Object.assign(I18N.de, {
+  "eval.titre_enfant": "Wie war dein Tag?",
+  "eval.titre_parent": "Deine Bewertung von {prenom}s Tag (optional)",
+  "eval.bien": "Gut", "eval.moyen": "Okay", "eval.mauvais": "Nicht so gut",
+  "stats.autoeval": "Selbsteinschätzung (30 T)", "stats.evalparent": "Elternbewertung (30 T)"
+});

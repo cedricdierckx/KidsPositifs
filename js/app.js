@@ -96,7 +96,9 @@ function etatVierge() {
       planJour: {},         // { "2026-06-14": [missionId,...] } missions imposées du jour
       enAttente: [],        // actions en attente de validation parentale
       badges: [],           // récompenses symboliques
-      badgesRetires: []     // badges retirés par les parents (non re-attribués)
+      badgesRetires: [],    // badges retirés par les parents (non re-attribués)
+      autoEval: {},         // auto-évaluation de l'enfant : { "2026-06-17": "bien"|"moyen"|"mauvais" }
+      evalParent: {}        // évaluation par un parent (facultative)
     };
   });
   return {
@@ -196,6 +198,8 @@ function normaliser(e) {
     }
     // champs d'avatar ajoutés ultérieurement -> valeur par défaut
     ["taches", "pilosite", "boucles"].forEach(k => { if (enf.avatar[k] === undefined) enf.avatar[k] = "rien"; });
+    if (!enf.autoEval || typeof enf.autoEval !== "object") enf.autoEval = {};
+    if (!enf.evalParent || typeof enf.evalParent !== "object") enf.evalParent = {};
     if (!Array.isArray(enf.badgesRetires)) enf.badgesRetires = [];
     if (!Array.isArray(enf.badges)) enf.badges = [];
     if (!enf.planJour || typeof enf.planJour !== "object") enf.planJour = {};
@@ -718,6 +722,30 @@ function verifierBadges(enf) {
     ajoute("equipe", "Esprit d'équipe", "🤝");
 }
 
+/* ---------- Auto-évaluation (enfant) & évaluation (parent) ---------- */
+const EVAL_VALEURS = ["bien", "moyen", "mauvais"];
+// L'enfant évalue sa propre journée depuis sa page d'accueil.
+function definirAutoEval(valeur) {
+  if (!EVAL_VALEURS.includes(valeur)) return;
+  const enf = enfantActif();
+  if (!enf.autoEval) enf.autoEval = {};
+  const jour = aujourdHui();
+  if (enf.autoEval[jour] === valeur) delete enf.autoEval[jour];  // re-toucher = annuler
+  else enf.autoEval[jour] = valeur;
+  sauver();
+  rendre();
+}
+// Un parent évalue (facultativement) la journée d'un enfant.
+function definirEvalParent(enf, valeur) {
+  if (!EVAL_VALEURS.includes(valeur) || !enf) return;
+  if (!enf.evalParent) enf.evalParent = {};
+  const jour = aujourdHui();
+  if (enf.evalParent[jour] === valeur) delete enf.evalParent[jour];
+  else enf.evalParent[jour] = valeur;
+  sauver();
+  rendre();
+}
+
 /* ---------- Feedback ---------- */
 function feterGain(mission) {
   const cat = CATEGORIES[mission.cat];
@@ -863,7 +891,8 @@ function enfantVierge(modele) {
     coeurs: 0, coeursTotal: 0, gouttes: 0, gouttesTotal: 0, donsTotal: 0, avatarTotal: 0,
     ecosysteme: { plantes: {}, herbivores: {}, carnivores: {} },
     avatar: avatarParDefaut(base), debloque: [], heureCoucher: "19:30",
-    journal: {}, planJour: {}, enAttente: [], badges: [], badgesRetires: []
+    journal: {}, planJour: {}, enAttente: [], badges: [], badgesRetires: [],
+    autoEval: {}, evalParent: {}
   };
 }
 // Ajoute un enfant à la famille et l'active.

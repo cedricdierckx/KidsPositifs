@@ -343,8 +343,28 @@ function vueAccueil(c) {
   colB.appendChild(titrePla);
   colB.appendChild(grilleMissions("planete"));
 
+  // Auto-évaluation de la journée (par l'enfant)
+  colB.appendChild(blocEval(enf, "enfant"));
+
   // Badges (seuls les badges réalisés sont affichés)
   colB.appendChild(blocBadges(enf));
+}
+
+// Widget d'évaluation de la journée (Bien / Moyen / Pas top).
+// mode "enfant" = auto-évaluation ; mode "parent" = évaluation par un parent.
+function blocEval(enf, mode) {
+  const today = aujourdHui();
+  const courant = mode === "parent" ? (enf.evalParent || {})[today] : (enf.autoEval || {})[today];
+  const sec = el("section", "carte eval-carte");
+  sec.innerHTML = `<h2>${mode === "parent" ? t("eval.titre_parent", { prenom: echapper(enf.prenom) }) : t("eval.titre_enfant")}</h2>`;
+  const row = el("div", "eval-choix");
+  [["bien", "😀"], ["moyen", "😐"], ["mauvais", "🙁"]].forEach(([v, e]) => {
+    const b = el("button", "eval-btn eval-" + v + (courant === v ? " actif" : ""), `${e} ${t("eval." + v)}`);
+    b.onclick = () => (mode === "parent" ? definirEvalParent(enf, v) : definirAutoEval(v));
+    row.appendChild(b);
+  });
+  sec.appendChild(row);
+  return sec;
 }
 
 // Rafraîchit en continu le bandeau dodo (l'ambiance suit l'heure réelle).
@@ -595,27 +615,6 @@ function missionsParCat(enf) {
   return { fam, pla, total: fam + pla };
 }
 
-// Lecture : relie le comportement (missions) aux choix (dépenses). Renvoie une
-// clé de phrase + les axes. Volontairement descriptif et bienveillant.
-function lectureComportement(enf) {
-  const mc = missionsParCat(enf);
-  const dons = enf.donsTotal || 0, avat = enf.avatarTotal || 0, dep = dons + avat;
-  const prosocial = mc.total ? Math.round((mc.fam / mc.total) * 100) : null;   // entraide vs écologie
-  const generosite = dep ? Math.round((dons / dep) * 100) : null;              // partage vs soi
-  let cle;
-  if (mc.total < 5 && dep === 0) cle = "stats.lecture_debut";
-  else if (dep === 0) cle = "stats.lecture_sansdepense";
-  else {
-    const aideHaut = prosocial !== null && prosocial >= 55;
-    const genHaut = generosite >= 55, genBas = generosite <= 35;
-    if (aideHaut && genHaut) cle = "stats.lecture_coherent_autres";
-    else if (aideHaut && genBas) cle = "stats.lecture_aide_garde";
-    else if (!aideHaut && genHaut) cle = "stats.lecture_partage_peu_aide";
-    else cle = "stats.lecture_equilibre";
-  }
-  return { mc, prosocial, generosite, dons, avat, cle };
-}
-
 // Espace statistiques : évolution de chaque enfant (utile aussi pour un suivi
 // psychologique : régularité, persévérance, équilibre prosocial/écologique).
 function blocStatistiques() {
@@ -730,25 +729,30 @@ function blocStatistiques() {
       html += `</div>`;
     }
 
-    // Profil & lecture : relie comportement et choix.
-    const lec = lectureComportement(enf);
-    html += `<p class="stat-graph-titre">${t("stats.profil_titre")}</p>`;
-    if (lec.mc.total > 0) {
+    // Répartitions objectives (sans interprétation).
+    const mc = missionsParCat(enf);
+    if (mc.total > 0) {
+      const pro = Math.round((mc.fam / mc.total) * 100);
       html += `<div class="stat-axe"><span class="stat-axe-lbl">${t("stats.axe_entraide")} / ${t("stats.axe_ecologie")}</span>
         <div class="stat-balance">
-          <div class="stat-balance-fam" style="width:${lec.prosocial}%">${lec.prosocial}%</div>
-          <div class="stat-balance-pla" style="width:${100 - lec.prosocial}%">${100 - lec.prosocial}%</div>
+          <div class="stat-balance-fam" style="width:${pro}%">${pro}%</div>
+          <div class="stat-balance-pla" style="width:${100 - pro}%">${100 - pro}%</div>
         </div></div>`;
     }
-    if (lec.generosite !== null) {
-      html += `<div class="stat-axe"><span class="stat-axe-lbl">${t("stats.axe_partage")} / ${t("stats.axe_soi")}</span>
-        <div class="stat-balance">
-          <div class="stat-dep-col" style="width:${lec.generosite}%">${lec.generosite}%</div>
-          <div class="stat-dep-ind" style="width:${100 - lec.generosite}%">${100 - lec.generosite}%</div>
-        </div></div>`;
-    }
-    html += `<p class="stat-lecture">${t(lec.cle, { prenom: echapper(enf.prenom) })}</p>
-      <p class="note stat-disclaimer">${t("stats.profil_note")}</p>`;
+
+    // Auto-évaluation de l'enfant + évaluation parent (comptes objectifs, 30 j).
+    const compteEval = (m) => {
+      const base = new Date(aujourdHui() + "T00:00:00");
+      const c = { bien: 0, moyen: 0, mauvais: 0 };
+      for (let i = 0; i < 30; i++) { const d = new Date(base); d.setDate(base.getDate() - i);
+        const v = (m || {})[d.toISOString().slice(0, 10)]; if (v && c[v] !== undefined) c[v]++; }
+      return c;
+    };
+    const ae = compteEval(enf.autoEval), pe = compteEval(enf.evalParent);
+    if (ae.bien + ae.moyen + ae.mauvais > 0)
+      html += `<p class="note stat-compare">${t("stats.autoeval")} : 😀 ${ae.bien} · 😐 ${ae.moyen} · 🙁 ${ae.mauvais}</p>`;
+    if (pe.bien + pe.moyen + pe.mauvais > 0)
+      html += `<p class="note stat-compare">${t("stats.evalparent")} : 😀 ${pe.bien} · 😐 ${pe.moyen} · 🙁 ${pe.mauvais}</p>`;
 
     sec.innerHTML = html;
     wrap.appendChild(sec);
@@ -1355,6 +1359,9 @@ function vueReglages(c) {
 
   // ----- Corrections pour l'enfant sélectionné -----
   c.appendChild(blocCorrections(enfantActif()));
+
+  // ----- Évaluation de la journée par un parent (facultative) -----
+  c.appendChild(blocEval(enfantActif(), "parent"));
 
   } /* fin onglet quotidien */
 

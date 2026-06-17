@@ -505,6 +505,16 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .stat-balance-pla{background:var(--planete); display:flex; align-items:center; justify-content:center; min-width:fit-content; padding:0 6px}
 .stat-dep-col{background:#a78bfa; display:flex; align-items:center; justify-content:center; min-width:fit-content; padding:0 6px; color:#fff; font-weight:800; font-size:12px}
 .stat-dep-ind{background:#5b8def; display:flex; align-items:center; justify-content:center; min-width:fit-content; padding:0 6px; color:#fff; font-weight:800; font-size:12px}
+/* ---- Auto-évaluation de la journée ---- */
+.eval-carte{background:linear-gradient(160deg,#f4f7ff,#fff4f8)}
+.eval-choix{display:flex; gap:8px}
+.eval-btn{flex:1; border:2px solid #e3edf5; background:#fff; border-radius:16px; padding:14px 6px;
+  font-size:15px; font-weight:800; cursor:pointer; font-family:inherit; transition:.12s}
+.eval-btn:active{transform:scale(.96)}
+.eval-btn.actif.eval-bien{border-color:#7fd9bd; background:#eafaf3}
+.eval-btn.actif.eval-moyen{border-color:#ffd98a; background:#fff6e6}
+.eval-btn.actif.eval-mauvais{border-color:#f2b8c6; background:#fdeef2}
+
 .stat-axe{margin:4px 0 8px}
 .stat-axe-lbl{font-size:12px; font-weight:700; color:var(--doux)}
 .stat-lecture{font-size:14px; line-height:1.5; background:#f0f6ff; border-left:4px solid #5b8def;
