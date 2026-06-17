@@ -337,6 +337,17 @@ function compteurVisuel(emoji, n, jeune) {
   return `<span class="pips" title="${n}">${pips}</span>`;
 }
 
+// Récompense d'une mission : chiffre pour les grands, emojis pour les petits
+// (ex. +2 💛 → 💛💛). Plafonné pour rester lisible.
+function pointsVisuels(points, emoji, jeune) {
+  if (!jeune) return `+${points} ${emoji}`;
+  const CAP = 6;
+  let s = "";
+  for (let i = 0; i < Math.min(points, CAP); i++) s += emoji;
+  if (points > CAP) s += "✨";
+  return `<span class="m-points-img">${s || emoji}</span>`;
+}
+
 /* ---------- Vue Accueil ---------- */
 function vueAccueil(c) {
   const enf = enfantActif();
@@ -480,14 +491,16 @@ function grilleMissions(catId) {
     liste.appendChild(el("p", "note", t("missions.aucune")));
     return liste;
   }
+  const jeune = estJeune(enf);
   actives.forEach(m => {
     const fait = (journalJour[m.id] || 0) >= 1;
     const enAttente = enf.enAttente.some(a => a.missionId === m.id && a.jour === jour);
     const carte = el("button", "mission" + (fait ? " fait" : "") + (enAttente ? " attente" : ""));
+    const recompense = pointsVisuels(m.points, cat.monnaieEmoji, jeune);
     carte.innerHTML = `
       <span class="m-emoji">${m.emoji}</span>
       <span class="m-titre">${trData("mission", m.id, m.titre)}</span>
-      <span class="m-points">${fait ? "✅" : (enAttente ? "⏳" : `+${m.points} ${cat.monnaieEmoji}`)}</span>`;
+      <span class="m-points">${fait ? "✅" : (enAttente ? "⏳" : recompense)}</span>`;
     carte.onclick = () => validerMission(m);
     liste.appendChild(carte);
   });

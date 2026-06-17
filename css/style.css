@@ -121,6 +121,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .mission .m-emoji{font-size:38px}
 .mission .m-titre{font-size:14px; font-weight:700; line-height:1.2}
 .mission .m-points{font-size:13px; font-weight:800; color:var(--famille)}
+.mission .m-points-img{font-size:15px; letter-spacing:1px}
 .mission.fait{opacity:.55; background:#f1faf6; border-color:#bfe9da}
 .mission.attente{background:#fff7e6; border-color:#ffe2a8}
 .mission.attente .m-points{color:#a86b00}
