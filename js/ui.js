@@ -645,6 +645,41 @@ function blocStatistiques() {
       });
       html += `</div>`;
     }
+
+    // Dépenses : collectif (dons aux cartes surprises) vs individuel (avatar).
+    const dons = enf.donsTotal || 0, avat = enf.avatarTotal || 0, somDep = dons + avat;
+    if (somDep > 0) {
+      const pctDon = Math.round((dons / somDep) * 100);
+      html += `<p class="stat-graph-titre">${t("stats.depenses")}</p>
+        <div class="stat-balance">
+          <div class="stat-dep-col" style="width:${pctDon}%">🎁 ${dons}</div>
+          <div class="stat-dep-ind" style="width:${100 - pctDon}%">🎨 ${avat}</div>
+        </div>
+        <p class="note stat-compare">${t("stats.depenses_detail", { col: dons, ind: avat })}</p>`;
+    }
+
+    // Cartes surprises soutenues par cet enfant (ses choix collectifs).
+    const cartesChoisies = (etat.cartesSurprises || [])
+      .filter(c => c.dons && c.dons[enf.id] > 0)
+      .map(c => [c.emoji, trData("carte", c.id, c.titre), c.dons[enf.id]]);
+    if (cartesChoisies.length) {
+      html += `<p class="stat-graph-titre">${t("stats.cartes_choix")}</p><div class="stat-top">`;
+      cartesChoisies.forEach(([e, nom, n]) =>
+        html += `<div class="stat-top-ligne"><span>${e} ${echapper(nom)}</span><span class="stat-top-n">${n} 💛</span></div>`);
+      html += `</div>`;
+    }
+
+    // Styles d'avatar préférés (catégories les plus débloquées).
+    const cats = {};
+    (enf.debloque || []).forEach(cle => { const cat = cle.split(":")[0]; cats[cat] = (cats[cat] || 0) + 1; });
+    const topCats = Object.entries(cats).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    if (topCats.length) {
+      html += `<p class="stat-graph-titre">${t("stats.avatar_choix")}</p><div class="stat-top">`;
+      topCats.forEach(([cat, n]) =>
+        html += `<div class="stat-top-ligne"><span>${(AVATAR_LIBELLES[cat] || cat)}</span><span class="stat-top-n">×${n}</span></div>`);
+      html += `</div>`;
+    }
+
     sec.innerHTML = html;
     wrap.appendChild(sec);
   });

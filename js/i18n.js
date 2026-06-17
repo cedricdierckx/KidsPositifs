@@ -1478,3 +1478,25 @@ Object.assign(I18N.de, {
   "don.bouton": "☕ Eine Kleinigkeit beisteuern",
   "don.merci": "Von Herzen danke, wie auch immer du dich entscheidest! 🙏"
 });
+
+/* ---- Statistiques : dépenses & choix ---- */
+Object.assign(I18N.fr, {
+  "stats.depenses": "Dépenses : collectif 🎁 / individuel 🎨",
+  "stats.depenses_detail": "Collectif (cartes) : {col} 💛 · Individuel (avatar) : {ind} 💛",
+  "stats.cartes_choix": "Cartes surprises soutenues", "stats.avatar_choix": "Styles d'avatar préférés"
+});
+Object.assign(I18N.en, {
+  "stats.depenses": "Spending: collective 🎁 / individual 🎨",
+  "stats.depenses_detail": "Collective (cards): {col} 💛 · Individual (avatar): {ind} 💛",
+  "stats.cartes_choix": "Surprise cards supported", "stats.avatar_choix": "Favourite avatar styles"
+});
+Object.assign(I18N.nl, {
+  "stats.depenses": "Uitgaven: collectief 🎁 / individueel 🎨",
+  "stats.depenses_detail": "Collectief (kaarten): {col} 💛 · Individueel (avatar): {ind} 💛",
+  "stats.cartes_choix": "Gesteunde verrassingskaarten", "stats.avatar_choix": "Favoriete avatarstijlen"
+});
+Object.assign(I18N.de, {
+  "stats.depenses": "Ausgaben: gemeinsam 🎁 / individuell 🎨",
+  "stats.depenses_detail": "Gemeinsam (Karten): {col} 💛 · Individuell (Avatar): {ind} 💛",
+  "stats.cartes_choix": "Unterstützte Überraschungskarten", "stats.avatar_choix": "Lieblings-Avatarstile"
+});

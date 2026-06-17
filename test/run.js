@@ -291,6 +291,26 @@ test("donnerCarte dépense les cœurs et fait progresser la récolte commune", (
   assert.strictEqual(api.trouverCarteSurprise(carte.id).dons[enf.id], 4);
 });
 
+test("donnerCarte cumule les dépenses collectives (donsTotal)", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  api.lierEtat(api.etatVierge());
+  const enf = api.enfantActif();
+  enf.coeurs = 10;
+  api.donnerCarte(api.cartesSurprises()[0].id, 4);
+  assert.strictEqual(enf.donsTotal, 4);
+});
+
+test("acheterOption cumule les dépenses individuelles (avatarTotal)", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  api.lierEtat(api.etatVierge());
+  const enf = api.enfantActif();
+  enf.coeurs = 10;
+  api.acheterOption("chapeau", { id: "couronne", cout: 6 });
+  assert.strictEqual(enf.avatarTotal, 6);
+});
+
 test("donnerCarte ne dépense pas le total cumulé (coeursTotal)", () => {
   const { api } = construireContexte();
   api.familleId = "f";

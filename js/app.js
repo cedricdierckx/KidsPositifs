@@ -86,6 +86,8 @@ function etatVierge() {
       coeursTotal: 0,       // total cumulé (statistiques)
       gouttes: 0,           // monnaie planète (dépensable pour l'écosystème)
       gouttesTotal: 0,      // total cumulé (statistiques)
+      donsTotal: 0,         // Cœurs donnés au collectif (cartes surprises), cumulé
+      avatarTotal: 0,       // Cœurs dépensés en individuel (avatar), cumulé
       ecosysteme: { plantes: {}, herbivores: {}, carnivores: {} }, // tier -> {especeId: nb}
       avatar: avatarParDefaut(e),
       debloque: [],         // ids d'options d'avatar débloquées
@@ -178,6 +180,10 @@ function normaliser(e) {
     if (!enf.ecosysteme) enf.ecosysteme = { plantes: {}, herbivores: {}, carnivores: {} };
     TIERS_ECO.forEach(t => { if (!enf.ecosysteme[t.id]) enf.ecosysteme[t.id] = {}; });
     if (enf.gouttesTotal === undefined) enf.gouttesTotal = enf.gouttes || 0;
+    // Suivi des dépenses (additif). L'avatar est rétro-calculé depuis les
+    // options déjà débloquées ; les dons collectifs démarrent à 0 (non rétro-actif).
+    if (typeof enf.avatarTotal !== "number") enf.avatarTotal = coutAvatarDebloque(enf);
+    if (typeof enf.donsTotal !== "number") enf.donsTotal = 0;
     if (!Array.isArray(enf.enAttente)) enf.enAttente = [];
     // migration date de naissance : ancien format = année (nombre)
     if (typeof enf.naissance === "number") enf.naissance = enf.naissance + "-01-01";
@@ -483,6 +489,7 @@ function acheterOption(categorie, option) {
       return;
     }
     enf.coeurs -= option.cout;
+    enf.avatarTotal = (enf.avatarTotal || 0) + option.cout;   // dépense individuelle
     enf.debloque.push(cle);
     toast(t("toast.debloque", { nom: trData("avatar." + categorie, option.id, option.nom) }), "succes");
   }
@@ -494,6 +501,19 @@ function acheterOption(categorie, option) {
 
 function estDebloque(enf, categorie, option) {
   return option.cout === 0 || enf.debloque.includes(`${categorie}:${option.id}`);
+}
+
+// Somme des Cœurs déjà dépensés en avatar (d'après les options débloquées).
+function coutAvatarDebloque(enf) {
+  let s = 0;
+  (enf.debloque || []).forEach(cle => {
+    const i = cle.indexOf(":");
+    if (i < 0) return;
+    const cat = cle.slice(0, i), id = cle.slice(i + 1);
+    const opt = (AVATAR_OPTIONS[cat] || []).find(o => o.id === id);
+    if (opt) s += opt.cout || 0;
+  });
+  return s;
 }
 
 /* ---------- Cartes surprises (objectifs d'équipe) ----------
@@ -519,6 +539,7 @@ function donnerCarte(carteId, montant) {
   montant = Math.min(montant, carte.cout - carte.recolte);
   if (montant <= 0) return;
   enf.coeurs -= montant;
+  enf.donsTotal = (enf.donsTotal || 0) + montant;   // dépense collective
   carte.recolte += montant;
   carte.dons[enf.id] = (carte.dons[enf.id] || 0) + montant;
   if (carte.recolte >= carte.cout) {
@@ -839,7 +860,7 @@ function enfantVierge(modele) {
                            sexe: "garcon", emoji: "🧒", couleur: "#5b8def" };
   return {
     ...base,
-    coeurs: 0, coeursTotal: 0, gouttes: 0, gouttesTotal: 0,
+    coeurs: 0, coeursTotal: 0, gouttes: 0, gouttesTotal: 0, donsTotal: 0, avatarTotal: 0,
     ecosysteme: { plantes: {}, herbivores: {}, carnivores: {} },
     avatar: avatarParDefaut(base), debloque: [], heureCoucher: "19:30",
     journal: {}, planJour: {}, enAttente: [], badges: [], badgesRetires: []

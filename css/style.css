@@ -503,6 +503,8 @@ main{max-width:680px; margin:0 auto; padding:14px}
   font-size:12px; font-weight:800; color:#fff}
 .stat-balance-fam{background:var(--famille); display:flex; align-items:center; justify-content:center; min-width:fit-content; padding:0 6px}
 .stat-balance-pla{background:var(--planete); display:flex; align-items:center; justify-content:center; min-width:fit-content; padding:0 6px}
+.stat-dep-col{background:#a78bfa; display:flex; align-items:center; justify-content:center; min-width:fit-content; padding:0 6px; color:#fff; font-weight:800; font-size:12px}
+.stat-dep-ind{background:#5b8def; display:flex; align-items:center; justify-content:center; min-width:fit-content; padding:0 6px; color:#fff; font-weight:800; font-size:12px}
 .stat-top{display:grid; gap:4px}
 .stat-top-ligne{display:flex; justify-content:space-between; font-size:14px; padding:4px 0;
   border-bottom:1px solid #eef2f7}
