@@ -1487,6 +1487,16 @@ function blocFeedback() {
       "Date: " + new Date().toISOString(),
       "Navigateur: " + (navigator.userAgent || "—")
     ].join("\n");
+    // Stockage côté base (best-effort, ne bloque pas l'e-mail).
+    try {
+      if (typeof sb !== "undefined" && sb && !(typeof modeDemo !== "undefined" && modeDemo)) {
+        sb.rpc("submit_feedback", {
+          p_type: selType.value, p_message: msg,
+          p_context: { langue, version: ETAT_VERSION, ua: navigator.userAgent || "" },
+          p_family: (typeof familleId !== "undefined" ? familleId : null)
+        });
+      }
+    } catch (e) { /* on garde l'e-mail comme repli */ }
     const sujet = encodeURIComponent(`${APP_NOM} — ${type}`);
     const corps = encodeURIComponent(`${msg}\n\n--- Contexte technique ---\n${contexte}`);
     location.href = `mailto:${FEEDBACK_EMAIL}?subject=${sujet}&body=${corps}`;

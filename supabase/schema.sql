@@ -333,9 +333,61 @@ begin
   update families set plan = coalesce(nullif(p_plan, ''), 'free') where id = p_family;
 end; $$;
 
+-- =====================================================================
+-- Évolutions anticipées (additives, ré-exécutables) pour éviter de
+-- futures migrations manuelles.
+-- =====================================================================
+
+-- ---------- Colonnes d'avenir sur families (non destructives) ----------
+alter table public.families add column if not exists locale text;            -- langue préférée
+alter table public.families add column if not exists last_seen_at timestamptz; -- dernière activité
+alter table public.families add column if not exists archived_at timestamptz;  -- archivage doux (soft-delete)
+
+-- ---------- Retours utilisateurs : bugs & suggestions ----------
+-- Stockage centralisé (en plus de l'e-mail) ; lisible par les admins.
+create table if not exists public.feedback (
+  id bigint generated always as identity primary key,
+  family_id uuid references public.families(id) on delete set null,
+  user_id uuid references auth.users(id) on delete set null,
+  email text,
+  type text not null default 'suggestion',   -- 'bug' | 'suggestion'
+  message text not null,
+  context jsonb,
+  created_at timestamptz default now()
+);
+create index if not exists idx_feedback_created on public.feedback(created_at desc);
+alter table public.feedback enable row level security;
+drop policy if exists "insert feedback" on public.feedback;
+create policy "insert feedback" on public.feedback
+  for insert with check (auth.uid() = user_id or user_id is null);
+drop policy if exists "admins read feedback" on public.feedback;
+create policy "admins read feedback" on public.feedback
+  for select using (is_admin());
+
+-- RPC : enregistrer un retour (bug/suggestion).
+create or replace function public.submit_feedback(p_type text, p_message text,
+                                                  p_context jsonb default null, p_family uuid default null)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if coalesce(trim(p_message), '') = '' then raise exception 'Message vide'; end if;
+  insert into feedback(family_id, user_id, email, type, message, context)
+    values (p_family, auth.uid(), auth.email(),
+            case when p_type = 'bug' then 'bug' else 'suggestion' end,
+            left(p_message, 4000), p_context);
+end; $$;
+
+-- RPC admin : consulter les retours.
+create or replace function public.admin_list_feedback()
+returns table(id bigint, created_at timestamptz, type text, message text, email text, family_id uuid)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  return query select f.id, f.created_at, f.type::text, f.message, f.email::text, f.family_id
+               from feedback f order by f.created_at desc;
+end; $$;
+
 -- ---------- Droits d'exécution ----------
-grant execute on function public.create_family(text)            to authenticated;
-grant execute on function public.create_invite(uuid, text)      to authenticated;
+grant execute on function public.create_family(text)            to authenticated;grant execute on function public.create_invite(uuid, text)      to authenticated;
 grant execute on function public.invite_info(uuid)              to authenticated;
 grant execute on function public.accept_invite(uuid)            to authenticated;
 grant execute on function public.referral_quota(uuid)           to authenticated;
@@ -349,6 +401,8 @@ grant execute on function public.admin_remove_waitlist(text)    to authenticated
 grant execute on function public.is_admin()                     to authenticated;
 grant execute on function public.admin_list_families()          to authenticated;
 grant execute on function public.admin_set_plan(uuid, text)     to authenticated;
+grant execute on function public.submit_feedback(text, text, jsonb, uuid) to authenticated;
+grant execute on function public.admin_list_feedback()          to authenticated;
 
 -- ---------- Temps réel sur l'état de jeu (tolérant si déjà activé) ----------
 do $$ begin
