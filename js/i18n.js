@@ -1658,3 +1658,9 @@ Object.assign(I18N.de, {
   "admin.don_libre": "Link mit freiem Betrag (optional)",
   "admin.don_note": "Erstelle für jeden Betrag einen Stripe Payment Link (einmalig oder monatliches Abo) und füge die URL ein. Leere Felder werden Eltern nicht angezeigt."
 });
+
+/* ---- Admin : lien d'aide Stripe ---- */
+Object.assign(I18N.fr, { "admin.don_aide": "↗ Créer un lien de paiement sur Stripe" });
+Object.assign(I18N.en, { "admin.don_aide": "↗ Create a payment link on Stripe" });
+Object.assign(I18N.nl, { "admin.don_aide": "↗ Maak een betaallink op Stripe" });
+Object.assign(I18N.de, { "admin.don_aide": "↗ Zahlungslink auf Stripe erstellen" });

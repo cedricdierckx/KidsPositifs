@@ -220,6 +220,9 @@ function blocAdmin() {
   // ----- Configuration des dons Stripe (un Payment Link par montant) -----
   sec.appendChild(el("h2", null, t("admin.don_titre")));
   sec.appendChild(el("p", "note", t("admin.don_note")));
+  const aide = el("a", "btn-secondaire don-aide", t("admin.don_aide"));
+  aide.href = "https://dashboard.stripe.com/payment-links"; aide.target = "_blank"; aide.rel = "noopener";
+  sec.appendChild(aide);
   const cfg = (typeof configApp !== "undefined") ? configApp : {};
   const champsDon = [
     ["don_once_10", t("don.ponctuel") + " — 10 €"],
@@ -1612,14 +1615,13 @@ function vueReglages(c) {
     c.appendChild(abo);
   }
 
-  // ----- Administration (réservé aux admins) -----
-  if (typeof estAdmin !== "undefined" && estAdmin) c.appendChild(blocAdmin());
-
   } /* fin sinon-démo */
   } /* fin onglet famille */
 
   /* ===== ONGLET : Mon compte & données ===== */
   if (ongletParent === "compte") {
+  // ----- Administration (réservé aux admins) : en haut pour être visible -----
+  if (typeof estAdmin !== "undefined" && estAdmin) c.appendChild(blocAdmin());
   // Module bug/suggestion : early adopters uniquement.
   if (typeof estEarlyAdopter !== "function" || estEarlyAdopter()) c.appendChild(blocFeedback());
   if (typeof modeDemo !== "undefined" && modeDemo) {
