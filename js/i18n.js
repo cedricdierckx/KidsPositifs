@@ -37,7 +37,14 @@ const I18N = {
     "auth.msg_invitation_only": "Inscription sur invitation uniquement. Rejoins la liste d'attente ci-dessous.",
     "auth.msg_attente_email": "Entre ton e-mail pour rejoindre la liste d'attente.",
     "auth.msg_attente_ok": "🎉 Merci ! Tu es sur la liste d'attente. On te préviendra dès qu'une place se libère.",
-    "auth.erreur": "Erreur : {msg}"
+    "auth.erreur": "Erreur : {msg}",
+    "auth.mdp_oublie": "Mot de passe oublié ?",
+    "auth.msg_reset_envoye": "📧 E-mail envoyé ! Clique sur le lien reçu pour choisir un nouveau mot de passe.",
+    "auth.reset_titre": "🔑 Choisis un nouveau mot de passe",
+    "auth.reset_ph": "Nouveau mot de passe (8 caractères min.)",
+    "auth.reset_valider": "Enregistrer le mot de passe",
+    "auth.reset_ok": "✅ Mot de passe mis à jour ! Tu es connecté·e.",
+    "auth.mdp_court": "Le mot de passe doit comporter au moins 8 caractères."
   },
   en: {
     "nav.accueil": "Home", "nav.famille": "Family", "nav.planete": "Planet",
@@ -66,7 +73,14 @@ const I18N = {
     "auth.msg_invitation_only": "Sign-up is invitation-only. Join the waiting list below.",
     "auth.msg_attente_email": "Enter your e-mail to join the waiting list.",
     "auth.msg_attente_ok": "🎉 Thanks! You're on the waiting list. We'll let you know as soon as a spot opens up.",
-    "auth.erreur": "Error: {msg}"
+    "auth.erreur": "Error: {msg}",
+    "auth.mdp_oublie": "Forgot your password?",
+    "auth.msg_reset_envoye": "📧 E-mail sent! Click the link to choose a new password.",
+    "auth.reset_titre": "🔑 Choose a new password",
+    "auth.reset_ph": "New password (min. 8 characters)",
+    "auth.reset_valider": "Save password",
+    "auth.reset_ok": "✅ Password updated! You're logged in.",
+    "auth.mdp_court": "The password must be at least 8 characters long."
   },
   nl: {
     "nav.accueil": "Start", "nav.famille": "Gezin", "nav.planete": "Planeet",
@@ -95,7 +109,14 @@ const I18N = {
     "auth.msg_invitation_only": "Registreren kan alleen op uitnodiging. Meld je hieronder aan voor de wachtlijst.",
     "auth.msg_attente_email": "Vul je e-mail in om je aan te melden voor de wachtlijst.",
     "auth.msg_attente_ok": "🎉 Bedankt! Je staat op de wachtlijst. We verwittigen je zodra er plaats vrijkomt.",
-    "auth.erreur": "Fout: {msg}"
+    "auth.erreur": "Fout: {msg}",
+    "auth.mdp_oublie": "Wachtwoord vergeten?",
+    "auth.msg_reset_envoye": "📧 E-mail verzonden! Klik op de link om een nieuw wachtwoord te kiezen.",
+    "auth.reset_titre": "🔑 Kies een nieuw wachtwoord",
+    "auth.reset_ph": "Nieuw wachtwoord (min. 8 tekens)",
+    "auth.reset_valider": "Wachtwoord opslaan",
+    "auth.reset_ok": "✅ Wachtwoord bijgewerkt! Je bent ingelogd.",
+    "auth.mdp_court": "Het wachtwoord moet minstens 8 tekens lang zijn."
   },
   de: {
     "nav.accueil": "Start", "nav.famille": "Familie", "nav.planete": "Planet",
@@ -124,7 +145,14 @@ const I18N = {
     "auth.msg_invitation_only": "Registrierung nur auf Einladung. Trage dich unten in die Warteliste ein.",
     "auth.msg_attente_email": "Gib deine E-Mail ein, um dich in die Warteliste einzutragen.",
     "auth.msg_attente_ok": "🎉 Danke! Du stehst auf der Warteliste. Wir melden uns, sobald ein Platz frei wird.",
-    "auth.erreur": "Fehler: {msg}"
+    "auth.erreur": "Fehler: {msg}",
+    "auth.mdp_oublie": "Passwort vergessen?",
+    "auth.msg_reset_envoye": "📧 E-mail gesendet! Klicke auf den Link, um ein neues Passwort zu wählen.",
+    "auth.reset_titre": "🔑 Wähle ein neues Passwort",
+    "auth.reset_ph": "Neues Passwort (mind. 8 Zeichen)",
+    "auth.reset_valider": "Passwort speichern",
+    "auth.reset_ok": "✅ Passwort aktualisiert! Du bist angemeldet.",
+    "auth.mdp_court": "Das Passwort muss mindestens 8 Zeichen lang sein."
   }
 };
 

@@ -49,7 +49,15 @@ async function demarrer() {
   const { data } = await sb.auth.getSession();
   session = data.session;
   utilisateur = session && session.user;
-  sb.auth.onAuthStateChange((_e, s) => { session = s; utilisateur = s && s.user; });
+  sb.auth.onAuthStateChange((evenement, s) => {
+    session = s; utilisateur = s && s.user;
+    if (evenement === "PASSWORD_RECOVERY") ecranNouveauMdp();
+  });
+
+  // Arrivée via le lien « mot de passe oublié » : Supabase ouvre une session
+  // de récupération (#type=recovery dans l'URL). On propose alors de choisir
+  // un nouveau mot de passe avant d'entrer dans l'app.
+  if (location.hash.includes("type=recovery")) return ecranNouveauMdp();
 
   if (!utilisateur) return ecranAuth();
   await apresConnexion();
@@ -180,6 +188,16 @@ async function inscription(email, mdp) {
     email, password: mdp, options: { emailRedirectTo: location.origin + location.pathname }
   });
   if (!error && data.session) { utilisateur = data.user; await apresConnexion(); }
+  return error;
+}
+async function envoyerResetMdp(email) {
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: location.origin + location.pathname
+  });
+  return error;
+}
+async function definirNouveauMdp(mdp) {
+  const { error } = await sb.auth.updateUser({ password: mdp });
   return error;
 }
 async function deconnexion() {
@@ -355,6 +373,7 @@ function ecranAuth() {
           <input id="email" type="email" inputmode="email" placeholder="${t("auth.email_ph")}" autocomplete="email">
           <input id="mdp" type="password" placeholder="${t("auth.mdp_ph")}" autocomplete="current-password">
           <button id="b-principal" class="gros-bouton planete">${t("auth.connexion")}</button>
+          <button id="b-oubli" class="lien-discret" type="button">${t("auth.mdp_oublie")}</button>
           <button id="b-signup" class="btn-secondaire">${t("auth.pas_compte")}</button>
           <div id="attente-bloc">
             <p class="note">${t("auth.attente_note")}</p>
@@ -391,12 +410,22 @@ function ecranAuth() {
   const bSignup = document.getElementById("b-signup");
   const blocAttente = document.getElementById("attente-bloc");
   const bWaitlist = document.getElementById("b-waitlist");
+  const bOubli = document.getElementById("b-oubli");
 
   const rafraichir = () => {
     bSignup.style.display = peutSinscrire ? "block" : "none";
     blocAttente.style.display = peutSinscrire ? "none" : "block";
+    bOubli.style.display = inscriptionMode ? "none" : "block";
     bPrinc.textContent = inscriptionMode ? t("auth.creer_compte") : t("auth.connexion");
     bSignup.textContent = inscriptionMode ? t("auth.deja_compte") : t("auth.pas_compte");
+  };
+  bOubli.onclick = async () => {
+    const email = elEmail.value.trim();
+    if (!email) return setMsg(t("auth.msg_entre_email"));
+    bOubli.disabled = true;
+    const err = await envoyerResetMdp(email);
+    bOubli.disabled = false;
+    setMsg(err ? t("auth.erreur", { msg: err.message }) : t("auth.msg_reset_envoye"));
   };
   bSignup.onclick = () => { inscriptionMode = !inscriptionMode; rafraichir(); };
   bPrinc.onclick = async () => {
@@ -425,6 +454,37 @@ function ecranAuth() {
   };
   document.getElementById("b-demo").onclick = demarrerDemo;
   rafraichir();
+}
+
+// Écran de réinitialisation : l'utilisateur choisit un nouveau mot de passe
+// après avoir cliqué sur le lien « mot de passe oublié » reçu par e-mail.
+function ecranNouveauMdp() {
+  document.body.innerHTML = `
+    <div class="landing landing-centre">
+      <section class="landing-form">
+        <div class="carte code-carte">
+          <div class="code-logo">🌟</div>
+          <h2 class="form-titre">${t("auth.reset_titre")}</h2>
+          <input id="reset-mdp" type="password" placeholder="${t("auth.reset_ph")}" autocomplete="new-password">
+          <button id="b-reset" class="gros-bouton planete">${t("auth.reset_valider")}</button>
+          <p class="note" id="auth-msg"></p>
+        </div>
+      </section>
+    </div>`;
+  const elMdp = document.getElementById("reset-mdp");
+  const bReset = document.getElementById("b-reset");
+  bReset.onclick = async () => {
+    const mdp = elMdp.value;
+    if (mdp.length < 8) return setMsg(t("auth.mdp_court"));
+    bReset.disabled = true;
+    const err = await definirNouveauMdp(mdp);
+    if (err) { bReset.disabled = false; return setMsg(t("auth.erreur", { msg: err.message })); }
+    setMsg(t("auth.reset_ok"));
+    nettoyerUrl();
+    utilisateur = (await sb.auth.getUser()).data.user;
+    await apresConnexion();
+  };
+  elMdp.focus();
 }
 
 // Mode démonstration : famille pré-remplie, 100 % hors-ligne, sans compte.
