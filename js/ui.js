@@ -1102,7 +1102,7 @@ function blocMissionsDuJour(enf) {
   const defauts = idsDefaut(enf);
   ["famille", "planete"].forEach(catId => {
     const cat = CATEGORIES[catId];
-    const dispo = toutesMissions().filter(m => m.cat === catId && age(enf) >= m.ageMin);
+    const dispo = toutesMissions().filter(m => m.cat === catId);   // toutes proposées
     if (!dispo.length) return;
     sec.appendChild(el("p", "sous-titre", `${cat.emoji} ${cat.nom}`));
     dispo.forEach(m => {

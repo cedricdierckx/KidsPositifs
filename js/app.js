@@ -410,15 +410,10 @@ function planEffectif(enf, jour) {
     .filter(d => Array.isArray(enf.planJour[d]) && d <= jour).sort();
   return dates.length ? enf.planJour[dates[dates.length - 1]] : null;
 }
-// Sélection par défaut, pertinente selon l'âge (les + prioritaires), ordre d'origine.
-function missionsDefautCat(enf, catId, n) {
-  n = n || NB_DEFAUT_PAR_CAT;
-  const dispo = toutesMissions().filter(m => m.cat === catId && age(enf) >= m.ageMin);
-  const choisis = new Set(
-    dispo.slice().sort((a, b) => (PRIO_DEFAUT[a.id] || 5) - (PRIO_DEFAUT[b.id] || 5))
-         .slice(0, n).map(m => m.id)
-  );
-  return dispo.filter(m => choisis.has(m.id));
+// Sélection par défaut = TOUTES les missions adaptées à l'âge de l'enfant
+// (cochées à la création ; les parents peuvent ensuite modifier librement).
+function missionsDefautCat(enf, catId) {
+  return toutesMissions().filter(m => m.cat === catId && age(enf) >= m.ageMin);
 }
 // Tous les ids proposés par défaut (toutes catégories).
 function idsDefaut(enf) {
@@ -427,7 +422,8 @@ function idsDefaut(enf) {
 function missionsActives(enf, catId, jour) {
   const plan = planEffectif(enf, jour);
   if (!plan) return missionsDefautCat(enf, catId);
-  return toutesMissions().filter(m => m.cat === catId && age(enf) >= m.ageMin && plan.includes(m.id));
+  // Le plan choisi par les parents fait foi (même au-delà de l'âge conseillé).
+  return toutesMissions().filter(m => m.cat === catId && plan.includes(m.id));
 }
 // Active/retire une mission du plan (mode parents) : vaut pour ce jour et les suivants.
 function basculerPlan(enf, jour, missionId) {

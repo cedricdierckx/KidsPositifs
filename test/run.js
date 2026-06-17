@@ -185,6 +185,19 @@ test("basculerPlan retire une mission pour ce jour ET les suivants", () => {
   assert.ok(!plan.includes(cible), "la mission retirée ne doit plus apparaître les jours suivants");
 });
 
+test("le choix parental fait foi, même au-delà de l'âge conseillé", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  api.lierEtat(api.etatVierge());
+  const enf = api.enfantActif();
+  const trop = api.MISSIONS.find(m => m.ageMin > api.age(enf));
+  if (!trop) return; // catalogue sans mission plus âgée
+  assert.ok(!api.idsDefaut(enf).includes(trop.id), "non cochée par défaut (hors âge)");
+  api.basculerPlan(enf, "2026-06-16", trop.id);
+  const actives = api.missionsActives(enf, trop.cat, "2026-06-16").map(m => m.id);
+  assert.ok(actives.includes(trop.id), "activable par les parents au-delà de l'âge");
+});
+
 test("planEffectif prend le modèle le plus récent <= jour", () => {
   const { api } = construireContexte();
   api.familleId = "f";
