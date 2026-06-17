@@ -566,6 +566,38 @@ function joursDepuisActivite(enf) {
   return Math.round((new Date(aujourdHui() + "T00:00:00") - last) / 86400000);
 }
 
+// Comportement : nb de missions réalisées par domaine (entraide / écologie).
+function missionsParCat(enf) {
+  let fam = 0, pla = 0;
+  Object.values(enf.journal || {}).forEach(j => Object.keys(j).forEach(mid => {
+    const m = (typeof trouverMission === "function") ? trouverMission(mid) : null;
+    if (!m) return;
+    if (m.cat === "planete") pla += j[mid]; else fam += j[mid];
+  }));
+  return { fam, pla, total: fam + pla };
+}
+
+// Lecture : relie le comportement (missions) aux choix (dépenses). Renvoie une
+// clé de phrase + les axes. Volontairement descriptif et bienveillant.
+function lectureComportement(enf) {
+  const mc = missionsParCat(enf);
+  const dons = enf.donsTotal || 0, avat = enf.avatarTotal || 0, dep = dons + avat;
+  const prosocial = mc.total ? Math.round((mc.fam / mc.total) * 100) : null;   // entraide vs écologie
+  const generosite = dep ? Math.round((dons / dep) * 100) : null;              // partage vs soi
+  let cle;
+  if (mc.total < 5 && dep === 0) cle = "stats.lecture_debut";
+  else if (dep === 0) cle = "stats.lecture_sansdepense";
+  else {
+    const aideHaut = prosocial !== null && prosocial >= 55;
+    const genHaut = generosite >= 55, genBas = generosite <= 35;
+    if (aideHaut && genHaut) cle = "stats.lecture_coherent_autres";
+    else if (aideHaut && genBas) cle = "stats.lecture_aide_garde";
+    else if (!aideHaut && genHaut) cle = "stats.lecture_partage_peu_aide";
+    else cle = "stats.lecture_equilibre";
+  }
+  return { mc, prosocial, generosite, dons, avat, cle };
+}
+
 // Espace statistiques : évolution de chaque enfant (utile aussi pour un suivi
 // psychologique : régularité, persévérance, équilibre prosocial/écologique).
 function blocStatistiques() {
@@ -679,6 +711,26 @@ function blocStatistiques() {
         html += `<div class="stat-top-ligne"><span>${(AVATAR_LIBELLES[cat] || cat)}</span><span class="stat-top-n">×${n}</span></div>`);
       html += `</div>`;
     }
+
+    // Profil & lecture : relie comportement et choix.
+    const lec = lectureComportement(enf);
+    html += `<p class="stat-graph-titre">${t("stats.profil_titre")}</p>`;
+    if (lec.mc.total > 0) {
+      html += `<div class="stat-axe"><span class="stat-axe-lbl">${t("stats.axe_entraide")} / ${t("stats.axe_ecologie")}</span>
+        <div class="stat-balance">
+          <div class="stat-balance-fam" style="width:${lec.prosocial}%">${lec.prosocial}%</div>
+          <div class="stat-balance-pla" style="width:${100 - lec.prosocial}%">${100 - lec.prosocial}%</div>
+        </div></div>`;
+    }
+    if (lec.generosite !== null) {
+      html += `<div class="stat-axe"><span class="stat-axe-lbl">${t("stats.axe_partage")} / ${t("stats.axe_soi")}</span>
+        <div class="stat-balance">
+          <div class="stat-dep-col" style="width:${lec.generosite}%">${lec.generosite}%</div>
+          <div class="stat-dep-ind" style="width:${100 - lec.generosite}%">${100 - lec.generosite}%</div>
+        </div></div>`;
+    }
+    html += `<p class="stat-lecture">${t(lec.cle, { prenom: echapper(enf.prenom) })}</p>
+      <p class="note stat-disclaimer">${t("stats.profil_note")}</p>`;
 
     sec.innerHTML = html;
     wrap.appendChild(sec);

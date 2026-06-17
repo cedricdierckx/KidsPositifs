@@ -1500,3 +1500,53 @@ Object.assign(I18N.de, {
   "stats.depenses_detail": "Gemeinsam (Karten): {col} 💛 · Individuell (Avatar): {ind} 💛",
   "stats.cartes_choix": "Unterstützte Überraschungskarten", "stats.avatar_choix": "Lieblings-Avatarstile"
 });
+
+/* ---- Statistiques : profil & lecture (comportement ↔ choix) ---- */
+Object.assign(I18N.fr, {
+  "stats.profil_titre": "🧭 Profil & lecture",
+  "stats.profil_note": "Indicatif, pour nourrir le dialogue — ce n'est pas un diagnostic.",
+  "stats.axe_entraide": "Entraide", "stats.axe_ecologie": "Écologie",
+  "stats.axe_partage": "Partage", "stats.axe_soi": "Pour soi",
+  "stats.lecture_debut": "Encore peu de données : laisse {prenom} jouer quelques jours pour voir son profil se dessiner. 🌱",
+  "stats.lecture_sansdepense": "{prenom} s'investit dans ses missions. Dès qu'il/elle dépensera ses Cœurs, on pourra relier ses choix (partage vs personnalisation) à son comportement.",
+  "stats.lecture_coherent_autres": "Comportement et choix convergent : {prenom} aide beaucoup ET partage volontiers ses Cœurs. Un profil tourné vers les autres. 💛",
+  "stats.lecture_aide_garde": "{prenom} aide beaucoup, mais préfère garder ses Cœurs pour son avatar. Aider et se faire plaisir peuvent très bien coexister. 🎨",
+  "stats.lecture_partage_peu_aide": "{prenom} partage volontiers ses Cœurs avec le collectif, même en faisant peu de missions d'entraide. Belle générosité ! 🎁",
+  "stats.lecture_equilibre": "{prenom} montre un bel équilibre entre entraide, écologie, partage et plaisir personnel. ⚖️"
+});
+Object.assign(I18N.en, {
+  "stats.profil_titre": "🧭 Profile & reading",
+  "stats.profil_note": "Indicative, to spark dialogue — not a diagnosis.",
+  "stats.axe_entraide": "Helping", "stats.axe_ecologie": "Ecology",
+  "stats.axe_partage": "Sharing", "stats.axe_soi": "For self",
+  "stats.lecture_debut": "Not much data yet: let {prenom} play a few days to see the profile emerge. 🌱",
+  "stats.lecture_sansdepense": "{prenom} is engaged in their missions. Once they start spending Hearts, we can link their choices (sharing vs personalising) to their behaviour.",
+  "stats.lecture_coherent_autres": "Behaviour and choices align: {prenom} helps a lot AND gladly shares their Hearts. An others-oriented profile. 💛",
+  "stats.lecture_aide_garde": "{prenom} helps a lot but prefers keeping Hearts for their avatar. Helping and treating oneself can coexist. 🎨",
+  "stats.lecture_partage_peu_aide": "{prenom} gladly shares Hearts with the group, even with few helping missions. Lovely generosity! 🎁",
+  "stats.lecture_equilibre": "{prenom} shows a nice balance between helping, ecology, sharing and personal enjoyment. ⚖️"
+});
+Object.assign(I18N.nl, {
+  "stats.profil_titre": "🧭 Profiel & duiding",
+  "stats.profil_note": "Indicatief, om het gesprek te voeden — geen diagnose.",
+  "stats.axe_entraide": "Helpen", "stats.axe_ecologie": "Ecologie",
+  "stats.axe_partage": "Delen", "stats.axe_soi": "Voor zichzelf",
+  "stats.lecture_debut": "Nog weinig gegevens: laat {prenom} een paar dagen spelen om het profiel te zien ontstaan. 🌱",
+  "stats.lecture_sansdepense": "{prenom} zet zich in voor de missies. Zodra hij/zij Hartjes uitgeeft, kunnen we de keuzes (delen vs personaliseren) aan het gedrag koppelen.",
+  "stats.lecture_coherent_autres": "Gedrag en keuzes komen overeen: {prenom} helpt veel ÉN deelt graag Hartjes. Een op anderen gericht profiel. 💛",
+  "stats.lecture_aide_garde": "{prenom} helpt veel, maar houdt Hartjes liever voor de avatar. Helpen en jezelf verwennen kunnen samengaan. 🎨",
+  "stats.lecture_partage_peu_aide": "{prenom} deelt graag Hartjes met de groep, zelfs met weinig hulpmissies. Mooie vrijgevigheid! 🎁",
+  "stats.lecture_equilibre": "{prenom} toont een mooi evenwicht tussen helpen, ecologie, delen en persoonlijk plezier. ⚖️"
+});
+Object.assign(I18N.de, {
+  "stats.profil_titre": "🧭 Profil & Deutung",
+  "stats.profil_note": "Orientierend, um das Gespräch zu fördern — keine Diagnose.",
+  "stats.axe_entraide": "Helfen", "stats.axe_ecologie": "Ökologie",
+  "stats.axe_partage": "Teilen", "stats.axe_soi": "Für sich",
+  "stats.lecture_debut": "Noch wenig Daten: lass {prenom} ein paar Tage spielen, damit das Profil sichtbar wird. 🌱",
+  "stats.lecture_sansdepense": "{prenom} engagiert sich in den Missionen. Sobald Herzen ausgegeben werden, können wir die Entscheidungen (Teilen vs. Personalisieren) mit dem Verhalten verknüpfen.",
+  "stats.lecture_coherent_autres": "Verhalten und Entscheidungen passen zusammen: {prenom} hilft viel UND teilt gern Herzen. Ein auf andere ausgerichtetes Profil. 💛",
+  "stats.lecture_aide_garde": "{prenom} hilft viel, behält Herzen aber lieber für den Avatar. Helfen und sich etwas gönnen passen gut zusammen. 🎨",
+  "stats.lecture_partage_peu_aide": "{prenom} teilt gern Herzen mit der Gruppe, selbst bei wenigen Hilfsmissionen. Schöne Großzügigkeit! 🎁",
+  "stats.lecture_equilibre": "{prenom} zeigt eine schöne Balance zwischen Helfen, Ökologie, Teilen und persönlichem Vergnügen. ⚖️"
+});

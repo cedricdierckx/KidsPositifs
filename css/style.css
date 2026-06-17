@@ -505,6 +505,11 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .stat-balance-pla{background:var(--planete); display:flex; align-items:center; justify-content:center; min-width:fit-content; padding:0 6px}
 .stat-dep-col{background:#a78bfa; display:flex; align-items:center; justify-content:center; min-width:fit-content; padding:0 6px; color:#fff; font-weight:800; font-size:12px}
 .stat-dep-ind{background:#5b8def; display:flex; align-items:center; justify-content:center; min-width:fit-content; padding:0 6px; color:#fff; font-weight:800; font-size:12px}
+.stat-axe{margin:4px 0 8px}
+.stat-axe-lbl{font-size:12px; font-weight:700; color:var(--doux)}
+.stat-lecture{font-size:14px; line-height:1.5; background:#f0f6ff; border-left:4px solid #5b8def;
+  border-radius:0 10px 10px 0; padding:10px 12px; margin:8px 0 4px!important; color:var(--texte)!important}
+.stat-disclaimer{font-style:italic}
 .stat-top{display:grid; gap:4px}
 .stat-top-ligne{display:flex; justify-content:space-between; font-size:14px; padding:4px 0;
   border-bottom:1px solid #eef2f7}
