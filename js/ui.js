@@ -240,7 +240,7 @@ function blocAdmin() {
   champsDon.forEach(([key, label]) => {
     const l = el("label", "champ", label);
     const inp = el("input");
-    if (key === "support_email") { inp.type = "email"; inp.placeholder = "hello@famiteam.com"; }
+    if (key === "support_email") { inp.type = "email"; inp.placeholder = "hello@fami.team"; }
     else { inp.type = "url"; inp.placeholder = "https://buy.stripe.com/…"; }
     inp.value = cfg[key] || "";
     l.appendChild(inp); sec.appendChild(l);
@@ -1751,10 +1751,10 @@ function vueReglages(c) {
 
 // Module de signalement (bug / suggestion) — réservé aux early adopters.
 // Transmet par e-mail (mailto) à l'adresse de support.
-// Adresse de support : configurable par l'admin (app_config), défaut hello@famiteam.com.
+// Adresse de support : configurable par l'admin (app_config), défaut hello@fami.team.
 function emailSupport() {
   const cfg = (typeof configApp !== "undefined") ? configApp : {};
-  return cfg.support_email || "hello@famiteam.com";
+  return cfg.support_email || "hello@fami.team";
 }
 function blocFeedback() {
   const sec = el("section", "carte feedback-carte");
