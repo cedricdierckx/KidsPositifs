@@ -1670,3 +1670,9 @@ Object.assign(I18N.fr, { "par.prog.seuil_visuel": "Affichage imagé (sans chiffr
 Object.assign(I18N.en, { "par.prog.seuil_visuel": "Picture display (no numbers) up to age" });
 Object.assign(I18N.nl, { "par.prog.seuil_visuel": "Weergave met beeldjes (zonder cijfers) tot de leeftijd van" });
 Object.assign(I18N.de, { "par.prog.seuil_visuel": "Bildanzeige (ohne Zahlen) bis zum Alter von" });
+
+/* ---- Admin : adresse de support ---- */
+Object.assign(I18N.fr, { "admin.support_email": "Adresse de support (réception des retours)" });
+Object.assign(I18N.en, { "admin.support_email": "Support address (receives feedback)" });
+Object.assign(I18N.nl, { "admin.support_email": "Support-adres (ontvangt feedback)" });
+Object.assign(I18N.de, { "admin.support_email": "Support-Adresse (empfängt Rückmeldungen)" });

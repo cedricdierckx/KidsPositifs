@@ -227,6 +227,7 @@ function blocAdmin() {
   sec.appendChild(aide);
   const cfg = (typeof configApp !== "undefined") ? configApp : {};
   const champsDon = [
+    ["support_email", t("admin.support_email")],
     ["don_once_10", t("don.ponctuel") + " — 10 €"],
     ["don_once_20", t("don.ponctuel") + " — 20 €"],
     ["don_once_50", t("don.ponctuel") + " — 50 €"],
@@ -239,7 +240,9 @@ function blocAdmin() {
   champsDon.forEach(([key, label]) => {
     const l = el("label", "champ", label);
     const inp = el("input");
-    inp.type = "url"; inp.placeholder = "https://buy.stripe.com/…"; inp.value = cfg[key] || "";
+    if (key === "support_email") { inp.type = "email"; inp.placeholder = "hello@famiteam.com"; }
+    else { inp.type = "url"; inp.placeholder = "https://buy.stripe.com/…"; }
+    inp.value = cfg[key] || "";
     l.appendChild(inp); sec.appendChild(l);
     inputsDon[key] = inp;
   });
@@ -1748,7 +1751,11 @@ function vueReglages(c) {
 
 // Module de signalement (bug / suggestion) — réservé aux early adopters.
 // Transmet par e-mail (mailto) à l'adresse de support.
-const FEEDBACK_EMAIL = "cedric.dierckx@gmail.com";
+// Adresse de support : configurable par l'admin (app_config), défaut hello@famiteam.com.
+function emailSupport() {
+  const cfg = (typeof configApp !== "undefined") ? configApp : {};
+  return cfg.support_email || "hello@famiteam.com";
+}
 function blocFeedback() {
   const sec = el("section", "carte feedback-carte");
   sec.innerHTML = `<h2>${t("fb.titre")}</h2><p class="note">${t("fb.sous")}</p>`;
@@ -1783,7 +1790,7 @@ function blocFeedback() {
     } catch (e) { /* on garde l'e-mail comme repli */ }
     const sujet = encodeURIComponent(`${APP_NOM} — ${type}`);
     const corps = encodeURIComponent(`${msg}\n\n--- Contexte technique ---\n${contexte}`);
-    location.href = `mailto:${FEEDBACK_EMAIL}?subject=${sujet}&body=${corps}`;
+    location.href = `mailto:${emailSupport()}?subject=${sujet}&body=${corps}`;
     toast(t("fb.merci"), "succes");
   };
   sec.appendChild(selType); sec.appendChild(ta); sec.appendChild(b);
