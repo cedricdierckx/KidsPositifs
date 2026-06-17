@@ -30,7 +30,7 @@ const I18N = {
     "auth.concept_titre": "🎁 Toute la famille, dans la même équipe",
     "auth.concept_texte": "{app} aide les parents à instaurer une ambiance positive à la maison et à aligner toute la famille sur les tâches du quotidien 🏡 et la protection de la planète 🌍 — en douceur, par l'encouragement. L'accès se fait sur invitation : chaque famille peut parrainer 3 familles amies par semaine. 🤝",
     "auth.parrain_generique": "🎁 Tu as été parrainé·e ! Crée ton compte pour lancer ta propre famille.",
-    "auth.parrain_nomme": "🎁 {nom} t'invite à découvrir {app} ! Crée ton compte pour lancer ta propre famille.",
+    "auth.parrain_nomme": "🎁 {nom} t'invite(nt) à découvrir {app} ! Crée ton compte pour lancer ta propre famille.",
     "auth.msg_entre_email": "Entre ton adresse e-mail.",
     "auth.msg_email_envoye": "📧 E-mail envoyé ! Clique sur le lien reçu pour te connecter.",
     "auth.msg_compte_cree": "Compte créé. Vérifie ta boîte mail si une confirmation est demandée.",
