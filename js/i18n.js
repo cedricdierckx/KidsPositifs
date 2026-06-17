@@ -1612,3 +1612,21 @@ Object.assign(I18N.fr, { "stats.ressenti": "Ressenti jour par jour (14 j) — �
 Object.assign(I18N.en, { "stats.ressenti": "Daily mood (14 d) — 🧒 child / 👤 parent" });
 Object.assign(I18N.nl, { "stats.ressenti": "Dagelijks gevoel (14 d) — 🧒 kind / 👤 ouder" });
 Object.assign(I18N.de, { "stats.ressenti": "Tägliches Gefühl (14 T) — 🧒 Kind / 👤 Eltern" });
+
+/* ---- Évaluation : porte sur le COMPORTEMENT (corrige les libellés) ---- */
+Object.assign(I18N.fr, {
+  "eval.titre_enfant": "Comment je me suis comporté·e aujourd'hui ?",
+  "eval.titre_parent": "Comportement de {prenom} aujourd'hui (facultatif)"
+});
+Object.assign(I18N.en, {
+  "eval.titre_enfant": "How did I behave today?",
+  "eval.titre_parent": "{prenom}'s behaviour today (optional)"
+});
+Object.assign(I18N.nl, {
+  "eval.titre_enfant": "Hoe heb ik me vandaag gedragen?",
+  "eval.titre_parent": "Gedrag van {prenom} vandaag (optioneel)"
+});
+Object.assign(I18N.de, {
+  "eval.titre_enfant": "Wie habe ich mich heute verhalten?",
+  "eval.titre_parent": "{prenom}s Verhalten heute (optional)"
+});
