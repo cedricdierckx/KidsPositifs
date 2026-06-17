@@ -383,6 +383,14 @@ main{max-width:680px; margin:0 auto; padding:14px}
   font-weight:800; text-transform:uppercase; letter-spacing:.5px; color:var(--doux)}
 .grp-titre:first-of-type{margin-top:10px}
 
+/* ---- Soutien / don ---- */
+.don-carte{background:linear-gradient(160deg,#fff6e9,#ffeef4); border:2px solid #ffe0c2}
+.don-gratuit{font-weight:800; color:#1c8a5b!important; margin:.2em 0!important}
+.don-texte{font-size:14px; line-height:1.5; color:var(--texte)!important}
+.don-bouton{display:block; text-align:center; text-decoration:none;
+  background:linear-gradient(135deg,#ffd25e,#f6a623); margin-top:8px}
+.don-merci{font-size:13px; color:var(--doux)!important; text-align:center; margin:8px 0 0!important}
+
 /* ---- Module bug / suggestion ---- */
 .feedback-carte .fb-type{width:100%; padding:12px; border:2px solid #e3edf5; border-radius:12px;
   font-family:inherit; font-size:15px; margin:6px 0 8px; background:#fff}

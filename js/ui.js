@@ -652,6 +652,21 @@ function blocStatistiques() {
 }
 
 /* ---------- Vue Missions (famille / planète) ---------- */
+// Soutien : don 100 % facultatif. L'app est et restera gratuite.
+function blocDon() {
+  const url = (window.KP_CONFIG && window.KP_CONFIG.DON_URL) || "";
+  const sec = el("section", "carte don-carte");
+  let html = `<h2>${t("don.titre")}</h2>
+    <p class="don-gratuit">${t("don.gratuit")}</p>
+    <p class="don-texte">${t("don.texte", { app: APP_NOM })}</p>`;
+  if (url) {
+    html += `<a class="gros-bouton don-bouton" href="${url}" target="_blank" rel="noopener">${t("don.bouton")}</a>
+      <p class="don-merci">${t("don.merci")}</p>`;
+  }
+  sec.innerHTML = html;
+  return sec;
+}
+
 // Défis réparation (alternative bienveillante à la punition).
 function blocReparation() {
   const rep = el("section", "carte reparation");
@@ -1232,6 +1247,9 @@ function vueReglages(c) {
 
   // ----- Corrections pour l'enfant sélectionné -----
   c.appendChild(blocCorrections(enfantActif()));
+
+  // ----- Soutien (don facultatif) -----
+  c.appendChild(blocDon());
 
   } /* fin onglet quotidien */
 
