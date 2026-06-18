@@ -245,9 +245,17 @@ function normaliser(e) {
 }
 
 /* ---------- Utilitaires ---------- */
+// Clé de jour AAAA-MM-JJ en heure LOCALE (et non UTC) : indispensable pour que
+// « aujourd'hui » corresponde au calendrier mural de la famille. Utiliser
+// toISOString() (UTC) décalait les clés d'un jour en soirée (fuseaux UTC+).
+function dateCle(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const j = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${j}`;
+}
 function aujourdHui() {
-  const d = new Date();
-  return d.toISOString().slice(0, 10);
+  return dateCle(new Date());
 }
 // Âge en années révolues à partir d'une date AAAA-MM-JJ.
 function ageDepuis(dateNaissance) {

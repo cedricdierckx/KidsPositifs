@@ -527,7 +527,7 @@ function blocEval(enf, mode) {
     const labels = [t("eval.aujourdhui"), t("eval.hier"), t("eval.avant_hier")];
     for (let i = 0; i < 3; i++) {
       const d = new Date(base); d.setDate(base.getDate() - i);
-      const cle = d.toISOString().slice(0, 10);
+      const cle = dateCle(d);
       const courant = (enf.evalParent || {})[cle];
       const ligne = el("div", "eval-jour");
       ligne.appendChild(el("span", "eval-jour-lbl", labels[i] + (courant ? " ✓" : "")));
@@ -739,7 +739,7 @@ function statsJournalieres(enf, nbJours) {
   const base = new Date(aujourdHui() + "T00:00:00");
   for (let i = nbJours - 1; i >= 0; i--) {
     const d = new Date(base); d.setDate(base.getDate() - i);
-    const cle = d.toISOString().slice(0, 10);
+    const cle = dateCle(d);
     const j = enf.journal[cle] || {};
     let coeurs = 0, gouttes = 0;
     Object.keys(j).forEach(mid => {
@@ -761,10 +761,10 @@ function serieActuelle(enf) {
   const base = new Date(aujourdHui() + "T00:00:00");
   // On tolère un démarrage hier (si rien fait aujourd'hui encore).
   let depart = 0;
-  if (!set.has(base.toISOString().slice(0, 10))) depart = 1;
+  if (!set.has(dateCle(base))) depart = 1;
   let streak = 0;
   const d = new Date(base); d.setDate(base.getDate() - depart);
-  while (set.has(d.toISOString().slice(0, 10))) { streak++; d.setDate(d.getDate() - 1); }
+  while (set.has(dateCle(d))) { streak++; d.setDate(d.getDate() - 1); }
   return streak;
 }
 // Plus longue série de jours consécutifs jamais réalisée.
@@ -783,7 +783,7 @@ function actifsDerniers(enf, n) {
   const set = joursActifsSet(enf);
   const base = new Date(aujourdHui() + "T00:00:00");
   let cpt = 0;
-  for (let i = 0; i < n; i++) { const d = new Date(base); d.setDate(base.getDate() - i); if (set.has(d.toISOString().slice(0, 10))) cpt++; }
+  for (let i = 0; i < n; i++) { const d = new Date(base); d.setDate(base.getDate() - i); if (set.has(dateCle(d))) cpt++; }
   return cpt;
 }
 // Missions les plus réalisées (toutes périodes) : [[id, n], ...].
@@ -941,7 +941,7 @@ function blocStatistiques() {
       const base = new Date(aujourdHui() + "T00:00:00");
       const c = { bien: 0, moyen: 0, mauvais: 0 };
       for (let i = 0; i < 30; i++) { const d = new Date(base); d.setDate(base.getDate() - i);
-        const v = (m || {})[d.toISOString().slice(0, 10)]; if (v && c[v] !== undefined) c[v]++; }
+        const v = (m || {})[dateCle(d)]; if (v && c[v] !== undefined) c[v]++; }
       return c;
     };
     const ae = compteEval(enf.autoEval), pe = compteEval(enf.evalParent);
@@ -958,7 +958,7 @@ function blocStatistiques() {
       let cE = "", cP = "", cJ = "";
       for (let i = 13; i >= 0; i--) {
         const d = new Date(base); d.setDate(base.getDate() - i);
-        const cle = d.toISOString().slice(0, 10);
+        const cle = dateCle(d);
         const ve = (enf.autoEval || {})[cle], vp = (enf.evalParent || {})[cle];
         cE += `<span class="stat-eval-c">${ve ? EMO[ve] : "·"}</span>`;
         cP += `<span class="stat-eval-c">${vp ? EMO[vp] : "·"}</span>`;
