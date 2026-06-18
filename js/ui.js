@@ -361,7 +361,7 @@ function montrerLienInvitation(conteneur, lien, note, mailto) {
       if (typeof sb === "undefined" || !sb || demo) { ouvrirMailto(to); return; }
       mail.disabled = true; mail.textContent = t("common.creation"); setRetour("");
       try {
-        const { error } = await sb.functions.invoke("send-invite", {
+        const { error } = await sb.functions.invoke("send-mail", {
           body: { to, subject: mailto.sujet || "", text: corps }
         });
         if (error) throw error;
@@ -1913,10 +1913,12 @@ function blocFeedback() {
     let envoye = false;
     b.disabled = true; b.textContent = t("common.creation");
     if (typeof sb !== "undefined" && sb && !demo) {
-      // 1) Envoi automatique par e-mail (depuis hello@fami.team via SMTP OVH).
+      // 1) Envoi automatique par e-mail (fonction commune send-mail, via SMTP OVH).
       try {
-        const { error } = await sb.functions.invoke("send-feedback", {
-          body: { type: selType.value, message: msg, context: ctxObj, email: u ? u.email : null }
+        const sujet = `${APP_NOM} — ${type}`;
+        const corps = `${msg}\n\n--- Contexte ---\n${JSON.stringify(ctxObj, null, 2)}\nDe : ${u && u.email ? u.email : "—"}`;
+        const { error } = await sb.functions.invoke("send-mail", {
+          body: { to: emailSupport(), subject: sujet, text: corps, replyTo: u ? u.email : undefined }
         });
         if (!error) envoye = true;
       } catch (e) { /* repli mailto plus bas */ }

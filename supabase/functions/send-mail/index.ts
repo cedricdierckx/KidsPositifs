@@ -1,9 +1,13 @@
 // =====================================================================
-// FamiTeam — Edge Function : envoi d'une invitation par e-mail
+// FamiTeam — Edge Function UNIQUE pour tous les envois d'e-mail
 // ---------------------------------------------------------------------
-// Envoie un e-mail d'invitation DEPUIS hello@fami.team via SMTP (OVH),
-// en utilisant npm:nodemailer (fiable sur le runtime Deno 2.x de Supabase,
-// contrairement à denomailer). Appelant authentifié requis.
+// Envoie n'importe quel e-mail DEPUIS hello@fami.team via SMTP (OVH),
+// avec npm:nodemailer (fiable sur le runtime Deno 2.x de Supabase).
+// Toutes les fonctionnalités (invitations, retours bug/suggestion, test…)
+// passent par ici : il n'y a donc qu'UNE fonction à déployer/configurer.
+//
+// Corps attendu (JSON) :
+//   { "to": "...", "subject": "...", "text": "...", "replyTo": "..."? }
 //
 // Secrets requis (Supabase → Edge Functions → Secrets) :
 //   SMTP_HOST   ex. "ssl0.ovh.net"
@@ -50,8 +54,9 @@ Deno.serve(async (req) => {
   let body: any;
   try { body = await req.json(); } catch { body = {}; }
   const to = (body?.to ?? "").toString().trim();
-  const subject = (body?.subject ?? "FamiTeam — Invitation").toString();
+  const subject = (body?.subject ?? "FamiTeam").toString();
   const text = (body?.text ?? "").toString();
+  const replyTo = body?.replyTo ? String(body.replyTo) : undefined;
   if (!to) return json({ error: "Destinataire manquant" }, 400);
   if (!text) return json({ error: "Message vide" }, 400);
   if (!SMTP_USER || !SMTP_PASS) return json({ error: "SMTP non configuré (secrets manquants)" }, 500);
@@ -63,7 +68,7 @@ Deno.serve(async (req) => {
       secure: SMTP_PORT === 465,   // 465 = SSL implicite ; 587 = STARTTLS
       auth: { user: SMTP_USER, pass: SMTP_PASS },
     });
-    await transporter.sendMail({ from: SMTP_FROM, to, subject, text });
+    await transporter.sendMail({ from: SMTP_FROM, to, replyTo, subject, text });
     return json({ ok: true, to });
   } catch (e) {
     return json({ error: String(e) }, 502);
