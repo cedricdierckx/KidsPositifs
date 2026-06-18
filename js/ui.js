@@ -361,46 +361,24 @@ function montrerLienInvitation(conteneur, lien, note, mailto) {
     setTimeout(() => (copier.textContent = t("lien.copier")), 1500);
   };
   box.appendChild(inp); box.appendChild(copier);
-  // Option : envoyer l'invitation par e-mail. On essaie d'abord l'envoi
-  // automatique depuis hello@fami.team (Edge Function) ; en cas d'échec, on
-  // bascule sur le client mail de l'utilisateur (mailto:).
+  // Envoi de l'invitation par e-mail via le client mail de l'utilisateur (mailto:).
+  // Choix volontaire : l'e-mail part de la VRAIE adresse du parent → on sait qui
+  // invite, et il n'atterrit pas dans les spams (contrairement à un envoi
+  // automatique depuis un domaine récent).
   if (mailto) {
     const destinataire = el("input", "aj-val");
     destinataire.type = "email"; destinataire.style.width = "100%";
     destinataire.placeholder = t("lien.email_dest_ph");
     const corps = (mailto.corps || "").replace("{lien}", lien);
-    const mail = el("button", "btn-secondaire btn-mail", t("lien.envoyer_mail"));
-    const retour = el("p"); // message de résultat (sans cadre si vide)
-    const setRetour = (txt, type) => {
-      if (!txt) { retour.textContent = ""; retour.className = ""; return; }
-      retour.textContent = txt; retour.className = "msg-retour " + (type === "ok" ? "msg-ok" : "msg-err");
+    const mail = el("a", "btn-secondaire btn-mail", t("lien.envoyer_mail"));
+    const majLien = () => {
+      mail.href = `mailto:${encodeURIComponent(destinataire.value.trim())}?subject=${encodeURIComponent(mailto.sujet || "")}&body=${encodeURIComponent(corps)}`;
     };
-    const ouvrirMailto = (to) => {
-      window.location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(mailto.sujet || "")}&body=${encodeURIComponent(corps)}`;
-    };
-    mail.onclick = async () => {
-      const to = destinataire.value.trim();
-      if (!to) { destinataire.focus(); return; }
-      const demo = (typeof modeDemo !== "undefined" && modeDemo);
-      if (typeof sb === "undefined" || !sb || demo) { ouvrirMailto(to); return; }
-      mail.disabled = true; mail.textContent = t("common.creation"); setRetour("");
-      const res = await envoyerMailFn({ to, subject: mailto.sujet || "", text: corps });
-      mail.disabled = false; mail.textContent = t("lien.envoyer_mail");
-      if (res.ok) {
-        setRetour(t("lien.envoye", { email: to }), "ok");
-        toast(t("lien.envoye", { email: to }), "succes");
-      } else {
-        // On affiche l'erreur précise + un bouton de repli explicite (mailto).
-        setRetour(t("lien.envoi_erreur", { msg: res.detail }), "err");
-        const repli = el("button", "btn-secondaire", t("lien.repli_mailto"));
-        repli.onclick = () => ouvrirMailto(to);
-        retour.appendChild(document.createElement("br"));
-        retour.appendChild(repli);
-      }
-    };
+    destinataire.oninput = majLien;
+    mail.onclick = (e) => { if (!destinataire.value.trim()) { e.preventDefault(); destinataire.focus(); } };
+    majLien();
     box.appendChild(destinataire);
     box.appendChild(mail);
-    box.appendChild(retour);
   }
   box.appendChild(el("p", "note", note || t("lien.valable")));
 }
