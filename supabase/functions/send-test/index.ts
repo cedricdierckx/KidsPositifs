@@ -13,7 +13,8 @@
 //   SMTP_FROM   expéditeur, ex. "hello@fami.team"  (facultatif, défaut = SMTP_USER)
 // (SUPABASE_URL et SUPABASE_ANON_KEY sont fournis automatiquement.)
 // =====================================================================
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+// On utilise Deno.serve natif (et non l'ancien `serve` de la lib standard)
+// pour éviter les erreurs « event loop / BadResource » avec denomailer.
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const SMTP_HOST = Deno.env.get("SMTP_HOST") ?? "ssl0.ovh.net";
@@ -32,7 +33,7 @@ const cors = {
 const json = (obj: unknown, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Méthode non autorisée" }, 405);
 
