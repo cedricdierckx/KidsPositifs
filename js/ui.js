@@ -219,7 +219,7 @@ function blocAdmin() {
   };
   sec.appendChild(bW); sec.appendChild(listeW);
 
-  // ----- Test d'envoi d'e-mail (depuis hello@fami.team via Resend) -----
+  // ----- Test d'envoi d'e-mail (depuis hello@fami.team via SMTP OVH) -----
   sec.appendChild(el("h2", null, t("admin.mailtest_titre")));
   sec.appendChild(el("p", "note", t("admin.mailtest_note")));
   const lDest = el("label", "champ", t("admin.mailtest_dest"));
@@ -1818,7 +1818,7 @@ function blocFeedback() {
     let envoye = false;
     b.disabled = true; b.textContent = t("common.creation");
     if (typeof sb !== "undefined" && sb && !demo) {
-      // 1) Envoi automatique par e-mail (depuis hello@fami.team via Resend).
+      // 1) Envoi automatique par e-mail (depuis hello@fami.team via SMTP OVH).
       try {
         const { error } = await sb.functions.invoke("send-feedback", {
           body: { type: selType.value, message: msg, context: ctxObj, email: u ? u.email : null }
