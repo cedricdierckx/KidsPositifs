@@ -44,6 +44,7 @@ const I18N = {
     "auth.reset_ph": "Nouveau mot de passe (8 caractères min.)",
     "auth.reset_valider": "Enregistrer le mot de passe",
     "auth.reset_ok": "✅ Mot de passe mis à jour ! Tu es connecté·e.",
+    "auth.reset_retour": "← Retour à la connexion",
     "auth.mdp_court": "Le mot de passe doit comporter au moins 8 caractères."
   },
   en: {
@@ -80,6 +81,7 @@ const I18N = {
     "auth.reset_ph": "New password (min. 8 characters)",
     "auth.reset_valider": "Save password",
     "auth.reset_ok": "✅ Password updated! You're logged in.",
+    "auth.reset_retour": "← Back to login",
     "auth.mdp_court": "The password must be at least 8 characters long."
   },
   nl: {
@@ -116,6 +118,7 @@ const I18N = {
     "auth.reset_ph": "Nieuw wachtwoord (min. 8 tekens)",
     "auth.reset_valider": "Wachtwoord opslaan",
     "auth.reset_ok": "✅ Wachtwoord bijgewerkt! Je bent ingelogd.",
+    "auth.reset_retour": "← Terug naar inloggen",
     "auth.mdp_court": "Het wachtwoord moet minstens 8 tekens lang zijn."
   },
   de: {
@@ -152,6 +155,7 @@ const I18N = {
     "auth.reset_ph": "Neues Passwort (mind. 8 Zeichen)",
     "auth.reset_valider": "Passwort speichern",
     "auth.reset_ok": "✅ Passwort aktualisiert! Du bist angemeldet.",
+    "auth.reset_retour": "← Zurück zur Anmeldung",
     "auth.mdp_court": "Das Passwort muss mindestens 8 Zeichen lang sein."
   }
 };

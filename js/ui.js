@@ -228,19 +228,25 @@ function blocAdmin() {
   inpDest.value = (moi && moi.email) ? moi.email : "";
   lDest.appendChild(inpDest); sec.appendChild(lDest);
   const bMail = el("button", "btn-secondaire", t("admin.mailtest_envoyer"));
-  const msgMail = el("p", "note");
+  const msgMail = el("p");
+  // Affiche un message uniquement quand il y en a un (sinon : aucun cadre gris).
+  const afficherMsg = (txt, type) => {
+    if (!txt) { msgMail.textContent = ""; msgMail.className = ""; return; }
+    msgMail.textContent = txt;
+    msgMail.className = "msg-retour " + (type === "ok" ? "msg-ok" : "msg-err");
+  };
   bMail.onclick = async () => {
     const to = inpDest.value.trim();
     if (!to) { inpDest.focus(); return; }
-    if (typeof sb === "undefined" || !sb) { msgMail.textContent = t("admin.mailtest_indispo"); return; }
-    bMail.disabled = true; bMail.textContent = t("common.creation"); msgMail.textContent = "";
+    if (typeof sb === "undefined" || !sb) { afficherMsg(t("admin.mailtest_indispo"), "err"); return; }
+    bMail.disabled = true; bMail.textContent = t("common.creation"); afficherMsg("");
     try {
       const { error } = await sb.functions.invoke("send-test", { body: { to } });
       if (error) throw error;
-      msgMail.textContent = t("admin.mailtest_ok", { email: to });
+      afficherMsg(t("admin.mailtest_ok", { email: to }), "ok");
       toast(t("admin.mailtest_ok", { email: to }), "succes");
     } catch (e) {
-      msgMail.textContent = t("admin.mailtest_ko", { msg: (e && e.message) ? e.message : String(e) });
+      afficherMsg(t("admin.mailtest_ko", { msg: (e && e.message) ? e.message : String(e) }), "err");
     } finally {
       bMail.disabled = false; bMail.textContent = t("admin.mailtest_envoyer");
     }

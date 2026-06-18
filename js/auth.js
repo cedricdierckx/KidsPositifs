@@ -468,11 +468,13 @@ function ecranNouveauMdp() {
           <input id="reset-mdp" type="password" placeholder="${t("auth.reset_ph")}" autocomplete="new-password">
           <button id="b-reset" class="gros-bouton planete">${t("auth.reset_valider")}</button>
           <p class="note" id="auth-msg"></p>
+          <button id="b-retour" class="btn-secondaire">${t("auth.reset_retour")}</button>
         </div>
       </section>
     </div>`;
   const elMdp = document.getElementById("reset-mdp");
   const bReset = document.getElementById("b-reset");
+  document.getElementById("b-retour").onclick = () => { nettoyerUrl(); ecranAuth(); };
   bReset.onclick = async () => {
     const mdp = elMdp.value;
     if (mdp.length < 8) return setMsg(t("auth.mdp_court"));
