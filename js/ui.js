@@ -219,7 +219,10 @@ function blocAdmin() {
   };
   sec.appendChild(bW); sec.appendChild(listeW);
 
-  // ----- Test d'envoi d'e-mail (depuis hello@fami.team via SMTP OVH) -----
+  // ----- Test d'envoi d'e-mail (via le SMTP de Supabase Auth) -----
+  // On déclenche un e-mail de réinitialisation : il emprunte EXACTEMENT le
+  // même chemin que les e-mails de confirmation / mot de passe oublié.
+  // (L'envoi n'aboutit que si l'adresse correspond à un compte existant.)
   sec.appendChild(el("h2", null, t("admin.mailtest_titre")));
   sec.appendChild(el("p", "note", t("admin.mailtest_note")));
   const lDest = el("label", "champ", t("admin.mailtest_dest"));
@@ -229,80 +232,29 @@ function blocAdmin() {
   lDest.appendChild(inpDest); sec.appendChild(lDest);
   const bMail = el("button", "btn-secondaire", t("admin.mailtest_envoyer"));
   const msgMail = el("p");
-  // Bloc diagnostic copiable (affiché uniquement en cas d'échec réseau/CORS).
-  const diag = el("div", "diag-bloc"); diag.style.display = "none";
-  // Affiche un message uniquement quand il y en a un (sinon : aucun cadre gris).
   const afficherMsg = (txt, type) => {
     if (!txt) { msgMail.textContent = ""; msgMail.className = ""; return; }
     msgMail.textContent = txt;
     msgMail.className = "msg-retour " + (type === "ok" ? "msg-ok" : "msg-err");
   };
-  const montrerDiag = (rapport) => {
-    diag.style.display = "block";
-    diag.innerHTML = "";
-    diag.appendChild(el("p", "note", t("admin.mailtest_diag_intro")));
-    const pre = el("pre", "diag-texte"); pre.textContent = rapport;
-    diag.appendChild(pre);
-    const bCopie = el("button", "btn-secondaire", t("admin.mailtest_copier"));
-    bCopie.onclick = async () => {
-      try { await navigator.clipboard.writeText(rapport); bCopie.textContent = t("lien.copie"); }
-      catch { /* sélection manuelle possible */ }
-      setTimeout(() => (bCopie.textContent = t("admin.mailtest_copier")), 1500);
-    };
-    diag.appendChild(bCopie);
-  };
   bMail.onclick = async () => {
     const to = inpDest.value.trim();
     if (!to) { inpDest.focus(); return; }
     if (typeof sb === "undefined" || !sb) { afficherMsg(t("admin.mailtest_indispo"), "err"); return; }
-    bMail.disabled = true; bMail.textContent = t("common.creation"); afficherMsg(""); diag.style.display = "none";
-    const cfg = window.KP_CONFIG || {};
-    const url = (cfg.SUPABASE_URL || "") + "/functions/v1/send-test";
-    // On récupère le jeton de session pour l'authentification.
-    let token = "";
-    try { const s = await sb.auth.getSession(); token = (s && s.data && s.data.session) ? s.data.session.access_token : ""; } catch (e) { /* ignore */ }
+    bMail.disabled = true; bMail.textContent = t("common.creation"); afficherMsg("");
     try {
-      // Appel direct (fetch) pour lire précisément le code et le message.
-      const r = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token, "apikey": cfg.SUPABASE_ANON_KEY || "" },
-        body: JSON.stringify({ to })
-      });
-      let data = {};
-      try { data = await r.json(); } catch (e) { /* corps non-JSON */ }
-      if (r.ok) {
-        afficherMsg(t("admin.mailtest_ok", { email: to }), "ok");
-        toast(t("admin.mailtest_ok", { email: to }), "succes");
-      } else {
-        // La requête a ATTEINT la fonction : erreur applicative précise.
-        const détail = data.error || r.statusText || ("HTTP " + r.status);
-        let conseil = "";
-        if (r.status === 500 && /SMTP/i.test(détail)) conseil = " — " + t("admin.mailtest_aide_smtp");
-        else if (r.status === 401) conseil = " — " + t("admin.mailtest_aide_auth");
-        else if (r.status === 502) conseil = " — " + t("admin.mailtest_aide_ovh");
-        afficherMsg(t("admin.mailtest_ko_http", { code: r.status, msg: détail }) + conseil, "err");
-      }
+      const { error } = await sb.auth.resetPasswordForEmail(to, { redirectTo: location.origin + location.pathname });
+      if (error) throw error;
+      afficherMsg(t("admin.mailtest_ok", { email: to }), "ok");
+      toast(t("admin.mailtest_ok", { email: to }), "succes");
     } catch (e) {
-      // fetch a échoué AVANT toute réponse → réseau / CORS / fonction absente.
-      afficherMsg(t("admin.mailtest_ko_reseau"), "err");
-      const rapport =
-        "=== Diagnostic FamiTeam — envoi e-mail ===\n" +
-        "Erreur : la requête n'a pas atteint la fonction (réseau/CORS).\n" +
-        "URL appelée : " + url + "\n" +
-        "Jeton de session : " + (token ? "présent" : "ABSENT (reconnecte-toi)") + "\n" +
-        "Message technique : " + ((e && e.message) ? e.message : String(e)) + "\n" +
-        "Date : " + new Date().toISOString() + "\n" +
-        "Navigateur : " + (navigator.userAgent || "—") + "\n" +
-        "\nCauses probables, à vérifier dans Supabase :\n" +
-        "1) Fonction « send-test » → onglet Settings → option « Verify JWT » : doit être DÉSACTIVÉE.\n" +
-        "2) Fonction « send-test » redéployée avec le dernier code (en-têtes CORS incluant x-client-info).\n" +
-        "3) La fonction « send-test » existe bien (nom exact, en minuscules).\n";
-      montrerDiag(rapport);
+      const msg = (e && e.message) ? e.message : String(e);
+      afficherMsg(t("admin.mailtest_ko", { msg }) + " — " + t("admin.mailtest_aide_smtp"), "err");
     } finally {
       bMail.disabled = false; bMail.textContent = t("admin.mailtest_envoyer");
     }
   };
-  sec.appendChild(bMail); sec.appendChild(msgMail); sec.appendChild(diag);
+  sec.appendChild(bMail); sec.appendChild(msgMail);
 
   // ----- Configuration des dons Stripe (un Payment Link par montant) -----
   sec.appendChild(el("h2", null, t("admin.don_titre")));
