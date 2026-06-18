@@ -375,7 +375,8 @@ function ecranAuth() {
       <section class="landing-form">
         <div class="carte code-carte">
           <div id="parrain-banniere"></div>
-          <h2 class="form-titre">${t("auth.form_titre")}</h2>
+          <h2 class="form-titre" id="form-titre">${t("auth.form_titre")}</h2>
+          <p id="form-sous" class="note" style="display:none"></p>
           <p id="auth-msg"></p>
           <input id="email" type="email" inputmode="email" placeholder="${t("auth.email_ph")}" autocomplete="email">
           <input id="mdp" type="password" placeholder="${t("auth.mdp_ph")}" autocomplete="current-password">
@@ -418,12 +419,23 @@ function ecranAuth() {
   const bWaitlist = document.getElementById("b-waitlist");
   const bOubli = document.getElementById("b-oubli");
 
+  const titre = document.getElementById("form-titre");
+  const sous = document.getElementById("form-sous");
   const rafraichir = () => {
     bSignup.style.display = peutSinscrire ? "block" : "none";
     blocAttente.style.display = peutSinscrire ? "none" : "block";
     bOubli.style.display = inscriptionMode ? "none" : "block";
     bPrinc.textContent = inscriptionMode ? t("auth.creer_compte") : t("auth.connexion");
     bSignup.textContent = inscriptionMode ? t("auth.deja_compte") : t("auth.pas_compte");
+    // En mode création (notamment via un lien d'invitation), on invite
+    // explicitement à créer son compte famille (e-mail + mot de passe).
+    if (titre) titre.textContent = inscriptionMode ? t("auth.form_titre_creer") : t("auth.form_titre");
+    if (sous) {
+      if (inscriptionMode) { sous.textContent = t("auth.form_sous_creer"); sous.style.display = "block"; }
+      else { sous.style.display = "none"; }
+    }
+    elEmail.placeholder = t("auth.email_ph");
+    elMdp.placeholder = inscriptionMode ? t("auth.mdp_ph_creer") : t("auth.mdp_ph");
   };
   bOubli.onclick = async () => {
     const email = elEmail.value.trim();

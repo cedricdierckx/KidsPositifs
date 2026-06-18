@@ -1458,6 +1458,9 @@ Object.assign(I18N.de, { "eco.niveau_desert": "🏜️ Wüste", "eco.niveau_prai
 /* ---- Page d'accueil publique (landing) ---- */
 Object.assign(I18N.fr, {
   "auth.form_titre": "Se connecter",
+  "auth.form_titre_creer": "Crée le compte de ta famille",
+  "auth.form_sous_creer": "Choisis ton adresse e-mail et un mot de passe pour lancer ta propre famille.",
+  "auth.mdp_ph_creer": "Choisis un mot de passe",
   "auth.hero_titre": "Toute la famille dans la même équipe 💛",
   "auth.hero_sous": "{app} transforme les tâches du quotidien et la protection de la planète en une aventure positive, douce et motivante pour vos enfants.",
   "auth.feat1_t": "Des missions rigolotes", "auth.feat1_d": "Chacun gagne des Cœurs 💛 en aidant à la maison et des Gouttes 💧 en protégeant la nature.",
@@ -1471,6 +1474,9 @@ Object.assign(I18N.fr, {
 });
 Object.assign(I18N.en, {
   "auth.form_titre": "Sign in",
+  "auth.form_titre_creer": "Create your family account",
+  "auth.form_sous_creer": "Choose your email and a password to start your own family.",
+  "auth.mdp_ph_creer": "Choose a password",
   "auth.hero_titre": "The whole family on the same team 💛",
   "auth.hero_sous": "{app} turns everyday chores and protecting the planet into a positive, gentle and motivating adventure for your children.",
   "auth.feat1_t": "Fun missions", "auth.feat1_d": "Everyone earns Hearts 💛 by helping at home and Drops 💧 by protecting nature.",
@@ -1484,6 +1490,9 @@ Object.assign(I18N.en, {
 });
 Object.assign(I18N.nl, {
   "auth.form_titre": "Aanmelden",
+  "auth.form_titre_creer": "Maak het account van je gezin aan",
+  "auth.form_sous_creer": "Kies je e-mailadres en een wachtwoord om je eigen gezin te starten.",
+  "auth.mdp_ph_creer": "Kies een wachtwoord",
   "auth.hero_titre": "Het hele gezin in hetzelfde team 💛",
   "auth.hero_sous": "{app} maakt van dagelijkse taken en het beschermen van de planeet een positief, zacht en motiverend avontuur voor je kinderen.",
   "auth.feat1_t": "Leuke missies", "auth.feat1_d": "Iedereen verdient Hartjes 💛 door thuis te helpen en Druppels 💧 door de natuur te beschermen.",
@@ -1497,6 +1506,9 @@ Object.assign(I18N.nl, {
 });
 Object.assign(I18N.de, {
   "auth.form_titre": "Anmelden",
+  "auth.form_titre_creer": "Erstelle das Konto deiner Familie",
+  "auth.form_sous_creer": "Wähle deine E-Mail-Adresse und ein Passwort, um deine eigene Familie zu starten.",
+  "auth.mdp_ph_creer": "Wähle ein Passwort",
   "auth.hero_titre": "Die ganze Familie in einem Team 💛",
   "auth.hero_sous": "{app} verwandelt Alltagsaufgaben und den Schutz des Planeten in ein positives, sanftes und motivierendes Abenteuer für deine Kinder.",
   "auth.feat1_t": "Lustige Missionen", "auth.feat1_d": "Jeder verdient Herzen 💛 durch Helfen zu Hause und Tropfen 💧 durch Naturschutz.",
