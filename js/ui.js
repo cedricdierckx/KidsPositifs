@@ -117,7 +117,7 @@ function initSquelette() {
     <div id="toast" class="toast"></div>
 
     <header class="topbar">
-      <button id="pastille-inviter" class="pastille-inviter" title="Inviter une autre famille">🎁</button>
+      <button id="pastille-inviter" class="pastille-inviter" title="Inviter une autre famille">🎁<span id="pastille-badge" class="pastille-badge"></span></button>
       <div class="logo">🌟 ${APP_NOM} <span id="sync-etat" class="sync-etat" title="État de la synchronisation">…</span></div>
       <div id="selecteur-enfant" class="selecteur"></div>
     </header>
@@ -142,9 +142,34 @@ function initSquelette() {
     if (typeof modeDemo !== "undefined" && modeDemo) { toast("Indisponible en mode démo 🧪", "info"); return; }
     modaleParrainage();
   };
+  majPastilleInvit();
 
   // Minuteur : le bandeau dodo suit l'heure en continu (toutes les 20 s).
   if (!window.__dodoTimer) window.__dodoTimer = setInterval(majDodo, 20000);
+}
+
+// Met à jour la pastille d'invitation : pastille « qui frétille » quand il
+// reste des invitations, avec une bulle indiquant le nombre restant (👑 pour
+// l'admin). Discrète et grisée quand le quota est épuisé.
+function majPastilleInvit() {
+  const pInv = document.getElementById("pastille-inviter");
+  const badge = document.getElementById("pastille-badge");
+  if (!pInv || !badge) return;
+  if (typeof modeDemo !== "undefined" && modeDemo) { badge.style.display = "none"; return; }
+  if (typeof estAdmin !== "undefined" && estAdmin) {
+    badge.textContent = "👑"; badge.style.display = "flex";
+    pInv.classList.add("a-des-invit");
+    return;
+  }
+  parrainageRestant().then(n => {
+    if (n > 0) {
+      badge.textContent = String(n); badge.style.display = "flex";
+      pInv.classList.add("a-des-invit");
+    } else {
+      badge.style.display = "none";
+      pInv.classList.remove("a-des-invit");
+    }
+  }).catch(() => { badge.style.display = "none"; });
 }
 
 // Panneau d'administration : liste de toutes les familles.
