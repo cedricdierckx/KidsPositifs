@@ -1613,6 +1613,44 @@ Object.assign(I18N.de, {
   "admin.don_ok": "Spendenlink gespeichert ✅"
 });
 
+/* ---- Admin : test d'envoi d'e-mail ---- */
+Object.assign(I18N.fr, {
+  "admin.mailtest_titre": "✉️ Test d'envoi d'e-mail",
+  "admin.mailtest_note": "Envoie un e-mail de test depuis hello@fami.team pour vérifier que l'expédition fonctionne.",
+  "admin.mailtest_dest": "Adresse de destination",
+  "admin.mailtest_envoyer": "Envoyer un e-mail test",
+  "admin.mailtest_ok": "✅ E-mail envoyé à {email}. Vérifie ta boîte (et les spams).",
+  "admin.mailtest_ko": "❌ Échec : {msg}",
+  "admin.mailtest_indispo": "Indisponible (non connecté)."
+});
+Object.assign(I18N.en, {
+  "admin.mailtest_titre": "✉️ Email test",
+  "admin.mailtest_note": "Send a test email from hello@fami.team to check that sending works.",
+  "admin.mailtest_dest": "Recipient address",
+  "admin.mailtest_envoyer": "Send a test email",
+  "admin.mailtest_ok": "✅ Email sent to {email}. Check your inbox (and spam).",
+  "admin.mailtest_ko": "❌ Failed: {msg}",
+  "admin.mailtest_indispo": "Unavailable (not logged in)."
+});
+Object.assign(I18N.nl, {
+  "admin.mailtest_titre": "✉️ E-mailtest",
+  "admin.mailtest_note": "Stuur een test-e-mail vanaf hello@fami.team om te controleren of verzenden werkt.",
+  "admin.mailtest_dest": "Ontvangeradres",
+  "admin.mailtest_envoyer": "Test-e-mail versturen",
+  "admin.mailtest_ok": "✅ E-mail verzonden naar {email}. Controleer je inbox (en spam).",
+  "admin.mailtest_ko": "❌ Mislukt: {msg}",
+  "admin.mailtest_indispo": "Niet beschikbaar (niet ingelogd)."
+});
+Object.assign(I18N.de, {
+  "admin.mailtest_titre": "✉️ E-Mail-Test",
+  "admin.mailtest_note": "Sende eine Test-E-Mail von hello@fami.team, um zu prüfen, ob der Versand funktioniert.",
+  "admin.mailtest_dest": "Empfängeradresse",
+  "admin.mailtest_envoyer": "Test-E-Mail senden",
+  "admin.mailtest_ok": "✅ E-Mail an {email} gesendet. Prüfe dein Postfach (und Spam).",
+  "admin.mailtest_ko": "❌ Fehlgeschlagen: {msg}",
+  "admin.mailtest_indispo": "Nicht verfügbar (nicht angemeldet)."
+});
+
 /* ---- Auto-évaluation / évaluation de la journée ---- */
 Object.assign(I18N.fr, {
   "eval.titre_enfant": "Comment s'est passée ta journée ?",

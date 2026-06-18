@@ -219,6 +219,34 @@ function blocAdmin() {
   };
   sec.appendChild(bW); sec.appendChild(listeW);
 
+  // ----- Test d'envoi d'e-mail (depuis hello@fami.team via Resend) -----
+  sec.appendChild(el("h2", null, t("admin.mailtest_titre")));
+  sec.appendChild(el("p", "note", t("admin.mailtest_note")));
+  const lDest = el("label", "champ", t("admin.mailtest_dest"));
+  const inpDest = el("input"); inpDest.type = "email"; inpDest.placeholder = "hello@fami.team";
+  const moi = (typeof utilisateurCourant === "function") ? utilisateurCourant() : null;
+  inpDest.value = (moi && moi.email) ? moi.email : "";
+  lDest.appendChild(inpDest); sec.appendChild(lDest);
+  const bMail = el("button", "btn-secondaire", t("admin.mailtest_envoyer"));
+  const msgMail = el("p", "note");
+  bMail.onclick = async () => {
+    const to = inpDest.value.trim();
+    if (!to) { inpDest.focus(); return; }
+    if (typeof sb === "undefined" || !sb) { msgMail.textContent = t("admin.mailtest_indispo"); return; }
+    bMail.disabled = true; bMail.textContent = t("common.creation"); msgMail.textContent = "";
+    try {
+      const { error } = await sb.functions.invoke("send-test", { body: { to } });
+      if (error) throw error;
+      msgMail.textContent = t("admin.mailtest_ok", { email: to });
+      toast(t("admin.mailtest_ok", { email: to }), "succes");
+    } catch (e) {
+      msgMail.textContent = t("admin.mailtest_ko", { msg: (e && e.message) ? e.message : String(e) });
+    } finally {
+      bMail.disabled = false; bMail.textContent = t("admin.mailtest_envoyer");
+    }
+  };
+  sec.appendChild(bMail); sec.appendChild(msgMail);
+
   // ----- Configuration des dons Stripe (un Payment Link par montant) -----
   sec.appendChild(el("h2", null, t("admin.don_titre")));
   sec.appendChild(el("p", "note", t("admin.don_note")));
