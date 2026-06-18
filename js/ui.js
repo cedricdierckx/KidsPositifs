@@ -244,10 +244,9 @@ function blocAdmin() {
   };
   sec.appendChild(bW); sec.appendChild(listeW);
 
-  // ----- Test d'envoi d'e-mail (via le SMTP de Supabase Auth) -----
-  // On déclenche un e-mail de réinitialisation : il emprunte EXACTEMENT le
-  // même chemin que les e-mails de confirmation / mot de passe oublié.
-  // (L'envoi n'aboutit que si l'adresse correspond à un compte existant.)
+  // ----- Test d'envoi d'e-mail (via la fonction commune send-mail / SMTP OVH) -----
+  // Envoie un vrai e-mail de test depuis hello@fami.team — même chemin que les
+  // invitations et les retours.
   sec.appendChild(el("h2", null, t("admin.mailtest_titre")));
   sec.appendChild(el("p", "note", t("admin.mailtest_note")));
   const lDest = el("label", "champ", t("admin.mailtest_dest"));
@@ -267,16 +266,17 @@ function blocAdmin() {
     if (!to) { inpDest.focus(); return; }
     if (typeof sb === "undefined" || !sb) { afficherMsg(t("admin.mailtest_indispo"), "err"); return; }
     bMail.disabled = true; bMail.textContent = t("common.creation"); afficherMsg("");
-    try {
-      const { error } = await sb.auth.resetPasswordForEmail(to, { redirectTo: location.origin + location.pathname });
-      if (error) throw error;
+    const res = await envoyerMailFn({
+      to,
+      subject: t("admin.mailtest_sujet", { app: APP_NOM }),
+      text: t("admin.mailtest_corps", { app: APP_NOM, date: new Date().toLocaleString() })
+    });
+    bMail.disabled = false; bMail.textContent = t("admin.mailtest_envoyer");
+    if (res.ok) {
       afficherMsg(t("admin.mailtest_ok", { email: to }), "ok");
       toast(t("admin.mailtest_ok", { email: to }), "succes");
-    } catch (e) {
-      const msg = (e && e.message) ? e.message : String(e);
-      afficherMsg(t("admin.mailtest_ko", { msg }) + " — " + t("admin.mailtest_aide_smtp"), "err");
-    } finally {
-      bMail.disabled = false; bMail.textContent = t("admin.mailtest_envoyer");
+    } else {
+      afficherMsg(t("admin.mailtest_ko", { msg: res.detail }) + " — " + t("admin.mailtest_aide_smtp"), "err");
     }
   };
   sec.appendChild(bMail); sec.appendChild(msgMail);
@@ -323,6 +323,30 @@ function blocAdmin() {
   return sec;
 }
 
+// Envoi d'e-mail via la fonction commune send-mail.
+// On utilise un fetch direct (et non sb.functions.invoke) car invoke masque le
+// message d'erreur renvoyé par la fonction (« non-2xx » générique). Retourne
+// { ok, status, detail }.
+async function envoyerMailFn(payload) {
+  const cfg = (typeof window !== "undefined" && window.KP_CONFIG) ? window.KP_CONFIG : {};
+  const url = (cfg.SUPABASE_URL || "") + "/functions/v1/send-mail";
+  let token = "";
+  try { const s = await sb.auth.getSession(); token = (s && s.data && s.data.session) ? s.data.session.access_token : ""; } catch (e) { /* ignore */ }
+  try {
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token, "apikey": cfg.SUPABASE_ANON_KEY || "" },
+      body: JSON.stringify(payload)
+    });
+    let data = {};
+    try { data = await r.json(); } catch (e) { /* corps non-JSON */ }
+    if (r.ok) return { ok: true, status: r.status };
+    return { ok: false, status: r.status, detail: data.error || r.statusText || ("HTTP " + r.status) };
+  } catch (e) {
+    return { ok: false, status: 0, detail: (e && e.message) ? e.message : String(e) };
+  }
+}
+
 // Affiche un lien d'invitation copiable.
 function montrerLienInvitation(conteneur, lien, note, mailto) {
   let box = conteneur.querySelector(".invite-box");
@@ -360,18 +384,18 @@ function montrerLienInvitation(conteneur, lien, note, mailto) {
       const demo = (typeof modeDemo !== "undefined" && modeDemo);
       if (typeof sb === "undefined" || !sb || demo) { ouvrirMailto(to); return; }
       mail.disabled = true; mail.textContent = t("common.creation"); setRetour("");
-      try {
-        const { error } = await sb.functions.invoke("send-mail", {
-          body: { to, subject: mailto.sujet || "", text: corps }
-        });
-        if (error) throw error;
+      const res = await envoyerMailFn({ to, subject: mailto.sujet || "", text: corps });
+      mail.disabled = false; mail.textContent = t("lien.envoyer_mail");
+      if (res.ok) {
         setRetour(t("lien.envoye", { email: to }), "ok");
-      } catch (e) {
-        // Repli : on ouvre le client mail de l'utilisateur.
-        setRetour(t("lien.envoi_repli"), "err");
-        ouvrirMailto(to);
-      } finally {
-        mail.disabled = false; mail.textContent = t("lien.envoyer_mail");
+        toast(t("lien.envoye", { email: to }), "succes");
+      } else {
+        // On affiche l'erreur précise + un bouton de repli explicite (mailto).
+        setRetour(t("lien.envoi_erreur", { msg: res.detail }), "err");
+        const repli = el("button", "btn-secondaire", t("lien.repli_mailto"));
+        repli.onclick = () => ouvrirMailto(to);
+        retour.appendChild(document.createElement("br"));
+        retour.appendChild(repli);
       }
     };
     box.appendChild(destinataire);
@@ -1914,14 +1938,10 @@ function blocFeedback() {
     b.disabled = true; b.textContent = t("common.creation");
     if (typeof sb !== "undefined" && sb && !demo) {
       // 1) Envoi automatique par e-mail (fonction commune send-mail, via SMTP OVH).
-      try {
-        const sujet = `${APP_NOM} — ${type}`;
-        const corps = `${msg}\n\n--- Contexte ---\n${JSON.stringify(ctxObj, null, 2)}\nDe : ${u && u.email ? u.email : "—"}`;
-        const { error } = await sb.functions.invoke("send-mail", {
-          body: { to: emailSupport(), subject: sujet, text: corps, replyTo: u ? u.email : undefined }
-        });
-        if (!error) envoye = true;
-      } catch (e) { /* repli mailto plus bas */ }
+      const sujet = `${APP_NOM} — ${type}`;
+      const corps = `${msg}\n\n--- Contexte ---\n${JSON.stringify(ctxObj, null, 2)}\nDe : ${u && u.email ? u.email : "—"}`;
+      const res = await envoyerMailFn({ to: emailSupport(), subject: sujet, text: corps, replyTo: u ? u.email : undefined });
+      if (res.ok) envoye = true;
       // 2) Stockage en base (best-effort).
       try {
         sb.rpc("submit_feedback", { p_type: selType.value, p_message: msg, p_context: ctxObj,
