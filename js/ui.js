@@ -522,7 +522,7 @@ function bandeauDodo(enf) {
   sec.id = "dodo-bandeau";
   sec.innerHTML = `
     <div class="dodo-etoiles">✦ ✧ ⭐ ✦ ✧ ✦ ✧</div>
-    <div class="dodo-txt"><strong>${m.emoji} ${trData("mission", m.id, m.titre)}</strong><small>🛏️ ${m.heure}</small></div>
+    <div class="dodo-txt"><strong>${m.emoji} ${titreMission(m)}</strong><small>🛏️ ${m.heure}</small></div>
     <div class="dodo-chemin" title="${t("dodo.title")}">
       <span class="dc-bout">☀️</span>
       <div class="dc-piste"><div class="dc-rempli" style="width:${m.progress}%"></div>
@@ -562,7 +562,7 @@ function grilleMissions(catId) {
     const recompense = pointsVisuels(m.points, cat.monnaieEmoji, jeune);
     carte.innerHTML = `
       <span class="m-emoji">${m.emoji}</span>
-      <span class="m-titre">${trData("mission", m.id, m.titre)}</span>
+      <span class="m-titre">${titreMission(m)}</span>
       <span class="m-points">${fait ? "✅" : (enAttente ? "⏳" : recompense)}</span>`;
     carte.onclick = () => validerMission(m);
     liste.appendChild(carte);
@@ -1240,7 +1240,16 @@ function blocMissionsDuJour(enf) {
       const cb = el("input"); cb.type = "checkbox"; cb.checked = inclus;
       cb.onchange = () => basculerPlan(enf, jour, m.id);
       ligne.appendChild(cb);
-      ligne.appendChild(el("span", null, `${m.emoji} ${trData("mission", m.id, m.titre)} (${cat.monnaieEmoji}${m.points})${m.perso ? " ✏️" : ""}`));
+      ligne.appendChild(el("span", null, `${m.emoji} ${titreMission(m)} (${cat.monnaieEmoji}${m.points})`));
+      // Bouton « modifier » : ouvre l'éditeur inline (toutes missions).
+      const edit = el("button", "mini-btn", "✏️");
+      edit.title = t("mdj.modifier");
+      const editeur = blocEditionMission(m, cat);
+      edit.onclick = (e) => {
+        e.preventDefault();
+        editeur.style.display = editeur.style.display === "none" ? "block" : "none";
+      };
+      ligne.appendChild(edit);
       if (m.perso) {
         const sup = el("button", "mini-btn danger", "🗑️");
         sup.title = t("mdj.suppr_perso");
@@ -1248,6 +1257,7 @@ function blocMissionsDuJour(enf) {
         ligne.appendChild(sup);
       }
       sec.appendChild(ligne);
+      sec.appendChild(editeur);
     });
   });
 
@@ -1259,7 +1269,7 @@ function blocMissionsDuJour(enf) {
   sec.appendChild(el("p", "sous-titre", t("mdj.ajouter_perso")));
   const form = el("div", "mission-perso-form");
   const iTitre = el("input"); iTitre.placeholder = t("mdj.nom_ph"); iTitre.maxLength = 40;
-  const iEmoji = el("input"); iEmoji.placeholder = t("mdj.emoji_ph"); iEmoji.maxLength = 4; iEmoji.className = "mp-emoji";
+  const iEmoji = el("input"); iEmoji.placeholder = t("mdj.emoji_ph"); iEmoji.maxLength = 12; iEmoji.className = "mp-emoji";
   const iCat = el("select");
   iCat.innerHTML = `<option value="famille">🏡 ${t("cat.famille.nom")} (💛)</option><option value="planete">🌍 ${t("cat.planete.nom")} (💧)</option>`;
   const iPts = el("input"); iPts.type = "number"; iPts.min = "1"; iPts.max = "5"; iPts.value = "1"; iPts.className = "mp-pts";
@@ -1271,6 +1281,33 @@ function blocMissionsDuJour(enf) {
   [iTitre, iEmoji, iCat, iPts, bAdd].forEach(x => form.appendChild(x));
   sec.appendChild(form);
   return sec;
+}
+
+// Éditeur inline d'une mission (nom, emoji, points) — préexistante ou perso.
+function blocEditionMission(m, cat) {
+  const box = el("div", "mission-edit");
+  box.style.display = "none";
+  const iEmoji = el("input"); iEmoji.className = "mp-emoji"; iEmoji.maxLength = 12;
+  iEmoji.placeholder = t("mdj.emoji_ph"); iEmoji.value = m.emoji || "";
+  const iTitre = el("input"); iTitre.maxLength = 40;
+  iTitre.placeholder = t("mdj.nom_ph"); iTitre.value = titreMission(m);
+  const iPts = el("input"); iPts.type = "number"; iPts.min = "1"; iPts.max = "9"; iPts.className = "mp-pts";
+  iPts.value = m.points;
+  const bOk = el("button", "mini-btn ok", t("mdj.enregistrer"));
+  bOk.onclick = (e) => {
+    e.preventDefault();
+    modifierMission(m.id, "emoji", iEmoji.value);
+    modifierMission(m.id, "titre", iTitre.value);
+    modifierMission(m.id, "points", iPts.value);
+  };
+  [iEmoji, iTitre, iPts, bOk].forEach(x => box.appendChild(x));
+  // Bouton « rétablir » pour les missions intégrées retouchées.
+  if (!m.perso) {
+    const bReset = el("button", "mini-btn", t("mdj.retablir"));
+    bReset.onclick = (e) => { e.preventDefault(); reinitMission(m.id); };
+    box.appendChild(bReset);
+  }
+  return box;
 }
 
 // Bloc de corrections manuelles pour un enfant (mode parents).
@@ -1306,7 +1343,7 @@ function blocCorrections(enf) {
     const n = journalJour[m.id] || 0;
     const ligne = el("div", "hist-ligne" + (n ? " valide" : ""));
     const cat = CATEGORIES[m.cat];
-    ligne.innerHTML = `<span class="h-info">${m.emoji} ${trData("mission", m.id, m.titre)} <small>${cat.monnaieEmoji}${m.points}</small></span>
+    ligne.innerHTML = `<span class="h-info">${m.emoji} ${titreMission(m)} <small>${cat.monnaieEmoji}${m.points}</small></span>
       <span class="h-compte">${n}</span>`;
     const moins = el("button", "mini-btn", "−"); moins.onclick = () => modifierHistorique(enf, jour, m, -1);
     const plus = el("button", "mini-btn", "+"); plus.onclick = () => modifierHistorique(enf, jour, m, +1);

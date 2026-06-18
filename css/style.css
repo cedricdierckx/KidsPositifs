@@ -276,6 +276,14 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .mission-perso-form .mp-emoji{width:64px; text-align:center}
 .mission-perso-form .mp-pts{width:60px}
 .mission-perso-form .btn-secondaire{margin:0}
+/* Éditeur inline d'une mission (nom/emoji/points) */
+.mission-edit{display:flex; flex-wrap:wrap; gap:6px; align-items:center;
+  margin:2px 0 8px 30px; padding:8px; background:#f7fafd; border-radius:10px}
+.mission-edit input{padding:8px; border:2px solid #e3edf5; border-radius:10px;
+  font-family:inherit; font-size:14px}
+.mission-edit input:not(.mp-emoji):not(.mp-pts){flex:1; min-width:120px}
+.mission-edit .mp-emoji{width:60px; text-align:center}
+.mission-edit .mp-pts{width:56px}
 
 /* ---- Avatar (SVG) ---- */
 .avatar-scene{width:150px; height:150px; margin:0 auto}

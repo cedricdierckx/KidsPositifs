@@ -106,6 +106,7 @@ function etatVierge() {
     enfants, enfantActif: ENFANTS_DEFAUT[0].id, vue: "accueil", maj: 0,
     version: ETAT_VERSION,
     missionsPerso: [],     // missions personnalisées ajoutées par les parents
+    missionsModif: {},     // retouches parentales des missions (titre/emoji/points)
     cartesSurprises: cartesSurprisesNeuves(ENFANTS_DEFAUT.length),  // objectifs d'équipe
     reglages: { validationParentale: false, codeParent: "", seuilVisuel: 5 }
   };
@@ -209,6 +210,7 @@ function normaliser(e) {
   });
   if (e.maj === undefined) e.maj = 0;
   if (!Array.isArray(e.missionsPerso)) e.missionsPerso = [];
+  if (!e.missionsModif || typeof e.missionsModif !== "object") e.missionsModif = {};
   // Cartes surprises (objectifs d'équipe) : seedées par défaut pour les
   // familles existantes, et chaque carte reçoit ses champs de progression.
   const nbEnf = Object.keys(e.enfants).length || ENFANTS_DEFAUT.length;
@@ -375,10 +377,51 @@ function validerMission(mission) {
  * Les parents peuvent ajouter des missions propres à la famille.
  * Elles sont stockées dans etat.missionsPerso (synchronisées). */
 function toutesMissions() {
-  return (etat && Array.isArray(etat.missionsPerso)) ? MISSIONS.concat(etat.missionsPerso) : MISSIONS;
+  const base = (etat && Array.isArray(etat.missionsPerso)) ? MISSIONS.concat(etat.missionsPerso) : MISSIONS.slice();
+  const mods = (etat && etat.missionsModif) ? etat.missionsModif : null;
+  if (!mods) return base;
+  // Applique les retouches parentales (titre/emoji/points) sans modifier MISSIONS.
+  return base.map(m => mods[m.id] ? Object.assign({}, m, mods[m.id]) : m);
 }
 function trouverMission(id) {
   return toutesMissions().find(m => m.id === id) || null;
+}
+// Titre affiché d'une mission : une retouche parentale (ou un titre perso)
+// prime sur la traduction intégrée.
+function titreMission(m) {
+  const mod = etat && etat.missionsModif && etat.missionsModif[m.id];
+  if (m.perso || (mod && mod.titre)) return m.titre;
+  return trData("mission", m.id, m.titre);
+}
+// Modifie une mission (préexistante OU personnalisée) : titre, emoji ou points.
+// Pour les missions personnalisées on édite l'objet directement ; pour les
+// missions intégrées on enregistre une retouche dans etat.missionsModif.
+function modifierMission(id, champ, valeur) {
+  const perso = Array.isArray(etat.missionsPerso) ? etat.missionsPerso.find(m => m.id === id) : null;
+  const normVal = (champ === "points")
+    ? Math.max(1, parseInt(valeur, 10) || 1)
+    : (valeur || "").trim();
+  if (perso) {
+    if (champ === "points") perso.points = normVal;
+    else if (normVal) perso[champ] = normVal;   // titre/emoji non vides
+  } else {
+    if (!etat.missionsModif) etat.missionsModif = {};
+    const o = etat.missionsModif[id] || (etat.missionsModif[id] = {});
+    if (champ === "points") o.points = normVal;
+    else if (normVal) o[champ] = normVal;
+    else delete o[champ];
+    if (!Object.keys(o).length) delete etat.missionsModif[id];
+  }
+  sauver();
+  rendre();
+}
+// Restaure une mission intégrée dans son état d'origine (efface les retouches).
+function reinitMission(id) {
+  if (etat.missionsModif && etat.missionsModif[id]) {
+    delete etat.missionsModif[id];
+    sauver();
+    rendre();
+  }
 }
 // Ajoute une mission personnalisée (mode parents).
 function ajouterMissionPerso(cat, titre, emoji, points) {
