@@ -337,24 +337,46 @@ function montrerLienInvitation(conteneur, lien, note, mailto) {
     setTimeout(() => (copier.textContent = t("lien.copier")), 1500);
   };
   box.appendChild(inp); box.appendChild(copier);
-  // Option : envoyer le lien directement par e-mail (ouvre le client mail).
-  // On demande l'adresse du destinataire car mailto: ne peut pas la pré-remplir seul.
+  // Option : envoyer l'invitation par e-mail. On essaie d'abord l'envoi
+  // automatique depuis hello@fami.team (Edge Function) ; en cas d'échec, on
+  // bascule sur le client mail de l'utilisateur (mailto:).
   if (mailto) {
     const destinataire = el("input", "aj-val");
     destinataire.type = "email"; destinataire.style.width = "100%";
     destinataire.placeholder = t("lien.email_dest_ph");
     const corps = (mailto.corps || "").replace("{lien}", lien);
-    const mail = el("a", "btn-secondaire btn-mail", t("lien.envoyer_mail"));
-    const majLien = () => {
-      mail.href = `mailto:${encodeURIComponent(destinataire.value.trim())}?subject=${encodeURIComponent(mailto.sujet || "")}&body=${encodeURIComponent(corps)}`;
+    const mail = el("button", "btn-secondaire btn-mail", t("lien.envoyer_mail"));
+    const retour = el("p"); // message de résultat (sans cadre si vide)
+    const setRetour = (txt, type) => {
+      if (!txt) { retour.textContent = ""; retour.className = ""; return; }
+      retour.textContent = txt; retour.className = "msg-retour " + (type === "ok" ? "msg-ok" : "msg-err");
     };
-    destinataire.oninput = majLien;
-    mail.onclick = (e) => {
-      if (!destinataire.value.trim()) { e.preventDefault(); destinataire.focus(); }
+    const ouvrirMailto = (to) => {
+      window.location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(mailto.sujet || "")}&body=${encodeURIComponent(corps)}`;
     };
-    majLien();
+    mail.onclick = async () => {
+      const to = destinataire.value.trim();
+      if (!to) { destinataire.focus(); return; }
+      const demo = (typeof modeDemo !== "undefined" && modeDemo);
+      if (typeof sb === "undefined" || !sb || demo) { ouvrirMailto(to); return; }
+      mail.disabled = true; mail.textContent = t("common.creation"); setRetour("");
+      try {
+        const { error } = await sb.functions.invoke("send-invite", {
+          body: { to, subject: mailto.sujet || "", text: corps }
+        });
+        if (error) throw error;
+        setRetour(t("lien.envoye", { email: to }), "ok");
+      } catch (e) {
+        // Repli : on ouvre le client mail de l'utilisateur.
+        setRetour(t("lien.envoi_repli"), "err");
+        ouvrirMailto(to);
+      } finally {
+        mail.disabled = false; mail.textContent = t("lien.envoyer_mail");
+      }
+    };
     box.appendChild(destinataire);
     box.appendChild(mail);
+    box.appendChild(retour);
   }
   box.appendChild(el("p", "note", note || t("lien.valable")));
 }
