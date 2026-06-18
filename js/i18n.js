@@ -1629,7 +1629,14 @@ Object.assign(I18N.fr, {
   "admin.mailtest_envoyer": "Envoyer un e-mail test",
   "admin.mailtest_ok": "✅ E-mail envoyé à {email}. Vérifie ta boîte (et les spams).",
   "admin.mailtest_ko": "❌ Échec : {msg}",
-  "admin.mailtest_indispo": "Indisponible (non connecté)."
+  "admin.mailtest_indispo": "Indisponible (non connecté).",
+  "admin.mailtest_ko_http": "❌ Erreur {code} : {msg}",
+  "admin.mailtest_ko_reseau": "❌ La requête n'a pas pu atteindre la fonction (réseau/CORS). Voir le diagnostic ci-dessous.",
+  "admin.mailtest_aide_smtp": "vérifie les 5 secrets SMTP dans Supabase.",
+  "admin.mailtest_aide_auth": "reconnecte-toi, ta session a peut-être expiré.",
+  "admin.mailtest_aide_ovh": "la fonction joint OVH mais l'envoi échoue (mot de passe ou port OVH).",
+  "admin.mailtest_diag_intro": "Copie ce diagnostic et colle-le dans la conversation pour obtenir de l'aide :",
+  "admin.mailtest_copier": "📋 Copier le diagnostic"
 });
 Object.assign(I18N.en, {
   "admin.mailtest_titre": "✉️ Email test",
@@ -1638,7 +1645,14 @@ Object.assign(I18N.en, {
   "admin.mailtest_envoyer": "Send a test email",
   "admin.mailtest_ok": "✅ Email sent to {email}. Check your inbox (and spam).",
   "admin.mailtest_ko": "❌ Failed: {msg}",
-  "admin.mailtest_indispo": "Unavailable (not logged in)."
+  "admin.mailtest_indispo": "Unavailable (not logged in).",
+  "admin.mailtest_ko_http": "❌ Error {code}: {msg}",
+  "admin.mailtest_ko_reseau": "❌ The request couldn't reach the function (network/CORS). See the diagnostic below.",
+  "admin.mailtest_aide_smtp": "check the 5 SMTP secrets in Supabase.",
+  "admin.mailtest_aide_auth": "log in again, your session may have expired.",
+  "admin.mailtest_aide_ovh": "the function reaches OVH but sending fails (OVH password or port).",
+  "admin.mailtest_diag_intro": "Copy this diagnostic and paste it in the conversation to get help:",
+  "admin.mailtest_copier": "📋 Copy diagnostic"
 });
 Object.assign(I18N.nl, {
   "admin.mailtest_titre": "✉️ E-mailtest",
@@ -1647,7 +1661,14 @@ Object.assign(I18N.nl, {
   "admin.mailtest_envoyer": "Test-e-mail versturen",
   "admin.mailtest_ok": "✅ E-mail verzonden naar {email}. Controleer je inbox (en spam).",
   "admin.mailtest_ko": "❌ Mislukt: {msg}",
-  "admin.mailtest_indispo": "Niet beschikbaar (niet ingelogd)."
+  "admin.mailtest_indispo": "Niet beschikbaar (niet ingelogd).",
+  "admin.mailtest_ko_http": "❌ Fout {code}: {msg}",
+  "admin.mailtest_ko_reseau": "❌ De aanvraag kon de functie niet bereiken (netwerk/CORS). Zie de diagnose hieronder.",
+  "admin.mailtest_aide_smtp": "controleer de 5 SMTP-secrets in Supabase.",
+  "admin.mailtest_aide_auth": "log opnieuw in, je sessie is mogelijk verlopen.",
+  "admin.mailtest_aide_ovh": "de functie bereikt OVH maar verzenden mislukt (OVH-wachtwoord of poort).",
+  "admin.mailtest_diag_intro": "Kopieer deze diagnose en plak ze in het gesprek voor hulp:",
+  "admin.mailtest_copier": "📋 Diagnose kopiëren"
 });
 Object.assign(I18N.de, {
   "admin.mailtest_titre": "✉️ E-Mail-Test",
@@ -1656,7 +1677,14 @@ Object.assign(I18N.de, {
   "admin.mailtest_envoyer": "Test-E-Mail senden",
   "admin.mailtest_ok": "✅ E-Mail an {email} gesendet. Prüfe dein Postfach (und Spam).",
   "admin.mailtest_ko": "❌ Fehlgeschlagen: {msg}",
-  "admin.mailtest_indispo": "Nicht verfügbar (nicht angemeldet)."
+  "admin.mailtest_indispo": "Nicht verfügbar (nicht angemeldet).",
+  "admin.mailtest_ko_http": "❌ Fehler {code}: {msg}",
+  "admin.mailtest_ko_reseau": "❌ Die Anfrage konnte die Funktion nicht erreichen (Netzwerk/CORS). Siehe Diagnose unten.",
+  "admin.mailtest_aide_smtp": "prüfe die 5 SMTP-Secrets in Supabase.",
+  "admin.mailtest_aide_auth": "melde dich erneut an, deine Sitzung ist möglicherweise abgelaufen.",
+  "admin.mailtest_aide_ovh": "die Funktion erreicht OVH, aber der Versand schlägt fehl (OVH-Passwort oder Port).",
+  "admin.mailtest_diag_intro": "Kopiere diese Diagnose und füge sie ins Gespräch ein, um Hilfe zu erhalten:",
+  "admin.mailtest_copier": "📋 Diagnose kopieren"
 });
 
 /* ---- Auto-évaluation / évaluation de la journée ---- */

@@ -52,6 +52,10 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .msg-retour{font-size:14px; font-weight:700; padding:10px 12px; border-radius:12px; margin-top:8px}
 .msg-ok{background:#eafaf2; color:#1d7a52; border:1px solid #bfe9da}
 .msg-err{background:#fdeef2; color:#b3274f; border:1px solid #f2c9d6}
+/* Bloc diagnostic copiable */
+.diag-bloc{margin-top:8px}
+.diag-texte{background:#1e2630; color:#e6edf3; padding:12px; border-radius:10px;
+  font-size:12px; line-height:1.5; white-space:pre-wrap; word-break:break-word; overflow-x:auto}
 
 /* ---- Accueil ---- */
 .carte-accueil{
