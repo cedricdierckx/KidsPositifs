@@ -1755,32 +1755,34 @@ function vueReglages(c) {
   const par = el("section", "carte");
   par.innerHTML = `<h2>${t("parr.titre")}</h2>
     <p class="note">${t("parr.note", { app: APP_NOM })}</p>
-    <p id="par-quota" class="note">${t("parr.quota_check")}</p>`;
-  const bPar = el("button", "btn-secondaire", t("parr.creer"));
+    <p id="par-quota" class="parr-quota">${t("parr.quota_check")}</p>`;
+  const bPar = el("button", "gros-bouton planete", t("parr.creer"));
   par.appendChild(bPar);
   c.appendChild(par);
-  // Quota affiché de façon asynchrone.
-  parrainageRestant().then(n => {
+  // Affiche le quota + reflète le nombre restant dans le bouton lui-même.
+  const majQuotaPar = (n) => {
     const q = par.querySelector("#par-quota");
-    if (estAdmin) { q.innerHTML = t("parr.illimite"); }
-    else { q.innerHTML = t("parr.restant", { n }); bPar.disabled = n <= 0; }
-  });
+    if (estAdmin) {
+      q.innerHTML = t("parr.illimite"); q.className = "parr-quota ok";
+      bPar.disabled = false; bPar.textContent = t("parr.creer");
+    } else {
+      q.innerHTML = t("parr.restant", { n }); q.className = "parr-quota " + (n > 0 ? "ok" : "vide");
+      bPar.disabled = n <= 0;
+      bPar.textContent = n > 0 ? t("parr.creer_n", { n }) : t("parr.epuise");
+    }
+  };
+  parrainageRestant().then(majQuotaPar);
   bPar.onclick = async () => {
     bPar.disabled = true; bPar.textContent = t("common.creation");
     const lien = await creerParrainage();
-    bPar.textContent = t("parr.creer");
     if (lien) {
       const mailto = {
         sujet: t("parr.sujet", { app: APP_NOM }),
         corps: t("parr.corps", { app: APP_NOM, lien: "{lien}" })
       };
       montrerLienInvitation(par, lien, t("parr.partage"), mailto);
-      parrainageRestant().then(n => {
-        const q = par.querySelector("#par-quota");
-        if (estAdmin) { q.innerHTML = t("parr.illimite"); bPar.disabled = false; }
-        else { q.innerHTML = t("parr.restant", { n }); bPar.disabled = n <= 0; }
-      });
-    } else { bPar.disabled = false; }
+      parrainageRestant().then(majQuotaPar);
+    } else { parrainageRestant().then(majQuotaPar); }
   };
 
   // ----- Abonnement (masqué provisoirement : early adopters = gratuit) -----

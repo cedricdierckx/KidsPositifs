@@ -19,7 +19,7 @@ body{
   position:sticky; top:0; z-index:20; background:#fff; box-shadow:var(--ombre);
   padding:10px 14px; display:flex; flex-direction:column; gap:10px;
 }
-.logo{font-size:22px; font-weight:800; padding-left:44px}
+.logo{font-size:22px; font-weight:800; text-align:center}
 .pastille-inviter{position:absolute; top:9px; left:12px; width:36px; height:36px;
   border:none; border-radius:50%; background:linear-gradient(135deg,#ffe9b8,#ffd1e0);
   font-size:19px; cursor:pointer; box-shadow:var(--ombre); line-height:1}
@@ -52,6 +52,10 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .msg-retour{font-size:14px; font-weight:700; padding:10px 12px; border-radius:12px; margin-top:8px}
 .msg-ok{background:#eafaf2; color:#1d7a52; border:1px solid #bfe9da}
 .msg-err{background:#fdeef2; color:#b3274f; border:1px solid #f2c9d6}
+/* Quota de parrainage (nombre restant), mis en évidence */
+.parr-quota{font-size:14px; font-weight:700; padding:10px 12px; border-radius:12px; margin:8px 0}
+.parr-quota.ok{background:#eafaf2; color:#1d7a52; border:1px solid #bfe9da}
+.parr-quota.vide{background:#fff5e6; color:#9a6a12; border:1px solid #ffe0b0}
 /* Bloc diagnostic copiable */
 .diag-bloc{margin-top:8px}
 .diag-texte{background:#1e2630; color:#e6edf3; padding:12px; border-radius:10px;
@@ -850,10 +854,10 @@ main{max-width:680px; margin:0 auto; padding:14px}
   /* Contenu plus large et centré */
   main{max-width:1040px; padding:22px}
 
-  /* En-tête : tout sur une ligne, centré sur la largeur du contenu */
-  .topbar{flex-direction:row; align-items:center; gap:16px; padding:12px 22px}
-  .topbar .logo{flex:0 0 auto; padding-left:48px}
-  .topbar .selecteur{flex:1 1 auto; justify-content:flex-end}
+  /* En-tête : titre centré, sélecteur d'enfants aligné à droite */
+  .topbar{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:16px; padding:12px 22px}
+  .topbar .logo{grid-column:2; text-align:center}
+  .topbar .selecteur{grid-column:3; justify-content:flex-end}
   .pastille-inviter{width:40px; height:40px; font-size:21px}
 
   /* Accueil sur 2 colonnes : profil/dodo à gauche, le reste à droite */
