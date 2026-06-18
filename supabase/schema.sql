@@ -406,6 +406,18 @@ begin
     on conflict (key) do update set value = excluded.value, updated_at = now();
 end; $$;
 
+-- ---------- Suppression d'un compte famille (propriétaire uniquement) ----------
+-- Supprime définitivement la famille et, par cascade (on delete cascade),
+-- ses membres, son état de jeu, l'historique, les invitations et parrainages.
+create or replace function public.delete_family(p_family uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from families where id = p_family and owner_id = auth.uid()) then
+    raise exception 'Accès refusé : seul le propriétaire peut supprimer la famille';
+  end if;
+  delete from families where id = p_family;
+end; $$;
+
 -- ---------- Droits d'exécution ----------
 grant execute on function public.create_family(text)            to authenticated;
 grant execute on function public.set_app_config(text, text)     to authenticated;grant execute on function public.create_invite(uuid, text)      to authenticated;
@@ -424,6 +436,7 @@ grant execute on function public.admin_list_families()          to authenticated
 grant execute on function public.admin_set_plan(uuid, text)     to authenticated;
 grant execute on function public.submit_feedback(text, text, jsonb, uuid) to authenticated;
 grant execute on function public.admin_list_feedback()          to authenticated;
+grant execute on function public.delete_family(uuid)            to authenticated;
 
 -- ---------- Temps réel sur l'état de jeu (tolérant si déjà activé) ----------
 do $$ begin

@@ -200,6 +200,24 @@ async function definirNouveauMdp(mdp) {
   const { error } = await sb.auth.updateUser({ password: mdp });
   return error;
 }
+// Suppression DÉFINITIVE du compte famille (propriétaire uniquement).
+// Double confirmation : l'utilisateur doit retaper le nom de la famille.
+async function supprimerCompteFamille() {
+  if (modeDemo || !familleId) return;
+  const nom = (familleActive && familleActive.name) ? familleActive.name : "";
+  if (!confirm(t("suppr.confirm1", { nom }))) return;
+  const saisie = prompt(t("suppr.confirm2", { nom }));
+  if (saisie == null) return;
+  if (saisie.trim() !== nom.trim()) { toast(t("suppr.nom_incorrect"), "info"); return; }
+  const { error } = await sb.rpc("delete_family", { p_family: familleId });
+  if (error) { toast(t("suppr.erreur", { msg: error.message }), "info"); return; }
+  // Tout est supprimé : on nettoie et on déconnecte.
+  try { Store.fermerRealtime(); } catch (e) { /* ignore */ }
+  localStorage.removeItem(FAMILLE_KEY);
+  alert(t("suppr.ok"));
+  await sb.auth.signOut();
+  location.reload();
+}
 async function deconnexion() {
   Store.fermerRealtime();
   localStorage.removeItem(FAMILLE_KEY);

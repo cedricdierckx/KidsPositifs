@@ -1882,6 +1882,17 @@ function vueReglages(c) {
   // ----- 🛟 Récupération de données -----
   c.appendChild(blocRecuperation());
 
+  // ----- ⚠️ Zone de danger : suppression du compte famille (propriétaire) -----
+  if (familleActive && familleActive.role === "owner") {
+    const danger = el("section", "carte zone-danger");
+    danger.innerHTML = `<h2>${t("suppr.zone_titre")}</h2>
+      <p class="suppr-avert">${t("suppr.avert")}</p>`;
+    const bDel = el("button", "btn-danger", t("suppr.bouton"));
+    bDel.onclick = () => supprimerCompteFamille();
+    danger.appendChild(bDel);
+    c.appendChild(danger);
+  }
+
   } /* fin sinon-démo */
   } /* fin onglet compte */
 }
