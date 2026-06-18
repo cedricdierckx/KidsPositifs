@@ -209,13 +209,16 @@ async function supprimerCompteFamille() {
   const saisie = prompt(t("suppr.confirm2", { nom }));
   if (saisie == null) return;
   if (saisie.trim() !== nom.trim()) { toast(t("suppr.nom_incorrect"), "info"); return; }
+  // 1) Suppression des données de la famille (RPC propriétaire).
   const { error } = await sb.rpc("delete_family", { p_family: familleId });
   if (error) { toast(t("suppr.erreur", { msg: error.message }), "info"); return; }
+  // 2) Suppression du compte d'authentification lui-même (best-effort).
+  try { await sb.functions.invoke("delete-account", { body: {} }); } catch (e) { /* compte login conservé si la fonction n'est pas déployée */ }
   // Tout est supprimé : on nettoie et on déconnecte.
   try { Store.fermerRealtime(); } catch (e) { /* ignore */ }
   localStorage.removeItem(FAMILLE_KEY);
   alert(t("suppr.ok"));
-  await sb.auth.signOut();
+  try { await sb.auth.signOut(); } catch (e) { /* la session peut déjà être invalide */ }
   location.reload();
 }
 async function deconnexion() {
