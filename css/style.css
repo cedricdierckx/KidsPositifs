@@ -67,6 +67,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .msg-retour{font-size:14px; font-weight:700; padding:10px 12px; border-radius:12px; margin-top:8px}
 .msg-ok{background:#eafaf2; color:#1d7a52; border:1px solid #bfe9da}
 .msg-err{background:#fdeef2; color:#b3274f; border:1px solid #f2c9d6}
+.msg-info{background:#eef4fb; color:#2c5a8c; border:1px solid #cfe0f2}
 /* Quota de parrainage (nombre restant), mis en évidence */
 .parr-quota{font-size:14px; font-weight:700; padding:10px 12px; border-radius:12px; margin:8px 0}
 .parr-quota.ok{background:#eafaf2; color:#1d7a52; border:1px solid #bfe9da}

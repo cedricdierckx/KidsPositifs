@@ -325,7 +325,13 @@ function planLibelle() {
 function carteEcran(html) {
   document.body.innerHTML = `<div class="ecran-code"><div class="carte code-carte">${html}</div></div>`;
 }
-function setMsg(txt) { const m = document.getElementById("auth-msg"); if (m) m.textContent = txt; }
+function setMsg(txt, type) {
+  const m = document.getElementById("auth-msg");
+  if (!m) return;
+  if (!txt) { m.textContent = ""; m.className = ""; return; }   // pas de cadre si vide
+  m.textContent = txt;
+  m.className = "msg-retour " + (type === "ok" ? "msg-ok" : type === "info" ? "msg-info" : "msg-err");
+}
 
 function ecranConfig() {
   carteEcran(`<div class="code-logo">🛠️</div><h1>Configuration requise</h1>
@@ -370,6 +376,7 @@ function ecranAuth() {
         <div class="carte code-carte">
           <div id="parrain-banniere"></div>
           <h2 class="form-titre">${t("auth.form_titre")}</h2>
+          <p id="auth-msg"></p>
           <input id="email" type="email" inputmode="email" placeholder="${t("auth.email_ph")}" autocomplete="email">
           <input id="mdp" type="password" placeholder="${t("auth.mdp_ph")}" autocomplete="current-password">
           <button id="b-principal" class="gros-bouton planete">${t("auth.connexion")}</button>
@@ -379,7 +386,6 @@ function ecranAuth() {
             <p class="note">${t("auth.attente_note")}</p>
             <button id="b-waitlist" class="btn-secondaire">${t("auth.rejoindre_attente")}</button>
           </div>
-          <p class="note" id="auth-msg"></p>
           <hr style="border:none;border-top:1px solid #e3edf5;margin:14px 0">
           <button id="b-demo" class="btn-secondaire">${t("auth.demo")}</button>
         </div>
@@ -421,36 +427,36 @@ function ecranAuth() {
   };
   bOubli.onclick = async () => {
     const email = elEmail.value.trim();
-    if (!email) return setMsg(t("auth.msg_entre_email"));
+    if (!email) return setMsg(t("auth.msg_entre_email"), "info");
     bOubli.disabled = true;
     const err = await envoyerResetMdp(email);
     bOubli.disabled = false;
-    setMsg(err ? t("auth.erreur", { msg: err.message }) : t("auth.msg_reset_envoye"));
+    setMsg(err ? t("auth.erreur", { msg: err.message }) : t("auth.msg_reset_envoye"), err ? "err" : "ok");
   };
   bSignup.onclick = () => { inscriptionMode = !inscriptionMode; rafraichir(); };
   bPrinc.onclick = async () => {
     const email = elEmail.value.trim();
-    if (!email) return setMsg(t("auth.msg_entre_email"));
+    if (!email) return setMsg(t("auth.msg_entre_email"), "info");
     bPrinc.disabled = true;
     try {
       if (inscriptionMode) {
-        if (!peutSinscrire) { setMsg(t("auth.msg_invitation_only")); return; }
+        if (!peutSinscrire) { setMsg(t("auth.msg_invitation_only"), "info"); return; }
         const err = await inscription(email, elMdp.value);
-        if (err) setMsg(t("auth.erreur", { msg: err.message }));
-        else setMsg(t("auth.msg_compte_cree"));
+        if (err) setMsg(t("auth.erreur", { msg: err.message }), "err");
+        else setMsg(t("auth.msg_compte_cree"), "ok");
       } else {
         const err = await connexionMotDePasse(email, elMdp.value);
-        if (err) setMsg(t("auth.erreur", { msg: err.message }));
+        if (err) setMsg(t("auth.erreur", { msg: err.message }), "err");
       }
     } finally { bPrinc.disabled = false; }
   };
   bWaitlist.onclick = async () => {
     const email = elEmail.value.trim();
-    if (!email) return setMsg(t("auth.msg_attente_email"));
+    if (!email) return setMsg(t("auth.msg_attente_email"), "info");
     bWaitlist.disabled = true;
     const err = await rejoindreListeAttente(email);
     bWaitlist.disabled = false;
-    setMsg(err ? t("auth.erreur", { msg: err.message }) : t("auth.msg_attente_ok"));
+    setMsg(err ? t("auth.erreur", { msg: err.message }) : t("auth.msg_attente_ok"), err ? "err" : "ok");
   };
   document.getElementById("b-demo").onclick = demarrerDemo;
   rafraichir();
@@ -465,9 +471,9 @@ function ecranNouveauMdp() {
         <div class="carte code-carte">
           <div class="code-logo">🌟</div>
           <h2 class="form-titre">${t("auth.reset_titre")}</h2>
+          <p id="auth-msg"></p>
           <input id="reset-mdp" type="password" placeholder="${t("auth.reset_ph")}" autocomplete="new-password">
           <button id="b-reset" class="gros-bouton planete">${t("auth.reset_valider")}</button>
-          <p class="note" id="auth-msg"></p>
           <button id="b-retour" class="btn-secondaire">${t("auth.reset_retour")}</button>
         </div>
       </section>
@@ -477,11 +483,11 @@ function ecranNouveauMdp() {
   document.getElementById("b-retour").onclick = () => { nettoyerUrl(); ecranAuth(); };
   bReset.onclick = async () => {
     const mdp = elMdp.value;
-    if (mdp.length < 8) return setMsg(t("auth.mdp_court"));
+    if (mdp.length < 8) return setMsg(t("auth.mdp_court"), "info");
     bReset.disabled = true;
     const err = await definirNouveauMdp(mdp);
-    if (err) { bReset.disabled = false; return setMsg(t("auth.erreur", { msg: err.message })); }
-    setMsg(t("auth.reset_ok"));
+    if (err) { bReset.disabled = false; return setMsg(t("auth.erreur", { msg: err.message }), "err"); }
+    setMsg(t("auth.reset_ok"), "ok");
     nettoyerUrl();
     utilisateur = (await sb.auth.getUser()).data.user;
     await apresConnexion();
