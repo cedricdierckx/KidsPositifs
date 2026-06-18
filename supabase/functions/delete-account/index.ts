@@ -6,9 +6,9 @@
 // il est propriétaire et TOUTES leurs données (membres, état, historique,
 // invitations, parrainages).
 //
-// Secret requis (Supabase → Edge Functions → Secrets) :
-//   SUPABASE_SERVICE_ROLE_KEY   (clé service_role — NE JAMAIS exposer côté client)
-// (SUPABASE_URL et SUPABASE_ANON_KEY sont fournis automatiquement.)
+// Aucun secret à ajouter : SUPABASE_URL, SUPABASE_ANON_KEY et
+// SUPABASE_SERVICE_ROLE_KEY sont fournis AUTOMATIQUEMENT par Supabase à
+// chaque edge function (impossible — et inutile — de les créer à la main).
 // =====================================================================
 import { createClient } from "npm:@supabase/supabase-js@2";
 
