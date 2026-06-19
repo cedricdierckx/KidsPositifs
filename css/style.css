@@ -39,6 +39,12 @@ body{
   93%{transform:rotate(10deg) scale(1.06)}
   96%{transform:rotate(-6deg)}
 }
+/* Petite animation de glissement lors d'un swipe entre enfants / sous-onglets */
+@keyframes glisseGauche{from{opacity:.35;transform:translateX(34px)}to{opacity:1;transform:translateX(0)}}
+@keyframes glisseDroite{from{opacity:.35;transform:translateX(-34px)}to{opacity:1;transform:translateX(0)}}
+#contenu.glisse-gauche{animation:glisseGauche .22s ease-out}
+#contenu.glisse-droite{animation:glisseDroite .22s ease-out}
+
 .parrain-modale{position:relative; max-width:340px}
 .modale-fermer{position:absolute; top:8px; right:10px; border:none; background:transparent;
   font-size:18px; cursor:pointer; color:var(--doux)}

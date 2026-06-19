@@ -163,24 +163,51 @@ function changerEnfantRelatif(dir) {
   rendre();
 }
 
+// Joue une petite animation de glissement sur la zone de contenu puis exécute
+// le changement (dir = +1 vers la gauche/suivant, -1 vers la droite/précédent).
+function glisserVers(dir, action) {
+  const c = document.getElementById("contenu");
+  action();   // rendre() recompose le contenu (sans toucher aux classes du <main>)
+  if (!c) return;
+  const cls = dir > 0 ? "glisse-gauche" : "glisse-droite";
+  c.classList.remove("glisse-gauche", "glisse-droite");
+  void c.offsetWidth;          // force le redémarrage de l'animation
+  c.classList.add(cls);
+  c.addEventListener("animationend", function fin() {
+    c.classList.remove(cls);
+    c.removeEventListener("animationend", fin);
+  });
+}
+
 // Détecte un glissement horizontal franc sur la zone de contenu et change
-// d'enfant (ou de sous-onglet dans l'espace parents). Ignoré quand le geste
-// est surtout vertical (scroll).
+// d'enfant (ou de sous-onglet dans l'espace parents). Conçu pour éviter les
+// déclenchements accidentels par un enfant : il faut un geste long (≥ 90 px),
+// nettement horizontal, assez rapide (≤ 600 ms) et pas trop lent du doigt.
 function brancherSwipeEnfant(zone) {
   if (!zone) return;
-  let x0 = 0, y0 = 0, suivi = false;
+  let x0 = 0, y0 = 0, t0 = 0, suivi = false;
   zone.addEventListener("touchstart", (e) => {
     if (e.touches.length !== 1) { suivi = false; return; }
-    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; suivi = true;
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now(); suivi = true;
+  }, { passive: true });
+  zone.addEventListener("touchmove", (e) => {
+    // Plusieurs doigts ou geste à dominante verticale : on annule (scroll/zoom).
+    if (e.touches.length !== 1) { suivi = false; return; }
+    const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
+    if (Math.abs(dy) > 40 && Math.abs(dy) > Math.abs(dx)) suivi = false;
   }, { passive: true });
   zone.addEventListener("touchend", (e) => {
     if (!suivi) return;
     suivi = false;
     const t = e.changedTouches[0];
     const dx = t.clientX - x0, dy = t.clientY - y0;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.8) {
-      if (etat.vue === "reglages") changerOngletParentRelatif(dx < 0 ? 1 : -1);
-      else changerEnfantRelatif(dx < 0 ? 1 : -1);
+    const duree = Date.now() - t0;
+    const horizontalNet = Math.abs(dx) > 90 && Math.abs(dx) > Math.abs(dy) * 2.5;
+    const assezRapide = duree < 600 && (Math.abs(dx) / duree) > 0.25; // px/ms
+    if (horizontalNet && assezRapide) {
+      const dir = dx < 0 ? 1 : -1;
+      if (etat.vue === "reglages") glisserVers(dir, () => changerOngletParentRelatif(dir));
+      else glisserVers(dir, () => changerEnfantRelatif(dir));
     }
   }, { passive: true });
 }
