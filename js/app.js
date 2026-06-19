@@ -136,10 +136,14 @@ function annulerAction(id) {
 // restes : budget restant (ms) PAR enfant en mode « par enfant » (persistant).
 // choix : en attente du choix de l'enfant qui continue (un enfant a épuisé son
 // temps mais d'autres en ont encore).
-let timerEtat = { actif: false, fin: 0, total: 0, enfant: null, restes: {}, choix: false, verrouille: false };
+// prep : horodatage de fin du petit décompte « prépare-toi » (5 s) qui précède
+// la reprise du minuteur après un changement d'enfant. Pendant cette phase le
+// temps de l'enfant n'est PAS décompté.
+const PREP_MS = 5000;
+let timerEtat = { actif: false, fin: 0, total: 0, enfant: null, restes: {}, prep: 0, choix: false, verrouille: false };
 let timerInterval = null;
 function cleTimer() { return STORAGE_KEY + ":timer:" + (familleId || "_local"); }
-function timerVierge() { return { actif: false, fin: 0, total: 0, enfant: null, restes: {}, choix: false, verrouille: false }; }
+function timerVierge() { return { actif: false, fin: 0, total: 0, enfant: null, restes: {}, prep: 0, choix: false, verrouille: false }; }
 function chargerTimer() {
   try {
     const b = localStorage.getItem(cleTimer());
@@ -147,6 +151,7 @@ function chargerTimer() {
   } catch { timerEtat = timerVierge(); }
   if (!timerEtat || typeof timerEtat !== "object") timerEtat = timerVierge();
   if (!timerEtat.restes || typeof timerEtat.restes !== "object") timerEtat.restes = {};
+  if (typeof timerEtat.prep !== "number") timerEtat.prep = 0;
   // Le minuteur a expiré pendant l'absence (onglet fermé).
   if (timerEtat.actif && timerEtat.fin && Date.now() >= timerEtat.fin) {
     finDeTempsEnfant();   // gère verrouillage OU proposition de continuer
@@ -196,6 +201,19 @@ function lancerTickTimer() {
 function stopTickTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
 function tickTimer() {
   if (!timerEtat.actif) { stopTickTimer(); return; }
+  // Phase « prépare-toi » : décompte de 5 s avant de (re)lancer le minuteur.
+  if (timerEtat.prep) {
+    const restePrep = timerEtat.prep - Date.now();
+    if (restePrep > 0) {
+      if (typeof majAffichagePrep === "function") majAffichagePrep(restePrep);
+      if (typeof majBoutonTimer === "function") majBoutonTimer();
+      return;
+    }
+    timerEtat.prep = 0;
+    timerEtat.fin = Date.now() + tempsRestantEnfant(timerEtat.enfant);
+    ecrireTimer();
+    if (typeof masquerPrep === "function") masquerPrep();
+  }
   const reste = timerEtat.fin - Date.now();
   if (reste <= 0) {
     finDeTempsEnfant();
@@ -242,10 +260,12 @@ function tempsRestantEnfant(id) {
 function continuerAvecEnfant(id) {
   if (!id || tempsRestantEnfant(id) <= 0) return;
   etat.enfantActif = id;
+  timerEtat.restes[id] = tempsRestantEnfant(id);   // fige le budget repris
   timerEtat.enfant = id;
   timerEtat.choix = false;
   timerEtat.actif = true;
-  timerEtat.fin = Date.now() + tempsRestantEnfant(id);
+  timerEtat.prep = Date.now() + PREP_MS;            // 5 s pour se préparer
+  timerEtat.fin = 0;
   ecrireTimer();
   if (typeof masquerChoixEnfant === "function") masquerChoixEnfant();
   ecrireCache();
@@ -261,11 +281,16 @@ function timerSurChangementEnfant() {
   const enf = enfantActif();
   const id = enf ? enf.id : null;
   if (id && id !== timerEtat.enfant) {
-    // Sauvegarde du temps restant de l'enfant précédent.
-    if (timerEtat.enfant) timerEtat.restes[timerEtat.enfant] = Math.max(0, timerEtat.fin - Date.now());
-    // Reprise du temps restant du nouvel enfant (budget plein si jamais utilisé).
+    // Sauvegarde du temps restant de l'enfant précédent (sauf en pleine phase
+    // « prépare-toi », où son temps n'avait pas encore repris).
+    if (timerEtat.enfant && !timerEtat.prep) {
+      timerEtat.restes[timerEtat.enfant] = Math.max(0, timerEtat.fin - Date.now());
+    }
+    // Le nouvel enfant a 5 s pour se préparer avant que son temps ne reprenne.
+    timerEtat.restes[id] = tempsRestantEnfant(id);
     timerEtat.enfant = id;
-    timerEtat.fin = Date.now() + tempsRestantEnfant(id);
+    timerEtat.prep = Date.now() + PREP_MS;
+    timerEtat.fin = 0;
     ecrireTimer();
   }
 }

@@ -278,6 +278,7 @@ function synchroniserTimerUI() {
   masquerVerrou();
   if (timerEtat.choix) { afficherChoixEnfant(); masquerBandeauTimer(); majBoutonTimer(); return; }
   masquerChoixEnfant();
+  if (!timerEtat.prep) masquerPrep();
   if (timerEtat.actif) {
     if (!timerInterval) lancerTickTimer(); else tickTimer();
   } else {
@@ -337,12 +338,49 @@ function majBoutonTimer() {
   const b = document.getElementById("timer-btn");
   if (!b) return;
   b.classList.toggle("actif", !!timerEtat.actif);
-  if (timerEtat.actif) {
+  if (timerEtat.actif && timerEtat.prep) {
+    b.textContent = "⏳ " + Math.max(0, Math.ceil((timerEtat.prep - Date.now()) / 1000));
+  } else if (timerEtat.actif) {
     const reste = Math.max(0, timerEtat.fin - Date.now());
     b.textContent = "⏱️ " + mmss(reste);
   } else {
     b.textContent = "⏱️";
   }
+}
+
+// Décompte « prépare-toi » plein écran (5 s) après un changement d'enfant.
+function majAffichagePrep(restePrep) {
+  masquerBandeauTimer();
+  const enf = enfantActif();
+  let ov = document.getElementById("prep-ecran");
+  if (!ov) {
+    ov = el("div", "prep-ecran");
+    ov.id = "prep-ecran";
+    ov.innerHTML = `
+      <div class="prep-carte">
+        <div id="prep-emoji" class="prep-emoji"></div>
+        <h2 id="prep-titre"></h2>
+        <div id="prep-num" class="prep-num"></div>
+        <p class="prep-sous">${t("prep.sous")}</p>
+      </div>`;
+    document.body.appendChild(ov);
+  }
+  const em = ov.querySelector("#prep-emoji");
+  const ti = ov.querySelector("#prep-titre");
+  const nu = ov.querySelector("#prep-num");
+  if (em && enf) em.textContent = enf.emoji;
+  if (ti && enf) ti.textContent = t("prep.titre", { prenom: enf.prenom });
+  const sec = Math.max(0, Math.ceil(restePrep / 1000));
+  if (nu) {
+    if (nu.textContent !== String(sec)) {
+      nu.textContent = sec;
+      nu.classList.remove("pulse"); void nu.offsetWidth; nu.classList.add("pulse");
+    }
+  }
+}
+function masquerPrep() {
+  const ov = document.getElementById("prep-ecran");
+  if (ov) ov.remove();
 }
 
 // Met à jour la jauge visuelle (bandeau) pour les enfants.

@@ -89,6 +89,19 @@ body{
 .verrou-carte p{margin:0 0 14px; color:#54616f; font-size:15px; line-height:1.5}
 .verrou-carte .gros-bouton{width:100%}
 
+/* Décompte « prépare-toi » (5 s) après un changement d'enfant */
+.prep-ecran{position:fixed; inset:0; z-index:1000; display:flex; align-items:center;
+  justify-content:center; padding:24px;
+  background:linear-gradient(160deg,#2c5a7a,#1d7a52); backdrop-filter:blur(3px)}
+.prep-carte{background:#fff; border-radius:24px; padding:28px 30px; max-width:320px;
+  text-align:center; box-shadow:0 16px 48px rgba(0,0,0,.35)}
+.prep-emoji{font-size:54px; line-height:1; margin-bottom:6px}
+.prep-carte h2{margin:0 0 6px; color:#27384a}
+.prep-num{font-size:84px; font-weight:900; line-height:1; color:#1d7a52; margin:8px 0}
+.prep-num.pulse{animation:prepPulse .5s ease-out}
+@keyframes prepPulse{0%{transform:scale(.4); opacity:.2}60%{transform:scale(1.15); opacity:1}100%{transform:scale(1)}}
+.prep-sous{margin:6px 0 0; color:#54616f; font-size:14px}
+
 /* Écran « qui continue ? » (temps par enfant épuisé) */
 .choix-carte{max-width:360px}
 .choix-liste{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:6px 0 4px}
