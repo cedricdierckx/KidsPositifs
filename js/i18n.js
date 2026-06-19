@@ -1200,31 +1200,35 @@ Object.assign(I18N.de, { "journal.titre": "↩️ Letzte Aktionen", "journal.vid
 /* ---- Minuteur de temps d'écran + verrouillage PIN ---- */
 Object.assign(I18N.fr, {
   "timer.titre": "⏱️ Minuteur d'écran", "timer.intro": "Au bout du temps choisi, l'application se verrouille (code PIN parental pour rouvrir).",
-  "timer.duree": "Durée (minutes)", "timer.mode_enfant": "Par enfant (chacun son temps, repart à zéro en changeant d'enfant)", "timer.mode_global": "Global (un seul temps pour tous)",
+  "timer.duree": "Durée (minutes)", "timer.mode_enfant": "Par enfant (chacun son temps, qui se met en pause en changeant d'enfant et reprend là où il s'était arrêté)", "timer.mode_global": "Global (un seul temps pour tous)",
   "timer.demarrer": "▶️ Démarrer", "timer.lance": "Minuteur lancé ⏱️", "timer.sans_pin": "⚠️ Aucun code PIN défini : pense à en créer un (onglet Activités) pour empêcher le déverrouillage.",
   "timer.arret_titre": "Arrêter le minuteur", "timer.arret_pin": "Saisis le code PIN parental pour arrêter.", "timer.arret_confirm": "Arrêter le minuteur ?", "timer.pin_faux": "Code PIN incorrect 🔒",
-  "verrou.titre": "Temps écoulé !", "verrou.texte": "C'est l'heure de faire une pause 😊 Demande à un parent pour continuer.", "verrou.sans_pin": "Aucun code PIN défini : tu peux déverrouiller directement.", "verrou.bouton": "🔓 Déverrouiller (parent)", "verrou.pin_titre": "🔒 Code PIN parental"
+  "verrou.titre": "Temps écoulé !", "verrou.texte": "C'est l'heure de faire une pause 😊 Demande à un parent pour continuer.", "verrou.sans_pin": "Aucun code PIN défini : tu peux déverrouiller directement.", "verrou.bouton": "🔓 Déverrouiller (parent)", "verrou.pin_titre": "🔒 Code PIN parental",
+  "choix.titre": "Temps écoulé pour cet enfant !", "choix.texte": "Qui veut continuer ? (temps restant indiqué)", "choix.arreter": "Arrêter le minuteur"
 });
 Object.assign(I18N.en, {
   "timer.titre": "⏱️ Screen timer", "timer.intro": "When the time is up, the app locks (parental PIN to reopen).",
-  "timer.duree": "Duration (minutes)", "timer.mode_enfant": "Per child (each their own time, resets when switching child)", "timer.mode_global": "Global (one shared time)",
+  "timer.duree": "Duration (minutes)", "timer.mode_enfant": "Per child (each their own time; pauses when switching child and resumes where it left off)", "timer.mode_global": "Global (one shared time)",
   "timer.demarrer": "▶️ Start", "timer.lance": "Timer started ⏱️", "timer.sans_pin": "⚠️ No PIN set: create one (Activities tab) to prevent unlocking.",
   "timer.arret_titre": "Stop the timer", "timer.arret_pin": "Enter the parental PIN to stop.", "timer.arret_confirm": "Stop the timer?", "timer.pin_faux": "Wrong PIN 🔒",
-  "verrou.titre": "Time's up!", "verrou.texte": "Time for a break 😊 Ask a parent to continue.", "verrou.sans_pin": "No PIN set: you can unlock directly.", "verrou.bouton": "🔓 Unlock (parent)", "verrou.pin_titre": "🔒 Parental PIN"
+  "verrou.titre": "Time's up!", "verrou.texte": "Time for a break 😊 Ask a parent to continue.", "verrou.sans_pin": "No PIN set: you can unlock directly.", "verrou.bouton": "🔓 Unlock (parent)", "verrou.pin_titre": "🔒 Parental PIN",
+  "choix.titre": "Time's up for this child!", "choix.texte": "Who wants to continue? (remaining time shown)", "choix.arreter": "Stop the timer"
 });
 Object.assign(I18N.nl, {
   "timer.titre": "⏱️ Schermtimer", "timer.intro": "Als de tijd om is, vergrendelt de app (ouderlijke PIN om te heropenen).",
-  "timer.duree": "Duur (minuten)", "timer.mode_enfant": "Per kind (elk eigen tijd, opnieuw bij wisselen van kind)", "timer.mode_global": "Globaal (één gedeelde tijd)",
+  "timer.duree": "Duur (minuten)", "timer.mode_enfant": "Per kind (elk eigen tijd; pauzeert bij wisselen van kind en gaat verder waar het stopte)", "timer.mode_global": "Globaal (één gedeelde tijd)",
   "timer.demarrer": "▶️ Starten", "timer.lance": "Timer gestart ⏱️", "timer.sans_pin": "⚠️ Geen PIN ingesteld: maak er een aan (tabblad Activiteiten) om ontgrendelen te voorkomen.",
   "timer.arret_titre": "Timer stoppen", "timer.arret_pin": "Voer de ouderlijke PIN in om te stoppen.", "timer.arret_confirm": "Timer stoppen?", "timer.pin_faux": "Verkeerde PIN 🔒",
-  "verrou.titre": "Tijd is om!", "verrou.texte": "Tijd voor een pauze 😊 Vraag een ouder om door te gaan.", "verrou.sans_pin": "Geen PIN ingesteld: je kunt direct ontgrendelen.", "verrou.bouton": "🔓 Ontgrendelen (ouder)", "verrou.pin_titre": "🔒 Ouderlijke PIN"
+  "verrou.titre": "Tijd is om!", "verrou.texte": "Tijd voor een pauze 😊 Vraag een ouder om door te gaan.", "verrou.sans_pin": "Geen PIN ingesteld: je kunt direct ontgrendelen.", "verrou.bouton": "🔓 Ontgrendelen (ouder)", "verrou.pin_titre": "🔒 Ouderlijke PIN",
+  "choix.titre": "Tijd is om voor dit kind!", "choix.texte": "Wie wil verdergaan? (resterende tijd weergegeven)", "choix.arreter": "Timer stoppen"
 });
 Object.assign(I18N.de, {
   "timer.titre": "⏱️ Bildschirm-Timer", "timer.intro": "Wenn die Zeit um ist, sperrt sich die App (Eltern-PIN zum Wiederöffnen).",
-  "timer.duree": "Dauer (Minuten)", "timer.mode_enfant": "Pro Kind (jedes eigene Zeit, startet beim Wechsel neu)", "timer.mode_global": "Global (eine gemeinsame Zeit)",
+  "timer.duree": "Dauer (Minuten)", "timer.mode_enfant": "Pro Kind (jedes eigene Zeit; pausiert beim Wechsel und macht dort weiter, wo es aufgehört hat)", "timer.mode_global": "Global (eine gemeinsame Zeit)",
   "timer.demarrer": "▶️ Starten", "timer.lance": "Timer gestartet ⏱️", "timer.sans_pin": "⚠️ Keine PIN festgelegt: Lege eine an (Tab Aktivitäten), um das Entsperren zu verhindern.",
   "timer.arret_titre": "Timer stoppen", "timer.arret_pin": "Gib die Eltern-PIN ein, um zu stoppen.", "timer.arret_confirm": "Timer stoppen?", "timer.pin_faux": "Falsche PIN 🔒",
-  "verrou.titre": "Zeit ist um!", "verrou.texte": "Zeit für eine Pause 😊 Frag ein Elternteil, um weiterzumachen.", "verrou.sans_pin": "Keine PIN festgelegt: Du kannst direkt entsperren.", "verrou.bouton": "🔓 Entsperren (Eltern)", "verrou.pin_titre": "🔒 Eltern-PIN"
+  "verrou.titre": "Zeit ist um!", "verrou.texte": "Zeit für eine Pause 😊 Frag ein Elternteil, um weiterzumachen.", "verrou.sans_pin": "Keine PIN festgelegt: Du kannst direkt entsperren.", "verrou.bouton": "🔓 Entsperren (Eltern)", "verrou.pin_titre": "🔒 Eltern-PIN",
+  "choix.titre": "Zeit ist um für dieses Kind!", "choix.texte": "Wer möchte weitermachen? (verbleibende Zeit angezeigt)", "choix.arreter": "Timer stoppen"
 });
 
 /* ---- Réinitialisation du code PIN parental oublié (par e-mail) ---- */

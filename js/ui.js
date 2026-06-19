@@ -276,12 +276,60 @@ function brancherSwipeEnfant(zone) {
 function synchroniserTimerUI() {
   if (timerEtat.verrouille) { afficherVerrou(); return; }
   masquerVerrou();
+  if (timerEtat.choix) { afficherChoixEnfant(); masquerBandeauTimer(); majBoutonTimer(); return; }
+  masquerChoixEnfant();
   if (timerEtat.actif) {
     if (!timerInterval) lancerTickTimer(); else tickTimer();
   } else {
     masquerBandeauTimer();
   }
   majBoutonTimer();
+}
+
+// Écran « qui continue ? » : un enfant a épuisé son temps mais d'autres en ont
+// encore. On affiche chaque enfant disponible avec le temps qu'il lui reste.
+function afficherChoixEnfant() {
+  if (document.getElementById("choix-enfant")) return;   // déjà affiché
+  masquerBandeauTimer();
+  const ov = el("div", "verrou-ecran");
+  ov.id = "choix-enfant";
+  const dispo = (typeof restesDisponibles === "function") ? restesDisponibles() : [];
+  let cartes = "";
+  dispo.forEach(enf => {
+    const reste = tempsRestantEnfant(enf.id);
+    cartes += `<button class="choix-enf" data-id="${enf.id}" style="--c:${enf.couleur}">
+        <span class="choix-emoji">${enf.emoji}</span>
+        <span class="choix-nom">${echapper(enf.prenom)}</span>
+        <span class="choix-temps">${mmss(reste)}</span>
+      </button>`;
+  });
+  ov.innerHTML = `
+    <div class="verrou-carte choix-carte">
+      <div class="verrou-emoji">⏰</div>
+      <h2>${t("choix.titre")}</h2>
+      <p>${t("choix.texte")}</p>
+      <div class="choix-liste">${cartes}</div>
+      <button id="choix-stop" class="lien-oubli">${t("choix.arreter")}</button>
+    </div>`;
+  document.body.appendChild(ov);
+  ov.querySelectorAll(".choix-enf").forEach(b => {
+    b.onclick = () => continuerAvecEnfant(b.dataset.id);
+  });
+  const stop = ov.querySelector("#choix-stop");
+  if (stop) stop.onclick = () => {
+    // Arrêter le minuteur depuis l'écran de choix (PIN si défini).
+    if (etat.reglages && etat.reglages.codeParent) {
+      demanderPin({
+        titre: t("timer.arret_titre"), sousTitre: t("timer.arret_pin"),
+        permettreOubli: true, onReset: () => arreterTimer(),
+        onOk: (s) => { if (s.trim() !== etat.reglages.codeParent) { toast(t("timer.pin_faux"), "info"); return; } arreterTimer(); }
+      });
+    } else if (confirm(t("timer.arret_confirm"))) arreterTimer();
+  };
+}
+function masquerChoixEnfant() {
+  const ov = document.getElementById("choix-enfant");
+  if (ov) ov.remove();
 }
 
 // Met à jour l'icône / le texte du bouton minuteur en haut.

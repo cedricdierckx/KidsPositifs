@@ -133,19 +133,23 @@ function annulerAction(id) {
  * simple rechargement de page ne contourne pas le verrou.
  *   réglages (synchronisés) : reglages.timerDuree (min) et reglages.timerMode
  *   ("parEnfant" = repart à zéro à chaque changement d'enfant, ou "global"). */
-let timerEtat = { actif: false, fin: 0, total: 0, enfant: null, verrouille: false };
+// restes : budget restant (ms) PAR enfant en mode « par enfant » (persistant).
+// choix : en attente du choix de l'enfant qui continue (un enfant a épuisé son
+// temps mais d'autres en ont encore).
+let timerEtat = { actif: false, fin: 0, total: 0, enfant: null, restes: {}, choix: false, verrouille: false };
 let timerInterval = null;
 function cleTimer() { return STORAGE_KEY + ":timer:" + (familleId || "_local"); }
-function timerVierge() { return { actif: false, fin: 0, total: 0, enfant: null, verrouille: false }; }
+function timerVierge() { return { actif: false, fin: 0, total: 0, enfant: null, restes: {}, choix: false, verrouille: false }; }
 function chargerTimer() {
   try {
     const b = localStorage.getItem(cleTimer());
     timerEtat = b ? JSON.parse(b) : timerVierge();
   } catch { timerEtat = timerVierge(); }
   if (!timerEtat || typeof timerEtat !== "object") timerEtat = timerVierge();
-  // Le minuteur a expiré pendant l'absence (onglet fermé) -> on verrouille.
+  if (!timerEtat.restes || typeof timerEtat.restes !== "object") timerEtat.restes = {};
+  // Le minuteur a expiré pendant l'absence (onglet fermé).
   if (timerEtat.actif && timerEtat.fin && Date.now() >= timerEtat.fin) {
-    timerEtat.actif = false; timerEtat.verrouille = true;
+    finDeTempsEnfant();   // gère verrouillage OU proposition de continuer
   }
 }
 function ecrireTimer() { try { localStorage.setItem(cleTimer(), JSON.stringify(timerEtat)); } catch {} }
@@ -168,7 +172,10 @@ function definirReglageTimer(duree, mode) {
 function demarrerTimer() {
   const ms = timerDureeMin() * 60000;
   const enf = enfantActif();
-  timerEtat = { actif: true, fin: Date.now() + ms, total: ms, enfant: enf ? enf.id : null, verrouille: false };
+  const id = enf ? enf.id : null;
+  const restes = {};
+  if (timerMode() === "parEnfant" && id) restes[id] = ms;   // budget initial de l'enfant actif
+  timerEtat = { actif: true, fin: Date.now() + ms, total: ms, enfant: id, restes, choix: false, verrouille: false };
   ecrireTimer();
   lancerTickTimer();
   if (typeof toast === "function") toast(t("timer.lance"), "info");
@@ -178,6 +185,7 @@ function arreterTimer() {
   timerEtat = timerVierge();
   stopTickTimer();
   ecrireTimer();
+  if (typeof masquerVerrou === "function") masquerVerrou();
   rendre();
 }
 function lancerTickTimer() {
@@ -190,28 +198,80 @@ function tickTimer() {
   if (!timerEtat.actif) { stopTickTimer(); return; }
   const reste = timerEtat.fin - Date.now();
   if (reste <= 0) {
-    timerEtat.actif = false;
-    ecrireTimer();
-    stopTickTimer();
-    verrouillerApp();
+    finDeTempsEnfant();
     return;
   }
   if (typeof majAffichageTimer === "function") majAffichageTimer(reste, timerEtat.total);
 }
-// Mode « par enfant » : chaque enfant dispose de sa propre durée ; on repart
-// à zéro dès qu'on change d'enfant actif.
+
+// Temps écoulé pour l'enfant courant (ou minuteur global).
+// - mode global : verrouillage direct.
+// - mode par enfant : si d'autres enfants ont encore du temps, on propose de
+//   choisir lequel continue ; sinon on verrouille.
+function finDeTempsEnfant() {
+  stopTickTimer();
+  timerEtat.actif = false;
+  if (timerMode() === "parEnfant") {
+    if (timerEtat.enfant) timerEtat.restes[timerEtat.enfant] = 0;   // budget épuisé
+    if (restesDisponibles().length > 0) {
+      timerEtat.choix = true;
+      ecrireTimer();
+      if (typeof afficherChoixEnfant === "function") afficherChoixEnfant();
+      return;
+    }
+  }
+  ecrireTimer();
+  verrouillerApp();
+}
+
+// Liste des enfants (objets) ayant encore du temps disponible (mode par enfant).
+// Les enfants jamais utilisés disposent de leur budget plein par défaut.
+function restesDisponibles() {
+  return Object.values(etat.enfants).filter(enf => tempsRestantEnfant(enf.id) > 0);
+}
+// Temps restant (ms) d'un enfant : valeur mémorisée, ou budget plein si jamais utilisé.
+function tempsRestantEnfant(id) {
+  if (timerEtat.restes && Object.prototype.hasOwnProperty.call(timerEtat.restes, id)) {
+    return Math.max(0, timerEtat.restes[id]);
+  }
+  return timerEtat.total || (timerDureeMin() * 60000);
+}
+
+// L'utilisateur choisit l'enfant qui continue : on bascule dessus et on reprend
+// son budget restant.
+function continuerAvecEnfant(id) {
+  if (!id || tempsRestantEnfant(id) <= 0) return;
+  etat.enfantActif = id;
+  timerEtat.enfant = id;
+  timerEtat.choix = false;
+  timerEtat.actif = true;
+  timerEtat.fin = Date.now() + tempsRestantEnfant(id);
+  ecrireTimer();
+  if (typeof masquerChoixEnfant === "function") masquerChoixEnfant();
+  ecrireCache();
+  lancerTickTimer();
+  rendre();
+}
+
+// Mode « par enfant » : budgets PERSISTANTS. Quand on change d'enfant actif,
+// on mémorise le temps restant de l'enfant qui sort, et on reprend (sans
+// réinitialiser) le temps restant de l'enfant qui entre.
 function timerSurChangementEnfant() {
-  if (!timerEtat.actif || timerMode() !== "parEnfant") return;
+  if (!timerEtat.actif || timerEtat.choix || timerMode() !== "parEnfant") return;
   const enf = enfantActif();
   const id = enf ? enf.id : null;
-  if (id !== timerEtat.enfant) {
+  if (id && id !== timerEtat.enfant) {
+    // Sauvegarde du temps restant de l'enfant précédent.
+    if (timerEtat.enfant) timerEtat.restes[timerEtat.enfant] = Math.max(0, timerEtat.fin - Date.now());
+    // Reprise du temps restant du nouvel enfant (budget plein si jamais utilisé).
     timerEtat.enfant = id;
-    timerEtat.fin = Date.now() + timerEtat.total;
+    timerEtat.fin = Date.now() + tempsRestantEnfant(id);
     ecrireTimer();
   }
 }
 function verrouillerApp() {
   timerEtat.verrouille = true;
+  timerEtat.choix = false;
   ecrireTimer();
   modeParents = false;
   if (typeof afficherVerrou === "function") afficherVerrou();
@@ -221,6 +281,7 @@ function deverrouillerApp() {
   stopTickTimer();
   ecrireTimer();
   if (typeof masquerVerrou === "function") masquerVerrou();
+  if (typeof masquerChoixEnfant === "function") masquerChoixEnfant();
   rendre();
 }
 

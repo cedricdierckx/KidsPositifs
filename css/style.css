@@ -89,6 +89,18 @@ body{
 .verrou-carte p{margin:0 0 14px; color:#54616f; font-size:15px; line-height:1.5}
 .verrou-carte .gros-bouton{width:100%}
 
+/* Écran « qui continue ? » (temps par enfant épuisé) */
+.choix-carte{max-width:360px}
+.choix-liste{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:6px 0 4px}
+.choix-enf{display:flex; flex-direction:column; align-items:center; gap:2px;
+  width:96px; padding:12px 8px; border:2px solid var(--c,#ddd); border-radius:16px;
+  background:#fff; cursor:pointer; transition:transform .12s}
+.choix-enf:hover{transform:translateY(-2px)}
+.choix-enf:active{transform:scale(.95)}
+.choix-emoji{font-size:30px; line-height:1}
+.choix-nom{font-weight:800; color:#27384a; font-size:14px}
+.choix-temps{font-size:15px; font-weight:800; color:var(--c,#1d4e6b)}
+
 /* Petite animation de glissement lors d'un swipe entre enfants / sous-onglets */
 @keyframes glisseGauche{from{opacity:.35;transform:translateX(34px)}to{opacity:1;transform:translateX(0)}}
 @keyframes glisseDroite{from{opacity:.35;transform:translateX(-34px)}to{opacity:1;transform:translateX(0)}}
