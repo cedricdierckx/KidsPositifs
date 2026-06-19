@@ -39,6 +39,11 @@ body{
   93%{transform:rotate(10deg) scale(1.06)}
   96%{transform:rotate(-6deg)}
 }
+/* Lien « Code PIN oublié ? » dans la modale PIN */
+.lien-oubli{display:block; margin:12px auto 0; background:none; border:none;
+  color:#3a7bd5; font-size:13px; text-decoration:underline; cursor:pointer}
+.lien-oubli:hover{color:#255fae}
+
 /* Bouton minuteur de temps d'écran (en haut à droite) */
 .timer-btn{position:absolute; top:9px; right:12px; min-width:36px; height:36px; padding:0 9px;
   border:none; border-radius:18px; background:linear-gradient(135deg,#d8f0ff,#cfe7ff);

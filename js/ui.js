@@ -55,6 +55,7 @@ function demanderPin(opts) {
         <button id="pin-annuler" class="btn-secondaire">Annuler</button>
         <button id="pin-ok" class="gros-bouton planete">Valider</button>
       </div>
+      ${opts.permettreOubli ? `<button id="pin-oubli" class="lien-oubli">${t("pin.oublie")}</button>` : ""}
     </div>`;
   document.body.appendChild(ov);
   const inp = ov.querySelector("#pin-input");
@@ -67,9 +68,51 @@ function demanderPin(opts) {
   };
   ov.querySelector("#pin-ok").onclick = valider;
   ov.querySelector("#pin-annuler").onclick = () => { fermer(); if (opts.onCancel) opts.onCancel(); };
+  const bOubli = ov.querySelector("#pin-oubli");
+  if (bOubli) bOubli.onclick = () => { fermer(); reinitPinParMail(opts.onReset || null); };
   inp.addEventListener("keydown", e => { if (e.key === "Enter") valider(); });
   // Ouvre tout de suite le clavier (numérique) du smartphone.
   setTimeout(() => { inp.focus(); inp.click(); }, 50);
+}
+
+// Réinitialisation du code PIN parental oublié, par e-mail. On envoie un code
+// à usage unique à l'adresse du compte (preuve que c'est bien le parent), puis
+// on permet de choisir un nouveau PIN. `apresOk` poursuit l'action en cours
+// (ex. ouvrir l'espace parents, déverrouiller l'écran) une fois le PIN changé.
+async function reinitPinParMail(apresOk) {
+  if (typeof modeDemo !== "undefined" && modeDemo) { toast("Indisponible en mode démo 🧪", "info"); return; }
+  const u = (typeof utilisateurCourant === "function") ? utilisateurCourant() : null;
+  const email = u && u.email;
+  if (!email) { toast(t("pin.reset_pas_email"), "info"); return; }
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  toast(t("pin.reset_envoi"), "info");
+  const res = await envoyerMailFn({
+    to: email,
+    subject: t("pin.reset_sujet"),
+    text: t("pin.reset_corps", { code, app: APP_NOM })
+  });
+  if (!res || !res.ok) { toast(t("pin.reset_echec", { detail: (res && res.detail) || "" }), "info"); return; }
+  // 1) Saisie du code reçu par e-mail.
+  demanderPin({
+    titre: t("pin.reset_titre"),
+    sousTitre: t("pin.reset_sous", { email }),
+    onOk: (saisi) => {
+      if (saisi.trim() !== code) { toast(t("pin.reset_code_faux"), "info"); return; }
+      // 2) Choix d'un nouveau PIN (vide = supprimer le PIN).
+      demanderPin({
+        titre: t("pin.nouveau_titre"),
+        sousTitre: t("pin.nouveau_sous"),
+        permettreVide: true,
+        onOk: (nv) => {
+          if (!etat.reglages) etat.reglages = {};
+          etat.reglages.codeParent = (nv || "").trim();
+          sauver();
+          toast(etat.reglages.codeParent ? t("pin.maj_ok") : t("pin.efface_ok"), "succes");
+          if (apresOk) apresOk();
+        }
+      });
+    }
+  });
 }
 
 // Modale rapide pour parrainer une autre famille (depuis la pastille en-tête).
@@ -324,6 +367,8 @@ function modaleTimerActif() {
     demanderPin({
       titre: t("timer.arret_titre"),
       sousTitre: t("timer.arret_pin"),
+      permettreOubli: true,
+      onReset: () => arret(),
       onOk: (saisi) => {
         if (saisi.trim() !== etat.reglages.codeParent) { toast(t("timer.pin_faux"), "info"); return; }
         arret();
@@ -354,6 +399,8 @@ function afficherVerrou() {
     if (!aPin) { deverrouillerApp(); return; }
     demanderPin({
       titre: t("verrou.pin_titre"),
+      permettreOubli: true,
+      onReset: () => deverrouillerApp(),
       onOk: (saisi) => {
         if (saisi.trim() !== etat.reglages.codeParent) { toast(t("timer.pin_faux"), "info"); return; }
         deverrouillerApp();

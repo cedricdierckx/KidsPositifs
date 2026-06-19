@@ -1012,6 +1012,8 @@ function activerModeParents() {
   if (!code) { modeParents = true; rendre(); return; }
   demanderPin({
     titre: "🔒 Code PIN parent",
+    permettreOubli: true,
+    onReset: () => { modeParents = true; rendre(); },
     onOk: (saisi) => {
       if (saisi.trim() !== code) { toast("Code PIN incorrect 🔒", "info"); return; }
       modeParents = true;

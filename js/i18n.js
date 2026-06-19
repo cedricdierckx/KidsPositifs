@@ -1227,6 +1227,64 @@ Object.assign(I18N.de, {
   "verrou.titre": "Zeit ist um!", "verrou.texte": "Zeit für eine Pause 😊 Frag ein Elternteil, um weiterzumachen.", "verrou.sans_pin": "Keine PIN festgelegt: Du kannst direkt entsperren.", "verrou.bouton": "🔓 Entsperren (Eltern)", "verrou.pin_titre": "🔒 Eltern-PIN"
 });
 
+/* ---- Réinitialisation du code PIN parental oublié (par e-mail) ---- */
+Object.assign(I18N.fr, {
+  "pin.oublie": "Code PIN oublié ?",
+  "pin.reset_pas_email": "Aucune adresse e-mail de compte trouvée.",
+  "pin.reset_envoi": "Envoi du code par e-mail…",
+  "pin.reset_echec": "Échec de l'envoi de l'e-mail. {detail}",
+  "pin.reset_sujet": "Réinitialisation de ton code PIN parental",
+  "pin.reset_corps": "Bonjour,\n\nVoici ton code de vérification pour réinitialiser le code PIN parental de {app} : {code}\n\nSaisis ce code dans l'application pour choisir un nouveau code PIN.\nSi tu n'es pas à l'origine de cette demande, ignore cet e-mail.",
+  "pin.reset_titre": "📧 Code reçu par e-mail",
+  "pin.reset_sous": "Saisis le code envoyé à {email}.",
+  "pin.reset_code_faux": "Code incorrect ✋",
+  "pin.nouveau_titre": "🔑 Nouveau code PIN",
+  "pin.nouveau_sous": "Choisis un nouveau code (laisse vide pour supprimer le PIN).",
+  "pin.maj_ok": "Nouveau code PIN enregistré 🔒", "pin.efface_ok": "Code PIN supprimé"
+});
+Object.assign(I18N.en, {
+  "pin.oublie": "Forgot your PIN?",
+  "pin.reset_pas_email": "No account email address found.",
+  "pin.reset_envoi": "Sending the code by email…",
+  "pin.reset_echec": "Failed to send the email. {detail}",
+  "pin.reset_sujet": "Reset your parental PIN",
+  "pin.reset_corps": "Hello,\n\nHere is your verification code to reset the {app} parental PIN: {code}\n\nEnter this code in the app to choose a new PIN.\nIf you didn't request this, just ignore this email.",
+  "pin.reset_titre": "📧 Code received by email",
+  "pin.reset_sous": "Enter the code sent to {email}.",
+  "pin.reset_code_faux": "Wrong code ✋",
+  "pin.nouveau_titre": "🔑 New PIN",
+  "pin.nouveau_sous": "Choose a new code (leave empty to remove the PIN).",
+  "pin.maj_ok": "New PIN saved 🔒", "pin.efface_ok": "PIN removed"
+});
+Object.assign(I18N.nl, {
+  "pin.oublie": "PIN vergeten?",
+  "pin.reset_pas_email": "Geen e-mailadres van account gevonden.",
+  "pin.reset_envoi": "Code per e-mail versturen…",
+  "pin.reset_echec": "Verzenden van e-mail mislukt. {detail}",
+  "pin.reset_sujet": "Je ouderlijke PIN opnieuw instellen",
+  "pin.reset_corps": "Hallo,\n\nHier is je verificatiecode om de ouderlijke PIN van {app} opnieuw in te stellen: {code}\n\nVoer deze code in de app in om een nieuwe PIN te kiezen.\nHeb je dit niet aangevraagd, negeer dan deze e-mail.",
+  "pin.reset_titre": "📧 Code per e-mail ontvangen",
+  "pin.reset_sous": "Voer de code in die naar {email} is gestuurd.",
+  "pin.reset_code_faux": "Verkeerde code ✋",
+  "pin.nouveau_titre": "🔑 Nieuwe PIN",
+  "pin.nouveau_sous": "Kies een nieuwe code (laat leeg om de PIN te verwijderen).",
+  "pin.maj_ok": "Nieuwe PIN opgeslagen 🔒", "pin.efface_ok": "PIN verwijderd"
+});
+Object.assign(I18N.de, {
+  "pin.oublie": "PIN vergessen?",
+  "pin.reset_pas_email": "Keine Konto-E-Mail-Adresse gefunden.",
+  "pin.reset_envoi": "Code wird per E-Mail gesendet…",
+  "pin.reset_echec": "E-Mail konnte nicht gesendet werden. {detail}",
+  "pin.reset_sujet": "Eltern-PIN zurücksetzen",
+  "pin.reset_corps": "Hallo,\n\nHier ist dein Bestätigungscode, um die Eltern-PIN von {app} zurückzusetzen: {code}\n\nGib diesen Code in der App ein, um eine neue PIN zu wählen.\nWenn du das nicht angefordert hast, ignoriere diese E-Mail.",
+  "pin.reset_titre": "📧 Code per E-Mail erhalten",
+  "pin.reset_sous": "Gib den an {email} gesendeten Code ein.",
+  "pin.reset_code_faux": "Falscher Code ✋",
+  "pin.nouveau_titre": "🔑 Neue PIN",
+  "pin.nouveau_sous": "Wähle einen neuen Code (leer lassen, um die PIN zu entfernen).",
+  "pin.maj_ok": "Neue PIN gespeichert 🔒", "pin.efface_ok": "PIN entfernt"
+});
+
 /* ---- Cartes surprises : visible/mystère ---- */
 Object.assign(I18N.fr, { "cs.revele_label": "Activité visible par les enfants (sinon : surprise mystère 🎁)" });
 Object.assign(I18N.en, { "cs.revele_label": "Activity visible to children (otherwise: mystery surprise 🎁)" });
