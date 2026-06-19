@@ -118,9 +118,16 @@ function initSquelette() {
 
     <header class="topbar">
       <button id="pastille-inviter" class="pastille-inviter" title="Inviter une autre famille">🎁<span id="pastille-badge" class="pastille-badge"></span></button>
+      <button id="timer-btn" class="timer-btn" title="${t("timer.titre")}">⏱️</button>
       <div class="logo">🌟 ${APP_NOM} <span id="sync-etat" class="sync-etat" title="État de la synchronisation">…</span></div>
       <div id="selecteur-enfant" class="selecteur"></div>
     </header>
+
+    <div id="timer-bandeau" class="timer-bandeau" style="display:none">
+      <span id="timer-bandeau-icone" class="timer-bandeau-icone">⏳</span>
+      <div class="timer-jauge"><div id="timer-jauge-rempl" class="timer-jauge-rempl"></div></div>
+      <span id="timer-bandeau-temps" class="timer-bandeau-temps">--:--</span>
+    </div>
 
     <main id="contenu"></main>
 
@@ -143,6 +150,15 @@ function initSquelette() {
     modaleParrainage();
   };
   majPastilleInvit();
+
+  // Bouton minuteur de temps d'écran (verrouillage PIN).
+  const bTimer = document.getElementById("timer-btn");
+  if (bTimer) bTimer.onclick = () => {
+    if (typeof modeDemo !== "undefined" && modeDemo) { toast("Indisponible en mode démo 🧪", "info"); return; }
+    if (timerEtat.actif) modaleTimerActif();
+    else modaleTimer();
+  };
+  majBoutonTimer();
 
   // Minuteur : le bandeau dodo suit l'heure en continu (toutes les 20 s).
   if (!window.__dodoTimer) window.__dodoTimer = setInterval(majDodo, 20000);
@@ -210,6 +226,144 @@ function brancherSwipeEnfant(zone) {
       else glisserVers(dir, () => changerEnfantRelatif(dir));
     }
   }, { passive: true });
+}
+
+/* ---------- Minuteur de temps d'écran (UI) ---------- */
+// Synchronise l'affichage du minuteur avec son état (appelé à chaque rendu).
+function synchroniserTimerUI() {
+  if (timerEtat.verrouille) { afficherVerrou(); return; }
+  masquerVerrou();
+  if (timerEtat.actif) {
+    if (!timerInterval) lancerTickTimer(); else tickTimer();
+  } else {
+    masquerBandeauTimer();
+  }
+  majBoutonTimer();
+}
+
+// Met à jour l'icône / le texte du bouton minuteur en haut.
+function majBoutonTimer() {
+  const b = document.getElementById("timer-btn");
+  if (!b) return;
+  b.classList.toggle("actif", !!timerEtat.actif);
+  if (timerEtat.actif) {
+    const reste = Math.max(0, timerEtat.fin - Date.now());
+    b.textContent = "⏱️ " + mmss(reste);
+  } else {
+    b.textContent = "⏱️";
+  }
+}
+
+// Met à jour la jauge visuelle (bandeau) pour les enfants.
+function majAffichageTimer(reste, total) {
+  majBoutonTimer();
+  const band = document.getElementById("timer-bandeau");
+  const rempl = document.getElementById("timer-jauge-rempl");
+  const txt = document.getElementById("timer-bandeau-temps");
+  const ic = document.getElementById("timer-bandeau-icone");
+  if (!band || !rempl || !txt) return;
+  band.style.display = "flex";
+  const pct = total > 0 ? Math.max(0, Math.min(100, (reste / total) * 100)) : 0;
+  rempl.style.width = pct + "%";
+  txt.textContent = mmss(reste);
+  // Couleur + émotion selon le temps restant.
+  let niv = "ok";
+  if (pct <= 15) niv = "fin";
+  else if (pct <= 40) niv = "bientot";
+  band.className = "timer-bandeau niv-" + niv;
+  if (ic) ic.textContent = niv === "fin" ? "⏰" : niv === "bientot" ? "⏳" : "⏳";
+}
+function masquerBandeauTimer() {
+  const band = document.getElementById("timer-bandeau");
+  if (band) band.style.display = "none";
+}
+// Formate des millisecondes en M:SS.
+function mmss(ms) {
+  const s = Math.max(0, Math.ceil(ms / 1000));
+  const m = Math.floor(s / 60);
+  return m + ":" + String(s % 60).padStart(2, "0");
+}
+
+// Modale de configuration + démarrage du minuteur.
+function modaleTimer() {
+  const ov = el("div", "pin-modal");
+  const mode = (typeof timerMode === "function") ? timerMode() : "parEnfant";
+  const duree = (typeof timerDureeMin === "function") ? timerDureeMin() : 3;
+  ov.innerHTML = `
+    <div class="pin-carte timer-modale">
+      <button class="modale-fermer" aria-label="Fermer">✕</button>
+      <div class="pin-titre">${t("timer.titre")}</div>
+      <p class="note">${t("timer.intro")}</p>
+      <label class="champ">${t("timer.duree")}
+        <input id="tm-duree" type="number" min="1" max="120" inputmode="numeric" value="${duree}">
+      </label>
+      <div class="timer-modes">
+        <label class="radio-ligne"><input type="radio" name="tm-mode" value="parEnfant" ${mode !== "global" ? "checked" : ""}> ${t("timer.mode_enfant")}</label>
+        <label class="radio-ligne"><input type="radio" name="tm-mode" value="global" ${mode === "global" ? "checked" : ""}> ${t("timer.mode_global")}</label>
+      </div>
+      ${etat.reglages && etat.reglages.codeParent ? "" : `<p class="note timer-avert">${t("timer.sans_pin")}</p>`}
+      <button id="tm-go" class="gros-bouton planete">${t("timer.demarrer")}</button>
+    </div>`;
+  document.body.appendChild(ov);
+  const fermer = () => ov.remove();
+  ov.querySelector(".modale-fermer").onclick = fermer;
+  ov.addEventListener("click", e => { if (e.target === ov) fermer(); });
+  ov.querySelector("#tm-go").onclick = () => {
+    const d = ov.querySelector("#tm-duree").value;
+    const m = (ov.querySelector('input[name="tm-mode"]:checked') || {}).value || "parEnfant";
+    definirReglageTimer(d, m);
+    fermer();
+    demarrerTimer();
+  };
+}
+
+// Modale quand un minuteur tourne déjà : arrêter (PIN si défini).
+function modaleTimerActif() {
+  const arret = () => arreterTimer();
+  if (etat.reglages && etat.reglages.codeParent) {
+    demanderPin({
+      titre: t("timer.arret_titre"),
+      sousTitre: t("timer.arret_pin"),
+      onOk: (saisi) => {
+        if (saisi.trim() !== etat.reglages.codeParent) { toast(t("timer.pin_faux"), "info"); return; }
+        arret();
+      }
+    });
+  } else {
+    if (confirm(t("timer.arret_confirm"))) arret();
+  }
+}
+
+// Écran de verrouillage plein écran (temps écoulé). Déverrouillage par PIN.
+function afficherVerrou() {
+  if (document.getElementById("verrou-ecran")) return;   // déjà affiché
+  masquerBandeauTimer();
+  const ov = el("div", "verrou-ecran");
+  ov.id = "verrou-ecran";
+  const aPin = !!(etat.reglages && etat.reglages.codeParent);
+  ov.innerHTML = `
+    <div class="verrou-carte">
+      <div class="verrou-emoji">🔒</div>
+      <h2>${t("verrou.titre")}</h2>
+      <p>${t("verrou.texte")}</p>
+      ${aPin ? "" : `<p class="note">${t("verrou.sans_pin")}</p>`}
+      <button id="verrou-btn" class="gros-bouton planete">${t("verrou.bouton")}</button>
+    </div>`;
+  document.body.appendChild(ov);
+  ov.querySelector("#verrou-btn").onclick = () => {
+    if (!aPin) { deverrouillerApp(); return; }
+    demanderPin({
+      titre: t("verrou.pin_titre"),
+      onOk: (saisi) => {
+        if (saisi.trim() !== etat.reglages.codeParent) { toast(t("timer.pin_faux"), "info"); return; }
+        deverrouillerApp();
+      }
+    });
+  };
+}
+function masquerVerrou() {
+  const ov = document.getElementById("verrou-ecran");
+  if (ov) ov.remove();
 }
 
 // Met à jour la pastille d'invitation : pastille « qui frétille » quand il
@@ -463,6 +617,8 @@ function rendre() {
     case "reglages": vueReglages(c); break;
   }
   majPastilleAttente();
+  timerSurChangementEnfant();
+  synchroniserTimerUI();
 }
 
 // Pastille du nombre d'actions en attente sur l'onglet Parents.

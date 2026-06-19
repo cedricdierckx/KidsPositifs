@@ -39,6 +39,51 @@ body{
   93%{transform:rotate(10deg) scale(1.06)}
   96%{transform:rotate(-6deg)}
 }
+/* Bouton minuteur de temps d'écran (en haut à droite) */
+.timer-btn{position:absolute; top:9px; right:12px; min-width:36px; height:36px; padding:0 9px;
+  border:none; border-radius:18px; background:linear-gradient(135deg,#d8f0ff,#cfe7ff);
+  font-size:15px; font-weight:800; color:#1d4e6b; cursor:pointer; box-shadow:var(--ombre);
+  display:flex; align-items:center; justify-content:center; gap:4px; transition:transform .15s; white-space:nowrap}
+.timer-btn:hover{transform:scale(1.06)}
+.timer-btn:active{transform:scale(.92)}
+.timer-btn.actif{background:linear-gradient(135deg,#ffe1a8,#ffc97a); color:#7a4e10}
+
+/* Bandeau de temps restant (visuel pour les enfants) */
+.timer-bandeau{display:flex; align-items:center; gap:10px; padding:8px 16px;
+  background:#eaf7ff; border-bottom:1px solid #d4ecfb}
+.timer-bandeau-icone{font-size:20px; line-height:1}
+.timer-bandeau-temps{font-size:17px; font-weight:800; color:#1d4e6b; min-width:48px; text-align:right}
+.timer-jauge{flex:1; height:14px; background:#d4e9f6; border-radius:8px; overflow:hidden}
+.timer-jauge-rempl{height:100%; width:100%; border-radius:8px;
+  background:linear-gradient(90deg,#5bd1a0,#37b985); transition:width .5s linear}
+.timer-bandeau.niv-bientot{background:#fff4e2; border-bottom-color:#ffe2b8}
+.timer-bandeau.niv-bientot .timer-jauge{background:#ffe6c2}
+.timer-bandeau.niv-bientot .timer-jauge-rempl{background:linear-gradient(90deg,#ffc266,#ffa733)}
+.timer-bandeau.niv-bientot .timer-bandeau-temps{color:#9a5a00}
+.timer-bandeau.niv-fin{background:#ffe9ea; border-bottom-color:#ffcdd0}
+.timer-bandeau.niv-fin .timer-jauge{background:#ffd2d5}
+.timer-bandeau.niv-fin .timer-jauge-rempl{background:linear-gradient(90deg,#ff8a8a,#ef5350)}
+.timer-bandeau.niv-fin .timer-bandeau-temps{color:#c62828}
+.timer-bandeau.niv-fin .timer-bandeau-icone{animation:fretille 1.2s ease-in-out infinite}
+
+/* Modale du minuteur */
+.timer-modale{position:relative; max-width:360px; text-align:left}
+.timer-modes{display:flex; flex-direction:column; gap:6px; margin:8px 0 4px}
+.radio-ligne{display:flex; align-items:flex-start; gap:8px; font-size:14px; cursor:pointer}
+.radio-ligne input{margin-top:3px}
+.timer-avert{color:#c0392b}
+
+/* Écran de verrouillage plein écran */
+.verrou-ecran{position:fixed; inset:0; z-index:1000; display:flex; align-items:center;
+  justify-content:center; padding:24px;
+  background:linear-gradient(160deg,#1d3a52,#2c5a7a); backdrop-filter:blur(3px)}
+.verrou-carte{background:#fff; border-radius:22px; padding:30px 26px; max-width:340px;
+  text-align:center; box-shadow:0 16px 48px rgba(0,0,0,.35)}
+.verrou-emoji{font-size:56px; line-height:1; margin-bottom:8px}
+.verrou-carte h2{margin:0 0 8px; color:#27384a}
+.verrou-carte p{margin:0 0 14px; color:#54616f; font-size:15px; line-height:1.5}
+.verrou-carte .gros-bouton{width:100%}
+
 /* Petite animation de glissement lors d'un swipe entre enfants / sous-onglets */
 @keyframes glisseGauche{from{opacity:.35;transform:translateX(34px)}to{opacity:1;transform:translateX(0)}}
 @keyframes glisseDroite{from{opacity:.35;transform:translateX(-34px)}to{opacity:1;transform:translateX(0)}}

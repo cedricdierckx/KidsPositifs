@@ -21,6 +21,7 @@ function lierEtat(nouvelEtat) {
   etat = nouvelEtat;
   familleEtat = familleId;
   chargerJournalActions();   // journal d'annulation propre à la famille active
+  chargerTimer();            // état du minuteur de temps d'écran (par famille)
   return etat;
 }
 // Vrai si `etat` contient au moins un enfant (sécurité anti-écrasement vide).
@@ -123,6 +124,103 @@ function annulerAction(id) {
   journalActions.splice(0, i + 1);
   ecrireJournalActions();
   sauver();
+  rendre();
+}
+
+/* ---------- Minuteur de temps d'écran (verrouillage PIN) ----------
+ * Au bout de la durée choisie, l'application se verrouille et ne se rouvre
+ * qu'avec le code PIN parental. État local (par appareil) et persistant : un
+ * simple rechargement de page ne contourne pas le verrou.
+ *   réglages (synchronisés) : reglages.timerDuree (min) et reglages.timerMode
+ *   ("parEnfant" = repart à zéro à chaque changement d'enfant, ou "global"). */
+let timerEtat = { actif: false, fin: 0, total: 0, enfant: null, verrouille: false };
+let timerInterval = null;
+function cleTimer() { return STORAGE_KEY + ":timer:" + (familleId || "_local"); }
+function timerVierge() { return { actif: false, fin: 0, total: 0, enfant: null, verrouille: false }; }
+function chargerTimer() {
+  try {
+    const b = localStorage.getItem(cleTimer());
+    timerEtat = b ? JSON.parse(b) : timerVierge();
+  } catch { timerEtat = timerVierge(); }
+  if (!timerEtat || typeof timerEtat !== "object") timerEtat = timerVierge();
+  // Le minuteur a expiré pendant l'absence (onglet fermé) -> on verrouille.
+  if (timerEtat.actif && timerEtat.fin && Date.now() >= timerEtat.fin) {
+    timerEtat.actif = false; timerEtat.verrouille = true;
+  }
+}
+function ecrireTimer() { try { localStorage.setItem(cleTimer(), JSON.stringify(timerEtat)); } catch {} }
+
+function timerDureeMin() {
+  const m = etat.reglages && etat.reglages.timerDuree;
+  return (typeof m === "number" && m > 0) ? m : 3;
+}
+function timerMode() {
+  return (etat.reglages && etat.reglages.timerMode === "global") ? "global" : "parEnfant";
+}
+function definirReglageTimer(duree, mode) {
+  if (!etat.reglages) etat.reglages = {};
+  const d = Math.max(1, Math.min(120, parseInt(duree, 10) || 3));
+  etat.reglages.timerDuree = d;
+  etat.reglages.timerMode = (mode === "global") ? "global" : "parEnfant";
+  sauver();
+}
+
+function demarrerTimer() {
+  const ms = timerDureeMin() * 60000;
+  const enf = enfantActif();
+  timerEtat = { actif: true, fin: Date.now() + ms, total: ms, enfant: enf ? enf.id : null, verrouille: false };
+  ecrireTimer();
+  lancerTickTimer();
+  if (typeof toast === "function") toast(t("timer.lance"), "info");
+  rendre();
+}
+function arreterTimer() {
+  timerEtat = timerVierge();
+  stopTickTimer();
+  ecrireTimer();
+  rendre();
+}
+function lancerTickTimer() {
+  stopTickTimer();
+  timerInterval = setInterval(tickTimer, 500);
+  tickTimer();
+}
+function stopTickTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
+function tickTimer() {
+  if (!timerEtat.actif) { stopTickTimer(); return; }
+  const reste = timerEtat.fin - Date.now();
+  if (reste <= 0) {
+    timerEtat.actif = false;
+    ecrireTimer();
+    stopTickTimer();
+    verrouillerApp();
+    return;
+  }
+  if (typeof majAffichageTimer === "function") majAffichageTimer(reste, timerEtat.total);
+}
+// Mode « par enfant » : chaque enfant dispose de sa propre durée ; on repart
+// à zéro dès qu'on change d'enfant actif.
+function timerSurChangementEnfant() {
+  if (!timerEtat.actif || timerMode() !== "parEnfant") return;
+  const enf = enfantActif();
+  const id = enf ? enf.id : null;
+  if (id !== timerEtat.enfant) {
+    timerEtat.enfant = id;
+    timerEtat.fin = Date.now() + timerEtat.total;
+    ecrireTimer();
+  }
+}
+function verrouillerApp() {
+  timerEtat.verrouille = true;
+  ecrireTimer();
+  modeParents = false;
+  if (typeof afficherVerrou === "function") afficherVerrou();
+}
+function deverrouillerApp() {
+  timerEtat = timerVierge();
+  stopTickTimer();
+  ecrireTimer();
+  if (typeof masquerVerrou === "function") masquerVerrou();
   rendre();
 }
 
