@@ -904,6 +904,11 @@ main{max-width:680px; margin:0 auto; padding:14px}
   body{padding-bottom:calc(98px + env(safe-area-inset-bottom, 0px))}
   main{padding:12px}
 
+  /* Un peu plus d'air avant les titres de section (missions Famille/Planète)
+     et avant la carte « Mes badges », pour aérer la page d'accueil. */
+  .titre-cat{margin-top:20px}
+  .badges-carte{margin-top:20px}
+
   .carte h1{font-size:26px}
   .carte h2{font-size:21px}
 
@@ -982,7 +987,9 @@ main{max-width:680px; margin:0 auto; padding:14px}
   /* En-tête : titre centré, sélecteur d'enfants aligné à droite */
   .topbar{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:16px; padding:12px 22px}
   .topbar .logo{grid-column:2; text-align:center}
-  .topbar .selecteur{grid-column:3; justify-content:flex-end}
+  /* On réserve de la place à droite pour la pastille minuteur (absolue), afin
+     qu'elle ne recouvre pas le dernier enfant du sélecteur. */
+  .topbar .selecteur{grid-column:3; justify-content:flex-end; padding-right:104px}
   .pastille-inviter{width:40px; height:40px; font-size:21px}
 
   /* Accueil sur 2 colonnes : profil/dodo à gauche, le reste à droite */
