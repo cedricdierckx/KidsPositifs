@@ -20,6 +20,7 @@ let modeDemo = false;         // mode démonstration (hors-ligne, sans compte)
 function lierEtat(nouvelEtat) {
   etat = nouvelEtat;
   familleEtat = familleId;
+  chargerJournalActions();   // journal d'annulation propre à la famille active
   return etat;
 }
 // Vrai si `etat` contient au moins un enfant (sécurité anti-écrasement vide).
@@ -75,6 +76,54 @@ function sauver() {
   etat.maj = Date.now();
   ecrireCache();
   if (typeof planifierSauvegardeCloud === "function") planifierSauvegardeCloud();
+}
+
+/* ---------- Journal des actions récentes (annulation) ----------
+ * Garde une trace locale (non synchronisée) des dernières actions parentales
+ * importantes, avec une copie de l'état AVANT l'action pour pouvoir l'annuler.
+ * Volontairement local à l'appareil : annuler une action est une correction
+ * immédiate, pas une donnée à partager entre appareils. */
+const JOURNAL_MAX = 20;
+let journalActions = [];
+function cleJournal() { return STORAGE_KEY + ":journal:" + (familleId || "_local"); }
+function chargerJournalActions() {
+  try {
+    const brut = localStorage.getItem(cleJournal());
+    journalActions = brut ? JSON.parse(brut) : [];
+  } catch { journalActions = []; }
+  if (!Array.isArray(journalActions)) journalActions = [];
+}
+function ecrireJournalActions() {
+  try { localStorage.setItem(cleJournal(), JSON.stringify(journalActions)); } catch {}
+}
+// À appeler AVANT une mutation : mémorise l'état actuel + un libellé lisible.
+function enregistrerAction(libelle, enfantNom) {
+  let avant;
+  try { avant = JSON.parse(JSON.stringify(etat)); } catch { return; }
+  journalActions.unshift({
+    id: Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+    ts: Date.now(),
+    libelle: libelle || "Action",
+    enfant: enfantNom || "",
+    avant
+  });
+  if (journalActions.length > JOURNAL_MAX) journalActions.length = JOURNAL_MAX;
+  ecrireJournalActions();
+}
+// Restaure l'état mémorisé par une entrée du journal (annulation).
+function annulerAction(id) {
+  const i = journalActions.findIndex(a => a.id === id);
+  if (i < 0) return;
+  const entree = journalActions[i];
+  if (!entree.avant) return;
+  // Remplace le contenu d'etat sur place (la référence est partagée ailleurs).
+  Object.keys(etat).forEach(k => delete etat[k]);
+  Object.assign(etat, entree.avant);
+  // L'entrée annulée et toutes les suivantes (plus récentes) ne sont plus valides.
+  journalActions.splice(0, i + 1);
+  ecrireJournalActions();
+  sauver();
+  rendre();
 }
 
 function etatVierge() {
@@ -358,6 +407,7 @@ function validerMission(mission) {
 
   // 2e clic alors que c'est déjà validé -> on annule et on retire les points.
   if (dejaFait >= 1) {
+    enregistrerAction(`Mission retirée : ${titreMission(mission)}`, enf.prenom);
     decrediterMission(enf, mission, jour);
     const cat = CATEGORIES[mission.cat];
     toast(t("toast.annule", { points: mission.points, emoji: cat.monnaieEmoji }), "info");
@@ -375,6 +425,7 @@ function validerMission(mission) {
   }
 
   // 1er clic : on crédite.
+  enregistrerAction(`Mission validée : ${titreMission(mission)}`, enf.prenom);
   crediterMission(enf, mission, jour);
   feterGain(mission);
   sauver();
@@ -517,6 +568,7 @@ function confirmerAttente(enf, idx) {
   if (!a) return;
   const mission = trouverMission(a.missionId) ||
                   { id: a.missionId, cat: a.cat, points: a.points, titre: a.titre };
+  enregistrerAction(`Demande acceptée : ${trData("mission", a.missionId, a.titre)}`, enf.prenom);
   crediterMission(enf, mission, a.jour);
   enf.enAttente.splice(idx, 1);
   toast(t("toast.valide", { emoji: a.emoji || "", titre: trData("mission", a.missionId, a.titre), points: a.points }), "succes");
@@ -525,6 +577,8 @@ function confirmerAttente(enf, idx) {
   rendre();
 }
 function refuserAttente(enf, idx) {
+  const a = enf.enAttente[idx];
+  enregistrerAction(`Demande refusée : ${a ? trData("mission", a.missionId, a.titre) : ""}`, enf.prenom);
   enf.enAttente.splice(idx, 1);
   toast("Demande retirée.", "info");
   sauver();
@@ -542,6 +596,7 @@ function reparationActive(enf, defiId) {
 function defiReparation(defi) {
   const enf = enfantActif();
   if (!enf.reparations) enf.reparations = {};
+  enregistrerAction(`Défi réparation`, enf.prenom);
   if (reparationActive(enf, defi.id)) {
     // Annulation dans l'heure : on retire le bonus.
     enf.coeurs = Math.max(0, enf.coeurs - defi.bonus);
@@ -816,6 +871,7 @@ function definirEvalParent(enf, valeur, jour) {
   if (!EVAL_VALEURS.includes(valeur) || !enf) return;
   if (!enf.evalParent) enf.evalParent = {};
   jour = jour || aujourdHui();
+  enregistrerAction(`Ressenti du jour modifié (${jour})`, enf.prenom);
   if (enf.evalParent[jour] === valeur) delete enf.evalParent[jour];
   else enf.evalParent[jour] = valeur;
   sauver();
@@ -891,6 +947,8 @@ function basculerValidationParentale(actif) {
 /* ---------- Ajustements manuels (mode parents) ---------- */
 // Ajuste une monnaie d'un delta (peut être négatif). Met aussi à jour le total cumulé.
 function ajusterMonnaie(enf, champ, delta) {
+  const emoji = champ === "coeurs" ? "💛" : "💧";
+  enregistrerAction(`Ajustement ${delta > 0 ? "+" : ""}${delta} ${emoji}`, enf.prenom);
   if (champ === "coeurs") {
     enf.coeurs = Math.max(0, enf.coeurs + delta);
     if (delta > 0) enf.coeursTotal += delta;
@@ -911,6 +969,7 @@ function fixerMonnaie(enf, champ, valeur) {
 // Édition rétroactive : ajoute/retire une validation de mission un jour donné,
 // et ajuste les soldes en conséquence.
 function modifierHistorique(enf, jour, mission, sens) {
+  enregistrerAction(`Historique ${sens > 0 ? "ajout" : "retrait"} : ${titreMission(mission)} (${jour})`, enf.prenom);
   enf.journal[jour] = enf.journal[jour] || {};
   const actuel = enf.journal[jour][mission.id] || 0;
   const champ = mission.cat === "famille" ? "coeurs" : "gouttes";
@@ -935,6 +994,7 @@ function modifierHistorique(enf, jour, mission, sens) {
 /* ---------- Gestion des badges (mode parents) ---------- */
 // Retire un badge ; il ne sera pas ré-attribué automatiquement.
 function retirerBadge(enf, badgeId) {
+  enregistrerAction(`Badge retiré`, enf.prenom);
   enf.badges = enf.badges.filter(b => b.id !== badgeId);
   if (!enf.badgesRetires.includes(badgeId)) enf.badgesRetires.push(badgeId);
   sauver();

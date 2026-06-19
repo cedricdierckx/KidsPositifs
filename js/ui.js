@@ -1427,6 +1427,41 @@ function blocEditionMission(m, cat) {
 }
 
 // Bloc de corrections manuelles pour un enfant (mode parents).
+// Journal des dernières actions, avec un bouton « Annuler » par ligne.
+// Annuler une action restaure l'état d'avant et invalide les actions plus
+// récentes (elles disparaissent du journal).
+function blocJournalActions() {
+  const sec = el("section", "carte journal-actions");
+  sec.innerHTML = `<h2>${t("journal.titre")}</h2>`;
+  if (!Array.isArray(journalActions) || journalActions.length === 0) {
+    sec.appendChild(el("p", "note", t("journal.vide")));
+    return sec;
+  }
+  sec.appendChild(el("p", "note", t("journal.note")));
+  journalActions.forEach((a, idx) => {
+    const ligne = el("div", "journal-ligne");
+    const quand = heureCourte(a.ts);
+    const qui = a.enfant ? `<strong>${a.enfant}</strong> · ` : "";
+    ligne.innerHTML = `<span class="journal-info">${qui}${a.libelle} <small>(${quand})</small></span>`;
+    const b = el("button", "mini-btn non", t("journal.annuler"));
+    // Seule la plus récente est strictement « la dernière » ; annuler une plus
+    // ancienne annule aussi celles d'après, on prévient au-delà de la 1ʳᵉ.
+    b.onclick = () => {
+      if (idx > 0 && !confirm(t("journal.confirm_multi", { n: idx + 1 }))) return;
+      annulerAction(a.id);
+    };
+    ligne.appendChild(b);
+    sec.appendChild(ligne);
+  });
+  return sec;
+}
+
+// Heure courte locale HH:MM (pour le journal des actions).
+function heureCourte(ts) {
+  const d = new Date(ts);
+  return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+
 function blocCorrections(enf) {
   const sec = el("section", "carte correction");
   sec.style.setProperty("--c", enf.couleur);
@@ -1735,6 +1770,9 @@ function vueReglages(c) {
 
   // ----- Corrections pour l'enfant sélectionné -----
   c.appendChild(blocCorrections(enfantActif()));
+
+  // ----- Journal des actions récentes (annulation) -----
+  c.appendChild(blocJournalActions());
 
   } /* fin onglet quotidien */
 

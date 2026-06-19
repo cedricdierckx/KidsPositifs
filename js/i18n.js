@@ -1191,6 +1191,12 @@ Object.assign(I18N.en, { "grp.quotidien": "📋 Daily", "grp.activites": "🎯 A
 Object.assign(I18N.nl, { "grp.quotidien": "📋 Dagelijks", "grp.activites": "🎯 Activiteiten & spelregels", "grp.enfants": "👧 De kinderen", "grp.famille": "👪 Gezin & uitnodigingen", "grp.compte": "⚙️ Mijn account & gegevens" });
 Object.assign(I18N.de, { "grp.quotidien": "📋 Täglich", "grp.activites": "🎯 Aktivitäten & Spielregeln", "grp.enfants": "👧 Die Kinder", "grp.famille": "👪 Familie & Einladungen", "grp.compte": "⚙️ Mein Konto & Daten" });
 
+/* ---- Journal des actions récentes (annulation) ---- */
+Object.assign(I18N.fr, { "journal.titre": "↩️ Actions récentes", "journal.vide": "Aucune action récente à annuler.", "journal.note": "Tu peux annuler une action récente. Annuler une action ancienne annule aussi les plus récentes.", "journal.annuler": "Annuler", "journal.confirm_multi": "Cela annulera les {n} dernières actions. Continuer ?" });
+Object.assign(I18N.en, { "journal.titre": "↩️ Recent actions", "journal.vide": "No recent action to undo.", "journal.note": "You can undo a recent action. Undoing an older one also undoes the more recent ones.", "journal.annuler": "Undo", "journal.confirm_multi": "This will undo the last {n} actions. Continue?" });
+Object.assign(I18N.nl, { "journal.titre": "↩️ Recente acties", "journal.vide": "Geen recente actie om ongedaan te maken.", "journal.note": "Je kunt een recente actie ongedaan maken. Een oudere ongedaan maken doet ook de recentere ongedaan.", "journal.annuler": "Ongedaan", "journal.confirm_multi": "Dit maakt de laatste {n} acties ongedaan. Doorgaan?" });
+Object.assign(I18N.de, { "journal.titre": "↩️ Letzte Aktionen", "journal.vide": "Keine kürzliche Aktion zum Rückgängigmachen.", "journal.note": "Du kannst eine kürzliche Aktion rückgängig machen. Eine ältere rückgängig zu machen, macht auch die neueren rückgängig.", "journal.annuler": "Rückgängig", "journal.confirm_multi": "Dies macht die letzten {n} Aktionen rückgängig. Fortfahren?" });
+
 /* ---- Cartes surprises : visible/mystère ---- */
 Object.assign(I18N.fr, { "cs.revele_label": "Activité visible par les enfants (sinon : surprise mystère 🎁)" });
 Object.assign(I18N.en, { "cs.revele_label": "Activity visible to children (otherwise: mystery surprise 🎁)" });

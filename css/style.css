@@ -744,6 +744,13 @@ main{max-width:680px; margin:0 auto; padding:14px}
   border-bottom:1px solid #eef2f7}
 .att-info{flex:1; font-size:14px}
 .att-info small{color:var(--doux); display:block}
+
+/* Journal des actions récentes (annulation) */
+.journal-ligne{display:flex; align-items:center; gap:8px; padding:7px 0;
+  border-bottom:1px solid #eef2f7}
+.journal-ligne:last-child{border-bottom:none}
+.journal-info{flex:1; font-size:14px}
+.journal-info small{color:var(--doux)}
 .mini-btn{border:2px solid #e3edf5; background:#fff; border-radius:10px;
   min-width:40px; padding:8px; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit}
 .mini-btn.ok{border-color:#bfe9da; background:#f1faf6}
