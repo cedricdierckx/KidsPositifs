@@ -147,7 +147,8 @@ function initSquelette() {
   // Minuteur : le bandeau dodo suit l'heure en continu (toutes les 20 s).
   if (!window.__dodoTimer) window.__dodoTimer = setInterval(majDodo, 20000);
 
-  // Swipe horizontal pour passer d'un enfant à l'autre (sauf onglet Parents).
+  // Swipe horizontal : change d'enfant (onglets enfants) ou de sous-onglet
+  // dans l'espace parents.
   brancherSwipeEnfant(document.getElementById("contenu"));
 }
 
@@ -163,8 +164,8 @@ function changerEnfantRelatif(dir) {
 }
 
 // Détecte un glissement horizontal franc sur la zone de contenu et change
-// d'enfant. Ignoré sur l'onglet Parents (pas centré sur un enfant) et quand
-// le geste est surtout vertical (scroll).
+// d'enfant (ou de sous-onglet dans l'espace parents). Ignoré quand le geste
+// est surtout vertical (scroll).
 function brancherSwipeEnfant(zone) {
   if (!zone) return;
   let x0 = 0, y0 = 0, suivi = false;
@@ -175,11 +176,11 @@ function brancherSwipeEnfant(zone) {
   zone.addEventListener("touchend", (e) => {
     if (!suivi) return;
     suivi = false;
-    if (etat.vue === "reglages") return;
     const t = e.changedTouches[0];
     const dx = t.clientX - x0, dy = t.clientY - y0;
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.8) {
-      changerEnfantRelatif(dx < 0 ? 1 : -1);
+      if (etat.vue === "reglages") changerOngletParentRelatif(dx < 0 ? 1 : -1);
+      else changerEnfantRelatif(dx < 0 ? 1 : -1);
     }
   }, { passive: true });
 }
@@ -1595,6 +1596,15 @@ function blocCartesSurprisesParents() {
 
 // Onglet actif de l'espace parents (session, non synchronisé).
 let ongletParent = "quotidien";
+// Ordre des onglets de l'espace parents (sert au swipe horizontal).
+const ONGLETS_PARENT = ["quotidien", "activites", "enfants", "famille", "compte", "stats"];
+
+// Change d'onglet parent d'un cran (dir = +1 suivant, -1 précédent), en boucle.
+function changerOngletParentRelatif(dir) {
+  const i = ONGLETS_PARENT.indexOf(ongletParent);
+  ongletParent = ONGLETS_PARENT[(i + dir + ONGLETS_PARENT.length) % ONGLETS_PARENT.length];
+  rendre();
+}
 
 // Bandeau "mode démo" (remplace les sections compte/famille en démo).
 function bandeauDemo() {
