@@ -146,6 +146,42 @@ function initSquelette() {
 
   // Minuteur : le bandeau dodo suit l'heure en continu (toutes les 20 s).
   if (!window.__dodoTimer) window.__dodoTimer = setInterval(majDodo, 20000);
+
+  // Swipe horizontal pour passer d'un enfant à l'autre (sauf onglet Parents).
+  brancherSwipeEnfant(document.getElementById("contenu"));
+}
+
+// Change d'enfant actif d'un cran (dir = +1 suivant, -1 précédent), en boucle.
+function changerEnfantRelatif(dir) {
+  const ids = Object.keys(etat.enfants);
+  if (ids.length < 2) return;
+  const i = ids.indexOf(etat.enfantActif);
+  const next = ids[(i + dir + ids.length) % ids.length];
+  etat.enfantActif = next;
+  ecrireCache();
+  rendre();
+}
+
+// Détecte un glissement horizontal franc sur la zone de contenu et change
+// d'enfant. Ignoré sur l'onglet Parents (pas centré sur un enfant) et quand
+// le geste est surtout vertical (scroll).
+function brancherSwipeEnfant(zone) {
+  if (!zone) return;
+  let x0 = 0, y0 = 0, suivi = false;
+  zone.addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1) { suivi = false; return; }
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; suivi = true;
+  }, { passive: true });
+  zone.addEventListener("touchend", (e) => {
+    if (!suivi) return;
+    suivi = false;
+    if (etat.vue === "reglages") return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - x0, dy = t.clientY - y0;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.8) {
+      changerEnfantRelatif(dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
 }
 
 // Met à jour la pastille d'invitation : pastille « qui frétille » quand il
