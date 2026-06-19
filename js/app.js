@@ -1101,7 +1101,7 @@ function activerModeParents() {
     permettreOubli: true,
     onReset: () => { modeParents = true; rendre(); },
     onOk: (saisi) => {
-      if (saisi.trim() !== code) { toast("Code PIN incorrect 🔒", "info"); return; }
+      if (saisi.trim() !== code) return false;   // garde la modale + message d'erreur
       modeParents = true;
       rendre();
     }

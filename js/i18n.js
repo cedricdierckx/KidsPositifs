@@ -7,6 +7,7 @@
  * ===================================================================== */
 
 const LANGUES = { fr: "Français", en: "English", nl: "Nederlands", de: "Deutsch" };
+const LANGUES_DRAPEAU = { fr: "🇫🇷", en: "🇬🇧", nl: "🇳🇱", de: "🇩🇪" };
 let langue = "fr";
 
 const I18N = {
@@ -1248,7 +1249,8 @@ Object.assign(I18N.fr, {
   "pin.reset_code_faux": "Code incorrect ✋",
   "pin.nouveau_titre": "🔑 Nouveau code PIN",
   "pin.nouveau_sous": "Choisis un nouveau code (laisse vide pour supprimer le PIN).",
-  "pin.maj_ok": "Nouveau code PIN enregistré 🔒", "pin.efface_ok": "Code PIN supprimé"
+  "pin.maj_ok": "Nouveau code PIN enregistré 🔒", "pin.efface_ok": "Code PIN supprimé",
+  "pin.faux": "❌ Code PIN incorrect. Réessaie ou réinitialise-le ci-dessous."
 });
 Object.assign(I18N.en, {
   "pin.oublie": "Forgot your PIN?",
@@ -1262,7 +1264,8 @@ Object.assign(I18N.en, {
   "pin.reset_code_faux": "Wrong code ✋",
   "pin.nouveau_titre": "🔑 New PIN",
   "pin.nouveau_sous": "Choose a new code (leave empty to remove the PIN).",
-  "pin.maj_ok": "New PIN saved 🔒", "pin.efface_ok": "PIN removed"
+  "pin.maj_ok": "New PIN saved 🔒", "pin.efface_ok": "PIN removed",
+  "pin.faux": "❌ Wrong PIN. Try again or reset it below."
 });
 Object.assign(I18N.nl, {
   "pin.oublie": "PIN vergeten?",
@@ -1276,7 +1279,8 @@ Object.assign(I18N.nl, {
   "pin.reset_code_faux": "Verkeerde code ✋",
   "pin.nouveau_titre": "🔑 Nieuwe PIN",
   "pin.nouveau_sous": "Kies een nieuwe code (laat leeg om de PIN te verwijderen).",
-  "pin.maj_ok": "Nieuwe PIN opgeslagen 🔒", "pin.efface_ok": "PIN verwijderd"
+  "pin.maj_ok": "Nieuwe PIN opgeslagen 🔒", "pin.efface_ok": "PIN verwijderd",
+  "pin.faux": "❌ Verkeerde PIN. Probeer opnieuw of stel hem hieronder opnieuw in."
 });
 Object.assign(I18N.de, {
   "pin.oublie": "PIN vergessen?",
@@ -1290,7 +1294,8 @@ Object.assign(I18N.de, {
   "pin.reset_code_faux": "Falscher Code ✋",
   "pin.nouveau_titre": "🔑 Neue PIN",
   "pin.nouveau_sous": "Wähle einen neuen Code (leer lassen, um die PIN zu entfernen).",
-  "pin.maj_ok": "Neue PIN gespeichert 🔒", "pin.efface_ok": "PIN entfernt"
+  "pin.maj_ok": "Neue PIN gespeichert 🔒", "pin.efface_ok": "PIN entfernt",
+  "pin.faux": "❌ Falsche PIN. Versuche es erneut oder setze sie unten zurück."
 });
 
 /* ---- Cartes surprises : visible/mystère ---- */

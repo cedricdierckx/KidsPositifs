@@ -364,8 +364,10 @@ function ecranConfig() {
 
 function ecranAuth() {
   const parrain = localStorage.getItem(PARRAIN_KEY);
-  const opts = Object.keys(LANGUES).map(l =>
-    `<option value="${l}"${l === langue ? " selected" : ""}>${LANGUES[l]}</option>`).join("");
+  const boutonsLangue = Object.keys(LANGUES).map(l =>
+    `<button type="button" class="langue-btn${l === langue ? " actif" : ""}" data-lang="${l}">
+       <span class="langue-drapeau">${LANGUES_DRAPEAU[l] || "🏳️"}</span><span class="langue-nom">${LANGUES[l]}</span>
+     </button>`).join("");
 
   const features = [
     ["🎯", t("auth.feat1_t"), t("auth.feat1_d")],
@@ -378,7 +380,7 @@ function ecranAuth() {
   document.body.innerHTML = `
     <div class="landing">
       <section class="landing-hero">
-        <div class="choix-langue"><select id="sel-langue" title="${t("langue")}">${opts}</select></div>
+        <div class="choix-langue langue-choix">${boutonsLangue}</div>
         <div class="hero-logo">🌟</div>
         <h1 class="hero-nom">${APP_NOM}</h1>
         <p class="hero-titre">${t("auth.hero_titre")}</p>
@@ -414,7 +416,9 @@ function ecranAuth() {
       </section>
     </div>`;
 
-  document.getElementById("sel-langue").onchange = (e) => { definirLangue(e.target.value); ecranAuth(); };
+  document.querySelectorAll(".langue-btn").forEach(b => {
+    b.onclick = () => { const l = b.dataset.lang; if (l && l !== langue) { definirLangue(l); ecranAuth(); } };
+  });
 
   // Bannière personnalisée si on arrive via un lien de parrainage.
   if (parrain) {

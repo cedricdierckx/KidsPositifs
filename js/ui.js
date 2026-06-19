@@ -51,6 +51,7 @@ function demanderPin(opts) {
              name="pin-parent" autocomplete="one-time-code" maxlength="8"
              data-lpignore="true" data-1p-ignore data-form-type="other"
              class="pin-input" placeholder="••••">
+      <p id="pin-err" class="pin-err" style="display:none"></p>
       <div class="pin-actions">
         <button id="pin-annuler" class="btn-secondaire">Annuler</button>
         <button id="pin-ok" class="gros-bouton planete">Valider</button>
@@ -59,12 +60,31 @@ function demanderPin(opts) {
     </div>`;
   document.body.appendChild(ov);
   const inp = ov.querySelector("#pin-input");
+  const err = ov.querySelector("#pin-err");
   const fermer = () => ov.remove();
+  // Affiche une erreur SANS fermer la modale (ex. mauvais code PIN), et fait
+  // apparaître le lien de réinitialisation si ce n'est pas déjà le cas.
+  const montrerErreur = (msg) => {
+    if (err) { err.textContent = msg || t("pin.faux"); err.style.display = "block"; }
+    inp.value = ""; inp.focus();
+    let lien = ov.querySelector("#pin-oubli");
+    if (!lien) {
+      lien = el("button", "lien-oubli", t("pin.oublie"));
+      lien.id = "pin-oubli";
+      ov.querySelector(".pin-carte").appendChild(lien);
+      lien.onclick = () => { fermer(); reinitPinParMail(opts.onReset || null); };
+    }
+  };
   const valider = () => {
     const v = inp.value;
     if (!opts.permettreVide && !v.trim()) { inp.focus(); return; }
+    // onOk peut renvoyer false pour signaler un code invalide : on garde la
+    // modale ouverte et on affiche le message d'erreur.
+    if (opts.onOk) {
+      const res = opts.onOk(v);
+      if (res === false) { montrerErreur(opts.msgErreur); return; }
+    }
     fermer();
-    if (opts.onOk) opts.onOk(v);
   };
   ov.querySelector("#pin-ok").onclick = valider;
   ov.querySelector("#pin-annuler").onclick = () => { fermer(); if (opts.onCancel) opts.onCancel(); };
@@ -96,8 +116,9 @@ async function reinitPinParMail(apresOk) {
   demanderPin({
     titre: t("pin.reset_titre"),
     sousTitre: t("pin.reset_sous", { email }),
+    msgErreur: t("pin.reset_code_faux"),
     onOk: (saisi) => {
-      if (saisi.trim() !== code) { toast(t("pin.reset_code_faux"), "info"); return; }
+      if (saisi.trim() !== code) return false;
       // 2) Choix d'un nouveau PIN (vide = supprimer le PIN).
       demanderPin({
         titre: t("pin.nouveau_titre"),
@@ -271,6 +292,24 @@ function brancherSwipeEnfant(zone) {
   }, { passive: true });
 }
 
+// Sélecteur de langue « fun » : un bouton-drapeau par langue, celui actif est
+// mis en avant. `onChange` est appelé après le changement de langue.
+function selecteurLangueFun(onChange) {
+  const wrap = el("div", "langue-choix");
+  Object.keys(LANGUES).forEach(l => {
+    const b = el("button", "langue-btn" + (l === langue ? " actif" : ""));
+    b.type = "button";
+    b.innerHTML = `<span class="langue-drapeau">${LANGUES_DRAPEAU[l] || "🏳️"}</span><span class="langue-nom">${LANGUES[l]}</span>`;
+    b.onclick = () => {
+      if (l === langue) return;
+      definirLangue(l);
+      if (onChange) onChange();
+    };
+    wrap.appendChild(b);
+  });
+  return wrap;
+}
+
 /* ---------- Minuteur de temps d'écran (UI) ---------- */
 // Synchronise l'affichage du minuteur avec son état (appelé à chaque rendu).
 function synchroniserTimerUI() {
@@ -323,7 +362,7 @@ function afficherChoixEnfant() {
       demanderPin({
         titre: t("timer.arret_titre"), sousTitre: t("timer.arret_pin"),
         permettreOubli: true, onReset: () => arreterTimer(),
-        onOk: (s) => { if (s.trim() !== etat.reglages.codeParent) { toast(t("timer.pin_faux"), "info"); return; } arreterTimer(); }
+        onOk: (s) => { if (s.trim() !== etat.reglages.codeParent) return false; arreterTimer(); }
       });
     } else if (confirm(t("timer.arret_confirm"))) arreterTimer();
   };
@@ -456,7 +495,7 @@ function modaleTimerActif() {
       permettreOubli: true,
       onReset: () => arret(),
       onOk: (saisi) => {
-        if (saisi.trim() !== etat.reglages.codeParent) { toast(t("timer.pin_faux"), "info"); return; }
+        if (saisi.trim() !== etat.reglages.codeParent) return false;
         arret();
       }
     });
@@ -488,7 +527,7 @@ function afficherVerrou() {
       permettreOubli: true,
       onReset: () => deverrouillerApp(),
       onOk: (saisi) => {
-        if (saisi.trim() !== etat.reglages.codeParent) { toast(t("timer.pin_faux"), "info"); return; }
+        if (saisi.trim() !== etat.reglages.codeParent) return false;
         deverrouillerApp();
       }
     });
@@ -1990,14 +2029,11 @@ function vueReglages(c) {
   const bq = el("button", "btn-secondaire", t("par.actif.quitter"));
   bq.onclick = quitterModeParents;
   banniere.appendChild(bq);
-  // Sélecteur de langue (E5) : changer la langue une fois connecté.
-  const lLang = el("label", "champ", "🌐 " + t("langue"));
-  const selLang = el("select");
-  selLang.innerHTML = Object.keys(LANGUES).map(l =>
-    `<option value="${l}"${l === langue ? " selected" : ""}>${LANGUES[l]}</option>`).join("");
-  selLang.onchange = () => { definirLangue(selLang.value); rendre(); };
-  lLang.appendChild(selLang);
-  banniere.appendChild(lLang);
+  // Sélecteur de langue « fun » : boutons drapeaux (plutôt qu'une liste).
+  const blocLang = el("div", "langue-bloc");
+  blocLang.innerHTML = `<span class="langue-titre">🌐 ${t("langue")}</span>`;
+  blocLang.appendChild(selecteurLangueFun(() => rendre()));
+  banniere.appendChild(blocLang);
   c.appendChild(banniere);
 
   // ----- Sous-menu (onglets) pour organiser l'espace parents -----

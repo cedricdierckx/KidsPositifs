@@ -39,6 +39,19 @@ body{
   93%{transform:rotate(10deg) scale(1.06)}
   96%{transform:rotate(-6deg)}
 }
+/* Sélecteur de langue « fun » (boutons drapeaux) */
+.langue-bloc{margin-top:12px}
+.langue-titre{display:block; font-size:14px; font-weight:700; color:var(--doux); margin-bottom:6px}
+.langue-choix{display:flex; flex-wrap:wrap; gap:8px}
+.langue-btn{display:flex; align-items:center; gap:7px; padding:8px 12px; cursor:pointer;
+  border:2px solid #e3edf5; border-radius:999px; background:#fff; font-size:14px; font-weight:700;
+  color:#54616f; transition:transform .12s, border-color .15s, background .15s}
+.langue-btn .langue-drapeau{font-size:20px; line-height:1}
+.langue-btn:hover{transform:translateY(-2px) scale(1.03); border-color:#bcdcf0}
+.langue-btn:active{transform:scale(.94)}
+.langue-btn.actif{border-color:#37b985; background:linear-gradient(135deg,#e7faf1,#dff3ff); color:#1d7a52}
+.langue-btn.actif .langue-drapeau{animation:fretille 2.6s ease-in-out infinite}
+
 /* Lien « Code PIN oublié ? » dans la modale PIN */
 .lien-oubli{display:block; margin:12px auto 0; background:none; border:none;
   color:#3a7bd5; font-size:13px; text-decoration:underline; cursor:pointer}
@@ -360,7 +373,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .parrain-pop{background:linear-gradient(135deg,#fff3d6,#ffe0ec)}
 
 /* Sélecteur de langue (écran d'accueil public) */
-.choix-langue{text-align:right; margin:-4px 0 4px}
+.choix-langue{margin:-4px 0 8px; justify-content:center}
 .choix-langue select{border:2px solid #e3edf5; border-radius:10px; padding:6px 10px;
   font-family:inherit; font-size:13px; font-weight:700; background:#fff; cursor:pointer}
 
@@ -377,6 +390,9 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .pin-actions{display:flex; gap:8px}
 .pin-actions .btn-secondaire{flex:1; margin:0}
 .pin-actions .gros-bouton{flex:1; padding:14px}
+.pin-err{color:#c62828; font-size:13.5px; font-weight:600; margin:0 0 10px;
+  background:#ffebee; border-radius:10px; padding:8px 10px; animation:secousse .35s ease}
+@keyframes secousse{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 
 /* Formulaire d'ajout de mission personnalisée */
 .mission-perso-form{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:6px}
