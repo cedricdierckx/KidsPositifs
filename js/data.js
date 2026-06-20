@@ -154,7 +154,7 @@ const AVATAR_OPTIONS = {
     { id: "brun",   nom: "Brun",   cout: 0,  hex: "#5b3a23" },
     { id: "noir",   nom: "Noir",   cout: 0,  hex: "#1c1c22" },
     { id: "blond",  nom: "Blond",  cout: 0,  hex: "#e7c067" },
-    { id: "roux",   nom: "Roux",   cout: 10, hex: "#c2562d" },
+    { id: "roux",   nom: "Roux",   cout: 0,  hex: "#c2562d" },
     { id: "blanc",  nom: "Blanc",  cout: 12, hex: "#eef0f4" },
     { id: "rose",   nom: "Rose",   cout: 20, hex: "#ff7eb6" },
     { id: "bleu",   nom: "Bleu",   cout: 20, hex: "#4cb3e6" },
@@ -169,9 +169,9 @@ const AVATAR_OPTIONS = {
   ],
   lunettes: [
     { id: "rien",    nom: "Aucunes",          cout: 0 },
-    { id: "rondes",  nom: "Lunettes rondes",  cout: 10 },
-    { id: "soleil",  nom: "Lunettes soleil",  cout: 12 },
-    { id: "etoile",  nom: "Lunettes étoiles", cout: 25 }
+    { id: "rondes",  nom: "Lunettes rondes",  cout: 0 },
+    { id: "soleil",  nom: "Lunettes soleil",  cout: 0 },
+    { id: "etoile",  nom: "Lunettes étoiles", cout: 0 }
   ],
   taches: [
     { id: "rien",   nom: "Aucune",            cout: 0 },
