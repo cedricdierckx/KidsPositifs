@@ -102,6 +102,8 @@ function construireContexte() {
       reinitCarteSurprise, marquerCarteFaite, deplacerCarteSurprise,
       // badges & divers
       verifierBadges, acheterOption, estDebloque, age, ageDepuis,
+      // humour (touches bon enfant, désactivables)
+      humourActif, messageVide, blagueDuJour, MESSAGES_VIDES,
       // couche de données isolée (Phase D)
       Store,
       // données de référence

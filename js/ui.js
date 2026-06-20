@@ -895,6 +895,32 @@ function vueAccueil(c) {
 
   // Badges (seuls les badges réalisés sont affichés)
   colB.appendChild(blocBadges(enf));
+
+  // Blague du jour (si l'humour est activé par les parents)
+  const blg = blocBlagueDuJour();
+  if (blg) colB.appendChild(blg);
+}
+
+// Carte « Blague du jour » : la réponse se révèle au tap (effet surprise).
+function blocBlagueDuJour() {
+  if (typeof humourActif !== "function" || !humourActif()) return null;
+  const b = (typeof blagueDuJour === "function") ? blagueDuJour() : null;
+  if (!b) return null;
+  const sec = el("section", "carte blague-carte");
+  sec.innerHTML = `<h2>${t("blague.titre")}</h2>
+    <p class="blague-q">${b.q}</p>`;
+  const rep = el("button", "blague-reveal", t("blague.reveler"));
+  const rTxt = el("p", "blague-r");
+  rTxt.textContent = b.r;
+  rTxt.style.display = "none";
+  rep.onclick = () => {
+    rTxt.style.display = "block";
+    rep.style.display = "none";
+    confettis();
+  };
+  sec.appendChild(rep);
+  sec.appendChild(rTxt);
+  return sec;
 }
 
 // Widget d'évaluation de la journée (Bien / Moyen / Pas top).
@@ -962,11 +988,18 @@ function bandeauDodo(enf) {
   const fait = ((enf.journal[jour] || {})[mission.id] || 0) >= 1;
   const enAttente = enf.enAttente.some(a => a.missionId === mission.id && a.jour === jour);
 
+  // Petite réplique rigolote le soir / la nuit (si l'humour est activé).
+  let funDodo = "";
+  if (typeof humourActif === "function" && humourActif()) {
+    if (m.classe === "dodo-soir") funDodo = `<small class="dodo-fun">${t("dodo.fun_soir")}</small>`;
+    else if (m.classe === "dodo-nuit") funDodo = `<small class="dodo-fun">${t("dodo.fun_nuit")}</small>`;
+  }
+
   const sec = el("section", "dodo " + m.classe);
   sec.id = "dodo-bandeau";
   sec.innerHTML = `
     <div class="dodo-etoiles">✦ ✧ ⭐ ✦ ✧ ✦ ✧</div>
-    <div class="dodo-txt"><strong>${m.emoji} ${titreMission(m)}</strong><small>🛏️ ${m.heure}</small></div>
+    <div class="dodo-txt"><strong>${m.emoji} ${titreMission(m)}</strong><small>🛏️ ${m.heure}</small>${funDodo}</div>
     <div class="dodo-chemin" title="${t("dodo.title")}">
       <span class="dc-bout">☀️</span>
       <div class="dc-piste"><div class="dc-rempli" style="width:${m.progress}%"></div>
@@ -995,7 +1028,7 @@ function grilleMissions(catId) {
   // La mission spéciale "coucher" est affichée à part (bandeau dodo).
   const actives = missionsActives(enf, catId, jour).filter(m => m.speciale !== "coucher");
   if (actives.length === 0) {
-    liste.appendChild(el("p", "note", t("missions.aucune")));
+    liste.appendChild(el("p", "note", messageVide(t("missions.aucune"))));
     return liste;
   }
   const jeune = estJeune(enf);
@@ -2137,6 +2170,14 @@ function vueReglages(c) {
   };
   lSeuil.appendChild(iSeuil);
   prog.appendChild(lSeuil);
+  // Interrupteur : touches d'humour bon enfant (blagues, taquineries…).
+  const lHum = el("label", "switch-ligne");
+  const iHum = el("input"); iHum.type = "checkbox";
+  iHum.checked = !(etat.reglages && etat.reglages.humour === false);
+  iHum.onchange = () => { etat.reglages.humour = iHum.checked; sauver(); rendre(); };
+  lHum.appendChild(iHum);
+  lHum.appendChild(el("span", null, t("par.prog.humour")));
+  prog.appendChild(lHum);
   c.appendChild(prog);
 
   // ----- Référence : prérequis de chaque espèce de l'écosystème -----

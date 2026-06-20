@@ -341,7 +341,7 @@ function etatVierge() {
     missionsPerso: [],     // missions personnalisées ajoutées par les parents
     missionsModif: {},     // retouches parentales des missions (titre/emoji/points)
     cartesSurprises: cartesSurprisesNeuves(ENFANTS_DEFAUT.length),  // objectifs d'équipe
-    reglages: { validationParentale: false, codeParent: "", seuilVisuel: 5 }
+    reglages: { validationParentale: false, codeParent: "", seuilVisuel: 5, humour: true }
   };
 }
 
@@ -468,8 +468,9 @@ function normaliser(e) {
       }
     });
   }
-  if (!e.reglages) e.reglages = { validationParentale: false, codeParent: "", seuilVisuel: 5 };
+  if (!e.reglages) e.reglages = { validationParentale: false, codeParent: "", seuilVisuel: 5, humour: true };
   if (typeof e.reglages.seuilVisuel !== "number") e.reglages.seuilVisuel = 5;
+  if (typeof e.reglages.humour !== "boolean") e.reglages.humour = true;   // humour ON par défaut
   // Estampille de version : les migrations ci-dessus sont *additives* (on ne
   // supprime jamais de données existantes), garantissant qu'une mise à jour de
   // l'application ne fait jamais perdre la progression d'une famille.
@@ -1063,10 +1064,49 @@ function definirEvalParent(enf, valeur, jour) {
 }
 
 /* ---------- Feedback ---------- */
+/* ---------- Touches d'humour (désactivables) ---------- */
+function humourActif() {
+  return !!(etat && etat.reglages && etat.reglages.humour);
+}
+// Mémoire anti-répétition du dernier index tiré par préfixe.
+const _humourDernier = {};
+function humourAleatoire(prefix, arr) {
+  if (!Array.isArray(arr) || !arr.length) return "";
+  let idx = Math.floor(Math.random() * arr.length);
+  if (arr.length > 1 && idx === _humourDernier[prefix]) idx = (idx + 1) % arr.length;
+  _humourDernier[prefix] = idx;
+  return trData(prefix, idx, arr[idx]);
+}
+// Message d'état vide : version rigolote si l'humour est actif, sinon le texte neutre fourni.
+function messageVide(neutre) {
+  if (!humourActif()) return neutre;
+  return humourAleatoire("vide", MESSAGES_VIDES) || neutre;
+}
+// Blague du jour : stable sur la journée (index dérivé de la date locale).
+function blagueDuJour() {
+  if (!Array.isArray(BLAGUES) || !BLAGUES.length) return null;
+  const cle = aujourdHui();
+  let somme = 0;
+  for (let i = 0; i < cle.length; i++) somme += cle.charCodeAt(i);
+  const idx = somme % BLAGUES.length;
+  const b = BLAGUES[idx];
+  return {
+    q: trData("blague_q", idx, b.q),
+    r: trData("blague_r", idx, b.r)
+  };
+}
+
 function feterGain(mission) {
   const cat = CATEGORIES[mission.cat];
-  const idx = Math.floor(Math.random() * ENCOURAGEMENTS.length);
-  toast(t("toast.gain", { emoji: cat.monnaieEmoji, points: mission.points, monnaie: t("cat." + mission.cat + ".monnaie"), phrase: trData("encour", idx, ENCOURAGEMENTS[idx]) }), "succes");
+  // 1 fois sur ~3, une taquinerie rigolote à la place de l'encouragement (si humour ON).
+  let phrase;
+  if (humourActif() && Math.random() < 0.34) {
+    phrase = humourAleatoire("taquin", TAQUINERIES);
+  } else {
+    const idx = Math.floor(Math.random() * ENCOURAGEMENTS.length);
+    phrase = trData("encour", idx, ENCOURAGEMENTS[idx]);
+  }
+  toast(t("toast.gain", { emoji: cat.monnaieEmoji, points: mission.points, monnaie: t("cat." + mission.cat + ".monnaie"), phrase }), "succes");
   confettis();
 }
 

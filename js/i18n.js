@@ -1021,6 +1021,77 @@ Object.assign(I18N.de, {
   "encour.7": "Dein Herz ist voller Freundlichkeit! 💖"
 });
 
+/* ---- Touches d'humour (FR = repli depuis data.js ; ici EN/NL/DE) ---- */
+Object.assign(I18N.en, {
+  "taquin.0": "Champion! Even the socks are impressed 🧦",
+  "taquin.1": "Bravo! You deserve a chocolate medal 🍫 (imaginary 😅)",
+  "taquin.2": "Wow! The house shines so much we need sunglasses 😎",
+  "taquin.3": "So strong! The unicorns are taking notes 🦄",
+  "taquin.4": "And hop! Another little superhero step 🦸",
+  "taquin.5": "Mission complete! Your invisible cape flutters in the wind 🌬️",
+  "taquin.6": "Awesome! The dinosaurs would have been jealous 🦕",
+  "taquin.7": "Top! You earn 1000 kindness points… and a hug 🤗",
+  "vide.0": "Nothing here… the missions are napping 😴",
+  "vide.1": "All empty! A gust of wind blew through 🌬️",
+  "vide.2": "Oops, the hamster tidied everything up 🐹",
+  "vide.3": "It's a desert for now… even the ants left 🐜",
+  "vide.4": "Nothing to see here… except this little emoji 👀",
+  "blague_q.0": "What's a gardener's worst nightmare?", "blague_r.0": "Telling tall tales… of beans! 🫘",
+  "blague_q.1": "What does a snail say when riding a turtle?", "blague_r.1": "« Wheee, so fast! » 🐌",
+  "blague_q.2": "Why don't fish like computers?", "blague_r.2": "They're scared of the Net! 🐟",
+  "blague_q.3": "Which animal never tells the truth?", "blague_r.3": "The lizard — it always bluffs! 🦎",
+  "blague_q.4": "What did one strawberry say on a horse?", "blague_r.4": "Giddy-up, berry! 🍓",
+  "blague_q.5": "Why was the maths book sad?", "blague_r.5": "It had too many problems! 📘",
+  "blague_q.6": "What's the funniest fruit?", "blague_r.6": "The peach — it's a real peach! 🍑",
+  "blague_q.7": "What did one wall say to the other?", "blague_r.7": "« Meet you at the corner! » 🧱"
+});
+Object.assign(I18N.nl, {
+  "taquin.0": "Kampioen! Zelfs de sokken zijn onder de indruk 🧦",
+  "taquin.1": "Bravo! Je verdient een chocolademedaille 🍫 (denkbeeldig 😅)",
+  "taquin.2": "Wauw! Het huis blinkt zo dat we een zonnebril nodig hebben 😎",
+  "taquin.3": "Zo sterk! De eenhoorns maken notities 🦄",
+  "taquin.4": "En hop! Weer een superheldenstapje 🦸",
+  "taquin.5": "Missie voltooid! Je onzichtbare cape wappert in de wind 🌬️",
+  "taquin.6": "Geweldig! De dino's zouden jaloers zijn 🦕",
+  "taquin.7": "Top! Je verdient 1000 lieve punten… en een knuffel 🤗",
+  "vide.0": "Niets hier… de opdrachten doen een dutje 😴",
+  "vide.1": "Helemaal leeg! Er waaide een windvlaag voorbij 🌬️",
+  "vide.2": "Oeps, de hamster heeft alles opgeruimd 🐹",
+  "vide.3": "Voorlopig een woestijn… zelfs de mieren zijn weg 🐜",
+  "vide.4": "Niets te zien hier… behalve deze kleine emoji 👀",
+  "blague_q.0": "Wat is de nachtmerrie van een tuinman?", "blague_r.0": "Onzin verkopen… vol bonen! 🫘",
+  "blague_q.1": "Wat zegt een slak op een schildpad?", "blague_r.1": "« Joepie, zo snel! » 🐌",
+  "blague_q.2": "Waarom houden vissen niet van computers?", "blague_r.2": "Ze zijn bang voor het Net! 🐟",
+  "blague_q.3": "Welk dier liegt altijd?", "blague_r.3": "De hagedis — die bluft altijd! 🦎",
+  "blague_q.4": "Wat zegt een aardbei op een paard?", "blague_r.4": "Hop, hop, bessie! 🍓",
+  "blague_q.5": "Waarom was het rekenboek verdrietig?", "blague_r.5": "Het had te veel problemen! 📘",
+  "blague_q.6": "Wat is het grappigste fruit?", "blague_r.6": "De peer — echt een pereltje! 🍐",
+  "blague_q.7": "Wat zegt de ene muur tegen de andere?", "blague_r.7": "« Tot bij de hoek! » 🧱"
+});
+Object.assign(I18N.de, {
+  "taquin.0": "Champion! Sogar die Socken sind beeindruckt 🧦",
+  "taquin.1": "Bravo! Du verdienst eine Schokomedaille 🍫 (eingebildet 😅)",
+  "taquin.2": "Wow! Das Haus glänzt so sehr, wir brauchen eine Sonnenbrille 😎",
+  "taquin.3": "So stark! Die Einhörner machen sich Notizen 🦄",
+  "taquin.4": "Und hopp! Noch ein kleiner Superheldenschritt 🦸",
+  "taquin.5": "Mission erfüllt! Dein unsichtbarer Umhang weht im Wind 🌬️",
+  "taquin.6": "Klasse! Die Dinos wären neidisch gewesen 🦕",
+  "taquin.7": "Top! Du bekommst 1000 Nettigkeitspunkte… und eine Umarmung 🤗",
+  "vide.0": "Nichts hier… die Aufgaben machen ein Nickerchen 😴",
+  "vide.1": "Alles leer! Ein Windstoß ist vorbeigezogen 🌬️",
+  "vide.2": "Hoppla, der Hamster hat alles aufgeräumt 🐹",
+  "vide.3": "Vorerst eine Wüste… sogar die Ameisen sind weg 🐜",
+  "vide.4": "Nichts zu sehen hier… außer diesem kleinen Emoji 👀",
+  "blague_q.0": "Was ist der Albtraum eines Gärtners?", "blague_r.0": "Käse erzählen… äh, Salat reden! 🥗",
+  "blague_q.1": "Was sagt eine Schnecke auf einer Schildkröte?", "blague_r.1": "« Juhu, so schnell! » 🐌",
+  "blague_q.2": "Warum mögen Fische keine Computer?", "blague_r.2": "Sie haben Angst vor dem Netz! 🐟",
+  "blague_q.3": "Welches Tier sagt nie die Wahrheit?", "blague_r.3": "Die Eidechse — sie blufft immer! 🦎",
+  "blague_q.4": "Was sagt eine Erdbeere auf einem Pferd?", "blague_r.4": "Hü, hü, Beere! 🍓",
+  "blague_q.5": "Warum war das Mathebuch traurig?", "blague_r.5": "Es hatte zu viele Probleme! 📘",
+  "blague_q.6": "Was ist das lustigste Obst?", "blague_r.6": "Die Birne — echt birnenstark! 🍐",
+  "blague_q.7": "Was sagt eine Wand zur anderen?", "blague_r.7": "« Wir treffen uns an der Ecke! » 🧱"
+});
+
 /* =====================================================================
  * Cartes surprises (objectifs d'équipe) — ajouts i18n
  * ===================================================================== */
@@ -1955,6 +2026,32 @@ Object.assign(I18N.fr, { "par.prog.seuil_visuel": "Affichage imagé (sans chiffr
 Object.assign(I18N.en, { "par.prog.seuil_visuel": "Picture display (no numbers) up to age" });
 Object.assign(I18N.nl, { "par.prog.seuil_visuel": "Weergave met beeldjes (zonder cijfers) tot de leeftijd van" });
 Object.assign(I18N.de, { "par.prog.seuil_visuel": "Bildanzeige (ohne Zahlen) bis zum Alter von" });
+
+/* ---- Humour : réglage, blague du jour, répliques dodo ---- */
+Object.assign(I18N.fr, {
+  "par.prog.humour": "Touches d'humour (blagues, taquineries) 😄",
+  "blague.titre": "🃏 La blague du jour", "blague.reveler": "Voir la réponse 👀",
+  "dodo.fun_soir": "Psst… le marchand de sable chauffe les moteurs 😴",
+  "dodo.fun_nuit": "Même les doudous sont déjà au lit 🧸"
+});
+Object.assign(I18N.en, {
+  "par.prog.humour": "Humor touches (jokes, teasing) 😄",
+  "blague.titre": "🃏 Joke of the day", "blague.reveler": "See the answer 👀",
+  "dodo.fun_soir": "Psst… the sandman is warming up 😴",
+  "dodo.fun_nuit": "Even the teddies are already in bed 🧸"
+});
+Object.assign(I18N.nl, {
+  "par.prog.humour": "Humortoetsen (grapjes, plagerijtjes) 😄",
+  "blague.titre": "🃏 Mop van de dag", "blague.reveler": "Bekijk het antwoord 👀",
+  "dodo.fun_soir": "Psst… het zandmannetje warmt op 😴",
+  "dodo.fun_nuit": "Zelfs de knuffels liggen al in bed 🧸"
+});
+Object.assign(I18N.de, {
+  "par.prog.humour": "Humor-Elemente (Witze, Neckereien) 😄",
+  "blague.titre": "🃏 Witz des Tages", "blague.reveler": "Antwort anzeigen 👀",
+  "dodo.fun_soir": "Psst… das Sandmännchen wärmt sich auf 😴",
+  "dodo.fun_nuit": "Sogar die Kuscheltiere sind schon im Bett 🧸"
+});
 
 /* ---- Admin : adresse de support ---- */
 Object.assign(I18N.fr, { "admin.support_email": "Adresse de support (réception des retours)" });

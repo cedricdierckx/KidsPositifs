@@ -131,6 +131,28 @@ test("Store.ecritureAutorisee bloque un état au schéma corrompu", () => {
   assert.strictEqual(api.Store.ecritureAutorisee().ok, false);
 });
 
+/* ---------- Humour (touches bon enfant, désactivables) ---------- */
+test("humour: activé par défaut, messageVide renvoie une blague", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  assert.strictEqual(api.humourActif(), true);
+  const m = api.messageVide("NEUTRE");
+  assert.ok(api.MESSAGES_VIDES.includes(m), "doit venir du corpus d'humour");
+});
+
+test("humour: désactivé, messageVide renvoie le texte neutre et blagueDuJour reste dispo", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const e = api.etatVierge();
+  e.reglages.humour = false;
+  api.lierEtat(e);
+  assert.strictEqual(api.humourActif(), false);
+  assert.strictEqual(api.messageVide("NEUTRE"), "NEUTRE");
+  const b = api.blagueDuJour();          // la blague existe indépendamment du réglage
+  assert.ok(b && b.q && b.r);
+});
+
 /* ---------- Crédit / décrédit de mission ---------- */
 test("crediterMission ajoute points et journal (catégorie famille = cœurs)", () => {
   const { api } = construireContexte();

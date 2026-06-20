@@ -333,6 +333,39 @@ const ENCOURAGEMENTS = [
   "Ton cœur est rempli de gentillesse ! 💖"
 ];
 
+/* ---- Touches d'humour bon enfant (désactivables par les parents) ----
+ * Corpus de repli en français ; traduits via i18n (trData).
+ * - TAQUINERIES : félicitations rigolotes (mêlées aux ENCOURAGEMENTS).
+ * - MESSAGES_VIDES : états vides présentés avec le sourire.
+ * - BLAGUES : devinettes pour la « blague du jour » ({ q: question, r: réponse }). */
+const TAQUINERIES = [
+  "Champion(ne) ! Même les chaussettes sont impressionnées 🧦",
+  "Bravo ! Tu mérites une médaille en chocolat 🍫 (imaginaire 😅)",
+  "Waouh ! La maison brille presque trop, on met des lunettes 😎",
+  "Trop fort(e) ! Les licornes prennent des notes 🦄",
+  "Et hop ! Encore un petit pas de super-héros 🦸",
+  "Mission accomplie ! Ton cape invisible flotte au vent 🌬️",
+  "Génial ! Les dinosaures auraient été jaloux 🦕",
+  "Top ! Tu gagnes 1000 points de gentillesse… et un câlin 🤗"
+];
+const MESSAGES_VIDES = [
+  "Rien ici… les missions font la sieste 😴",
+  "C'est tout vide ! Un courant d'air est passé 🌬️",
+  "Oups, le hamster a tout rangé 🐹",
+  "Pour l'instant c'est désert… même les fourmis sont parties 🐜",
+  "Rien à voir ici… à part ce petit emoji 👀"
+];
+const BLAGUES = [
+  { q: "Quel est le comble pour un jardinier ?", r: "Raconter des salades ! 🥗" },
+  { q: "Que dit un escargot quand il croise une limace ?", r: "« Regarde, un nudiste ! » 🐌" },
+  { q: "Pourquoi les poissons détestent l'ordinateur ?", r: "Ils ont peur du Net ! 🐟" },
+  { q: "Quel animal ne dit jamais la vérité ?", r: "Le menteur… euh, le lézard, il bluffe ! 🦎" },
+  { q: "Que fait une fraise sur un cheval ?", r: "Tagada, tagada ! 🍓" },
+  { q: "Pourquoi le livre de maths est triste ?", r: "Il a trop de problèmes ! 📘" },
+  { q: "Quel est le fruit le plus rigolo ?", r: "La poire… elle est marrante ! 🍐" },
+  { q: "Que dit un mur à un autre mur ?", r: "« On se retrouve au coin ! » 🧱" }
+];
+
 /* ---- Catalogue des badges (pour l'affichage : gagnés + à débloquer) ----
  * Doit rester synchronisé avec les conditions d'attribution dans
  * app.js → verifierBadges(). 'comment' = comment l'obtenir (motivation). */
