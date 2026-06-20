@@ -300,6 +300,19 @@ function brancherSwipeEnfant(zone) {
   }, { passive: true });
 }
 
+// Composant « liste déroulante » natif (accessible) : un <details> stylé.
+// titre : texte du résumé ; ouvert : déplié par défaut. Renvoie {details, corps}
+// pour qu'on y ajoute le contenu.
+function blocPliable(titre, ouvert) {
+  const d = el("details", "pliable");
+  if (ouvert) d.open = true;
+  const s = el("summary", "pliable-tete", titre);
+  const corps = el("div", "pliable-corps");
+  d.appendChild(s);
+  d.appendChild(corps);
+  return { details: d, corps };
+}
+
 // Sélecteur de langue « fun » : un bouton-drapeau par langue, celui actif est
 // mis en avant. `onChange` est appelé après le changement de langue.
 function selecteurLangueFun(onChange) {

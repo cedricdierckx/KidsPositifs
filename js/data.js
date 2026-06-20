@@ -113,6 +113,20 @@ const PRIO_DEFAUT = {
 };
 const NB_DEFAUT_PAR_CAT = 8; // nombre de missions proposées par défaut par catégorie
 
+/* ---- Budget de temps d'usage (≈ 3 minutes / jour maximum) ----------
+ * Pour rester fidèle à l'esprit « peu d'écran », la sélection PAR DÉFAUT
+ * de missions est limitée selon l'âge : peu de tâches chez les petits,
+ * un peu plus chez les grands. Cocher tout reste possible côté parent.
+ * ------------------------------------------------------------------- */
+const BUDGET_MIN_JOUR = 3;     // minutes d'usage app/jour visées
+// Nombre total de missions/jour conseillé par âge (cochable en ~3 min).
+const TACHES_PAR_AGE = [
+  { max: 3, n: 3 },   // ≤ 3 ans : 3 tâches
+  { max: 5, n: 4 },   // 4-5 ans : 4
+  { max: 7, n: 5 },   // 6-7 ans : 5
+  { max: 99, n: 6 }   // 8 ans + : 6
+];
+
 /* ---- Défis « réparation » (alternative bienveillante à la punition)
  * Quand un comportement négatif apparaît, on ne retire pas de points :
  * on propose à l'enfant un petit défi positif pour réparer / apprendre.

@@ -259,6 +259,26 @@ test("décréditer ne descend jamais sous zéro", () => {
   assert.strictEqual(enf.coeursTotal, 0);
 });
 
+/* ---------- Budget de tâches par âge (≈ 3 min/jour) ---------- */
+test("la sélection par défaut respecte le budget de tâches selon l'âge", () => {
+  const { api } = construireContexte();
+  api.familleId = "f";
+  api.lierEtat(api.etatVierge());
+  const enf = api.enfantActif();
+  const a = api.age(enf);
+  const attendu = api.tachesConseillees(a);
+  const ids = api.idsDefaut(enf);
+  // On ne dépasse pas le budget conseillé (peut être un peu moins si peu de missions pour l'âge).
+  assert.ok(ids.length <= attendu, `${ids.length} ≤ ${attendu}`);
+  assert.ok(ids.length >= 2, "au moins quelques tâches proposées");
+});
+
+test("tachesConseillees augmente avec l'âge", () => {
+  const { api } = construireContexte();
+  assert.ok(api.tachesConseillees(3) <= api.tachesConseillees(6));
+  assert.ok(api.tachesConseillees(6) <= api.tachesConseillees(10));
+});
+
 /* ---------- Plan « jours suivants » ---------- */
 test("basculerPlan retire une mission pour ce jour ET les suivants", () => {
   const { api } = construireContexte();

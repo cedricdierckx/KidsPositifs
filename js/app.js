@@ -733,15 +733,35 @@ function planEffectif(enf, jour) {
 function missionsDefautCat(enf, catId) {
   return toutesMissions().filter(m => m.cat === catId && age(enf) >= m.ageMin);
 }
-// Tous les ids proposés par défaut (toutes catégories).
+// Nombre de tâches/jour conseillé pour un âge (budget ~3 min/jour).
+function tachesConseillees(age) {
+  const r = TACHES_PAR_AGE.find(x => age <= x.max);
+  return r ? r.n : 6;
+}
+// Répartition du budget entre les deux catégories (≈ 60 % Famille).
+function nbConseille(catId, age) {
+  const total = tachesConseillees(age);
+  const fam = Math.ceil(total * 0.6);
+  return catId === "famille" ? fam : Math.max(1, total - fam);
+}
+// Sélection CONSEILLÉE par défaut : missions adaptées à l'âge, les plus
+// prioritaires, limitées au budget de temps (≈ 3 min/jour).
+function missionsConseillees(enf, catId) {
+  const a = age(enf);
+  return missionsDefautCat(enf, catId)
+    .slice()
+    .sort((m1, m2) => (PRIO_DEFAUT[m1.id] || 9) - (PRIO_DEFAUT[m2.id] || 9))
+    .slice(0, nbConseille(catId, a));
+}
+// Tous les ids proposés par défaut (= sélection conseillée, budget respecté).
 function idsDefaut(enf) {
-  return [...missionsDefautCat(enf, "famille"), ...missionsDefautCat(enf, "planete")].map(m => m.id);
+  return [...missionsConseillees(enf, "famille"), ...missionsConseillees(enf, "planete")].map(m => m.id);
 }
 function missionsActives(enf, catId, jour) {
   const plan = planEffectif(enf, jour);
   const base = plan
     ? toutesMissions().filter(m => m.cat === catId && plan.includes(m.id))
-    : missionsDefautCat(enf, catId);
+    : missionsConseillees(enf, catId);
   // Filtre de planification (jours de la semaine, plage de dates, enfants).
   return base.filter(m => missionPlanifieeActive(m, enf, jour));
 }

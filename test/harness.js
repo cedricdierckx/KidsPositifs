@@ -90,6 +90,8 @@ function construireContexte() {
       crediterMission, decrediterMission, validerMission, trouverMission, toutesMissions,
       ajouterMissionPerso, planEffectif, missionsActives, basculerPlan, reinitPlan,
       missionsDefautCat, idsDefaut, enfantActif,
+      // budget de tâches par âge (≈ 3 min/jour)
+      tachesConseillees, nbConseille, missionsConseillees,
       // planification des missions (jours / dates / enfants)
       definirPlanifMission, basculerPlanifElement, planifMission, missionPlanifieeActive,
       // encodage semaine papier
