@@ -216,6 +216,30 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .blague-r{margin-top:8px; font-size:17px; font-weight:800; color:#c0468a; animation:glisseGauche .25s ease-out}
 /* Réplique rigolote du bandeau dodo */
 .dodo-fun{display:block; font-style:italic; opacity:.9; margin-top:2px}
+
+/* Section discrète « vérifier les jours précédents » (bas d'accueil) */
+.verif-jours{margin-top:18px}
+.verif-jours:not(.ouvert){background:transparent; box-shadow:none; padding:4px; text-align:center}
+.verif-activer{border:none; background:transparent; color:var(--doux); cursor:pointer;
+  font-size:13px; text-decoration:underline; opacity:.7; padding:6px 10px}
+.verif-activer:hover{opacity:1}
+.verif-tete{display:flex; align-items:center; justify-content:space-between; gap:8px}
+.verif-tete h2{margin:0}
+.verif-nav{display:flex; align-items:center; justify-content:center; gap:12px; margin:8px 0 12px}
+.verif-fleche{border:none; background:#eef4fa; border-radius:10px; width:40px; height:36px;
+  font-size:16px; cursor:pointer}
+.verif-fleche:disabled{opacity:.35; cursor:default}
+.verif-jour{font-weight:800; color:#27384a; text-transform:capitalize; min-width:160px; text-align:center}
+.verif-cat{margin:12px 0 4px; font-size:15px}
+.verif-ligne{display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+  border:2px solid #eef2f7; background:#fff; border-radius:14px; padding:10px 12px;
+  margin-bottom:6px; cursor:pointer; transition:transform .1s, border-color .15s}
+.verif-ligne:hover{border-color:#cfe2f3}
+.verif-ligne:active{transform:scale(.98)}
+.verif-ligne.fait{background:#eefaf2; border-color:#bfe8d2}
+.vl-check{font-size:20px; line-height:1}
+.vl-info{flex:1; font-size:14px}
+.vl-info small{color:var(--doux); margin-left:4px}
 .badges-compteur{font-size:14px; font-weight:800; color:#fff; background:var(--famille);
   border-radius:12px; padding:2px 10px; margin-left:6px}
 .badges-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:14px; margin-top:8px}

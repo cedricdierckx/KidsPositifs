@@ -2053,6 +2053,40 @@ Object.assign(I18N.de, {
   "dodo.fun_nuit": "Sogar die Kuscheltiere sind schon im Bett 🧸"
 });
 
+/* ---- Vérification des jours précédents (parent, depuis l'accueil) ---- */
+Object.assign(I18N.fr, {
+  "retro.activer": "🔧 Vérifier les jours précédents (parent)",
+  "retro.pin_titre": "🔒 Code PIN parental",
+  "retro.titre": "Vérifier les missions de {prenom}",
+  "retro.quitter": "Terminer",
+  "retro.aujourdhui": "aujourd'hui",
+  "retro.note": "Touche une mission pour la cocher ou la décocher pour le jour affiché. Les soldes sont ajustés automatiquement."
+});
+Object.assign(I18N.en, {
+  "retro.activer": "🔧 Check previous days (parent)",
+  "retro.pin_titre": "🔒 Parental PIN",
+  "retro.titre": "Check {prenom}'s missions",
+  "retro.quitter": "Done",
+  "retro.aujourdhui": "today",
+  "retro.note": "Tap a mission to check or uncheck it for the selected day. Balances adjust automatically."
+});
+Object.assign(I18N.nl, {
+  "retro.activer": "🔧 Vorige dagen controleren (ouder)",
+  "retro.pin_titre": "🔒 Ouderlijke PIN",
+  "retro.titre": "Opdrachten van {prenom} controleren",
+  "retro.quitter": "Klaar",
+  "retro.aujourdhui": "vandaag",
+  "retro.note": "Tik op een opdracht om ze aan of uit te vinken voor de gekozen dag. Saldo's worden automatisch aangepast."
+});
+Object.assign(I18N.de, {
+  "retro.activer": "🔧 Frühere Tage prüfen (Eltern)",
+  "retro.pin_titre": "🔒 Eltern-PIN",
+  "retro.titre": "Aufgaben von {prenom} prüfen",
+  "retro.quitter": "Fertig",
+  "retro.aujourdhui": "heute",
+  "retro.note": "Tippe auf eine Aufgabe, um sie für den gewählten Tag an- oder abzuhaken. Guthaben wird automatisch angepasst."
+});
+
 /* ---- Admin : adresse de support ---- */
 Object.assign(I18N.fr, { "admin.support_email": "Adresse de support (réception des retours)" });
 Object.assign(I18N.en, { "admin.support_email": "Support address (receives feedback)" });

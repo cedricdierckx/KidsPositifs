@@ -899,6 +899,94 @@ function vueAccueil(c) {
   // Blague du jour (si l'humour est activé par les parents)
   const blg = blocBlagueDuJour();
   if (blg) colB.appendChild(blg);
+
+  // Section discrète (bas de page) : vérifier/compléter les jours précédents.
+  c.appendChild(blocVerifJours(enf));
+}
+
+// État local (session) du mode « vérification des jours précédents ».
+let retroActif = false;
+let retroJour = null;
+
+// Active le mode rétroactif après le code PIN parental (ou directement si le
+// parent est déjà en mode parents / qu'aucun PIN n'est défini).
+function activerModeRetro() {
+  const lancer = () => { retroActif = true; retroJour = retroJour || aujourdHui(); rendre(); };
+  if (modeParents || !(etat.reglages && etat.reglages.codeParent)) { lancer(); return; }
+  demanderPin({
+    titre: t("retro.pin_titre"),
+    permettreOubli: true,
+    onReset: () => lancer(),
+    onOk: (saisi) => { if (saisi.trim() !== etat.reglages.codeParent) return false; lancer(); }
+  });
+}
+function quitterModeRetro() { retroActif = false; rendre(); }
+function decalerJourRetro(delta) {
+  const d = new Date((retroJour || aujourdHui()) + "T00:00:00");
+  d.setDate(d.getDate() + delta);
+  const cle = dateCle(d);
+  if (cle > aujourdHui()) return;     // pas de futur
+  retroJour = cle;
+  rendre();
+}
+// Libellé lisible d'un jour (ex. « lundi 16 juin »), dans la langue courante.
+function libelleJour(cle) {
+  try {
+    const d = new Date(cle + "T00:00:00");
+    return d.toLocaleDateString(langue, { weekday: "long", day: "numeric", month: "long" });
+  } catch { return cle; }
+}
+
+// Bloc « vérifier les jours précédents » : discret au repos, déployé une fois
+// le code PIN saisi. Permet de cocher/décocher toutes les missions, jour par jour.
+function blocVerifJours(enf) {
+  const sec = el("section", "carte verif-jours" + (retroActif ? " ouvert" : ""));
+  if (!retroActif) {
+    const b = el("button", "verif-activer", t("retro.activer"));
+    b.onclick = () => activerModeRetro();
+    sec.appendChild(b);
+    return sec;
+  }
+
+  retroJour = retroJour || aujourdHui();
+  const estAujourdhui = retroJour >= aujourdHui();
+
+  const tete = el("div", "verif-tete");
+  tete.innerHTML = `<h2>${t("retro.titre", { prenom: echapper(enf.prenom) })}</h2>`;
+  const bQuit = el("button", "mini-btn", t("retro.quitter"));
+  bQuit.onclick = quitterModeRetro;
+  tete.appendChild(bQuit);
+  sec.appendChild(tete);
+
+  // Navigation entre les jours.
+  const nav = el("div", "verif-nav");
+  const prev = el("button", "verif-fleche", "◀");
+  prev.onclick = () => decalerJourRetro(-1);
+  const lbl = el("span", "verif-jour", libelleJour(retroJour) + (estAujourdhui ? " · " + t("retro.aujourdhui") : ""));
+  const next = el("button", "verif-fleche", "▶");
+  next.disabled = estAujourdhui;
+  next.onclick = () => decalerJourRetro(1);
+  nav.appendChild(prev); nav.appendChild(lbl); nav.appendChild(next);
+  sec.appendChild(nav);
+
+  // Toutes les missions adaptées à l'âge, cochables pour le jour sélectionné.
+  const journalJour = enf.journal[retroJour] || {};
+  ["famille", "planete"].forEach(catId => {
+    const cat = CATEGORIES[catId];
+    const titre = el("h3", "verif-cat", catId === "famille" ? t("home.missions_famille") : t("home.missions_planete"));
+    sec.appendChild(titre);
+    toutesMissions().filter(m => m.cat === catId && m.speciale !== "coucher" && age(enf) >= m.ageMin).forEach(m => {
+      const n = journalJour[m.id] || 0;
+      const ligne = el("button", "verif-ligne" + (n ? " fait" : ""));
+      ligne.innerHTML = `<span class="vl-check">${n ? "✅" : "⬜"}</span>
+        <span class="vl-info">${m.emoji} ${titreMission(m)} <small>${cat.monnaieEmoji}${m.points}${n > 1 ? " ×" + n : ""}</small></span>`;
+      ligne.onclick = () => modifierHistorique(enf, retroJour, m, n > 0 ? -1 : +1);
+      sec.appendChild(ligne);
+    });
+  });
+
+  sec.appendChild(el("p", "note", t("retro.note")));
+  return sec;
 }
 
 // Carte « Blague du jour » : la réponse se révèle au tap (effet surprise).
