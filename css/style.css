@@ -814,6 +814,20 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .sous-nav-pin{position:absolute; top:-6px; right:-6px; background:#e26d9b; color:#fff;
   font-size:11px; font-weight:800; min-width:18px; height:18px; line-height:18px;
   border-radius:9px; text-align:center; padding:0 4px}
+/* Onglet actif bien marqué (anneau + relief) */
+.sous-nav-btn.actif{box-shadow:0 0 0 3px rgba(246,166,35,.25), 0 3px 8px rgba(246,166,35,.35)}
+
+/* Indicateur de page de l'espace parents (titre courant + points + flèches) */
+.parent-indic{display:flex; align-items:center; gap:10px; margin:2px 0 12px}
+.parent-indic-fleche{flex:0 0 auto; width:38px; height:34px; border:none; border-radius:10px;
+  background:#eef4fa; color:#3a5a72; font-size:15px; cursor:pointer; transition:transform .1s}
+.parent-indic-fleche:hover{background:#e0ecf6}
+.parent-indic-fleche:active{transform:scale(.9)}
+.parent-indic-centre{flex:1; text-align:center}
+.parent-indic-titre{display:block; font-size:16px; font-weight:800; color:#27384a}
+.parent-indic-dots{display:inline-flex; gap:6px; justify-content:center; margin-top:5px}
+.pi-dot{width:8px; height:8px; border-radius:50%; background:#d7e2ec; transition:transform .15s, background .15s}
+.pi-dot.on{background:var(--famille); transform:scale(1.3)}
 
 /* ---- Barre de navigation ---- */
 .navbar{position:fixed; bottom:0; left:0; right:0; background:#fff;

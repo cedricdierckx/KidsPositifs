@@ -282,12 +282,20 @@ function brancherSwipeEnfant(zone) {
     const t = e.changedTouches[0];
     const dx = t.clientX - x0, dy = t.clientY - y0;
     const duree = Date.now() - t0;
+    // Dans l'espace parents : critères assouplis (pas d'enfant susceptible de
+    // déclencher par accident) — un glissement horizontal net suffit.
+    if (etat.vue === "reglages") {
+      if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+        glisserVers(dx < 0 ? 1 : -1, () => changerOngletParentRelatif(dx < 0 ? 1 : -1));
+      }
+      return;
+    }
+    // Vues enfant : critères stricts (geste long, net et rapide).
     const horizontalNet = Math.abs(dx) > 90 && Math.abs(dx) > Math.abs(dy) * 2.5;
     const assezRapide = duree < 600 && (Math.abs(dx) / duree) > 0.25; // px/ms
     if (horizontalNet && assezRapide) {
       const dir = dx < 0 ? 1 : -1;
-      if (etat.vue === "reglages") glisserVers(dir, () => changerOngletParentRelatif(dir));
-      else glisserVers(dir, () => changerEnfantRelatif(dir));
+      glisserVers(dir, () => changerEnfantRelatif(dir));
     }
   }, { passive: true });
 }
@@ -2390,8 +2398,10 @@ function vueReglages(c) {
     ["stats",     t("grp.stats")]
   ];
   const nav = el("nav", "sous-nav");
+  let btnActif = null;
   onglets.forEach(([id, label]) => {
     const b = el("button", "sous-nav-btn" + (ongletParent === id ? " actif" : ""), label);
+    if (ongletParent === id) btnActif = b;
     if (id === "quotidien" && totalAttente) {
       const pin = el("span", "sous-nav-pin", String(totalAttente));
       b.appendChild(pin);
@@ -2400,6 +2410,25 @@ function vueReglages(c) {
     nav.appendChild(b);
   });
   c.appendChild(nav);
+  // L'onglet actif est amené à l'écran (sinon il peut rester hors du défilement).
+  if (btnActif) requestAnimationFrame(() => {
+    try { btnActif.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) { /* ignore */ }
+  });
+
+  // Indicateur clair de la page courante : « ◀ Titre (n/total) ▶ » + points.
+  const idxOnglet = onglets.findIndex(([id]) => id === ongletParent);
+  const labelCourant = (onglets[idxOnglet] || ["", ""])[1];
+  const indic = el("div", "parent-indic");
+  const prevB = el("button", "parent-indic-fleche", "◀");
+  prevB.onclick = () => glisserVers(-1, () => changerOngletParentRelatif(-1));
+  const nextB = el("button", "parent-indic-fleche", "▶");
+  nextB.onclick = () => glisserVers(1, () => changerOngletParentRelatif(1));
+  const centre = el("div", "parent-indic-centre");
+  centre.innerHTML = `<span class="parent-indic-titre">${labelCourant}</span>
+    <span class="parent-indic-dots">${onglets.map((_, k) =>
+      `<span class="pi-dot${k === idxOnglet ? " on" : ""}"></span>`).join("")}</span>`;
+  indic.appendChild(prevB); indic.appendChild(centre); indic.appendChild(nextB);
+  c.appendChild(indic);
 
   /* ===== ONGLET : Au quotidien ===== */
   if (ongletParent === "quotidien") {
