@@ -1167,6 +1167,19 @@ function blocSemainePapier() {
 
 let encodeMode = "detaille";   // "detaille" | "express" (session)
 
+// Exécute une action qui re-rend la page, en préservant la position de défilement
+// (vertical de la page + horizontal de la grille d'encodage) pour éviter le saut
+// en haut à chaque case cochée.
+function majSansSaut(action) {
+  const y = window.scrollY || window.pageYOffset || 0;
+  const sc = document.querySelector(".enc-scroll");
+  const sx = sc ? sc.scrollLeft : 0;
+  action();
+  const sc2 = document.querySelector(".enc-scroll");
+  if (sc2) sc2.scrollLeft = sx;
+  window.scrollTo(0, y);
+}
+
 // Encodage de la feuille papier dans l'app, pour la semaine sélectionnée et
 // l'enfant actif. Deux modes : détaillé (grille jour par jour + comportement)
 // ou express (juste les totaux de la semaine).
@@ -1241,7 +1254,7 @@ function blocEncoderSemaine() {
       jours.forEach(j => {
         const n = (enf.journal[j] || {})[m.id] || 0;
         const b = el("button", "enc-case" + (n ? " on" : ""), n ? "✅" : "");
-        b.onclick = () => modifierHistorique(enf, j, m, n > 0 ? -1 : +1);
+        b.onclick = () => majSansSaut(() => modifierHistorique(enf, j, m, n > 0 ? -1 : +1));
         ligne.appendChild(b);
       });
       grille.appendChild(ligne);
@@ -1256,7 +1269,7 @@ function blocEncoderSemaine() {
   jours.forEach(j => {
     const v = (enf.autoEval || {})[j] || "";
     const b = el("button", "enc-case enc-humeur" + (v ? " on" : ""), EMO[v]);
-    b.onclick = () => cyclerAutoEvalJour(enf, j);
+    b.onclick = () => majSansSaut(() => cyclerAutoEvalJour(enf, j));
     ligneC.appendChild(b);
   });
   grille.appendChild(ligneC);
