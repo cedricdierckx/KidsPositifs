@@ -1319,7 +1319,7 @@ function imprimerFeuilleSemaine(mode) {
       if (!ms.length) return;
       lignes += `<tr class="cat"><td colspan="${mode === "jours" ? 8 : 2}">${cat.monnaieEmoji} ${trData("cat", catId + ".nom", cat.nom)}</td></tr>`;
       ms.forEach(m => {
-        const nom = `${m.emoji} ${titreMission(m)} <small>(${cat.monnaieEmoji}${m.points})</small>`;
+        const nom = `${m.emoji} ${titreMission(m)} <small>(${cat.monnaieEmoji}${pointsMission(enf, m)})</small>`;
         if (mode === "jours") {
           lignes += `<tr><td class="m">${nom}</td>` + lettres.map(() => `<td class="c">☆</td>`).join("") + `</tr>`;
         } else {
@@ -1427,7 +1427,7 @@ function blocVerifJours(enf) {
       const n = journalJour[m.id] || 0;
       const ligne = el("button", "verif-ligne" + (n ? " fait" : ""));
       ligne.innerHTML = `<span class="vl-check">${n ? "✅" : "⬜"}</span>
-        <span class="vl-info">${m.emoji} ${titreMission(m)} <small>${cat.monnaieEmoji}${m.points}${n > 1 ? " ×" + n : ""}</small></span>`;
+        <span class="vl-info">${m.emoji} ${titreMission(m)} <small>${cat.monnaieEmoji}${pointsMission(enf, m)}${n > 1 ? " ×" + n : ""}</small></span>`;
       ligne.onclick = () => modifierHistorique(enf, retroJour, m, n > 0 ? -1 : +1);
       sec.appendChild(ligne);
     });
@@ -1544,9 +1544,10 @@ function bandeauDodo(enf) {
     </div>`;
   const jeune = estJeune(enf);
   const emojiCat = (CATEGORIES[mission.cat] || {}).monnaieEmoji || "💛";
+  const ptsDodo = pointsMission(enf, mission);
   const texteAction = jeune
-    ? `🛏️ ${pointsVisuels(mission.points, emojiCat, true)}`
-    : t("dodo.bouton", { pts: mission.points });
+    ? `🛏️ ${pointsVisuels(ptsDodo, emojiCat, true)}`
+    : t("dodo.bouton", { pts: ptsDodo });
   const b = el("button", "dodo-btn" + (fait ? " fait" : ""),
     fait ? t("dodo.fait") : (enAttente ? t("dodo.attente") : texteAction));
   b.onclick = () => validerMission(mission);
@@ -1572,7 +1573,7 @@ function grilleMissions(catId) {
     const fait = (journalJour[m.id] || 0) >= 1;
     const enAttente = enf.enAttente.some(a => a.missionId === m.id && a.jour === jour);
     const carte = el("button", "mission" + (fait ? " fait" : "") + (enAttente ? " attente" : ""));
-    const recompense = pointsVisuels(m.points, cat.monnaieEmoji, jeune);
+    const recompense = pointsVisuels(pointsMission(enf, m), cat.monnaieEmoji, jeune);
     carte.innerHTML = `
       <span class="m-emoji">${m.emoji}</span>
       <span class="m-titre">${titreMission(m)}</span>
@@ -1708,7 +1709,7 @@ function statsJournalieres(enf, nbJours) {
     Object.keys(j).forEach(mid => {
       const m = (typeof trouverMission === "function") ? trouverMission(mid) : null;
       if (!m) return;
-      const pts = (m.points || 0) * j[mid];
+      const pts = pointsMission(enf, m) * j[mid];
       if (m.cat === "planete") gouttes += pts; else coeurs += pts;
     });
     out.push({ cle, coeurs, gouttes, total: coeurs + gouttes });
@@ -2528,7 +2529,7 @@ function blocCorrections(enf) {
     const n = journalJour[m.id] || 0;
     const ligne = el("div", "hist-ligne" + (n ? " valide" : ""));
     const cat = CATEGORIES[m.cat];
-    ligne.innerHTML = `<span class="h-info">${m.emoji} ${titreMission(m)} <small>${cat.monnaieEmoji}${m.points}</small></span>
+    ligne.innerHTML = `<span class="h-info">${m.emoji} ${titreMission(m)} <small>${cat.monnaieEmoji}${pointsMission(enf, m)}</small></span>
       <span class="h-compte">${n}</span>`;
     const moins = el("button", "mini-btn", "−"); moins.onclick = () => modifierHistorique(enf, jour, m, -1);
     const plus = el("button", "mini-btn", "+"); plus.onclick = () => modifierHistorique(enf, jour, m, +1);
