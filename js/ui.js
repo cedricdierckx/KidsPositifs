@@ -601,21 +601,65 @@ function modaleTimer() {
 
 // Modale quand un minuteur tourne déjà : arrêter (PIN si défini).
 function modaleTimerActif() {
-  const arret = () => arreterTimer();
+  const ouvrir = () => modaleTimerOptions();
   if (etat.reglages && etat.reglages.codeParent) {
     demanderPin({
       titre: t("timer.arret_titre"),
       sousTitre: t("timer.arret_pin"),
       permettreOubli: true,
-      onReset: () => arret(),
+      onReset: () => ouvrir(),
       onOk: (saisi) => {
         if (saisi.trim() !== etat.reglages.codeParent) return false;
-        arret();
+        ouvrir();
       }
     });
   } else {
-    if (confirm(t("timer.arret_confirm"))) arret();
+    ouvrir();
   }
+}
+
+// Après le code PIN : choix entre arrêter le minuteur ou remettre du temps
+// (par enfant en mode « par enfant », global sinon).
+function modaleTimerOptions() {
+  const duree = (typeof timerDureeMin === "function") ? timerDureeMin() : 3;
+  const ov = el("div", "pin-modal");
+  ov.innerHTML = `
+    <div class="pin-carte timer-modale">
+      <button class="modale-fermer" aria-label="Fermer">✕</button>
+      <div class="pin-titre">${t("timer.opt_titre")}</div>
+      <button id="to-stop" class="btn-danger" style="width:100%">${t("timer.opt_arreter")}</button>
+      <p class="planif-sous">${t("timer.opt_ajouter", { min: duree })}</p>
+      <div id="to-zone" class="planif-enfants"></div>
+    </div>`;
+  document.body.appendChild(ov);
+  const fermer = () => ov.remove();
+  ov.querySelector(".modale-fermer").onclick = fermer;
+  ov.addEventListener("click", e => { if (e.target === ov) fermer(); });
+  ov.querySelector("#to-stop").onclick = () => { arreterTimer(); fermer(); };
+
+  const zone = ov.querySelector("#to-zone");
+  const ms = duree * 60000;
+  if ((typeof timerMode === "function" ? timerMode() : "parEnfant") === "global") {
+    const b = el("button", "gros-bouton planete", t("timer.opt_plus", { min: duree }));
+    b.onclick = () => { ajouterTempsGlobal(ms); toast(t("timer.temps_ajoute", { min: duree }), "succes"); fermer(); };
+    zone.appendChild(b);
+  } else {
+    Object.values(etat.enfants).forEach(enf => {
+      const reste = tempsRestantLive(enf.id);
+      const b = el("button", "enf-chip", `${enf.emoji} ${echapper(enf.prenom)} · +${duree} min <small>(${mmss(reste)})</small>`);
+      b.onclick = () => { ajouterTempsEnfant(enf.id, ms); toast(t("timer.temps_ajoute_enf", { prenom: enf.prenom, min: duree }), "succes"); fermer(); };
+      zone.appendChild(b);
+    });
+  }
+}
+
+// Temps restant « live » d'un enfant (tient compte du décompte en cours pour
+// l'enfant actif).
+function tempsRestantLive(id) {
+  if (timerEtat.actif && timerEtat.enfant === id && !timerEtat.prep) {
+    return Math.max(0, timerEtat.fin - Date.now());
+  }
+  return tempsRestantEnfant(id);
 }
 
 // Écran de verrouillage plein écran (temps écoulé). Déverrouillage par PIN.

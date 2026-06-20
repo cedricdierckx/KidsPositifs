@@ -255,6 +255,26 @@ function tempsRestantEnfant(id) {
   return timerEtat.total || (timerDureeMin() * 60000);
 }
 
+// Remet du temps à un enfant (ms) : ajoute à son budget restant. Si c'est
+// l'enfant actif en cours de décompte, on prolonge directement la fin.
+function ajouterTempsEnfant(id, ms) {
+  if (!id || !ms) return;
+  if (!timerEtat.restes) timerEtat.restes = {};
+  const actifEnCours = timerEtat.actif && timerEtat.enfant === id && !timerEtat.prep;
+  const courant = actifEnCours ? Math.max(0, timerEtat.fin - Date.now()) : tempsRestantEnfant(id);
+  timerEtat.restes[id] = courant + ms;
+  if (actifEnCours) timerEtat.fin = Date.now() + timerEtat.restes[id];
+  ecrireTimer();
+  rendre();
+}
+// Remet du temps au minuteur global (ms).
+function ajouterTempsGlobal(ms) {
+  if (!ms || !timerEtat.actif) return;
+  timerEtat.fin += ms;
+  ecrireTimer();
+  rendre();
+}
+
 // L'utilisateur choisit l'enfant qui continue : on bascule dessus et on reprend
 // son budget restant.
 function continuerAvecEnfant(id) {
