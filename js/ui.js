@@ -1109,6 +1109,140 @@ function libelleJour(cle) {
 
 // Bloc « vérifier les jours précédents » : discret au repos, déployé une fois
 // le code PIN saisi. Permet de cocher/décocher toutes les missions, jour par jour.
+/* ---------- Semaine papier (suivi sans écran) ---------- */
+// Lundi de la semaine contenant `cle` (AAAA-MM-JJ local).
+function debutSemaine(cle) {
+  const d = new Date(cle + "T00:00:00");
+  const dl = (d.getDay() + 6) % 7;     // 0 = lundi
+  d.setDate(d.getDate() - dl);
+  return dateCle(d);
+}
+// Les 7 clés de jour d'une semaine à partir de son lundi.
+function joursSemaine(debut) {
+  const base = new Date(debut + "T00:00:00");
+  const arr = [];
+  for (let i = 0; i < 7; i++) { const d = new Date(base); d.setDate(base.getDate() + i); arr.push(dateCle(d)); }
+  return arr;
+}
+// Missions à imprimer pour un enfant (sélection du plan, par âge ; on n'applique
+// PAS le filtre de planification jour par jour : la feuille couvre la semaine).
+function missionsFeuille(enf, catId) {
+  const plan = planEffectif(enf, aujourdHui());
+  return plan
+    ? toutesMissions().filter(m => m.cat === catId && m.speciale !== "coucher" && plan.includes(m.id))
+    : missionsDefautCat(enf, catId).filter(m => m.speciale !== "coucher");
+}
+
+let semainePapierDebut = null;   // lundi de la semaine sélectionnée (session)
+
+// Onglet « Semaine papier » : explique le rituel sans écran et génère la feuille A4.
+function blocSemainePapier() {
+  semainePapierDebut = semainePapierDebut || debutSemaine(aujourdHui());
+  const sec = el("section", "carte");
+  const jours = joursSemaine(semainePapierDebut);
+  sec.innerHTML = `<h2>${t("papier.titre")}</h2>
+    <p class="note">${t("papier.intro")}</p>`;
+
+  // Choix de la semaine (◀ / libellé / ▶), sans dépasser la semaine en cours.
+  const nav = el("div", "verif-nav");
+  const prev = el("button", "verif-fleche", "◀");
+  prev.onclick = () => { semainePapierDebut = decalerSemaine(semainePapierDebut, -7); rendre(); };
+  const lbl = el("span", "verif-jour", libelleSemaine(jours[0], jours[6]));
+  const next = el("button", "verif-fleche", "▶");
+  next.disabled = debutSemaine(aujourdHui()) <= semainePapierDebut;
+  next.onclick = () => { semainePapierDebut = decalerSemaine(semainePapierDebut, 7); rendre(); };
+  nav.appendChild(prev); nav.appendChild(lbl); nav.appendChild(next);
+  sec.appendChild(nav);
+
+  // Deux mises en page possibles (choix à l'impression).
+  sec.appendChild(el("p", "planif-sous", t("papier.format")));
+  const b1 = el("button", "gros-bouton planete", t("papier.imprimer_jours"));
+  b1.onclick = () => imprimerFeuilleSemaine("jours");
+  const b2 = el("button", "btn-secondaire", t("papier.imprimer_total"));
+  b2.onclick = () => imprimerFeuilleSemaine("total");
+  sec.appendChild(b1);
+  sec.appendChild(b2);
+  sec.appendChild(el("p", "note", t("papier.encodage_bientot")));
+  return sec;
+}
+function decalerSemaine(debut, deltaJours) {
+  const d = new Date(debut + "T00:00:00"); d.setDate(d.getDate() + deltaJours); return dateCle(d);
+}
+function libelleSemaine(d1, d2) {
+  try {
+    const a = new Date(d1 + "T00:00:00").toLocaleDateString(langue, { day: "numeric", month: "short" });
+    const b = new Date(d2 + "T00:00:00").toLocaleDateString(langue, { day: "numeric", month: "short" });
+    return t("papier.semaine_du", { a, b });
+  } catch { return d1 + " → " + d2; }
+}
+
+// Construit la feuille A4 (HTML autonome) et ouvre la fenêtre d'impression.
+function imprimerFeuilleSemaine(mode) {
+  const jours = joursSemaine(semainePapierDebut);
+  const lettres = t("planif.jours_courts").split(",");
+  const famille = (typeof familleActive !== "undefined" && familleActive && familleActive.name) ? familleActive.name : "";
+  const titreSem = libelleSemaine(jours[0], jours[6]);
+
+  const blocEnfant = (enf) => {
+    let lignes = "";
+    ["famille", "planete"].forEach(catId => {
+      const cat = CATEGORIES[catId];
+      const ms = missionsFeuille(enf, catId);
+      if (!ms.length) return;
+      lignes += `<tr class="cat"><td colspan="${mode === "jours" ? 8 : 2}">${cat.monnaieEmoji} ${trData("cat", catId + ".nom", cat.nom)}</td></tr>`;
+      ms.forEach(m => {
+        const nom = `${m.emoji} ${titreMission(m)} <small>(${cat.monnaieEmoji}${m.points})</small>`;
+        if (mode === "jours") {
+          lignes += `<tr><td class="m">${nom}</td>` + lettres.map(() => `<td class="c"></td>`).join("") + `</tr>`;
+        } else {
+          lignes += `<tr><td class="m">${nom}</td><td class="c large"></td></tr>`;
+        }
+      });
+    });
+    const entete = (mode === "jours")
+      ? `<tr class="head"><th></th>${lettres.map(l => `<th>${l}</th>`).join("")}</tr>`
+      : `<tr class="head"><th></th><th>${t("papier.total")}</th></tr>`;
+    return `<div class="enfant">
+        <h3><span class="em">${enf.emoji}</span> ${echapper(enf.prenom)}</h3>
+        <table>${entete}${lignes}</table>
+        <div class="totaux">💛 ${t("money.coeurs")} : ______&nbsp;&nbsp;&nbsp; 💧 ${t("money.gouttes")} : ______</div>
+      </div>`;
+  };
+
+  const corps = Object.values(etat.enfants).map(blocEnfant).join("");
+  const html = `<!doctype html><html lang="${langue}"><head><meta charset="utf-8">
+    <title>${APP_NOM} — ${titreSem}</title>
+    <style>
+      @page { size: A4 portrait; margin: 11mm; }
+      *{box-sizing:border-box} body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#222;margin:0}
+      .tete{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #f6a623;padding-bottom:6px;margin-bottom:8px}
+      .tete .logo{font-size:18px;font-weight:800}
+      .tete .sem{font-size:13px;color:#555}
+      .intro{font-size:11px;color:#666;margin:0 0 10px}
+      .grille{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}
+      .enfant{break-inside:avoid;border:1px solid #e3e3e3;border-radius:8px;padding:8px 10px}
+      .enfant h3{margin:0 0 6px;font-size:14px} .enfant .em{font-size:16px}
+      table{width:100%;border-collapse:collapse;font-size:11px}
+      th,td{border:1px solid #d7d7d7;padding:3px 4px;text-align:center}
+      td.m{text-align:left;font-size:10.5px;line-height:1.2} td.m small{color:#888}
+      tr.cat td{background:#faf3e6;text-align:left;font-weight:700;font-size:10.5px}
+      tr.head th{background:#f3f6fa;font-size:10px;width:22px}
+      td.c{width:22px;height:18px} td.c.large{width:60px}
+      .totaux{font-size:11px;margin-top:6px}
+      .pied{margin-top:10px;font-size:10px;color:#777;text-align:center}
+    </style></head><body>
+    <div class="tete"><div class="logo">🌟 ${APP_NOM}${famille ? " · " + echapper(famille) : ""}</div><div class="sem">${titreSem}</div></div>
+    <p class="intro">${t("papier.feuille_intro")}</p>
+    <div class="grille">${corps}</div>
+    <p class="pied">${t("papier.feuille_pied")}</p>
+    </body></html>`;
+
+  const w = window.open("", "_blank");
+  if (!w) { toast(t("papier.popup_bloque"), "info"); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+  setTimeout(() => { try { w.focus(); w.print(); } catch (e) { /* impression annulée */ } }, 350);
+}
+
 function blocVerifJours(enf) {
   const sec = el("section", "carte verif-jours" + (retroActif ? " ouvert" : ""));
   if (!retroActif) {
@@ -2339,7 +2473,7 @@ function blocCartesSurprisesParents() {
 // Onglet actif de l'espace parents (session, non synchronisé).
 let ongletParent = "quotidien";
 // Ordre des onglets de l'espace parents (sert au swipe horizontal).
-const ONGLETS_PARENT = ["quotidien", "activites", "enfants", "famille", "compte", "stats"];
+const ONGLETS_PARENT = ["quotidien", "papier", "activites", "enfants", "famille", "compte", "stats"];
 
 // Change d'onglet parent d'un cran (dir = +1 suivant, -1 précédent), en boucle.
 function changerOngletParentRelatif(dir) {
@@ -2391,6 +2525,7 @@ function vueReglages(c) {
   // ----- Sous-menu (onglets) pour organiser l'espace parents -----
   const onglets = [
     ["quotidien", t("grp.quotidien")],
+    ["papier",    t("grp.papier")],
     ["activites", t("grp.activites")],
     ["enfants",   t("grp.enfants")],
     ["famille",   t("grp.famille")],
@@ -2473,6 +2608,11 @@ function vueReglages(c) {
   c.appendChild(blocJournalActions());
 
   } /* fin onglet quotidien */
+
+  /* ===== ONGLET : Semaine papier ===== */
+  if (ongletParent === "papier") {
+    c.appendChild(blocSemainePapier());
+  }
 
   /* ===== ONGLET : Statistiques ===== */
   if (ongletParent === "stats") {

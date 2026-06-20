@@ -1269,10 +1269,64 @@ Object.assign(I18N.de, {
 });
 
 /* ---- Espace parents : titres de groupes ---- */
-Object.assign(I18N.fr, { "grp.quotidien": "📋 Au quotidien", "grp.activites": "🎯 Activités & règles du jeu", "grp.enfants": "👧 Les enfants", "grp.famille": "👪 Famille & invitations", "grp.compte": "⚙️ Mon compte & données" });
-Object.assign(I18N.en, { "grp.quotidien": "📋 Daily", "grp.activites": "🎯 Activities & game rules", "grp.enfants": "👧 The children", "grp.famille": "👪 Family & invitations", "grp.compte": "⚙️ My account & data" });
-Object.assign(I18N.nl, { "grp.quotidien": "📋 Dagelijks", "grp.activites": "🎯 Activiteiten & spelregels", "grp.enfants": "👧 De kinderen", "grp.famille": "👪 Gezin & uitnodigingen", "grp.compte": "⚙️ Mijn account & gegevens" });
-Object.assign(I18N.de, { "grp.quotidien": "📋 Täglich", "grp.activites": "🎯 Aktivitäten & Spielregeln", "grp.enfants": "👧 Die Kinder", "grp.famille": "👪 Familie & Einladungen", "grp.compte": "⚙️ Mein Konto & Daten" });
+Object.assign(I18N.fr, { "grp.quotidien": "📋 Au quotidien", "grp.papier": "📄 Semaine papier", "grp.activites": "🎯 Activités & règles du jeu", "grp.enfants": "👧 Les enfants", "grp.famille": "👪 Famille & invitations", "grp.compte": "⚙️ Mon compte & données" });
+Object.assign(I18N.en, { "grp.quotidien": "📋 Daily", "grp.papier": "📄 Paper week", "grp.activites": "🎯 Activities & game rules", "grp.enfants": "👧 The children", "grp.famille": "👪 Family & invitations", "grp.compte": "⚙️ My account & data" });
+Object.assign(I18N.nl, { "grp.quotidien": "📋 Dagelijks", "grp.papier": "📄 Papieren week", "grp.activites": "🎯 Activiteiten & spelregels", "grp.enfants": "👧 De kinderen", "grp.famille": "👪 Gezin & uitnodigingen", "grp.compte": "⚙️ Mijn account & gegevens" });
+Object.assign(I18N.de, { "grp.quotidien": "📋 Täglich", "grp.papier": "📄 Papierwoche", "grp.activites": "🎯 Aktivitäten & Spielregeln", "grp.enfants": "👧 Die Kinder", "grp.famille": "👪 Familie & Einladungen", "grp.compte": "⚙️ Mein Konto & Daten" });
+
+/* ---- Semaine papier (suivi sans écran) ---- */
+Object.assign(I18N.fr, {
+  "papier.titre": "📄 Suivi papier de la semaine",
+  "papier.intro": "Pour limiter le temps d'écran : suivez les missions sur papier toute la semaine, puis encodez-les ici une seule fois. L'app sert de mémoire et de statistiques.",
+  "papier.format": "Choisis la mise en page à imprimer :",
+  "papier.imprimer_jours": "🖨️ Imprimer — 7 cases par jour",
+  "papier.imprimer_total": "🖨️ Imprimer — 1 total par semaine",
+  "papier.encodage_bientot": "💡 L'encodage de la feuille dans l'app arrive très bientôt.",
+  "papier.semaine_du": "Semaine du {a} au {b}",
+  "papier.total": "Total",
+  "papier.feuille_intro": "Cochez chaque mission accomplie. En fin de semaine, un parent reporte le tout dans l'application (quelques minutes).",
+  "papier.feuille_pied": "FamiTeam · fami.team — 💛 cœurs (Famille) · 💧 gouttes (Planète)",
+  "papier.popup_bloque": "Autorise les fenêtres pop-up pour générer la feuille."
+});
+Object.assign(I18N.en, {
+  "papier.titre": "📄 Paper tracking for the week",
+  "papier.intro": "To limit screen time: track missions on paper all week, then enter them here just once. The app acts as memory and statistics.",
+  "papier.format": "Choose the layout to print:",
+  "papier.imprimer_jours": "🖨️ Print — 7 boxes per day",
+  "papier.imprimer_total": "🖨️ Print — 1 weekly total",
+  "papier.encodage_bientot": "💡 Entering the sheet into the app is coming very soon.",
+  "papier.semaine_du": "Week of {a} to {b}",
+  "papier.total": "Total",
+  "papier.feuille_intro": "Tick each completed mission. At the end of the week, a parent enters everything into the app (a few minutes).",
+  "papier.feuille_pied": "FamiTeam · fami.team — 💛 hearts (Family) · 💧 drops (Planet)",
+  "papier.popup_bloque": "Allow pop-ups to generate the sheet."
+});
+Object.assign(I18N.nl, {
+  "papier.titre": "📄 Papieren weekoverzicht",
+  "papier.intro": "Om schermtijd te beperken: volg de opdrachten de hele week op papier en voer ze hier één keer in. De app dient als geheugen en statistiek.",
+  "papier.format": "Kies de af te drukken lay-out:",
+  "papier.imprimer_jours": "🖨️ Afdrukken — 7 vakjes per dag",
+  "papier.imprimer_total": "🖨️ Afdrukken — 1 weektotaal",
+  "papier.encodage_bientot": "💡 Het invoeren van het blad in de app komt zeer binnenkort.",
+  "papier.semaine_du": "Week van {a} tot {b}",
+  "papier.total": "Totaal",
+  "papier.feuille_intro": "Vink elke voltooide opdracht aan. Aan het einde van de week voert een ouder alles in de app in (een paar minuten).",
+  "papier.feuille_pied": "FamiTeam · fami.team — 💛 hartjes (Gezin) · 💧 druppels (Planeet)",
+  "papier.popup_bloque": "Sta pop-ups toe om het blad te genereren."
+});
+Object.assign(I18N.de, {
+  "papier.titre": "📄 Papier-Wochenübersicht",
+  "papier.intro": "Um Bildschirmzeit zu begrenzen: Verfolge die Aufgaben die ganze Woche auf Papier und gib sie hier nur einmal ein. Die App dient als Gedächtnis und Statistik.",
+  "papier.format": "Wähle das zu druckende Layout:",
+  "papier.imprimer_jours": "🖨️ Drucken — 7 Kästchen pro Tag",
+  "papier.imprimer_total": "🖨️ Drucken — 1 Wochensumme",
+  "papier.encodage_bientot": "💡 Die Eingabe des Blatts in die App kommt sehr bald.",
+  "papier.semaine_du": "Woche vom {a} bis {b}",
+  "papier.total": "Summe",
+  "papier.feuille_intro": "Hake jede erledigte Aufgabe ab. Am Wochenende überträgt ein Elternteil alles in die App (ein paar Minuten).",
+  "papier.feuille_pied": "FamiTeam · fami.team — 💛 Herzen (Familie) · 💧 Tropfen (Planet)",
+  "papier.popup_bloque": "Erlaube Pop-ups, um das Blatt zu erstellen."
+});
 
 /* ---- Journal des actions récentes (annulation) ---- */
 Object.assign(I18N.fr, { "journal.titre": "↩️ Actions récentes", "journal.vide": "Aucune action récente à annuler.", "journal.note": "Tu peux annuler une action récente. Annuler une action ancienne annule aussi les plus récentes.", "journal.annuler": "Annuler", "journal.confirm_multi": "Cela annulera les {n} dernières actions. Continuer ?" });
