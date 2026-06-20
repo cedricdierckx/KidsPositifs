@@ -75,6 +75,11 @@ const MISSIONS = [
   { id: "aider_courses", cat: "famille", emoji: "🛒", titre: "Aider aux courses",         ageMin: 4, points: 2, type: "ponctuel" },
   { id: "coucher_lheure",cat: "famille", emoji: "🌙", titre: "Aller au lit à l'heure", ageMin: 2, points: 2, type: "quotidien", speciale: "coucher" },
   { id: "se_laver",      cat: "famille", emoji: "🛁", titre: "Se laver / prendre le bain", ageMin: 2, points: 1, type: "quotidien" },
+  // --- Tâches pour les plus grands ---
+  { id: "devoirs",       cat: "famille", emoji: "📚", titre: "Faire ses devoirs",          ageMin: 6, points: 3, type: "quotidien" },
+  { id: "cartable",      cat: "famille", emoji: "🎒", titre: "Préparer son cartable",      ageMin: 5, points: 2, type: "quotidien" },
+  { id: "plier_linge",   cat: "famille", emoji: "🧦", titre: "Ranger / plier son linge",   ageMin: 6, points: 2, type: "quotidien" },
+  { id: "poubelle",      cat: "famille", emoji: "🗑️", titre: "Sortir les poubelles",      ageMin: 7, points: 2, type: "ponctuel" },
 
   /* ---------------- PLANÈTE ---------------- */
   { id: "lumiere",       cat: "planete", emoji: "💡", titre: "Éteindre la lumière",       ageMin: 2, points: 1, type: "quotidien" },
@@ -91,7 +96,10 @@ const MISSIONS = [
   { id: "oiseaux",       cat: "planete", emoji: "🐦", titre: "Nourrir les oiseaux",       ageMin: 3, points: 1, type: "quotidien" },
   { id: "ecrans",        cat: "planete", emoji: "📺", titre: "Éteindre les écrans",       ageMin: 3, points: 1, type: "quotidien" },
   { id: "animaux",       cat: "planete", emoji: "🐾", titre: "S'occuper des animaux",     ageMin: 2, points: 2, type: "quotidien" },
-  { id: "recup",         cat: "planete", emoji: "📦", titre: "Réutiliser au lieu de jeter", ageMin: 4, points: 1, type: "ponctuel" }
+  { id: "recup",         cat: "planete", emoji: "📦", titre: "Réutiliser au lieu de jeter", ageMin: 4, points: 1, type: "ponctuel" },
+  // --- Tâches pour les plus grands ---
+  { id: "chauffage",     cat: "planete", emoji: "🌡️", titre: "Baisser le chauffage",      ageMin: 6, points: 1, type: "quotidien" },
+  { id: "transports",    cat: "planete", emoji: "🚌", titre: "Prendre les transports en commun", ageMin: 6, points: 2, type: "ponctuel" }
 ];
 
 /* ---- Priorité des missions pour la sélection PAR DÉFAUT ------------
@@ -106,10 +114,12 @@ const PRIO_DEFAUT = {
   bonjour: 3, habiller_seul: 3, ecouter: 3, se_laver: 3, table_debarr: 4,
   histoire: 4, lit_faire: 4, jouer_calme: 4, calme_colere: 4, chaussures: 5,
   linge_panier: 5, aider_cuisine: 6, aider_courses: 7,
+  devoirs: 2, cartable: 3, plier_linge: 4, poubelle: 5,
   // Planète
   lumiere: 1, eau_robinet: 1, gourde: 2, pas_gaspiller: 2, tri_dechets: 2,
   ecrans: 3, arroser: 3, compost: 3, douche_courte: 3, oiseaux: 4,
-  animaux: 2, marche_velo: 4, ramasser: 4, jardiner: 5, recup: 5
+  animaux: 2, marche_velo: 4, ramasser: 4, jardiner: 5, recup: 5,
+  chauffage: 3, transports: 4
 };
 const NB_DEFAUT_PAR_CAT = 8; // nombre de missions proposées par défaut par catégorie
 

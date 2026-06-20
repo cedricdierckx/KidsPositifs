@@ -2569,8 +2569,8 @@ function blocEcoReference() {
   sec.innerHTML = `<h2>${t("ecoref.titre")}</h2>
     <p class="note">${t("ecoref.note")}</p>`;
   TIERS_ECO.forEach(tier => {
-    const grp = el("div", "eco-ref-tier");
-    grp.innerHTML = `<h3 class="eco-ref-titre">${tier.emoji} ${trData("tier", tier.id, tier.nom)}</h3>`;
+    // Liste déroulante par palier (plantes / herbivores / carnivores).
+    const { details, corps } = blocPliable(`${tier.emoji} ${trData("tier", tier.id, tier.nom)} · ${tier.especes.length}`);
     tier.especes.forEach(sp => {
       const entrees = Object.keys(sp.prereq || {});
       const prereq = entrees.length
@@ -2583,9 +2583,9 @@ function blocEcoReference() {
       ligne.innerHTML = `<span class="erl-nom">${sp.emoji} ${trData("espece", sp.id, sp.nom)}</span>
         <span class="erl-cout">${sp.cout} 💧</span>
         <span class="erl-prereq">${prereq}</span>`;
-      grp.appendChild(ligne);
+      corps.appendChild(ligne);
     });
-    sec.appendChild(grp);
+    sec.appendChild(details);
   });
   return sec;
 }
