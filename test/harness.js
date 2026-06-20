@@ -90,6 +90,8 @@ function construireContexte() {
       crediterMission, decrediterMission, validerMission, trouverMission, toutesMissions,
       ajouterMissionPerso, planEffectif, missionsActives, basculerPlan, reinitPlan,
       missionsDefautCat, idsDefaut, enfantActif,
+      // planification des missions (jours / dates / enfants)
+      definirPlanifMission, basculerPlanifElement, planifMission, missionPlanifieeActive,
       // attente / validation parentale
       confirmerAttente, refuserAttente,
       // défis réparation

@@ -1872,7 +1872,68 @@ function blocEditionMission(m, cat) {
     bReset.onclick = (e) => { e.preventDefault(); reinitMission(m.id); };
     box.appendChild(bReset);
   }
+  // Bloc planification (jours / dates / enfants).
+  box.appendChild(blocPlanifMission(m));
   return box;
+}
+
+// Planification d'une mission : jours de la semaine (avec préréglages), plage
+// de dates, et enfants concernés. Tout vide = mission active pour tous, tous
+// les jours, sans limite de dates.
+function blocPlanifMission(m) {
+  const p = (typeof planifMission === "function" && planifMission(m.id)) || { jours: [], du: "", au: "", enfants: [] };
+  const wrap = el("div", "planif");
+  wrap.appendChild(el("p", "planif-titre", t("planif.titre")));
+
+  // -- Préréglages rapides + jours de la semaine --
+  const presets = el("div", "planif-presets");
+  const mkPreset = (label, jours) => {
+    const b = el("button", "mini-btn", label);
+    b.onclick = (e) => { e.preventDefault(); definirPlanifMission(m.id, "jours", jours.slice()); };
+    return b;
+  };
+  presets.appendChild(mkPreset(t("planif.tous"), []));
+  presets.appendChild(mkPreset(t("planif.semaine"), [1, 2, 3, 4, 5]));
+  presets.appendChild(mkPreset(t("planif.weekend"), [0, 6]));
+  wrap.appendChild(presets);
+
+  // L=1 … D=0 (ordre d'affichage lundi→dimanche)
+  const ordre = [1, 2, 3, 4, 5, 6, 0];
+  const labels = t("planif.jours_courts").split(",");   // "L,M,M,J,V,S,D"
+  const sem = el("div", "planif-jours");
+  ordre.forEach((wd, i) => {
+    const b = el("button", "jour-chip" + ((p.jours || []).includes(wd) ? " on" : ""), labels[i] || String(wd));
+    b.onclick = (e) => { e.preventDefault(); basculerPlanifElement(m.id, "jours", wd); };
+    sem.appendChild(b);
+  });
+  wrap.appendChild(sem);
+
+  // -- Plage de dates --
+  const dates = el("div", "planif-dates");
+  const lDu = el("label", "champ-mini", t("planif.du"));
+  const iDu = el("input"); iDu.type = "date"; iDu.value = p.du || "";
+  iDu.onchange = () => definirPlanifMission(m.id, "du", iDu.value || "");
+  lDu.appendChild(iDu);
+  const lAu = el("label", "champ-mini", t("planif.au"));
+  const iAu = el("input"); iAu.type = "date"; iAu.value = p.au || "";
+  iAu.onchange = () => definirPlanifMission(m.id, "au", iAu.value || "");
+  lAu.appendChild(iAu);
+  dates.appendChild(lDu); dates.appendChild(lAu);
+  wrap.appendChild(dates);
+
+  // -- Enfants concernés --
+  wrap.appendChild(el("p", "planif-sous", t("planif.enfants")));
+  const enfRow = el("div", "planif-enfants");
+  Object.values(etat.enfants).forEach(enf => {
+    const actif = (p.enfants || []).includes(enf.id);
+    // vide = tous les enfants ; on coche visuellement « tous » si aucune restriction
+    const b = el("button", "enf-chip" + (actif ? " on" : ""), `${enf.emoji} ${echapper(enf.prenom)}`);
+    b.onclick = (e) => { e.preventDefault(); basculerPlanifElement(m.id, "enfants", enf.id); };
+    enfRow.appendChild(b);
+  });
+  wrap.appendChild(enfRow);
+  wrap.appendChild(el("p", "note planif-aide", t("planif.aide")));
+  return wrap;
 }
 
 // Bloc de corrections manuelles pour un enfant (mode parents).

@@ -153,6 +153,35 @@ test("humour: désactivé, messageVide renvoie le texte neutre et blagueDuJour r
   assert.ok(b && b.q && b.r);
 });
 
+/* ---------- Planification des missions ---------- */
+test("planification: weekend uniquement filtre les jours de semaine", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  const m = missionFamille(api);
+  const enf = api.etat.enfants[Object.keys(api.etat.enfants)[0]];
+  api.definirPlanifMission(m.id, "jours", [0, 6]);   // dimanche + samedi
+  // 2026-06-20 = samedi (actif), 2026-06-22 = lundi (inactif)
+  assert.strictEqual(api.missionPlanifieeActive(m, enf, "2026-06-20"), true);
+  assert.strictEqual(api.missionPlanifieeActive(m, enf, "2026-06-22"), false);
+});
+
+test("planification: plage de dates et enfant ciblé", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  const m = missionPlanete(api);
+  const ids = Object.keys(api.etat.enfants);
+  const enfA = api.etat.enfants[ids[0]];
+  const enfB = api.etat.enfants[ids[1]];
+  api.definirPlanifMission(m.id, "du", "2026-06-10");
+  api.definirPlanifMission(m.id, "au", "2026-06-30");
+  api.definirPlanifMission(m.id, "enfants", [enfA.id]);
+  assert.strictEqual(api.missionPlanifieeActive(m, enfA, "2026-06-15"), true);
+  assert.strictEqual(api.missionPlanifieeActive(m, enfA, "2026-07-01"), false); // hors plage
+  assert.strictEqual(api.missionPlanifieeActive(m, enfB, "2026-06-15"), false); // autre enfant
+});
+
 /* ---------- Crédit / décrédit de mission ---------- */
 test("crediterMission ajoute points et journal (catégorie famille = cœurs)", () => {
   const { api } = construireContexte();

@@ -2095,6 +2095,40 @@ Object.assign(I18N.de, {
   "retro.note": "Tippe auf eine Aufgabe, um sie für den gewählten Tag an- oder abzuhaken. Guthaben wird automatisch angepasst."
 });
 
+/* ---- Planification des missions (jours / dates / enfants) ---- */
+Object.assign(I18N.fr, {
+  "planif.titre": "📅 Planification",
+  "planif.tous": "Tous les jours", "planif.semaine": "Semaine", "planif.weekend": "Week-end",
+  "planif.jours_courts": "L,M,M,J,V,S,D",
+  "planif.du": "Du", "planif.au": "Au",
+  "planif.enfants": "Enfants concernés",
+  "planif.aide": "Rien de coché = mission active pour tous les enfants, tous les jours, sans limite de dates."
+});
+Object.assign(I18N.en, {
+  "planif.titre": "📅 Scheduling",
+  "planif.tous": "Every day", "planif.semaine": "Weekdays", "planif.weekend": "Weekend",
+  "planif.jours_courts": "M,T,W,T,F,S,S",
+  "planif.du": "From", "planif.au": "To",
+  "planif.enfants": "Children concerned",
+  "planif.aide": "Nothing selected = mission active for all children, every day, with no date limit."
+});
+Object.assign(I18N.nl, {
+  "planif.titre": "📅 Planning",
+  "planif.tous": "Elke dag", "planif.semaine": "Weekdagen", "planif.weekend": "Weekend",
+  "planif.jours_courts": "M,D,W,D,V,Z,Z",
+  "planif.du": "Van", "planif.au": "Tot",
+  "planif.enfants": "Betrokken kinderen",
+  "planif.aide": "Niets aangevinkt = opdracht actief voor alle kinderen, elke dag, zonder datumgrens."
+});
+Object.assign(I18N.de, {
+  "planif.titre": "📅 Planung",
+  "planif.tous": "Jeden Tag", "planif.semaine": "Wochentags", "planif.weekend": "Wochenende",
+  "planif.jours_courts": "M,D,M,D,F,S,S",
+  "planif.du": "Von", "planif.au": "Bis",
+  "planif.enfants": "Betroffene Kinder",
+  "planif.aide": "Nichts ausgewählt = Aufgabe für alle Kinder aktiv, jeden Tag, ohne Datumsgrenze."
+});
+
 /* ---- Admin : adresse de support ---- */
 Object.assign(I18N.fr, { "admin.support_email": "Adresse de support (réception des retours)" });
 Object.assign(I18N.en, { "admin.support_email": "Support address (receives feedback)" });

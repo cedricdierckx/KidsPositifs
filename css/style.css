@@ -219,6 +219,26 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* Réplique rigolote du bandeau dodo */
 .dodo-fun{display:block; font-style:italic; opacity:.9; margin-top:2px}
 
+/* Planification d'une mission (jours / dates / enfants) */
+.planif{margin-top:10px; padding-top:10px; border-top:1px dashed #dde6ef}
+.planif-titre{font-weight:800; font-size:14px; margin:0 0 6px}
+.planif-sous{font-weight:700; font-size:13px; color:var(--doux); margin:10px 0 4px}
+.planif-presets{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px}
+.planif-jours{display:flex; flex-wrap:wrap; gap:6px}
+.jour-chip{width:34px; height:34px; border-radius:50%; border:2px solid #e3edf5;
+  background:#fff; font-weight:800; font-size:13px; color:#54616f; cursor:pointer; transition:transform .1s}
+.jour-chip:active{transform:scale(.9)}
+.jour-chip.on{background:linear-gradient(135deg,#bfe8d2,#9fd9ff); border-color:#37b985; color:#1d5a3f}
+.planif-dates{display:flex; flex-wrap:wrap; gap:12px; margin-top:10px}
+.champ-mini{display:flex; flex-direction:column; gap:3px; font-size:12px; font-weight:700; color:var(--doux)}
+.champ-mini input{border:2px solid #e3edf5; border-radius:10px; padding:6px 8px; font-family:inherit}
+.planif-enfants{display:flex; flex-wrap:wrap; gap:6px}
+.enf-chip{border:2px solid #e3edf5; background:#fff; border-radius:999px; padding:6px 12px;
+  font-weight:700; font-size:13px; color:#54616f; cursor:pointer; transition:transform .1s}
+.enf-chip:active{transform:scale(.94)}
+.enf-chip.on{background:linear-gradient(135deg,#ffe1a8,#ffc97a); border-color:#f6a623; color:#7a4e10}
+.planif-aide{margin-top:8px}
+
 /* Section discrète « vérifier les jours précédents » (bas d'accueil) */
 .verif-jours{margin-top:18px}
 .verif-jours:not(.ouvert){background:transparent; box-shadow:none; padding:4px; text-align:center}

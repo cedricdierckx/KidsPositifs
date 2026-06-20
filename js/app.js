@@ -340,6 +340,7 @@ function etatVierge() {
     version: ETAT_VERSION,
     missionsPerso: [],     // missions personnalisées ajoutées par les parents
     missionsModif: {},     // retouches parentales des missions (titre/emoji/points)
+    missionsPlanif: {},    // planification des missions (jours/dates/enfants)
     cartesSurprises: cartesSurprisesNeuves(ENFANTS_DEFAUT.length),  // objectifs d'équipe
     reglages: { validationParentale: false, codeParent: "", seuilVisuel: 5, humour: true }
   };
@@ -471,6 +472,7 @@ function normaliser(e) {
   if (!e.reglages) e.reglages = { validationParentale: false, codeParent: "", seuilVisuel: 5, humour: true };
   if (typeof e.reglages.seuilVisuel !== "number") e.reglages.seuilVisuel = 5;
   if (typeof e.reglages.humour !== "boolean") e.reglages.humour = true;   // humour ON par défaut
+  if (!e.missionsPlanif || typeof e.missionsPlanif !== "object") e.missionsPlanif = {};
   // Estampille de version : les migrations ci-dessus sont *additives* (on ne
   // supprime jamais de données existantes), garantissant qu'une mise à jour de
   // l'application ne fait jamais perdre la progression d'une famille.
@@ -717,9 +719,51 @@ function idsDefaut(enf) {
 }
 function missionsActives(enf, catId, jour) {
   const plan = planEffectif(enf, jour);
-  if (!plan) return missionsDefautCat(enf, catId);
-  // Le plan choisi par les parents fait foi (même au-delà de l'âge conseillé).
-  return toutesMissions().filter(m => m.cat === catId && plan.includes(m.id));
+  const base = plan
+    ? toutesMissions().filter(m => m.cat === catId && plan.includes(m.id))
+    : missionsDefautCat(enf, catId);
+  // Filtre de planification (jours de la semaine, plage de dates, enfants).
+  return base.filter(m => missionPlanifieeActive(m, enf, jour));
+}
+
+/* ---------- Planification des missions (jours / dates / enfants) ----------
+ * etat.missionsPlanif[id] = { jours:[0..6], du:"AAAA-MM-JJ", au:"AAAA-MM-JJ", enfants:[ids] }
+ * Champ vide / tableau vide = aucune restriction sur ce critère.
+ * jours : 0=dimanche … 6=samedi (compatible Date.getDay). */
+function planifMission(id) {
+  return (etat.missionsPlanif && etat.missionsPlanif[id]) || null;
+}
+function planifVide(p) {
+  return !p || ((!p.jours || !p.jours.length) && !p.du && !p.au && (!p.enfants || !p.enfants.length));
+}
+function definirPlanifMission(id, champ, valeur) {
+  if (!etat.missionsPlanif) etat.missionsPlanif = {};
+  const p = etat.missionsPlanif[id] || (etat.missionsPlanif[id] = { jours: [], du: "", au: "", enfants: [] });
+  p[champ] = valeur;
+  if (planifVide(p)) delete etat.missionsPlanif[id];   // pas de règle = on n'encombre pas l'état
+  sauver();
+  rendre();
+}
+// Bascule un jour de semaine (0..6) ou un enfant dans la planification.
+function basculerPlanifElement(id, champ, valeur) {
+  const p = (etat.missionsPlanif && etat.missionsPlanif[id]) || { jours: [], du: "", au: "", enfants: [] };
+  const arr = Array.isArray(p[champ]) ? p[champ].slice() : [];
+  const i = arr.indexOf(valeur);
+  if (i >= 0) arr.splice(i, 1); else arr.push(valeur);
+  definirPlanifMission(id, champ, arr);
+}
+// La mission est-elle active pour cet enfant ce jour-là, au regard de sa planification ?
+function missionPlanifieeActive(m, enf, jour) {
+  const p = planifMission(m.id);
+  if (planifVide(p)) return true;
+  if (p.enfants && p.enfants.length && !p.enfants.includes(enf.id)) return false;
+  if (p.du && jour < p.du) return false;
+  if (p.au && jour > p.au) return false;
+  if (p.jours && p.jours.length) {
+    const wd = new Date(jour + "T00:00:00").getDay();   // 0=dim … 6=sam
+    if (!p.jours.includes(wd)) return false;
+  }
+  return true;
 }
 // Active/retire une mission du plan (mode parents) : vaut pour ce jour et les suivants.
 function basculerPlan(enf, jour, missionId) {
