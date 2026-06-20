@@ -991,6 +991,7 @@ function creerEspece(tier, espece) {
     toast(t("toast.pas_assez_gouttes"), "info");
     return;
   }
+  enregistrerAction(`Achat écosystème : ${espece.emoji} ${trData("espece", espece.id, espece.nom)}`, enf.prenom);
   enf.gouttes -= espece.cout;
   const coll = enf.ecosysteme[tier.id];
   coll[espece.id] = (coll[espece.id] || 0) + 1;
