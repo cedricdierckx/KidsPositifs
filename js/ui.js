@@ -337,7 +337,7 @@ function lancerTuto() {
   const etapes = [
     { sel: null, e: "🌟", t: t("tuto.s1_t"), d: t("tuto.s1_d") },
     { sel: "#selecteur-enfant", e: "👧", t: t("tuto.s2_t"), d: t("tuto.s2_d") },
-    { sel: ".missions", e: "✅", t: t("tuto.s3_t"), d: t("tuto.s3_d") },
+    { sel: ".mission", e: "✅", t: t("tuto.s3_t"), d: t("tuto.s3_d") },
     { sel: "#timer-btn", e: "⏱️", t: t("tuto.s4_t"), d: t("tuto.s4_d") },
     { sel: '.nav-btn[data-vue="avatar"]', e: "🎨", t: t("tuto.s5_t"), d: t("tuto.s5_d") },
     { sel: '.nav-btn[data-vue="planete"]', e: "🌍", t: t("tuto.s6_t"), d: t("tuto.s6_d") },
@@ -404,6 +404,10 @@ function lancerTuto() {
 
   const maj = () => {
     const s = etapes[i];
+    // On amène la zone ciblée à l'écran avant de l'éclairer (sinon le halo
+    // peut tomber hors de la vue, surtout pour les missions plus bas).
+    const cible = s.sel ? document.querySelector(s.sel) : null;
+    if (cible && cible.scrollIntoView) cible.scrollIntoView({ block: "center", inline: "center" });
     bulle.querySelector(".tuto-emoji").textContent = s.e;
     bulle.querySelector(".tuto-titre").textContent = s.t;
     bulle.querySelector(".tuto-texte").innerHTML = s.d;
@@ -413,8 +417,8 @@ function lancerTuto() {
     prec.style.visibility = i === 0 ? "hidden" : "visible";
     prec.textContent = t("tuto.precedent");
     bulle.querySelector(".tuto-suiv").textContent = (i === etapes.length - 1) ? t("tuto.commencer") : t("tuto.suivant");
-    // Laisse le DOM mesurer la bulle avant de la positionner.
-    requestAnimationFrame(positionner);
+    // Laisse le DOM défiler/mesurer avant de positionner (double frame).
+    requestAnimationFrame(() => requestAnimationFrame(positionner));
   };
 
   ov.querySelector(".tuto-passer").onclick = terminer;
