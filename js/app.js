@@ -782,18 +782,40 @@ function planEffectif(enf, jour) {
 }
 // Sélection par défaut = TOUTES les missions adaptées à l'âge de l'enfant
 // (cochées à la création ; les parents peuvent ensuite modifier librement).
+/* ---------- Tableau de bord « science » (paramètres ajustables) ----------
+ * Fusionne les défauts (data.js) avec l'override admin stocké dans app_config
+ * (clé "science"). Source unique pour les réglages fondés sur la recherche. */
+function scienceConf() {
+  let over = {};
+  try {
+    if (typeof configApp !== "undefined" && configApp && configApp.science) {
+      over = typeof configApp.science === "string" ? JSON.parse(configApp.science) : configApp.science;
+    }
+  } catch (e) { over = {}; }
+  return Object.assign({}, SCIENCE_DEFAUT, over);
+}
+function budgetMinJour() { return scienceConf().budgetMinJour || 3; }
+function pointsMaxConseille() { return scienceConf().pointsMax || 5; }
+// Âge minimal conseillé d'une mission (override science prioritaire).
+function ageMinMission(m) {
+  const ov = scienceConf().ageMission || {};
+  return (typeof ov[m.id] === "number") ? ov[m.id] : m.ageMin;
+}
+
 function missionsDefautCat(enf, catId) {
-  return toutesMissions().filter(m => m.cat === catId && age(enf) >= m.ageMin);
+  return toutesMissions().filter(m => m.cat === catId && age(enf) >= ageMinMission(m));
 }
 // Nombre de tâches/jour conseillé pour un âge (budget ~3 min/jour).
 function tachesConseillees(age) {
-  const r = TACHES_PAR_AGE.find(x => age <= x.max);
+  const table = scienceConf().tachesParAge || TACHES_PAR_AGE;
+  const r = table.find(x => age <= x.max);
   return r ? r.n : 6;
 }
 // Répartition du budget entre les deux catégories (≈ 60 % Famille).
 function nbConseille(catId, age) {
   const total = tachesConseillees(age);
-  const fam = Math.ceil(total * 0.6);
+  const part = scienceConf().partFamille || 0.6;
+  const fam = Math.ceil(total * part);
   return catId === "famille" ? fam : Math.max(1, total - fam);
 }
 // Sélection CONSEILLÉE par défaut : missions adaptées à l'âge, les plus
@@ -1278,6 +1300,7 @@ function toast(msg, type = "info") {
 }
 
 function confettis() {
+  if (scienceConf().celebrer === false) return;   // micro-célébrations désactivables (réglage science)
   const zone = $("#confettis");
   const emojis = ["🎉", "⭐", "💛", "🌟", "✨", "🌈"];
   for (let i = 0; i < 18; i++) {

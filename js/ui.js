@@ -746,6 +746,121 @@ function majPastilleInvit() {
 }
 
 // Panneau d'administration : liste de toutes les familles.
+// Tableau de bord « science » (admin) : centralise les paramètres fondés sur
+// la psychologie, la pédagogie et la neurologie. Ajustables par l'admin et un
+// comité d'experts ; enregistrés dans app_config (clé "science"), donc actifs
+// pour toute l'app.
+function blocDashboardScience() {
+  const sec = el("section", "carte science-carte");
+  const cfg = scienceConf();
+  sec.innerHTML = `<h2>${t("sci.titre")}</h2><p class="note">${t("sci.note")}</p>`;
+  const refs = {};   // références des champs pour la sauvegarde
+
+  // --- 1. Temps d'écran (neurologie) ---
+  {
+    const { details, corps } = blocPliable(`🧠 ${t("sci.ecran")}`, true);
+    const lBudget = el("label", "champ", t("sci.budget_min"));
+    refs.budget = el("input", "perso-num"); refs.budget.type = "number"; refs.budget.min = "1"; refs.budget.max = "60";
+    refs.budget.value = cfg.budgetMinJour; lBudget.appendChild(refs.budget); corps.appendChild(lBudget);
+
+    corps.appendChild(el("p", "sous-titre", t("sci.taches_age")));
+    refs.taches = [];
+    (cfg.tachesParAge || []).forEach((b, i) => {
+      const l = el("label", "champ-mini", t("sci.jusqua", { age: b.max >= 99 ? "8+" : b.max }));
+      const inp = el("input", "perso-num"); inp.type = "number"; inp.min = "1"; inp.max = "12"; inp.value = b.n;
+      l.appendChild(inp); corps.appendChild(l);
+      refs.taches.push({ max: b.max, inp });
+    });
+    const lPart = el("label", "champ", t("sci.part_famille"));
+    refs.part = el("input", "perso-num"); refs.part.type = "number"; refs.part.min = "0"; refs.part.max = "100";
+    refs.part.value = Math.round((cfg.partFamille || 0.6) * 100); lPart.appendChild(refs.part); corps.appendChild(lPart);
+    sec.appendChild(details);
+  }
+
+  // --- 2. Incentives sains (psychologie de la motivation) ---
+  {
+    const { details, corps } = blocPliable(`💛 ${t("sci.incentives")}`);
+    const lMax = el("label", "champ", t("sci.points_max"));
+    refs.pointsMax = el("input", "perso-num"); refs.pointsMax.type = "number"; refs.pointsMax.min = "1"; refs.pointsMax.max = "20";
+    refs.pointsMax.value = cfg.pointsMax; lMax.appendChild(refs.pointsMax); corps.appendChild(lMax);
+    const lCel = el("label", "switch-ligne");
+    refs.celebrer = el("input"); refs.celebrer.type = "checkbox"; refs.celebrer.checked = cfg.celebrer !== false;
+    lCel.appendChild(refs.celebrer); lCel.appendChild(el("span", null, t("sci.celebrer")));
+    corps.appendChild(lCel);
+    sec.appendChild(details);
+  }
+
+  // --- 3. Âge conseillé par mission (pédagogie) ---
+  {
+    const { details, corps } = blocPliable(`🎯 ${t("sci.ages_missions")}`);
+    refs.ages = {};
+    ["famille", "planete"].forEach(catId => {
+      corps.appendChild(el("p", "sous-titre", `${CATEGORIES[catId].emoji} ${trData("cat", catId + ".nom", CATEGORIES[catId].nom)}`));
+      MISSIONS.filter(m => m.cat === catId).forEach(m => {
+        const ligne = el("div", "perso-ligne");
+        ligne.appendChild(el("span", "perso-lbl", `${m.emoji} ${titreMission(m)}`));
+        const inp = el("input", "perso-num"); inp.type = "number"; inp.min = "1"; inp.max = "12";
+        inp.value = ageMinMission(m);
+        ligne.appendChild(inp); ligne.appendChild(el("span", "perso-unite", t("sci.ans")));
+        corps.appendChild(ligne);
+        refs.ages[m.id] = { inp, def: m.ageMin };
+      });
+    });
+    sec.appendChild(details);
+  }
+
+  // --- 4. Repères & propositions des experts (texte) ---
+  {
+    const { details, corps } = blocPliable(`📚 ${t("sci.reperes")}`);
+    refs.principes = {};
+    [["psychologie", "🧩"], ["pedagogie", "🎓"], ["neurologie", "🧠"]].forEach(([dom, emo]) => {
+      corps.appendChild(el("p", "sous-titre", `${emo} ${t("sci.dom_" + dom)}`));
+      const ta = el("textarea", "sci-texte");
+      ta.rows = 4; ta.value = ((cfg.principes || {})[dom] || []).join("\n");
+      corps.appendChild(ta); refs.principes[dom] = ta;
+    });
+    corps.appendChild(el("p", "sous-titre", `💡 ${t("sci.propositions")}`));
+    refs.propositions = el("textarea", "sci-texte"); refs.propositions.rows = 4;
+    refs.propositions.value = (cfg.propositions || []).join("\n");
+    corps.appendChild(refs.propositions);
+    sec.appendChild(details);
+  }
+
+  // --- Enregistrement (app-wide via app_config) ---
+  const linesToArr = (s) => s.split("\n").map(x => x.trim()).filter(Boolean);
+  const bSave = el("button", "gros-bouton planete", t("sci.enregistrer"));
+  bSave.onclick = async () => {
+    const conf = {
+      budgetMinJour: Math.max(1, parseInt(refs.budget.value, 10) || 3),
+      tachesParAge: refs.taches.map(x => ({ max: x.max, n: Math.max(1, parseInt(x.inp.value, 10) || 3) })),
+      partFamille: Math.min(1, Math.max(0, (parseInt(refs.part.value, 10) || 60) / 100)),
+      pointsMax: Math.max(1, parseInt(refs.pointsMax.value, 10) || 5),
+      celebrer: refs.celebrer.checked,
+      ageMission: {},
+      principes: {
+        psychologie: linesToArr(refs.principes.psychologie.value),
+        pedagogie: linesToArr(refs.principes.pedagogie.value),
+        neurologie: linesToArr(refs.principes.neurologie.value)
+      },
+      propositions: linesToArr(refs.propositions.value)
+    };
+    // On ne stocke que les âges qui diffèrent du catalogue (config compacte).
+    Object.keys(refs.ages).forEach(id => {
+      const v = parseInt(refs.ages[id].inp.value, 10);
+      if (v && v !== refs.ages[id].def) conf.ageMission[id] = v;
+    });
+    bSave.disabled = true; bSave.textContent = t("sci.enreg_cours");
+    let ok = false;
+    try { ok = await adminDefinirConfig("science", JSON.stringify(conf)); } catch (e) { ok = false; }
+    bSave.disabled = false; bSave.textContent = t("sci.enregistrer");
+    if (ok) { toast(t("sci.enreg_ok"), "succes"); rendre(); }
+    else toast(t("sci.enreg_err"), "info");
+  };
+  sec.appendChild(bSave);
+  sec.appendChild(el("p", "note", t("sci.diffusion")));
+  return sec;
+}
+
 function blocAdmin() {
   const sec = el("section", "carte");
   sec.innerHTML = `<h2>${t("admin.titre")}</h2>
@@ -2235,7 +2350,7 @@ function blocMissionsDuJour(enf) {
   planDate[enf.id] = jour;
   sec.innerHTML = `<h2>${t("mdj.titre", { enf: enf.emoji + " " + enf.prenom })}</h2>
     <p class="note">${t("mdj.note")}</p>
-    <p class="note mdj-budget">${t("mdj.budget", { n: tachesConseillees(age(enf)), min: BUDGET_MIN_JOUR })}</p>`;
+    <p class="note mdj-budget">${t("mdj.budget", { n: tachesConseillees(age(enf)), min: budgetMinJour() })}</p>`;
 
   const lDate = el("label", "champ", t("mdj.a_partir"));
   const iDate = el("input"); iDate.type = "date"; iDate.value = jour;
@@ -3039,6 +3154,7 @@ function vueReglages(c) {
   if (ongletParent === "compte") {
   // ----- Administration (réservé aux admins) : en haut pour être visible -----
   if (typeof estAdmin !== "undefined" && estAdmin) c.appendChild(blocAdmin());
+  if (typeof estAdmin !== "undefined" && estAdmin) c.appendChild(blocDashboardScience());
   // Module bug/suggestion : early adopters uniquement.
   if (typeof estEarlyAdopter !== "function" || estEarlyAdopter()) c.appendChild(blocFeedback());
   if (typeof modeDemo !== "undefined" && modeDemo) {

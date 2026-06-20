@@ -137,6 +137,51 @@ const TACHES_PAR_AGE = [
   { max: 99, n: 6 }   // 8 ans + : 6
 ];
 
+/* =====================================================================
+ *  TABLEAU DE BORD « SCIENCE » (admin) — paramètres fondés sur la
+ *  recherche en psychologie, pédagogie et neurologie.
+ * ---------------------------------------------------------------------
+ *  Source de vérité unique, ajustable par l'administrateur (et un comité
+ *  d'experts) pour refléter l'état de la science. Stocké dans app_config
+ *  (clé "science") ; les valeurs ci-dessous sont les défauts.
+ * ===================================================================== */
+const SCIENCE_DEFAUT = {
+  // — Temps d'écran (neurologie / pédiatrie) —
+  budgetMinJour: 3,                 // minutes d'app/jour visées
+  tachesParAge: [                   // nb de tâches/jour conseillé par âge
+    { max: 3, n: 3 }, { max: 5, n: 4 }, { max: 7, n: 5 }, { max: 99, n: 6 }
+  ],
+  partFamille: 0.6,                 // répartition Famille/Planète du budget
+  // — Incentives sains (psychologie de la motivation) —
+  pointsMax: 5,                     // plafond conseillé de points par tâche (évite la surenchère)
+  celebrer: true,                   // micro-célébrations (confettis) : oui/non
+  // — Âge minimal conseillé par mission (override le catalogue) —
+  ageMission: {},                   // { missionId: ageMin }
+  // — Repères & propositions par discipline (texte affiché aux parents) —
+  principes: {
+    psychologie: [
+      "Renforcement positif : on valorise les progrès, jamais de punition ni de retrait de points.",
+      "Autonomie & sentiment de compétence : l'enfant choisit et coche lui-même ses missions.",
+      "Récompenses non matérielles (avatar, écosystème) pour préserver la motivation intrinsèque."
+    ],
+    pedagogie: [
+      "Peu de tâches à la fois, adaptées à l'âge, pour rester atteignables.",
+      "Régularité douce : un petit rituel quotidien ou tous les 2-3 jours suffit.",
+      "Le suivi papier est encouragé ; l'app sert de mémoire, pas d'outil quotidien d'écran."
+    ],
+    neurologie: [
+      "Limiter fortement le temps d'écran chez les jeunes enfants (≈ 3 min/jour ici).",
+      "Éviter les boucles addictives : pas de notifications, pas de scores compétitifs entre enfants.",
+      "Des récompenses prévisibles et calmes, pas de hasard à effet « machine à sous »."
+    ]
+  },
+  propositions: [
+    "Ajouter un rappel doux en fin de journée selon le rythme choisi par la famille.",
+    "Proposer des packs de missions validés par tranche d'âge.",
+    "Mesurer le temps réel passé dans l'app pour vérifier l'objectif des 3 min/jour."
+  ]
+};
+
 /* ---- Défis « réparation » (alternative bienveillante à la punition)
  * Quand un comportement négatif apparaît, on ne retire pas de points :
  * on propose à l'enfant un petit défi positif pour réparer / apprendre.

@@ -219,6 +219,12 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* Réplique rigolote du bandeau dodo */
 .dodo-fun{display:block; font-style:italic; opacity:.9; margin-top:2px}
 
+/* Tableau de bord scientifique (admin) */
+.science-carte{background:linear-gradient(180deg,#f1f7ff,#fff)}
+.sci-texte{width:100%;border:2px solid #e3edf5;border-radius:10px;padding:8px 10px;
+  font-family:inherit;font-size:13.5px;line-height:1.4;resize:vertical;margin-bottom:6px}
+.science-carte .gros-bouton{width:100%;margin-top:10px}
+
 /* Personnalisation par enfant */
 .perso-ligne{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f0f4f8}
 .perso-ligne.off{opacity:.5}

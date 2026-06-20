@@ -318,6 +318,29 @@ test("tachesConseillees augmente avec l'âge", () => {
   assert.ok(api.tachesConseillees(6) <= api.tachesConseillees(10));
 });
 
+/* ---------- Tableau de bord science ---------- */
+test("scienceConf renvoie les défauts sans override", () => {
+  const { api } = construireContexte();
+  api.familleId = "f"; api.lierEtat(api.etatVierge());
+  assert.strictEqual(api.budgetMinJour(), 3);
+  assert.ok(api.tachesConseillees(3) === 3);
+});
+
+test("un override science (app_config) ajuste le budget et l'âge des missions", () => {
+  const { api } = construireContexte();
+  api.familleId = "f"; api.lierEtat(api.etatVierge());
+  const m = api.MISSIONS.find(x => x.cat === "famille");
+  api.configApp = { science: JSON.stringify({
+    budgetMinJour: 5,
+    tachesParAge: [{ max: 3, n: 1 }, { max: 99, n: 8 }],
+    ageMission: { [m.id]: 9 }
+  }) };
+  assert.strictEqual(api.budgetMinJour(), 5);
+  assert.strictEqual(api.tachesConseillees(3), 1);
+  assert.strictEqual(api.tachesConseillees(10), 8);
+  assert.strictEqual(api.ageMinMission(m), 9);
+});
+
 /* ---------- Plan « jours suivants » ---------- */
 test("basculerPlan retire une mission pour ce jour ET les suivants", () => {
   const { api } = construireContexte();

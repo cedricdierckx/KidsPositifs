@@ -92,6 +92,10 @@ function construireContexte() {
       missionsDefautCat, idsDefaut, enfantActif,
       // budget de tâches par âge (≈ 3 min/jour)
       tachesConseillees, nbConseille, missionsConseillees,
+      // tableau de bord science
+      scienceConf, budgetMinJour, pointsMaxConseille, ageMinMission,
+      get configApp() { return (typeof configApp !== "undefined") ? configApp : undefined; },
+      set configApp(v) { configApp = v; },
       // planification des missions (jours / dates / enfants)
       definirPlanifMission, basculerPlanifElement, planifMission, missionPlanifieeActive,
       // encodage semaine papier

@@ -2257,6 +2257,44 @@ Object.assign(I18N.de, {
   "perso.actif": "Für dieses Kind aktiv", "perso.points": "Punkte", "perso.reinit": "↩️ Alles zurücksetzen"
 });
 
+/* ---- Tableau de bord « science » (admin) ---- */
+Object.assign(I18N.fr, {
+  "sci.titre": "🔬 Tableau de bord scientifique", "sci.note": "Paramètres fondés sur la psychologie, la pédagogie et la neurologie. Ajustables avec un comité d'experts ; appliqués à toute l'application.",
+  "sci.ecran": "Temps d'écran (neurologie)", "sci.budget_min": "Minutes d'app/jour visées", "sci.taches_age": "Nombre de tâches/jour par âge", "sci.jusqua": "Jusqu'à {age} ans", "sci.part_famille": "Part Famille du budget (%)",
+  "sci.incentives": "Incentives sains (motivation)", "sci.points_max": "Plafond de points par tâche", "sci.celebrer": "Micro-célébrations (confettis)",
+  "sci.ages_missions": "Âge conseillé par mission (pédagogie)", "sci.ans": "ans",
+  "sci.reperes": "Repères & propositions des experts", "sci.dom_psychologie": "Psychologie", "sci.dom_pedagogie": "Pédagogie", "sci.dom_neurologie": "Neurologie", "sci.propositions": "Propositions d'amélioration",
+  "sci.enregistrer": "💾 Enregistrer pour toute l'app", "sci.enreg_cours": "Enregistrement…", "sci.enreg_ok": "Paramètres scientifiques enregistrés ✅", "sci.enreg_err": "Échec de l'enregistrement",
+  "sci.diffusion": "Une ligne par idée. Les valeurs s'appliquent à toutes les familles au prochain chargement."
+});
+Object.assign(I18N.en, {
+  "sci.titre": "🔬 Scientific dashboard", "sci.note": "Parameters grounded in psychology, pedagogy and neurology. Adjustable with an expert panel; applied across the whole app.",
+  "sci.ecran": "Screen time (neurology)", "sci.budget_min": "Target app minutes/day", "sci.taches_age": "Tasks/day by age", "sci.jusqua": "Up to age {age}", "sci.part_famille": "Family share of budget (%)",
+  "sci.incentives": "Healthy incentives (motivation)", "sci.points_max": "Max points per task", "sci.celebrer": "Micro-celebrations (confetti)",
+  "sci.ages_missions": "Recommended age per mission (pedagogy)", "sci.ans": "yrs",
+  "sci.reperes": "Expert guidance & proposals", "sci.dom_psychologie": "Psychology", "sci.dom_pedagogie": "Pedagogy", "sci.dom_neurologie": "Neurology", "sci.propositions": "Improvement proposals",
+  "sci.enregistrer": "💾 Save for the whole app", "sci.enreg_cours": "Saving…", "sci.enreg_ok": "Scientific parameters saved ✅", "sci.enreg_err": "Save failed",
+  "sci.diffusion": "One idea per line. Values apply to all families on next load."
+});
+Object.assign(I18N.nl, {
+  "sci.titre": "🔬 Wetenschappelijk dashboard", "sci.note": "Parameters op basis van psychologie, pedagogie en neurologie. Aanpasbaar met een expertpanel; geldt voor de hele app.",
+  "sci.ecran": "Schermtijd (neurologie)", "sci.budget_min": "Beoogde app-minuten/dag", "sci.taches_age": "Taken/dag per leeftijd", "sci.jusqua": "Tot {age} jaar", "sci.part_famille": "Gezinsdeel van budget (%)",
+  "sci.incentives": "Gezonde prikkels (motivatie)", "sci.points_max": "Max. punten per taak", "sci.celebrer": "Micro-vieringen (confetti)",
+  "sci.ages_missions": "Aanbevolen leeftijd per opdracht (pedagogie)", "sci.ans": "jaar",
+  "sci.reperes": "Expertrichtlijnen & voorstellen", "sci.dom_psychologie": "Psychologie", "sci.dom_pedagogie": "Pedagogie", "sci.dom_neurologie": "Neurologie", "sci.propositions": "Verbetervoorstellen",
+  "sci.enregistrer": "💾 Opslaan voor de hele app", "sci.enreg_cours": "Opslaan…", "sci.enreg_ok": "Wetenschappelijke parameters opgeslagen ✅", "sci.enreg_err": "Opslaan mislukt",
+  "sci.diffusion": "Eén idee per regel. Waarden gelden voor alle gezinnen bij de volgende keer laden."
+});
+Object.assign(I18N.de, {
+  "sci.titre": "🔬 Wissenschafts-Dashboard", "sci.note": "Parameter auf Basis von Psychologie, Pädagogik und Neurologie. Mit einem Expertengremium anpassbar; gilt für die ganze App.",
+  "sci.ecran": "Bildschirmzeit (Neurologie)", "sci.budget_min": "Angestrebte App-Minuten/Tag", "sci.taches_age": "Aufgaben/Tag nach Alter", "sci.jusqua": "Bis {age} Jahre", "sci.part_famille": "Familienanteil am Budget (%)",
+  "sci.incentives": "Gesunde Anreize (Motivation)", "sci.points_max": "Max. Punkte pro Aufgabe", "sci.celebrer": "Mikro-Feiern (Konfetti)",
+  "sci.ages_missions": "Empfohlenes Alter pro Aufgabe (Pädagogik)", "sci.ans": "J.",
+  "sci.reperes": "Experten-Hinweise & Vorschläge", "sci.dom_psychologie": "Psychologie", "sci.dom_pedagogie": "Pädagogik", "sci.dom_neurologie": "Neurologie", "sci.propositions": "Verbesserungsvorschläge",
+  "sci.enregistrer": "💾 Für die ganze App speichern", "sci.enreg_cours": "Speichern…", "sci.enreg_ok": "Wissenschaftliche Parameter gespeichert ✅", "sci.enreg_err": "Speichern fehlgeschlagen",
+  "sci.diffusion": "Eine Idee pro Zeile. Werte gelten beim nächsten Laden für alle Familien."
+});
+
 /* ---- Tutoriel d'accueil (visite guidée) ---- */
 Object.assign(I18N.fr, {
   "tuto.passer": "Passer", "tuto.precedent": "← Précédent", "tuto.suivant": "Suivant →",
