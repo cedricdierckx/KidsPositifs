@@ -219,6 +219,14 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* Réplique rigolote du bandeau dodo */
 .dodo-fun{display:block; font-style:italic; opacity:.9; margin-top:2px}
 
+/* Personnalisation par enfant */
+.perso-ligne{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f0f4f8}
+.perso-ligne.off{opacity:.5}
+.perso-lbl{flex:1;font-size:13.5px;line-height:1.2}
+.perso-num{width:56px;border:2px solid #e3edf5;border-radius:8px;padding:5px 6px;font-family:inherit;text-align:center}
+.perso-unite{font-size:14px}
+.mini-reset{margin-top:8px}
+
 /* Composant liste déroulante (details/summary) */
 .pliable{border:2px solid #e9eef4;border-radius:14px;margin-bottom:10px;background:#fff;overflow:hidden}
 .pliable[open]{border-color:#d3e6f5}

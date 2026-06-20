@@ -259,6 +259,45 @@ test("décréditer ne descend jamais sous zéro", () => {
   assert.strictEqual(enf.coeursTotal, 0);
 });
 
+/* ---------- Personnalisation par enfant ---------- */
+test("points par enfant : override pris en compte au crédit", () => {
+  const { api } = construireContexte();
+  api.familleId = "f"; api.lierEtat(api.etatVierge());
+  const enf = api.enfantActif();
+  const m = missionFamille(api);
+  api.definirPersoMission(enf, m.id, "points", 9);
+  assert.strictEqual(api.pointsMission(enf, m), 9);
+  const c0 = enf.coeurs;
+  api.crediterMission(enf, m, "2026-06-16");
+  assert.strictEqual(enf.coeurs, c0 + 9);
+});
+
+test("mission désactivée pour un enfant n'apparaît plus dans ses missions actives", () => {
+  const { api } = construireContexte();
+  api.familleId = "f"; api.lierEtat(api.etatVierge());
+  const enf = api.enfantActif();
+  const ids0 = api.idsDefaut(enf);
+  const cible = ids0[0];
+  const m = api.trouverMission(cible);
+  api.definirPersoMission(enf, cible, "actif", false);
+  assert.strictEqual(api.missionActivePourEnfant(enf, cible), false);
+  const actives = api.missionsActives(enf, m.cat, "2026-06-16").map(x => x.id);
+  assert.ok(!actives.includes(cible));
+});
+
+test("coût d'espèce par enfant : override pris en compte", () => {
+  const { api } = construireContexte();
+  api.familleId = "f"; api.lierEtat(api.etatVierge());
+  const enf = api.enfantActif();
+  const sp = api.spInfo("herbe").sp;
+  assert.strictEqual(api.coutEspece(enf, sp), sp.cout);
+  api.definirPersoEspece(enf, "herbe", "cout", 1);
+  assert.strictEqual(api.coutEspece(enf, sp), 1);
+  assert.strictEqual(api.especeActivePourEnfant(enf, "herbe"), true);
+  api.definirPersoEspece(enf, "herbe", "actif", false);
+  assert.strictEqual(api.especeActivePourEnfant(enf, "herbe"), false);
+});
+
 /* ---------- Budget de tâches par âge (≈ 3 min/jour) ---------- */
 test("la sélection par défaut respecte le budget de tâches selon l'âge", () => {
   const { api } = construireContexte();

@@ -573,14 +573,15 @@ function aleatoire(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 /* ---------- Actions ---------- */
 // Crédite réellement les points d'une mission un jour donné.
 function crediterMission(enf, mission, jour) {
+  const pts = pointsMission(enf, mission);
   enf.journal[jour] = enf.journal[jour] || {};
   enf.journal[jour][mission.id] = (enf.journal[jour][mission.id] || 0) + 1;
   if (mission.cat === "famille") {
-    enf.coeurs += mission.points;
-    enf.coeursTotal += mission.points;
+    enf.coeurs += pts;
+    enf.coeursTotal += pts;
   } else {
-    enf.gouttes += mission.points;
-    enf.gouttesTotal += mission.points;
+    enf.gouttes += pts;
+    enf.gouttesTotal += pts;
   }
   verifierBadges(enf);
 }
@@ -591,10 +592,11 @@ function decrediterMission(enf, mission, jour) {
   if (!j || !j[mission.id]) return;
   if (j[mission.id] <= 1) delete j[mission.id]; else j[mission.id] -= 1;
   if (Object.keys(j).length === 0) delete enf.journal[jour];
+  const pts = pointsMission(enf, mission);
   const champ = mission.cat === "famille" ? "coeurs" : "gouttes";
   const total = mission.cat === "famille" ? "coeursTotal" : "gouttesTotal";
-  enf[champ] = Math.max(0, enf[champ] - mission.points);
-  enf[total] = Math.max(0, enf[total] - mission.points);
+  enf[champ] = Math.max(0, enf[champ] - pts);
+  enf[total] = Math.max(0, enf[total] - pts);
 }
 
 // Clic sur une mission : 1er clic = valider, 2e clic = annuler (corrige une erreur).
@@ -659,6 +661,56 @@ function titreMission(m) {
   if (m.perso || (mod && mod.titre)) return m.titre;
   return trData("mission", m.id, m.titre);
 }
+/* ---------- Personnalisation PAR ENFANT (missions & espèces) ----------
+ * enf.persoMissions[id] = { actif:bool, points:int }   (override par enfant)
+ * enf.persoEspeces[id]  = { actif:bool, cout:int }
+ * Champ absent = on retombe sur la valeur globale. */
+function persoMission(enf, id) {
+  return (enf && enf.persoMissions && enf.persoMissions[id]) || null;
+}
+// Points d'une mission pour un enfant donné (override éventuel, sinon global).
+function pointsMission(enf, m) {
+  const p = persoMission(enf, m.id);
+  if (p && typeof p.points === "number" && p.points > 0) return p.points;
+  return m.points;
+}
+// Une mission est-elle activée pour cet enfant ? (désactivable par enfant)
+function missionActivePourEnfant(enf, id) {
+  const p = persoMission(enf, id);
+  return !(p && p.actif === false);
+}
+function definirPersoMission(enf, id, champ, valeur) {
+  if (!enf) return;
+  if (!enf.persoMissions) enf.persoMissions = {};
+  const o = enf.persoMissions[id] || (enf.persoMissions[id] = {});
+  o[champ] = valeur;
+  // Nettoyage : si l'entrée ne porte plus aucune dérogation, on la retire.
+  if ((o.actif === undefined || o.actif === true) && (o.points === undefined || o.points === null))
+    delete enf.persoMissions[id];
+  sauver();
+  rendre();
+}
+// Coût d'une espèce pour un enfant (override éventuel).
+function coutEspece(enf, sp) {
+  const p = enf && enf.persoEspeces && enf.persoEspeces[sp.id];
+  if (p && typeof p.cout === "number" && p.cout > 0) return p.cout;
+  return sp.cout;
+}
+function especeActivePourEnfant(enf, id) {
+  const p = enf && enf.persoEspeces && enf.persoEspeces[id];
+  return !(p && p.actif === false);
+}
+function definirPersoEspece(enf, id, champ, valeur) {
+  if (!enf) return;
+  if (!enf.persoEspeces) enf.persoEspeces = {};
+  const o = enf.persoEspeces[id] || (enf.persoEspeces[id] = {});
+  o[champ] = valeur;
+  if ((o.actif === undefined || o.actif === true) && (o.cout === undefined || o.cout === null))
+    delete enf.persoEspeces[id];
+  sauver();
+  rendre();
+}
+
 // Modifie une mission (préexistante OU personnalisée) : titre, emoji ou points.
 // Pour les missions personnalisées on édite l'objet directement ; pour les
 // missions intégrées on enregistre une retouche dans etat.missionsModif.
@@ -762,8 +814,8 @@ function missionsActives(enf, catId, jour) {
   const base = plan
     ? toutesMissions().filter(m => m.cat === catId && plan.includes(m.id))
     : missionsConseillees(enf, catId);
-  // Filtre de planification (jours de la semaine, plage de dates, enfants).
-  return base.filter(m => missionPlanifieeActive(m, enf, jour));
+  // Filtres : activation par enfant + planification (jours/dates/enfants).
+  return base.filter(m => missionActivePourEnfant(enf, m.id) && missionPlanifieeActive(m, enf, jour));
 }
 
 /* ---------- Planification des missions (jours / dates / enfants) ----------
@@ -1071,12 +1123,13 @@ function creerEspece(tier, espece) {
     toast(t("toast.manque_prereq", { emoji: espece.emoji, nom: trData("espece", espece.id, espece.nom), liste }), "info");
     return;
   }
-  if (enf.gouttes < espece.cout) {
+  const cout = coutEspece(enf, espece);
+  if (enf.gouttes < cout) {
     toast(t("toast.pas_assez_gouttes"), "info");
     return;
   }
   enregistrerAction(`Achat écosystème : ${espece.emoji} ${trData("espece", espece.id, espece.nom)}`, enf.prenom);
-  enf.gouttes -= espece.cout;
+  enf.gouttes -= cout;
   const coll = enf.ecosysteme[tier.id];
   coll[espece.id] = (coll[espece.id] || 0) + 1;
   toast(t("toast.nouvel_etre", { emoji: espece.emoji, nom: trData("espece", espece.id, espece.nom) }), "succes");
@@ -1210,7 +1263,8 @@ function feterGain(mission) {
     const idx = Math.floor(Math.random() * ENCOURAGEMENTS.length);
     phrase = trData("encour", idx, ENCOURAGEMENTS[idx]);
   }
-  toast(t("toast.gain", { emoji: cat.monnaieEmoji, points: mission.points, monnaie: t("cat." + mission.cat + ".monnaie"), phrase }), "succes");
+  const pts = pointsMission(enfantActif(), mission);
+  toast(t("toast.gain", { emoji: cat.monnaieEmoji, points: pts, monnaie: t("cat." + mission.cat + ".monnaie"), phrase }), "succes");
   confettis();
 }
 
@@ -1302,19 +1356,20 @@ function modifierHistorique(enf, jour, mission, sens) {
   enregistrerAction(`Historique ${sens > 0 ? "ajout" : "retrait"} : ${titreMission(mission)} (${jour})`, enf.prenom);
   enf.journal[jour] = enf.journal[jour] || {};
   const actuel = enf.journal[jour][mission.id] || 0;
+  const pts = pointsMission(enf, mission);
   const champ = mission.cat === "famille" ? "coeurs" : "gouttes";
   const totalChamp = mission.cat === "famille" ? "coeursTotal" : "gouttesTotal";
 
   if (sens > 0) {
     enf.journal[jour][mission.id] = actuel + 1;
-    enf[champ] += mission.points;
-    enf[totalChamp] += mission.points;
+    enf[champ] += pts;
+    enf[totalChamp] += pts;
   } else {
     if (actuel <= 0) return;
     if (actuel === 1) delete enf.journal[jour][mission.id];
     else enf.journal[jour][mission.id] = actuel - 1;
-    enf[champ] = Math.max(0, enf[champ] - mission.points);
-    enf[totalChamp] = Math.max(0, enf[totalChamp] - mission.points);
+    enf[champ] = Math.max(0, enf[champ] - pts);
+    enf[totalChamp] = Math.max(0, enf[totalChamp] - pts);
   }
   if (Object.keys(enf.journal[jour]).length === 0) delete enf.journal[jour];
   sauver();

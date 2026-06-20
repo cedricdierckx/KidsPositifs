@@ -2109,7 +2109,7 @@ function vueEcosysteme(enf) {
       <p class="t-lecon">${trData("lecon", tier.id, tier.lecon)}</p>`;
 
     const grille = el("div", "eco-cartes");
-    tier.especes.forEach(sp => {
+    tier.especes.filter(sp => especeActivePourEnfant(enf, sp.id)).forEach(sp => {
       grille.appendChild(carteEspece(enf, tier, sp));
     });
     bloc.appendChild(grille);
@@ -2123,7 +2123,8 @@ function vueEcosysteme(enf) {
 function carteEspece(enf, tier, sp) {
   const possede = (enf.ecosysteme[tier.id] || {})[sp.id] || 0;
   const prereqOk = especeDebloquee(enf, sp);
-  const assezGouttes = enf.gouttes >= sp.cout;
+  const cout = coutEspece(enf, sp);
+  const assezGouttes = enf.gouttes >= cout;
   const creable = prereqOk && assezGouttes;
 
   let etatCls = creable ? "creable" : (prereqOk ? "verrou-cout" : "verrou-prereq");
@@ -2150,7 +2151,7 @@ function carteEspece(enf, tier, sp) {
   }
 
   const coinAff = jeune ? repeterEmoji(possede, sp.emoji, 5) : (possede ? "×" + possede : "");
-  const coutAff = jeune ? repeterEmoji(sp.cout, "💧", 6) : `${sp.cout} 💧`;
+  const coutAff = jeune ? repeterEmoji(cout, "💧", 6) : `${cout} 💧`;
   carte.innerHTML = `
     <span class="ec-coin${jeune ? " imgs" : ""}">${possede ? coinAff : ""}</span>
     <span class="ec-emoji">${sp.emoji}</span>
@@ -2246,14 +2247,16 @@ function blocMissionsDuJour(enf) {
     const cat = CATEGORIES[catId];
     const dispo = toutesMissions().filter(m => m.cat === catId);   // toutes proposées
     if (!dispo.length) return;
-    sec.appendChild(el("p", "sous-titre", `${cat.emoji} ${cat.nom}`));
+    const choisis = dispo.filter(m => plan ? plan.includes(m.id) : defauts.includes(m.id)).length;
+    // Liste déroulante par catégorie (évite une page interminable).
+    const { details, corps } = blocPliable(`${cat.emoji} ${trData("cat", catId + ".nom", cat.nom)} · ${choisis}/${dispo.length}`);
     dispo.forEach(m => {
       const inclus = plan ? plan.includes(m.id) : defauts.includes(m.id);
       const ligne = el("label", "switch-ligne");
       const cb = el("input"); cb.type = "checkbox"; cb.checked = inclus;
       cb.onchange = () => basculerPlan(enf, jour, m.id);
       ligne.appendChild(cb);
-      ligne.appendChild(el("span", null, `${m.emoji} ${titreMission(m)} (${cat.monnaieEmoji}${m.points})`));
+      ligne.appendChild(el("span", null, `${m.emoji} ${titreMission(m)} (${cat.monnaieEmoji}${pointsMission(enf, m)})`));
       // Bouton « modifier » : ouvre l'éditeur inline (toutes missions).
       const edit = el("button", "mini-btn", "✏️");
       edit.title = t("mdj.modifier");
@@ -2269,9 +2272,10 @@ function blocMissionsDuJour(enf) {
         sup.onclick = (e) => { e.preventDefault(); if (confirm(t("mdj.confirm_suppr", { nom: m.titre }))) supprimerMissionPerso(m.id); };
         ligne.appendChild(sup);
       }
-      sec.appendChild(ligne);
-      sec.appendChild(editeur);
+      corps.appendChild(ligne);
+      corps.appendChild(editeur);
     });
+    sec.appendChild(details);
   });
 
   const rb = el("button", "btn-secondaire", t("mdj.defaut"));
@@ -2418,6 +2422,78 @@ function blocJournalActions() {
 function heureCourte(ts) {
   const d = new Date(ts);
   return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+
+// Personnalisation fine par enfant : pour chaque enfant, on peut activer /
+// désactiver et ajuster (points / coût) chaque mission et chaque espèce.
+// Tout est présenté en listes déroulantes imbriquées pour rester compact.
+function blocPersonnalisation() {
+  const sec = el("section", "carte");
+  sec.innerHTML = `<h2>${t("perso.titre")}</h2><p class="note">${t("perso.note")}</p>`;
+
+  Object.values(etat.enfants).forEach(enf => {
+    const { details: dEnf, corps: cEnf } = blocPliable(`${enf.emoji} ${echapper(enf.prenom)}`);
+    dEnf.style.setProperty("--c", enf.couleur);
+
+    // --- Missions ---
+    const { details: dM, corps: cM } = blocPliable(`✅ ${t("perso.missions")}`);
+    ["famille", "planete"].forEach(catId => {
+      const cat = CATEGORIES[catId];
+      const ms = toutesMissions().filter(m => m.cat === catId);
+      if (!ms.length) return;
+      cM.appendChild(el("p", "sous-titre", `${cat.emoji} ${trData("cat", catId + ".nom", cat.nom)}`));
+      ms.forEach(m => {
+        const actif = missionActivePourEnfant(enf, m.id);
+        const ligne = el("div", "perso-ligne" + (actif ? "" : " off"));
+        const cb = el("input"); cb.type = "checkbox"; cb.checked = actif;
+        cb.title = t("perso.actif");
+        cb.onchange = () => definirPersoMission(enf, m.id, "actif", cb.checked ? undefined : false);
+        const lbl = el("span", "perso-lbl", `${m.emoji} ${titreMission(m)}`);
+        const pts = el("input", "perso-num"); pts.type = "number"; pts.min = "1"; pts.max = "20";
+        pts.inputMode = "numeric"; pts.value = pointsMission(enf, m);
+        pts.title = t("perso.points");
+        pts.onchange = () => definirPersoMission(enf, m.id, "points", Math.max(1, parseInt(pts.value, 10) || m.points));
+        const unite = el("span", "perso-unite", cat.monnaieEmoji);
+        ligne.appendChild(cb); ligne.appendChild(lbl); ligne.appendChild(pts); ligne.appendChild(unite);
+        cM.appendChild(ligne);
+      });
+    });
+    dEnf_appendReset(cM, enf, "missions");
+    cEnf.appendChild(dM);
+
+    // --- Écosystème (plantes & animaux) ---
+    const { details: dE, corps: cE } = blocPliable(`🌱 ${t("perso.especes")}`);
+    TIERS_ECO.forEach(tier => {
+      cE.appendChild(el("p", "sous-titre", `${tier.emoji} ${trData("tier", tier.id, tier.nom)}`));
+      tier.especes.forEach(sp => {
+        const actif = especeActivePourEnfant(enf, sp.id);
+        const ligne = el("div", "perso-ligne" + (actif ? "" : " off"));
+        const cb = el("input"); cb.type = "checkbox"; cb.checked = actif;
+        cb.onchange = () => definirPersoEspece(enf, sp.id, "actif", cb.checked ? undefined : false);
+        const lbl = el("span", "perso-lbl", `${sp.emoji} ${trData("espece", sp.id, sp.nom)}`);
+        const cout = el("input", "perso-num"); cout.type = "number"; cout.min = "1";
+        cout.inputMode = "numeric"; cout.value = coutEspece(enf, sp);
+        cout.onchange = () => definirPersoEspece(enf, sp.id, "cout", Math.max(1, parseInt(cout.value, 10) || sp.cout));
+        const unite = el("span", "perso-unite", "💧");
+        ligne.appendChild(cb); ligne.appendChild(lbl); ligne.appendChild(cout); ligne.appendChild(unite);
+        cE.appendChild(ligne);
+      });
+    });
+    dEnf_appendReset(cE, enf, "especes");
+    cEnf.appendChild(dE);
+
+    sec.appendChild(dEnf);
+  });
+  return sec;
+}
+// Petit bouton « tout réinitialiser » pour la personnalisation d'une catégorie.
+function dEnf_appendReset(conteneur, enf, type) {
+  const b = el("button", "btn-secondaire mini-reset", t("perso.reinit"));
+  b.onclick = () => {
+    if (type === "missions") enf.persoMissions = {}; else enf.persoEspeces = {};
+    sauver(); rendre();
+  };
+  conteneur.appendChild(b);
 }
 
 function blocCorrections(enf) {
@@ -2879,6 +2955,9 @@ function vueReglages(c) {
   const bAjout = el("button", "gros-bouton famille", t("profil.ajouter_enfant"));
   bAjout.onclick = () => { ajouterEnfant(); rendre(); };
   c.appendChild(bAjout);
+
+  // ----- Personnalisation fine par enfant (missions & écosystème) -----
+  c.appendChild(blocPersonnalisation());
 
   } /* fin onglet enfants */
 
