@@ -324,26 +324,36 @@ function verifierTuto() {
   lancerTuto();
 }
 
-// Carrousel d'explication : fonctionnement, utilisation, et rituel du soir.
+// Visite guidée superposée à l'application : on met en lumière de vraies zones
+// (sélecteur d'enfants, missions, onglets…) avec une bulle explicative.
 function lancerTuto() {
-  if (document.getElementById("tuto-ecran")) return;
+  if (document.getElementById("tuto-tour")) return;
   tutoEnCours = true;
-  const slides = [
-    { e: "🌟", t: t("tuto.s1_t"), d: t("tuto.s1_d") },
-    { e: "✅", t: t("tuto.s2_t"), d: t("tuto.s2_d") },
-    { e: "🎨", t: t("tuto.s3_t"), d: t("tuto.s3_d") },
-    { e: "🤝", t: t("tuto.s4_t"), d: t("tuto.s4_d"), rituel: true },
-    { e: "⚙️", t: t("tuto.s5_t"), d: t("tuto.s5_d") }
+  // On se place sur l'accueil pour que les zones ciblées existent.
+  etat.vue = "accueil";
+  rendre();
+
+  // Étapes : sel = sélecteur de la zone à éclairer (null = bulle centrée).
+  const etapes = [
+    { sel: null, e: "🌟", t: t("tuto.s1_t"), d: t("tuto.s1_d") },
+    { sel: "#selecteur-enfant", e: "👧", t: t("tuto.s2_t"), d: t("tuto.s2_d") },
+    { sel: ".missions", e: "✅", t: t("tuto.s3_t"), d: t("tuto.s3_d") },
+    { sel: "#timer-btn", e: "⏱️", t: t("tuto.s4_t"), d: t("tuto.s4_d") },
+    { sel: '.nav-btn[data-vue="avatar"]', e: "🎨", t: t("tuto.s5_t"), d: t("tuto.s5_d") },
+    { sel: '.nav-btn[data-vue="planete"]', e: "🌍", t: t("tuto.s6_t"), d: t("tuto.s6_d") },
+    { sel: '.nav-btn[data-vue="reglages"]', e: "⚙️", t: t("tuto.s7_t"), d: t("tuto.s7_d") },
+    { sel: null, e: "🤝", t: t("tuto.s8_t"), d: t("tuto.s8_d") }
   ];
   let i = 0;
-  const ov = el("div", "tuto-ecran"); ov.id = "tuto-ecran";
+
+  const ov = el("div", "tuto-tour"); ov.id = "tuto-tour";
   ov.innerHTML = `
-    <div class="tuto-carte">
+    <div class="tour-trou"></div>
+    <div class="tour-bulle">
       <button class="tuto-passer">${t("tuto.passer")}</button>
       <div class="tuto-emoji"></div>
       <h2 class="tuto-titre"></h2>
       <p class="tuto-texte"></p>
-      <div class="tuto-rituel" style="display:none"></div>
       <div class="tuto-dots"></div>
       <div class="tuto-nav">
         <button class="btn-secondaire tuto-prec"></button>
@@ -351,49 +361,66 @@ function lancerTuto() {
       </div>
     </div>`;
   document.body.appendChild(ov);
+  const trou = ov.querySelector(".tour-trou");
+  const bulle = ov.querySelector(".tour-bulle");
 
   const terminer = () => {
     if (typeof modeDemo !== "undefined" && modeDemo) window.__tutoDemoVu = true;
     else { if (!etat.reglages) etat.reglages = {}; etat.reglages.tutoVu = true; sauver(); }
+    window.removeEventListener("resize", reposition);
     ov.remove(); tutoEnCours = false; rendre();
   };
 
-  const blocRituel = () => {
-    const r = ov.querySelector(".tuto-rituel");
-    r.innerHTML = `<p class="tuto-rituel-q">${t("tuto.rituel_q")}</p>`;
-    const row = el("div", "tuto-rituel-choix");
-    [["quotidien", t("tuto.rituel_quotidien")], ["2-3j", t("tuto.rituel_23j")]].forEach(([val, lab]) => {
-      const sel = (etat.reglages && etat.reglages.rituelRythme) === val;
-      const b = el("button", "rituel-chip" + (sel ? " on" : ""), lab);
-      b.onclick = () => {
-        if (!etat.reglages) etat.reglages = {};
-        etat.reglages.rituelRythme = val;
-        if (typeof modeDemo === "undefined" || !modeDemo) sauver();
-        blocRituel();
-      };
-      row.appendChild(b);
-    });
-    r.appendChild(row);
-  };
+  // Place la lumière sur la cible et positionne la bulle au mieux.
+  function positionner() {
+    const s = etapes[i];
+    const cible = s.sel ? document.querySelector(s.sel) : null;
+    if (!cible) {
+      trou.style.display = "none";
+      bulle.classList.add("centre");
+      bulle.style.left = ""; bulle.style.top = "";
+      return;
+    }
+    bulle.classList.remove("centre");
+    const r = cible.getBoundingClientRect();
+    const pad = 8;
+    trou.style.display = "block";
+    trou.style.left = (r.left - pad) + "px";
+    trou.style.top = (r.top - pad) + "px";
+    trou.style.width = (r.width + pad * 2) + "px";
+    trou.style.height = (r.height + pad * 2) + "px";
+    // Bulle au-dessus si la cible est dans la moitié basse, sinon en-dessous.
+    const bh = bulle.offsetHeight || 200;
+    const bw = bulle.offsetWidth || 300;
+    const enBas = r.top > window.innerHeight / 2;
+    let top = enBas ? (r.top - pad - bh - 12) : (r.bottom + pad + 12);
+    top = Math.max(10, Math.min(top, window.innerHeight - bh - 10));
+    let left = r.left + r.width / 2 - bw / 2;
+    left = Math.max(10, Math.min(left, window.innerWidth - bw - 10));
+    bulle.style.left = left + "px";
+    bulle.style.top = top + "px";
+  }
+  const reposition = () => positionner();
 
   const maj = () => {
-    const s = slides[i];
-    ov.querySelector(".tuto-emoji").textContent = s.e;
-    ov.querySelector(".tuto-titre").textContent = s.t;
-    ov.querySelector(".tuto-texte").innerHTML = s.d;
-    const r = ov.querySelector(".tuto-rituel");
-    if (s.rituel) { r.style.display = "block"; blocRituel(); } else { r.style.display = "none"; r.innerHTML = ""; }
-    ov.querySelector(".tuto-dots").innerHTML = slides.map((_, k) =>
+    const s = etapes[i];
+    bulle.querySelector(".tuto-emoji").textContent = s.e;
+    bulle.querySelector(".tuto-titre").textContent = s.t;
+    bulle.querySelector(".tuto-texte").innerHTML = s.d;
+    bulle.querySelector(".tuto-dots").innerHTML = etapes.map((_, k) =>
       `<span class="tuto-dot${k === i ? " on" : ""}"></span>`).join("");
-    const prec = ov.querySelector(".tuto-prec");
+    const prec = bulle.querySelector(".tuto-prec");
     prec.style.visibility = i === 0 ? "hidden" : "visible";
     prec.textContent = t("tuto.precedent");
-    ov.querySelector(".tuto-suiv").textContent = (i === slides.length - 1) ? t("tuto.commencer") : t("tuto.suivant");
+    bulle.querySelector(".tuto-suiv").textContent = (i === etapes.length - 1) ? t("tuto.commencer") : t("tuto.suivant");
+    // Laisse le DOM mesurer la bulle avant de la positionner.
+    requestAnimationFrame(positionner);
   };
 
   ov.querySelector(".tuto-passer").onclick = terminer;
-  ov.querySelector(".tuto-prec").onclick = () => { if (i > 0) { i--; maj(); } };
-  ov.querySelector(".tuto-suiv").onclick = () => { if (i < slides.length - 1) { i++; maj(); } else terminer(); };
+  bulle.querySelector(".tuto-prec").onclick = () => { if (i > 0) { i--; maj(); } };
+  bulle.querySelector(".tuto-suiv").onclick = () => { if (i < etapes.length - 1) { i++; maj(); } else terminer(); };
+  window.addEventListener("resize", reposition);
   maj();
 }
 
