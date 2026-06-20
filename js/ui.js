@@ -2772,18 +2772,17 @@ function vueReglages(c) {
     try { btnActif.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) { /* ignore */ }
   });
 
-  // Indicateur clair de la page courante : « ◀ Titre (n/total) ▶ » + points.
+  // Indicateur de position : flèches ◀ ▶ + points (le titre est déjà donné
+  // par l'onglet actif surligné juste au-dessus — on évite le doublon).
   const idxOnglet = onglets.findIndex(([id]) => id === ongletParent);
-  const labelCourant = (onglets[idxOnglet] || ["", ""])[1];
   const indic = el("div", "parent-indic");
   const prevB = el("button", "parent-indic-fleche", "◀");
   prevB.onclick = () => glisserVers(-1, () => changerOngletParentRelatif(-1));
   const nextB = el("button", "parent-indic-fleche", "▶");
   nextB.onclick = () => glisserVers(1, () => changerOngletParentRelatif(1));
   const centre = el("div", "parent-indic-centre");
-  centre.innerHTML = `<span class="parent-indic-titre">${labelCourant}</span>
-    <span class="parent-indic-dots">${onglets.map((_, k) =>
-      `<span class="pi-dot${k === idxOnglet ? " on" : ""}"></span>`).join("")}</span>`;
+  centre.innerHTML = `<span class="parent-indic-dots">${onglets.map((_, k) =>
+    `<span class="pi-dot${k === idxOnglet ? " on" : ""}"></span>`).join("")}</span>`;
   indic.appendChild(prevB); indic.appendChild(centre); indic.appendChild(nextB);
   c.appendChild(indic);
 
