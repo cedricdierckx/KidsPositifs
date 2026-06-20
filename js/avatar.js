@@ -80,6 +80,14 @@ function svgLunettes(id) {
       return `<circle cx="${G}" cy="${Y}" r="7.5" fill="rgba(255,210,80,0.25)" stroke="#f2b01b" stroke-width="2"/>
               <circle cx="${D}" cy="${Y}" r="7.5" fill="rgba(255,210,80,0.25)" stroke="#f2b01b" stroke-width="2"/>
               ${etoile(G, Y, 2.4, "#f2b01b")}${etoile(D, Y, 2.4, "#f2b01b")}` + pont + branches;
+    case "coeur":
+      return `<circle cx="${G}" cy="${Y}" r="7.5" fill="rgba(255,120,180,0.22)" stroke="#e8537f" stroke-width="2"/>
+              <circle cx="${D}" cy="${Y}" r="7.5" fill="rgba(255,120,180,0.22)" stroke="#e8537f" stroke-width="2"/>
+              ${coeurForme(G, Y, 2.8, "#e8537f")}${coeurForme(D, Y, 2.8, "#e8537f")}` + pont + branches;
+    case "goutte":
+      return `<circle cx="${G}" cy="${Y}" r="7.5" fill="rgba(76,179,230,0.22)" stroke="#2f9bd0" stroke-width="2"/>
+              <circle cx="${D}" cy="${Y}" r="7.5" fill="rgba(76,179,230,0.22)" stroke="#2f9bd0" stroke-width="2"/>
+              ${goutteForme(G, Y, 3, "#2f9bd0")}${goutteForme(D, Y, 3, "#2f9bd0")}` + pont + branches;
     default: // rondes
       return `<circle cx="${G}" cy="${Y}" r="7.5" fill="rgba(255,255,255,0.15)" stroke="#2b2b35" stroke-width="2"/>
               <circle cx="${D}" cy="${Y}" r="7.5" fill="rgba(255,255,255,0.15)" stroke="#2b2b35" stroke-width="2"/>` + pont + branches;
@@ -243,6 +251,12 @@ function etoile(cx, cy, r, fill) {
 function coeurForme(cx, cy, r, fill) {
   return `<path transform="translate(${cx - r},${cy - r}) scale(${r / 8})"
     d="M8 14 C2 9 0 6 0 3.5 A3.5 3.5 0 0 1 8 2 A3.5 3.5 0 0 1 16 3.5 C16 6 14 9 8 14Z" fill="${fill}"/>`;
+}
+// Goutte (larme) : pointe en haut, base arrondie.
+function goutteForme(cx, cy, r, fill) {
+  return `<path d="M${cx} ${cy - r * 1.3}
+    C${cx + r} ${cy - r * 0.2} ${cx + r} ${cy + r * 0.7} ${cx} ${cy + r}
+    C${cx - r} ${cy + r * 0.7} ${cx - r} ${cy - r * 0.2} ${cx} ${cy - r * 1.3}Z" fill="${fill}"/>`;
 }
 // Assombrit une couleur hex (facteur < 1).
 function assombrir(hex, f) {

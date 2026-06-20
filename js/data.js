@@ -170,8 +170,10 @@ const AVATAR_OPTIONS = {
   lunettes: [
     { id: "rien",    nom: "Aucunes",          cout: 0 },
     { id: "rondes",  nom: "Lunettes rondes",  cout: 0 },
-    { id: "soleil",  nom: "Lunettes soleil",  cout: 0 },
-    { id: "etoile",  nom: "Lunettes étoiles", cout: 0 }
+    { id: "soleil",  nom: "Lunettes soleil",  cout: 12 },
+    { id: "etoile",  nom: "Lunettes étoiles", cout: 25 },
+    { id: "coeur",   nom: "Lunettes cœurs",   cout: 20 },
+    { id: "goutte",  nom: "Lunettes gouttes", cout: 20 }
   ],
   taches: [
     { id: "rien",   nom: "Aucune",            cout: 0 },
