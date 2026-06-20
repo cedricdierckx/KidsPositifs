@@ -366,7 +366,7 @@ function ecranAuth() {
   const parrain = localStorage.getItem(PARRAIN_KEY);
   const boutonsLangue = Object.keys(LANGUES).map(l =>
     `<button type="button" class="langue-btn${l === langue ? " actif" : ""}" data-lang="${l}">
-       <span class="langue-drapeau">${LANGUES_DRAPEAU[l] || "🏳️"}</span><span class="langue-nom">${LANGUES[l]}</span>
+       <span class="langue-drapeau">${drapeau(l)}</span><span class="langue-nom">${LANGUES[l]}</span>
      </button>`).join("");
 
   const features = [

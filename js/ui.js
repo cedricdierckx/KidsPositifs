@@ -299,7 +299,7 @@ function selecteurLangueFun(onChange) {
   Object.keys(LANGUES).forEach(l => {
     const b = el("button", "langue-btn" + (l === langue ? " actif" : ""));
     b.type = "button";
-    b.innerHTML = `<span class="langue-drapeau">${LANGUES_DRAPEAU[l] || "🏳️"}</span><span class="langue-nom">${LANGUES[l]}</span>`;
+    b.innerHTML = `<span class="langue-drapeau">${drapeau(l)}</span><span class="langue-nom">${LANGUES[l]}</span>`;
     b.onclick = () => {
       if (l === langue) return;
       definirLangue(l);
