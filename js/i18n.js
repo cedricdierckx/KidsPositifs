@@ -1286,7 +1286,8 @@ Object.assign(I18N.fr, {
   "papier.total": "Total",
   "papier.feuille_intro": "Cochez chaque mission accomplie. En fin de semaine, un parent reporte le tout dans l'application (quelques minutes).",
   "papier.feuille_pied": "FamiTeam · fami.team — 💛 cœurs (Famille) · 💧 gouttes (Planète)",
-  "papier.popup_bloque": "Autorise les fenêtres pop-up pour générer la feuille."
+  "papier.popup_bloque": "Autorise les fenêtres pop-up pour générer la feuille.",
+  "papier.humeur": "Mon comportement du jour (entoure 😄 😐 😠)", "papier.humeur_jour": "Comment je me suis comporté"
 });
 Object.assign(I18N.en, {
   "papier.titre": "📄 Paper tracking for the week",
@@ -1299,7 +1300,8 @@ Object.assign(I18N.en, {
   "papier.total": "Total",
   "papier.feuille_intro": "Tick each completed mission. At the end of the week, a parent enters everything into the app (a few minutes).",
   "papier.feuille_pied": "FamiTeam · fami.team — 💛 hearts (Family) · 💧 drops (Planet)",
-  "papier.popup_bloque": "Allow pop-ups to generate the sheet."
+  "papier.popup_bloque": "Allow pop-ups to generate the sheet.",
+  "papier.humeur": "My behavior each day (circle 😄 😐 😠)", "papier.humeur_jour": "How I behaved"
 });
 Object.assign(I18N.nl, {
   "papier.titre": "📄 Papieren weekoverzicht",
@@ -1312,7 +1314,8 @@ Object.assign(I18N.nl, {
   "papier.total": "Totaal",
   "papier.feuille_intro": "Vink elke voltooide opdracht aan. Aan het einde van de week voert een ouder alles in de app in (een paar minuten).",
   "papier.feuille_pied": "FamiTeam · fami.team — 💛 hartjes (Gezin) · 💧 druppels (Planeet)",
-  "papier.popup_bloque": "Sta pop-ups toe om het blad te genereren."
+  "papier.popup_bloque": "Sta pop-ups toe om het blad te genereren.",
+  "papier.humeur": "Mijn gedrag van de dag (omcirkel 😄 😐 😠)", "papier.humeur_jour": "Hoe ik me gedroeg"
 });
 Object.assign(I18N.de, {
   "papier.titre": "📄 Papier-Wochenübersicht",
@@ -1325,7 +1328,8 @@ Object.assign(I18N.de, {
   "papier.total": "Summe",
   "papier.feuille_intro": "Hake jede erledigte Aufgabe ab. Am Wochenende überträgt ein Elternteil alles in die App (ein paar Minuten).",
   "papier.feuille_pied": "FamiTeam · fami.team — 💛 Herzen (Familie) · 💧 Tropfen (Planet)",
-  "papier.popup_bloque": "Erlaube Pop-ups, um das Blatt zu erstellen."
+  "papier.popup_bloque": "Erlaube Pop-ups, um das Blatt zu erstellen.",
+  "papier.humeur": "Mein Verhalten am Tag (kreise 😄 😐 😠 ein)", "papier.humeur_jour": "Wie ich mich verhalten habe"
 });
 
 /* ---- Journal des actions récentes (annulation) ---- */

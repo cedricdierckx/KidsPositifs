@@ -1138,10 +1138,10 @@ let semainePapierDebut = null;   // lundi de la semaine sélectionnée (session)
 // Onglet « Semaine papier » : explique le rituel sans écran et génère la feuille A4.
 function blocSemainePapier() {
   semainePapierDebut = semainePapierDebut || debutSemaine(aujourdHui());
-  const sec = el("section", "carte");
+  const sec = el("section", "carte papier-carte");
   const jours = joursSemaine(semainePapierDebut);
   sec.innerHTML = `<h2>${t("papier.titre")}</h2>
-    <p class="note">${t("papier.intro")}</p>`;
+    <div class="papier-intro">🌿 ${t("papier.intro")}</div>`;
 
   // Choix de la semaine (◀ / libellé / ▶), sans dépasser la semaine en cours.
   const nav = el("div", "verif-nav");
@@ -1183,7 +1183,8 @@ function imprimerFeuilleSemaine(mode) {
   const famille = (typeof familleActive !== "undefined" && familleActive && familleActive.name) ? familleActive.name : "";
   const titreSem = libelleSemaine(jours[0], jours[6]);
 
-  const blocEnfant = (enf) => {
+  const blocEnfant = (enf, k) => {
+    const coul = enf.couleur || "#f6a623";
     let lignes = "";
     ["famille", "planete"].forEach(catId => {
       const cat = CATEGORIES[catId];
@@ -1193,7 +1194,7 @@ function imprimerFeuilleSemaine(mode) {
       ms.forEach(m => {
         const nom = `${m.emoji} ${titreMission(m)} <small>(${cat.monnaieEmoji}${m.points})</small>`;
         if (mode === "jours") {
-          lignes += `<tr><td class="m">${nom}</td>` + lettres.map(() => `<td class="c"></td>`).join("") + `</tr>`;
+          lignes += `<tr><td class="m">${nom}</td>` + lettres.map(() => `<td class="c">☆</td>`).join("") + `</tr>`;
         } else {
           lignes += `<tr><td class="m">${nom}</td><td class="c large"></td></tr>`;
         }
@@ -1202,10 +1203,19 @@ function imprimerFeuilleSemaine(mode) {
     const entete = (mode === "jours")
       ? `<tr class="head"><th></th>${lettres.map(l => `<th>${l}</th>`).join("")}</tr>`
       : `<tr class="head"><th></th><th>${t("papier.total")}</th></tr>`;
-    return `<div class="enfant">
-        <h3><span class="em">${enf.emoji}</span> ${echapper(enf.prenom)}</h3>
+    // Auto-évaluation du comportement, chaque jour (à entourer par l'enfant).
+    const humeur = `<div class="humeur">
+        <div class="humeur-t">😊 ${t("papier.humeur")}</div>
+        <table class="humeur-tbl">
+          <tr class="head"><th></th>${lettres.map(l => `<th>${l}</th>`).join("")}</tr>
+          <tr><td class="m">${t("papier.humeur_jour")}</td>${lettres.map(() => `<td class="hc">😄 😐 😠</td>`).join("")}</tr>
+        </table>
+      </div>`;
+    return `<div class="enfant enf-${k}" style="--c:${coul}">
+        <h3><span class="em">${enf.emoji}</span> ${echapper(enf.prenom)} <span class="stars">★ ★ ★</span></h3>
         <table>${entete}${lignes}</table>
-        <div class="totaux">💛 ${t("money.coeurs")} : ______&nbsp;&nbsp;&nbsp; 💧 ${t("money.gouttes")} : ______</div>
+        ${humeur}
+        <div class="totaux">💛 ${t("money.coeurs")} : <span class="trait"></span>&nbsp;&nbsp; 💧 ${t("money.gouttes")} : <span class="trait"></span></div>
       </div>`;
   };
 
@@ -1213,25 +1223,32 @@ function imprimerFeuilleSemaine(mode) {
   const html = `<!doctype html><html lang="${langue}"><head><meta charset="utf-8">
     <title>${APP_NOM} — ${titreSem}</title>
     <style>
-      @page { size: A4 portrait; margin: 11mm; }
-      *{box-sizing:border-box} body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#222;margin:0}
-      .tete{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #f6a623;padding-bottom:6px;margin-bottom:8px}
-      .tete .logo{font-size:18px;font-weight:800}
-      .tete .sem{font-size:13px;color:#555}
-      .intro{font-size:11px;color:#666;margin:0 0 10px}
-      .grille{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}
-      .enfant{break-inside:avoid;border:1px solid #e3e3e3;border-radius:8px;padding:8px 10px}
-      .enfant h3{margin:0 0 6px;font-size:14px} .enfant .em{font-size:16px}
-      table{width:100%;border-collapse:collapse;font-size:11px}
-      th,td{border:1px solid #d7d7d7;padding:3px 4px;text-align:center}
-      td.m{text-align:left;font-size:10.5px;line-height:1.2} td.m small{color:#888}
-      tr.cat td{background:#faf3e6;text-align:left;font-weight:700;font-size:10.5px}
-      tr.head th{background:#f3f6fa;font-size:10px;width:22px}
-      td.c{width:22px;height:18px} td.c.large{width:60px}
-      .totaux{font-size:11px;margin-top:6px}
-      .pied{margin-top:10px;font-size:10px;color:#777;text-align:center}
+      @page { size: A4 portrait; margin: 10mm; }
+      *{box-sizing:border-box} body{font-family:'Comic Sans MS','Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#2b3a4a;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .tete{display:flex;justify-content:space-between;align-items:center;
+        background:linear-gradient(90deg,#fff1d6,#ffe3ef,#e3f3ff);border-radius:14px;
+        padding:10px 14px;margin-bottom:8px;border:2px dashed #f6a623}
+      .tete .logo{font-size:19px;font-weight:800}
+      .tete .sem{font-size:13px;color:#5a6b7a;font-weight:700}
+      .intro{font-size:11px;color:#6a7a88;margin:0 0 12px;text-align:center}
+      .grille{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+      .enfant{break-inside:avoid;border:2px solid var(--c);border-radius:16px;padding:9px 11px;background:#fff}
+      .enfant h3{margin:0 0 7px;font-size:15px;display:flex;align-items:center;gap:6px}
+      .enfant h3 .em{font-size:19px}
+      .enfant h3 .stars{margin-left:auto;color:#f2c200;font-size:13px;letter-spacing:2px}
+      table{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
+      th,td{border:1px solid #e0e6ec;padding:3px 4px;text-align:center}
+      td.m{text-align:left;font-size:10.5px;line-height:1.2} td.m small{color:#9aa7b3}
+      tr.cat td{background:var(--c);color:#fff;text-align:left;font-weight:800;font-size:10.5px;border-color:var(--c)}
+      tr.head th{background:#f3f6fa;font-size:10px;width:23px;font-weight:800}
+      td.c{width:23px;height:19px;color:#cfd8e0;font-size:12px} td.c.large{width:62px;color:#fff}
+      .humeur{margin-top:8px} .humeur-t{font-size:10.5px;font-weight:800;margin-bottom:2px}
+      .humeur-tbl td.hc{font-size:11px;letter-spacing:0;white-space:nowrap}
+      .totaux{font-size:12px;margin-top:8px;font-weight:700}
+      .totaux .trait{display:inline-block;width:46px;border-bottom:2px dotted #9aa7b3}
+      .pied{margin-top:12px;font-size:10px;color:#8a97a3;text-align:center}
     </style></head><body>
-    <div class="tete"><div class="logo">🌟 ${APP_NOM}${famille ? " · " + echapper(famille) : ""}</div><div class="sem">${titreSem}</div></div>
+    <div class="tete"><div class="logo">🌟 ${APP_NOM}${famille ? " · " + echapper(famille) : ""}</div><div class="sem">🗓️ ${titreSem}</div></div>
     <p class="intro">${t("papier.feuille_intro")}</p>
     <div class="grille">${corps}</div>
     <p class="pied">${t("papier.feuille_pied")}</p>

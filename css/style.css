@@ -219,6 +219,12 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* Réplique rigolote du bandeau dodo */
 .dodo-fun{display:block; font-style:italic; opacity:.9; margin-top:2px}
 
+/* Onglet « Semaine papier » */
+.papier-carte{background:linear-gradient(180deg,#f3fbf6,#fff)}
+.papier-intro{background:linear-gradient(135deg,#fff1d6,#e3f3ff);border:2px dashed #9fd9ff;
+  border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.5;color:#3a4a5a;margin-bottom:6px}
+.papier-carte .gros-bouton,.papier-carte .btn-secondaire{width:100%;margin-top:8px}
+
 /* Tutoriel = visite guidée superposée à l'application */
 .tuto-tour{position:fixed; inset:0; z-index:1100}
 .tour-trou{position:fixed; border-radius:14px; border:3px solid #fff;
