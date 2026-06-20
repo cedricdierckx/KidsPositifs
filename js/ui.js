@@ -2234,7 +2234,8 @@ function blocMissionsDuJour(enf) {
   const jour = planDate[enf.id] || aujourdHui();
   planDate[enf.id] = jour;
   sec.innerHTML = `<h2>${t("mdj.titre", { enf: enf.emoji + " " + enf.prenom })}</h2>
-    <p class="note">${t("mdj.note")}</p>`;
+    <p class="note">${t("mdj.note")}</p>
+    <p class="note mdj-budget">${t("mdj.budget", { n: tachesConseillees(age(enf)), min: BUDGET_MIN_JOUR })}</p>`;
 
   const lDate = el("label", "champ", t("mdj.a_partir"));
   const iDate = el("input"); iDate.type = "date"; iDate.value = jour;
