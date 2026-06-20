@@ -219,6 +219,31 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* Réplique rigolote du bandeau dodo */
 .dodo-fun{display:block; font-style:italic; opacity:.9; margin-top:2px}
 
+/* Tutoriel d'accueil (carrousel plein écran) */
+.tuto-ecran{position:fixed; inset:0; z-index:1100; display:flex; align-items:center;
+  justify-content:center; padding:22px;
+  background:linear-gradient(160deg,#2c5a7a,#1d7a52); backdrop-filter:blur(3px)}
+.tuto-carte{position:relative; background:#fff; border-radius:24px; padding:30px 26px 22px;
+  max-width:380px; width:100%; text-align:center; box-shadow:0 18px 52px rgba(0,0,0,.38)}
+.tuto-passer{position:absolute; top:12px; right:14px; border:none; background:transparent;
+  color:var(--doux); font-size:13px; cursor:pointer; text-decoration:underline}
+.tuto-emoji{font-size:60px; line-height:1; margin-bottom:6px}
+.tuto-titre{margin:0 0 10px; color:#27384a}
+.tuto-texte{color:#3a4a5a; font-size:15px; line-height:1.55; margin:0 0 6px}
+.tuto-rituel{margin:12px 0 2px; background:#f3f9f6; border-radius:14px; padding:12px}
+.tuto-rituel-q{margin:0 0 8px; font-weight:700; font-size:14px; color:#27384a}
+.tuto-rituel-choix{display:flex; gap:8px; justify-content:center; flex-wrap:wrap}
+.rituel-chip{border:2px solid #e3edf5; background:#fff; border-radius:999px; padding:8px 14px;
+  font-weight:700; font-size:14px; color:#54616f; cursor:pointer; transition:transform .1s}
+.rituel-chip:active{transform:scale(.94)}
+.rituel-chip.on{background:linear-gradient(135deg,#bfe8d2,#9fd9ff); border-color:#37b985; color:#1d5a3f}
+.tuto-dots{display:flex; gap:7px; justify-content:center; margin:16px 0 12px}
+.tuto-dot{width:9px; height:9px; border-radius:50%; background:#d7e2ec; transition:transform .15s}
+.tuto-dot.on{background:#37b985; transform:scale(1.25)}
+.tuto-nav{display:flex; gap:8px}
+.tuto-nav .btn-secondaire{flex:1; margin:0}
+.tuto-nav .gros-bouton{flex:2; padding:14px}
+
 /* Planification d'une mission (jours / dates / enfants) */
 .planif{margin-top:10px; padding-top:10px; border-top:1px dashed #dde6ef}
 .planif-titre{font-weight:800; font-size:14px; margin:0 0 6px}

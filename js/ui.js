@@ -310,7 +310,94 @@ function selecteurLangueFun(onChange) {
   return wrap;
 }
 
-/* ---------- Minuteur de temps d'écran (UI) ---------- */
+/* ---------- Tutoriel d'accueil (carrousel) ---------- */
+let tutoEnCours = false;
+
+// Affiche le tutoriel au tout premier lancement du compte (une seule fois).
+// Appelé après le chargement des données réelles (cf. auth.js).
+function verifierTuto() {
+  if (tutoEnCours) return;
+  if (!etat || !etat.reglages) return;
+  if (typeof modeDemo !== "undefined" && modeDemo) {
+    if (window.__tutoDemoVu) return;       // en démo : une fois par session
+  } else if (etat.reglages.tutoVu) return; // compte réel : mémorisé
+  lancerTuto();
+}
+
+// Carrousel d'explication : fonctionnement, utilisation, et rituel du soir.
+function lancerTuto() {
+  if (document.getElementById("tuto-ecran")) return;
+  tutoEnCours = true;
+  const slides = [
+    { e: "🌟", t: t("tuto.s1_t"), d: t("tuto.s1_d") },
+    { e: "✅", t: t("tuto.s2_t"), d: t("tuto.s2_d") },
+    { e: "🎨", t: t("tuto.s3_t"), d: t("tuto.s3_d") },
+    { e: "🤝", t: t("tuto.s4_t"), d: t("tuto.s4_d"), rituel: true },
+    { e: "⚙️", t: t("tuto.s5_t"), d: t("tuto.s5_d") }
+  ];
+  let i = 0;
+  const ov = el("div", "tuto-ecran"); ov.id = "tuto-ecran";
+  ov.innerHTML = `
+    <div class="tuto-carte">
+      <button class="tuto-passer">${t("tuto.passer")}</button>
+      <div class="tuto-emoji"></div>
+      <h2 class="tuto-titre"></h2>
+      <p class="tuto-texte"></p>
+      <div class="tuto-rituel" style="display:none"></div>
+      <div class="tuto-dots"></div>
+      <div class="tuto-nav">
+        <button class="btn-secondaire tuto-prec"></button>
+        <button class="gros-bouton planete tuto-suiv"></button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+
+  const terminer = () => {
+    if (typeof modeDemo !== "undefined" && modeDemo) window.__tutoDemoVu = true;
+    else { if (!etat.reglages) etat.reglages = {}; etat.reglages.tutoVu = true; sauver(); }
+    ov.remove(); tutoEnCours = false; rendre();
+  };
+
+  const blocRituel = () => {
+    const r = ov.querySelector(".tuto-rituel");
+    r.innerHTML = `<p class="tuto-rituel-q">${t("tuto.rituel_q")}</p>`;
+    const row = el("div", "tuto-rituel-choix");
+    [["quotidien", t("tuto.rituel_quotidien")], ["2-3j", t("tuto.rituel_23j")]].forEach(([val, lab]) => {
+      const sel = (etat.reglages && etat.reglages.rituelRythme) === val;
+      const b = el("button", "rituel-chip" + (sel ? " on" : ""), lab);
+      b.onclick = () => {
+        if (!etat.reglages) etat.reglages = {};
+        etat.reglages.rituelRythme = val;
+        if (typeof modeDemo === "undefined" || !modeDemo) sauver();
+        blocRituel();
+      };
+      row.appendChild(b);
+    });
+    r.appendChild(row);
+  };
+
+  const maj = () => {
+    const s = slides[i];
+    ov.querySelector(".tuto-emoji").textContent = s.e;
+    ov.querySelector(".tuto-titre").textContent = s.t;
+    ov.querySelector(".tuto-texte").innerHTML = s.d;
+    const r = ov.querySelector(".tuto-rituel");
+    if (s.rituel) { r.style.display = "block"; blocRituel(); } else { r.style.display = "none"; r.innerHTML = ""; }
+    ov.querySelector(".tuto-dots").innerHTML = slides.map((_, k) =>
+      `<span class="tuto-dot${k === i ? " on" : ""}"></span>`).join("");
+    const prec = ov.querySelector(".tuto-prec");
+    prec.style.visibility = i === 0 ? "hidden" : "visible";
+    prec.textContent = t("tuto.precedent");
+    ov.querySelector(".tuto-suiv").textContent = (i === slides.length - 1) ? t("tuto.commencer") : t("tuto.suivant");
+  };
+
+  ov.querySelector(".tuto-passer").onclick = terminer;
+  ov.querySelector(".tuto-prec").onclick = () => { if (i > 0) { i--; maj(); } };
+  ov.querySelector(".tuto-suiv").onclick = () => { if (i < slides.length - 1) { i++; maj(); } else terminer(); };
+  maj();
+}
+
+
 // Synchronise l'affichage du minuteur avec son état (appelé à chaque rendu).
 function synchroniserTimerUI() {
   if (timerEtat.verrouille) { afficherVerrou(); return; }
@@ -2327,6 +2414,10 @@ function vueReglages(c) {
   lHum.appendChild(iHum);
   lHum.appendChild(el("span", null, t("par.prog.humour")));
   prog.appendChild(lHum);
+  // Revoir le tutoriel d'accueil.
+  const bTuto = el("button", "btn-secondaire", t("tuto.revoir"));
+  bTuto.onclick = () => lancerTuto();
+  prog.appendChild(bTuto);
   c.appendChild(prog);
 
   // ----- Référence : prérequis de chaque espèce de l'écosystème -----

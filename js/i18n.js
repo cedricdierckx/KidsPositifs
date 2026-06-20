@@ -2129,6 +2129,72 @@ Object.assign(I18N.de, {
   "planif.aide": "Nichts ausgewählt = Aufgabe für alle Kinder aktiv, jeden Tag, ohne Datumsgrenze."
 });
 
+/* ---- Tutoriel d'accueil ---- */
+Object.assign(I18N.fr, {
+  "tuto.passer": "Passer", "tuto.precedent": "← Précédent", "tuto.suivant": "Suivant →",
+  "tuto.commencer": "C'est parti ! 🚀", "tuto.revoir": "🎓 Revoir le tutoriel",
+  "tuto.s1_t": "Bienvenue dans FamiTeam ! 🌟",
+  "tuto.s1_d": "Toute la famille dans la même équipe. On encourage les gestes positifs — <strong>jamais de punition</strong>, que des progrès célébrés ensemble.",
+  "tuto.s2_t": "Les missions du jour ✅",
+  "tuto.s2_d": "Chaque enfant valide ses missions <strong>Famille 🏡</strong> et <strong>Planète 🌍</strong>. Il gagne des <strong>cœurs 💛</strong> et des <strong>gouttes 💧</strong>.",
+  "tuto.s3_t": "Des récompenses qui font grandir 🎨🌱",
+  "tuto.s3_d": "Les <strong>cœurs</strong> personnalisent l'avatar. Les <strong>gouttes</strong> font grandir un véritable <strong>écosystème vivant</strong> (plantes, animaux…).",
+  "tuto.s4_t": "Le rituel en famille 🤝",
+  "tuto.s4_d": "Le plus chouette : faire le point <strong>ensemble en fin de journée</strong>. On coche les missions, on évalue la journée et on se félicite !",
+  "tuto.rituel_q": "À quel rythme veux-tu faire ce moment ensemble ?",
+  "tuto.rituel_quotidien": "Chaque jour", "tuto.rituel_23j": "Tous les 2-3 jours",
+  "tuto.s5_t": "L'espace parents ⚙️",
+  "tuto.s5_d": "Code PIN, planification des missions, minuteur d'écran, invitations, corrections… tout se règle dans l'onglet Parents."
+});
+Object.assign(I18N.en, {
+  "tuto.passer": "Skip", "tuto.precedent": "← Back", "tuto.suivant": "Next →",
+  "tuto.commencer": "Let's go! 🚀", "tuto.revoir": "🎓 Replay the tutorial",
+  "tuto.s1_t": "Welcome to FamiTeam! 🌟",
+  "tuto.s1_d": "The whole family on the same team. We encourage positive actions — <strong>never punishment</strong>, only progress celebrated together.",
+  "tuto.s2_t": "Daily missions ✅",
+  "tuto.s2_d": "Each child completes their <strong>Family 🏡</strong> and <strong>Planet 🌍</strong> missions, earning <strong>hearts 💛</strong> and <strong>drops 💧</strong>.",
+  "tuto.s3_t": "Rewards that help them grow 🎨🌱",
+  "tuto.s3_d": "<strong>Hearts</strong> customize the avatar. <strong>Drops</strong> grow a real <strong>living ecosystem</strong> (plants, animals…).",
+  "tuto.s4_t": "The family ritual 🤝",
+  "tuto.s4_d": "The best part: reviewing <strong>together at the end of the day</strong>. Check off the missions, rate the day, and celebrate!",
+  "tuto.rituel_q": "How often do you want this moment together?",
+  "tuto.rituel_quotidien": "Every day", "tuto.rituel_23j": "Every 2-3 days",
+  "tuto.s5_t": "The parents' area ⚙️",
+  "tuto.s5_d": "PIN code, mission scheduling, screen timer, invitations, corrections… it's all in the Parents tab."
+});
+Object.assign(I18N.nl, {
+  "tuto.passer": "Overslaan", "tuto.precedent": "← Terug", "tuto.suivant": "Volgende →",
+  "tuto.commencer": "Aan de slag! 🚀", "tuto.revoir": "🎓 Tutorial opnieuw bekijken",
+  "tuto.s1_t": "Welkom bij FamiTeam! 🌟",
+  "tuto.s1_d": "Het hele gezin in één team. We moedigen positief gedrag aan — <strong>nooit straf</strong>, alleen vooruitgang die we samen vieren.",
+  "tuto.s2_t": "Dagelijkse opdrachten ✅",
+  "tuto.s2_d": "Elk kind voltooit zijn <strong>Gezin 🏡</strong>- en <strong>Planeet 🌍</strong>-opdrachten en verdient <strong>hartjes 💛</strong> en <strong>druppels 💧</strong>.",
+  "tuto.s3_t": "Beloningen die laten groeien 🎨🌱",
+  "tuto.s3_d": "<strong>Hartjes</strong> personaliseren de avatar. <strong>Druppels</strong> laten een echt <strong>levend ecosysteem</strong> groeien (planten, dieren…).",
+  "tuto.s4_t": "Het gezinsritueel 🤝",
+  "tuto.s4_d": "Het leukste: samen <strong>aan het einde van de dag</strong> terugblikken. Opdrachten afvinken, de dag beoordelen en elkaar feliciteren!",
+  "tuto.rituel_q": "Hoe vaak wil je dit samen doen?",
+  "tuto.rituel_quotidien": "Elke dag", "tuto.rituel_23j": "Om de 2-3 dagen",
+  "tuto.s5_t": "De ouderomgeving ⚙️",
+  "tuto.s5_d": "Pincode, opdrachtenplanning, schermtimer, uitnodigingen, correcties… alles staat in het tabblad Ouders."
+});
+Object.assign(I18N.de, {
+  "tuto.passer": "Überspringen", "tuto.precedent": "← Zurück", "tuto.suivant": "Weiter →",
+  "tuto.commencer": "Los geht's! 🚀", "tuto.revoir": "🎓 Tutorial erneut ansehen",
+  "tuto.s1_t": "Willkommen bei FamiTeam! 🌟",
+  "tuto.s1_d": "Die ganze Familie in einem Team. Wir fördern positives Verhalten — <strong>keine Strafen</strong>, nur Fortschritte, die wir gemeinsam feiern.",
+  "tuto.s2_t": "Tägliche Aufgaben ✅",
+  "tuto.s2_d": "Jedes Kind erledigt seine <strong>Familien- 🏡</strong> und <strong>Planeten- 🌍</strong>Aufgaben und verdient <strong>Herzen 💛</strong> und <strong>Tropfen 💧</strong>.",
+  "tuto.s3_t": "Belohnungen, die wachsen lassen 🎨🌱",
+  "tuto.s3_d": "<strong>Herzen</strong> gestalten den Avatar. <strong>Tropfen</strong> lassen ein echtes <strong>lebendiges Ökosystem</strong> wachsen (Pflanzen, Tiere…).",
+  "tuto.s4_t": "Das Familienritual 🤝",
+  "tuto.s4_d": "Das Schönste: am <strong>Ende des Tages gemeinsam</strong> zurückblicken. Aufgaben abhaken, den Tag bewerten und sich gegenseitig loben!",
+  "tuto.rituel_q": "Wie oft möchtet ihr diesen Moment gemeinsam?",
+  "tuto.rituel_quotidien": "Jeden Tag", "tuto.rituel_23j": "Alle 2-3 Tage",
+  "tuto.s5_t": "Der Elternbereich ⚙️",
+  "tuto.s5_d": "PIN-Code, Aufgabenplanung, Bildschirm-Timer, Einladungen, Korrekturen… alles im Eltern-Tab."
+});
+
 /* ---- Admin : adresse de support ---- */
 Object.assign(I18N.fr, { "admin.support_email": "Adresse de support (réception des retours)" });
 Object.assign(I18N.en, { "admin.support_email": "Support address (receives feedback)" });

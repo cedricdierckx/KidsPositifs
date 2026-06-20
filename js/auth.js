@@ -151,6 +151,7 @@ async function ouvrirFamille(f) {
   await chargerEtatFamille();
   vueAccueilAine();                       // toujours démarrer sur l'accueil de l'aîné
   rendre();
+  if (typeof verifierTuto === "function") verifierTuto();   // tutoriel au 1ᵉʳ lancement
   abonnerRealtime();
   document.removeEventListener("visibilitychange", auRetour);
   document.addEventListener("visibilitychange", auRetour);
@@ -543,6 +544,7 @@ function demarrerDemo() {
   vueAccueilAine();
   rendre();
   majBadgeSync("🧪");
+  if (typeof verifierTuto === "function") verifierTuto();   // tutoriel en démo aussi
 }
 
 function ecranFamilles(opts) {
