@@ -1115,6 +1115,25 @@ function definirAutoEval(valeur) {
   sauver();
   rendre();
 }
+// Auto-évaluation d'un enfant pour un jour précis (encodage de la feuille).
+// `valeur` vide = on efface. On cycle bien→moyen→mauvais→(vide) côté UI.
+function definirAutoEvalJour(enf, jour, valeur) {
+  if (!enf || !jour) return;
+  if (valeur && !EVAL_VALEURS.includes(valeur)) return;
+  if (!enf.autoEval) enf.autoEval = {};
+  enregistrerAction(`Comportement (${jour})`, enf.prenom);
+  if (!valeur) delete enf.autoEval[jour];
+  else enf.autoEval[jour] = valeur;
+  sauver();
+  rendre();
+}
+function cyclerAutoEvalJour(enf, jour) {
+  const ordre = ["bien", "moyen", "mauvais", ""];
+  const cur = (enf.autoEval || {})[jour] || "";
+  const i = ordre.indexOf(cur);
+  definirAutoEvalJour(enf, jour, ordre[(i + 1) % ordre.length]);
+}
+
 // Un parent évalue (facultativement) la journée d'un enfant.
 // `jour` permet de compléter les jours récents (défaut : aujourd'hui).
 function definirEvalParent(enf, valeur, jour) {

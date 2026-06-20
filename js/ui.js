@@ -1162,7 +1162,108 @@ function blocSemainePapier() {
   b2.onclick = () => imprimerFeuilleSemaine("total");
   sec.appendChild(b1);
   sec.appendChild(b2);
-  sec.appendChild(el("p", "note", t("papier.encodage_bientot")));
+  return sec;
+}
+
+let encodeMode = "detaille";   // "detaille" | "express" (session)
+
+// Encodage de la feuille papier dans l'app, pour la semaine sélectionnée et
+// l'enfant actif. Deux modes : détaillé (grille jour par jour + comportement)
+// ou express (juste les totaux de la semaine).
+function blocEncoderSemaine() {
+  const sec = el("section", "carte papier-carte");
+  const enf = enfantActif();
+  const jours = joursSemaine(semainePapierDebut || debutSemaine(aujourdHui()));
+  const lettres = t("planif.jours_courts").split(",");
+  sec.innerHTML = `<h2>${t("papier.encoder_titre")}</h2>
+    <p class="note">${t("papier.encoder_note")}</p>`;
+
+  // Sélection de l'enfant à encoder.
+  const enfRow = el("div", "planif-enfants");
+  Object.values(etat.enfants).forEach(e => {
+    const b = el("button", "enf-chip" + (e.id === etat.enfantActif ? " on" : ""), `${e.emoji} ${echapper(e.prenom)}`);
+    b.onclick = () => { etat.enfantActif = e.id; ecrireCache(); rendre(); };
+    enfRow.appendChild(b);
+  });
+  sec.appendChild(enfRow);
+
+  // Bascule de mode.
+  const modes = el("div", "enc-modes");
+  [["detaille", t("papier.mode_detaille")], ["express", t("papier.mode_express")]].forEach(([val, lab]) => {
+    const b = el("button", "rituel-chip" + (encodeMode === val ? " on" : ""), lab);
+    b.onclick = () => { encodeMode = val; rendre(); };
+    modes.appendChild(b);
+  });
+  sec.appendChild(modes);
+
+  if (encodeMode === "express") {
+    // -- Mode express : totaux de la semaine --
+    sec.appendChild(el("p", "planif-sous", t("papier.express_note", { prenom: echapper(enf.prenom) })));
+    const mk = (champ, libelle) => {
+      const l = el("label", "champ", libelle);
+      const inp = el("input", "aj-val"); inp.type = "number"; inp.min = "0"; inp.inputMode = "numeric"; inp.value = "0";
+      l.appendChild(inp); return { l, inp };
+    };
+    const c = mk("coeurs", "💛 " + t("money.coeurs"));
+    const g = mk("gouttes", "💧 " + t("money.gouttes"));
+    sec.appendChild(c.l); sec.appendChild(g.l);
+    const b = el("button", "gros-bouton planete", t("papier.express_ajouter"));
+    b.onclick = () => {
+      const nc = Math.max(0, parseInt(c.inp.value, 10) || 0);
+      const ng = Math.max(0, parseInt(g.inp.value, 10) || 0);
+      if (!nc && !ng) { toast(t("papier.rien"), "info"); return; }
+      if (nc) ajusterMonnaie(enf, "coeurs", nc);
+      if (ng) ajusterMonnaie(enf, "gouttes", ng);
+      toast(t("papier.express_ok", { prenom: enf.prenom }), "succes");
+    };
+    sec.appendChild(b);
+    return sec;
+  }
+
+  // -- Mode détaillé : grille missions × 7 jours + comportement --
+  const scroll = el("div", "enc-scroll");
+  const grille = el("div", "enc-grille");
+  // En-tête (jours).
+  const head = el("div", "enc-ligne enc-head");
+  head.appendChild(el("span", "enc-lib", ""));
+  lettres.forEach(l => head.appendChild(el("span", "enc-jour", l)));
+  grille.appendChild(head);
+
+  ["famille", "planete"].forEach(catId => {
+    const cat = CATEGORIES[catId];
+    const ms = missionsFeuille(enf, catId);
+    if (!ms.length) return;
+    const titre = el("div", "enc-cat", `${cat.monnaieEmoji} ${trData("cat", catId + ".nom", cat.nom)}`);
+    grille.appendChild(titre);
+    ms.forEach(m => {
+      const ligne = el("div", "enc-ligne");
+      ligne.appendChild(el("span", "enc-lib", `${m.emoji} ${titreMission(m)}`));
+      jours.forEach(j => {
+        const n = (enf.journal[j] || {})[m.id] || 0;
+        const b = el("button", "enc-case" + (n ? " on" : ""), n ? "✅" : "");
+        b.onclick = () => modifierHistorique(enf, j, m, n > 0 ? -1 : +1);
+        ligne.appendChild(b);
+      });
+      grille.appendChild(ligne);
+    });
+  });
+
+  // Ligne comportement (auto-évaluation par jour).
+  grille.appendChild(el("div", "enc-cat", `😊 ${t("papier.comportement")}`));
+  const ligneC = el("div", "enc-ligne");
+  ligneC.appendChild(el("span", "enc-lib", t("papier.humeur_jour")));
+  const EMO = { bien: "😄", moyen: "😐", mauvais: "😠", "": "·" };
+  jours.forEach(j => {
+    const v = (enf.autoEval || {})[j] || "";
+    const b = el("button", "enc-case enc-humeur" + (v ? " on" : ""), EMO[v]);
+    b.onclick = () => cyclerAutoEvalJour(enf, j);
+    ligneC.appendChild(b);
+  });
+  grille.appendChild(ligneC);
+
+  scroll.appendChild(grille);
+  sec.appendChild(scroll);
+  sec.appendChild(el("p", "note", t("papier.detaille_note")));
   return sec;
 }
 function decalerSemaine(debut, deltaJours) {
@@ -2629,6 +2730,7 @@ function vueReglages(c) {
   /* ===== ONGLET : Semaine papier ===== */
   if (ongletParent === "papier") {
     c.appendChild(blocSemainePapier());
+    c.appendChild(blocEncoderSemaine());
   }
 
   /* ===== ONGLET : Statistiques ===== */

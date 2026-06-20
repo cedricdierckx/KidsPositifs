@@ -92,6 +92,8 @@ function construireContexte() {
       missionsDefautCat, idsDefaut, enfantActif,
       // planification des missions (jours / dates / enfants)
       definirPlanifMission, basculerPlanifElement, planifMission, missionPlanifieeActive,
+      // encodage semaine papier
+      definirAutoEvalJour, cyclerAutoEvalJour, modifierHistorique, ajusterMonnaie,
       // attente / validation parentale
       confirmerAttente, refuserAttente,
       // défis réparation

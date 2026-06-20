@@ -224,6 +224,20 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .papier-intro{background:linear-gradient(135deg,#fff1d6,#e3f3ff);border:2px dashed #9fd9ff;
   border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.5;color:#3a4a5a;margin-bottom:6px}
 .papier-carte .gros-bouton,.papier-carte .btn-secondaire{width:100%;margin-top:8px}
+/* Encodage de la semaine (grille missions × jours) */
+.enc-modes{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+.enc-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.enc-grille{min-width:340px;display:flex;flex-direction:column;gap:4px}
+.enc-cat{font-weight:800;font-size:13px;color:#27384a;margin-top:8px}
+.enc-ligne{display:flex;align-items:center;gap:4px}
+.enc-head .enc-jour{font-weight:800;color:var(--doux)}
+.enc-lib{flex:1;min-width:120px;font-size:12.5px;line-height:1.15}
+.enc-jour{width:30px;text-align:center;font-size:11px}
+.enc-case{width:30px;height:30px;flex:0 0 auto;border:2px solid #e3edf5;background:#fff;
+  border-radius:8px;cursor:pointer;font-size:14px;padding:0;transition:transform .1s}
+.enc-case:active{transform:scale(.88)}
+.enc-case.on{background:#eefaf2;border-color:#7bd3a6}
+.enc-humeur{font-size:16px}
 
 /* Tutoriel = visite guidée superposée à l'application */
 .tuto-tour{position:fixed; inset:0; z-index:1100}

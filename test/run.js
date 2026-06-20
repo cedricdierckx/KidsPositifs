@@ -182,6 +182,42 @@ test("planification: plage de dates et enfant ciblé", () => {
   assert.strictEqual(api.missionPlanifieeActive(m, enfB, "2026-06-15"), false); // autre enfant
 });
 
+/* ---------- Semaine papier : encodage ---------- */
+test("encodage détaillé : modifierHistorique crédite un jour précis", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  const enf = api.etat.enfants[Object.keys(api.etat.enfants)[0]];
+  const m = missionFamille(api);
+  const c0 = enf.coeurs;
+  api.modifierHistorique(enf, "2026-06-15", m, +1);
+  assert.strictEqual((enf.journal["2026-06-15"] || {})[m.id], 1);
+  assert.strictEqual(enf.coeurs, c0 + m.points);
+});
+
+test("encodage express : ajusterMonnaie ajoute les totaux de la semaine", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  const enf = api.etat.enfants[Object.keys(api.etat.enfants)[0]];
+  api.ajusterMonnaie(enf, "coeurs", 12);
+  api.ajusterMonnaie(enf, "gouttes", 7);
+  assert.strictEqual(enf.coeurs, 12);
+  assert.strictEqual(enf.gouttes, 7);
+});
+
+test("comportement par jour : cyclerAutoEvalJour parcourt bien→moyen→mauvais→vide", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  const enf = api.etat.enfants[Object.keys(api.etat.enfants)[0]];
+  const j = "2026-06-16";
+  api.cyclerAutoEvalJour(enf, j); assert.strictEqual(enf.autoEval[j], "bien");
+  api.cyclerAutoEvalJour(enf, j); assert.strictEqual(enf.autoEval[j], "moyen");
+  api.cyclerAutoEvalJour(enf, j); assert.strictEqual(enf.autoEval[j], "mauvais");
+  api.cyclerAutoEvalJour(enf, j); assert.strictEqual(enf.autoEval[j], undefined);
+});
+
 /* ---------- Crédit / décrédit de mission ---------- */
 test("crediterMission ajoute points et journal (catégorie famille = cœurs)", () => {
   const { api } = construireContexte();

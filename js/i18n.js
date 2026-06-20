@@ -1287,7 +1287,14 @@ Object.assign(I18N.fr, {
   "papier.feuille_intro": "Cochez chaque mission accomplie. En fin de semaine, un parent reporte le tout dans l'application (quelques minutes).",
   "papier.feuille_pied": "FamiTeam · fami.team — 💛 cœurs (Famille) · 💧 gouttes (Planète)",
   "papier.popup_bloque": "Autorise les fenêtres pop-up pour générer la feuille.",
-  "papier.humeur": "Mon comportement du jour (entoure 😄 😐 😠)", "papier.humeur_jour": "Comment je me suis comporté"
+  "papier.humeur": "Mon comportement du jour (entoure 😄 😐 😠)", "papier.humeur_jour": "Comment je me suis comporté",
+  "papier.encoder_titre": "⌨️ Encoder la feuille de la semaine",
+  "papier.encoder_note": "Reporte ici la feuille remplie. Choisis le niveau de détail.",
+  "papier.mode_detaille": "Détaillé (stats complètes)", "papier.mode_express": "Express (juste les totaux)",
+  "papier.express_note": "Totaux de la semaine pour {prenom} :",
+  "papier.express_ajouter": "➕ Ajouter au solde", "papier.express_ok": "Totaux ajoutés pour {prenom} ✅",
+  "papier.rien": "Rien à ajouter.", "papier.comportement": "Comportement du jour",
+  "papier.detaille_note": "Touche une case pour cocher/décocher. Le comportement passe par 😄 → 😐 → 😠. Tout est annulable (Actions récentes)."
 });
 Object.assign(I18N.en, {
   "papier.titre": "📄 Paper tracking for the week",
@@ -1301,7 +1308,14 @@ Object.assign(I18N.en, {
   "papier.feuille_intro": "Tick each completed mission. At the end of the week, a parent enters everything into the app (a few minutes).",
   "papier.feuille_pied": "FamiTeam · fami.team — 💛 hearts (Family) · 💧 drops (Planet)",
   "papier.popup_bloque": "Allow pop-ups to generate the sheet.",
-  "papier.humeur": "My behavior each day (circle 😄 😐 😠)", "papier.humeur_jour": "How I behaved"
+  "papier.humeur": "My behavior each day (circle 😄 😐 😠)", "papier.humeur_jour": "How I behaved",
+  "papier.encoder_titre": "⌨️ Enter the week's sheet",
+  "papier.encoder_note": "Report the completed sheet here. Choose the level of detail.",
+  "papier.mode_detaille": "Detailed (full stats)", "papier.mode_express": "Express (totals only)",
+  "papier.express_note": "Weekly totals for {prenom}:",
+  "papier.express_ajouter": "➕ Add to balance", "papier.express_ok": "Totals added for {prenom} ✅",
+  "papier.rien": "Nothing to add.", "papier.comportement": "Daily behavior",
+  "papier.detaille_note": "Tap a box to check/uncheck. Behavior cycles 😄 → 😐 → 😠. Everything is undoable (Recent actions)."
 });
 Object.assign(I18N.nl, {
   "papier.titre": "📄 Papieren weekoverzicht",
@@ -1315,7 +1329,14 @@ Object.assign(I18N.nl, {
   "papier.feuille_intro": "Vink elke voltooide opdracht aan. Aan het einde van de week voert een ouder alles in de app in (een paar minuten).",
   "papier.feuille_pied": "FamiTeam · fami.team — 💛 hartjes (Gezin) · 💧 druppels (Planeet)",
   "papier.popup_bloque": "Sta pop-ups toe om het blad te genereren.",
-  "papier.humeur": "Mijn gedrag van de dag (omcirkel 😄 😐 😠)", "papier.humeur_jour": "Hoe ik me gedroeg"
+  "papier.humeur": "Mijn gedrag van de dag (omcirkel 😄 😐 😠)", "papier.humeur_jour": "Hoe ik me gedroeg",
+  "papier.encoder_titre": "⌨️ Het weekblad invoeren",
+  "papier.encoder_note": "Voer het ingevulde blad hier in. Kies het detailniveau.",
+  "papier.mode_detaille": "Gedetailleerd (volledige stats)", "papier.mode_express": "Express (alleen totalen)",
+  "papier.express_note": "Weektotalen voor {prenom}:",
+  "papier.express_ajouter": "➕ Toevoegen aan saldo", "papier.express_ok": "Totalen toegevoegd voor {prenom} ✅",
+  "papier.rien": "Niets toe te voegen.", "papier.comportement": "Gedrag van de dag",
+  "papier.detaille_note": "Tik op een vakje om aan/uit te vinken. Gedrag wisselt 😄 → 😐 → 😠. Alles is omkeerbaar (Recente acties)."
 });
 Object.assign(I18N.de, {
   "papier.titre": "📄 Papier-Wochenübersicht",
@@ -1329,7 +1350,14 @@ Object.assign(I18N.de, {
   "papier.feuille_intro": "Hake jede erledigte Aufgabe ab. Am Wochenende überträgt ein Elternteil alles in die App (ein paar Minuten).",
   "papier.feuille_pied": "FamiTeam · fami.team — 💛 Herzen (Familie) · 💧 Tropfen (Planet)",
   "papier.popup_bloque": "Erlaube Pop-ups, um das Blatt zu erstellen.",
-  "papier.humeur": "Mein Verhalten am Tag (kreise 😄 😐 😠 ein)", "papier.humeur_jour": "Wie ich mich verhalten habe"
+  "papier.humeur": "Mein Verhalten am Tag (kreise 😄 😐 😠 ein)", "papier.humeur_jour": "Wie ich mich verhalten habe",
+  "papier.encoder_titre": "⌨️ Das Wochenblatt eingeben",
+  "papier.encoder_note": "Übertrage das ausgefüllte Blatt hier. Wähle den Detailgrad.",
+  "papier.mode_detaille": "Detailliert (volle Statistik)", "papier.mode_express": "Express (nur Summen)",
+  "papier.express_note": "Wochensummen für {prenom}:",
+  "papier.express_ajouter": "➕ Zum Guthaben hinzufügen", "papier.express_ok": "Summen für {prenom} hinzugefügt ✅",
+  "papier.rien": "Nichts hinzuzufügen.", "papier.comportement": "Verhalten des Tages",
+  "papier.detaille_note": "Tippe auf ein Kästchen zum An-/Abhaken. Verhalten wechselt 😄 → 😐 → 😠. Alles ist widerrufbar (Letzte Aktionen)."
 });
 
 /* ---- Journal des actions récentes (annulation) ---- */
