@@ -131,10 +131,10 @@ const NB_DEFAUT_PAR_CAT = 8; // nombre de missions proposées par défaut par ca
 const BUDGET_MIN_JOUR = 3;     // minutes d'usage app/jour visées
 // Nombre total de missions/jour conseillé par âge (cochable en ~3 min).
 const TACHES_PAR_AGE = [
-  { max: 3, n: 6 },   // ≤ 3 ans : 6 tâches
-  { max: 5, n: 8 },   // 4-5 ans : 8
-  { max: 7, n: 10 },  // 6-7 ans : 10
-  { max: 99, n: 12 }  // 8 ans + : 12
+  { max: 3, n: 8 },   // ≤ 3 ans : 8 tâches
+  { max: 5, n: 10 },  // 4-5 ans : 10
+  { max: 7, n: 12 },  // 6-7 ans : 12
+  { max: 99, n: 14 }  // 8 ans + : 14
 ];
 
 /* =====================================================================
@@ -149,7 +149,7 @@ const SCIENCE_DEFAUT = {
   // — Temps d'écran (neurologie / pédiatrie) —
   budgetMinJour: 3,                 // minutes d'app/jour visées
   tachesParAge: [                   // nb de tâches/jour conseillé par âge
-    { max: 3, n: 6 }, { max: 5, n: 8 }, { max: 7, n: 10 }, { max: 99, n: 12 }
+    { max: 3, n: 8 }, { max: 5, n: 10 }, { max: 7, n: 12 }, { max: 99, n: 14 }
   ],
   partFamille: 0.6,                 // répartition Famille/Planète du budget
   // — Incentives sains (psychologie de la motivation) —
