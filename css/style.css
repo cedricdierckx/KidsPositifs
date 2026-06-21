@@ -219,6 +219,11 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* Réplique rigolote du bandeau dodo */
 .dodo-fun{display:block; font-style:italic; opacity:.9; margin-top:2px}
 
+/* Compteur de tâches sélectionnées (budget) */
+.mdj-compte{font-size:13px;font-weight:700;border-radius:10px;padding:8px 10px;margin:0 0 8px}
+.mdj-compte.ok{background:#eefaf2;color:#1d7a52}
+.mdj-compte.trop{background:#fff1e6;color:#c0560f}
+
 /* Tournantes de tâches */
 .rot-item{position:relative;border:2px solid #e9eef4;border-radius:14px;padding:10px 12px;margin-bottom:8px}
 .rot-ms{font-weight:700;font-size:14px;color:#27384a}

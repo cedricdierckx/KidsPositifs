@@ -2527,18 +2527,23 @@ function blocMissionsDuJour(enf) {
   sec.style.setProperty("--c", enf.couleur);
   const jour = planDate[enf.id] || aujourdHui();
   planDate[enf.id] = jour;
+  const plan = planEffectif(enf, jour); // null = sélection par défaut
+  const defauts = idsDefaut(enf);
+  // Nombre de tâches sélectionnées vs conseillé (budget par âge).
+  const selIds = (plan || defauts).filter(id => trouverMission(id));
+  const totalSel = selIds.length;
+  const conseille = tachesConseillees(age(enf));
+  const trop = totalSel > conseille;
   sec.innerHTML = `<h2>${t("mdj.titre", { enf: enf.emoji + " " + enf.prenom })}</h2>
     <p class="note">${t("mdj.note")}</p>
-    <p class="note mdj-budget">${t("mdj.budget", { n: tachesConseillees(age(enf)), min: budgetMinJour() })}</p>`;
+    <p class="note mdj-budget">${t("mdj.budget", { n: conseille, min: budgetMinJour() })}</p>
+    <p class="mdj-compte ${trop ? "trop" : "ok"}">${t(trop ? "mdj.trop" : "mdj.compte", { sel: totalSel, n: conseille })}</p>`;
 
   const lDate = el("label", "champ", t("mdj.a_partir"));
   const iDate = el("input"); iDate.type = "date"; iDate.value = jour;
   iDate.onchange = () => { planDate[enf.id] = iDate.value || jour; rendre(); };
   lDate.appendChild(iDate);
   sec.appendChild(lDate);
-
-  const plan = planEffectif(enf, jour); // null = sélection par défaut
-  const defauts = idsDefaut(enf);
   ["famille", "planete"].forEach(catId => {
     const cat = CATEGORIES[catId];
     const dispo = toutesMissions().filter(m => m.cat === catId);   // toutes proposées
@@ -2933,7 +2938,7 @@ function blocCartesSurprisesParents() {
   sec.querySelectorAll("[data-champ]").forEach(inp =>
     inp.onchange = () => modifierCarteSurprise(inp.dataset.id, inp.dataset.champ, inp.value));
   sec.querySelectorAll("[data-revele]").forEach(cb =>
-    cb.onchange = () => modifierCarteSurprise(cb.dataset.revele, "revele", cb.checked));
+    cb.onchange = () => majSansSaut(() => modifierCarteSurprise(cb.dataset.revele, "revele", cb.checked)));
   sec.querySelectorAll("[data-monter]").forEach(b =>
     b.onclick = () => deplacerCarteSurprise(b.dataset.monter, -1));
   sec.querySelectorAll("[data-descendre]").forEach(b =>
@@ -3117,7 +3122,7 @@ function vueReglages(c) {
   prog.innerHTML = `<h2>${t("par.prog.titre")}</h2>`;
   const lVal = el("label", "switch-ligne");
   const iVal = el("input"); iVal.type = "checkbox"; iVal.checked = etat.reglages.validationParentale;
-  iVal.onchange = () => basculerValidationParentale(iVal.checked);
+  iVal.onchange = () => majSansSaut(() => basculerValidationParentale(iVal.checked));
   lVal.appendChild(iVal);
   lVal.appendChild(el("span", null, t("par.prog.validation")));
   prog.appendChild(lVal);
@@ -3141,7 +3146,7 @@ function vueReglages(c) {
   const lHum = el("label", "switch-ligne");
   const iHum = el("input"); iHum.type = "checkbox";
   iHum.checked = !(etat.reglages && etat.reglages.humour === false);
-  iHum.onchange = () => { etat.reglages.humour = iHum.checked; sauver(); rendre(); };
+  iHum.onchange = () => majSansSaut(() => { etat.reglages.humour = iHum.checked; sauver(); rendre(); });
   lHum.appendChild(iHum);
   lHum.appendChild(el("span", null, t("par.prog.humour")));
   prog.appendChild(lHum);
