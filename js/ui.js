@@ -1271,13 +1271,13 @@ function blocSemainePapier() {
   sec.innerHTML = `<h2>${t("papier.titre")}</h2>
     <div class="papier-intro">🌿 ${t("papier.intro")}</div>`;
 
-  // Choix de la semaine (◀ / libellé / ▶), sans dépasser la semaine en cours.
+  // Choix de la semaine (◀ / libellé / ▶) — on peut aussi préparer les
+  // semaines suivantes (impression à l'avance).
   const nav = el("div", "verif-nav");
   const prev = el("button", "verif-fleche", "◀");
   prev.onclick = () => { semainePapierDebut = decalerSemaine(semainePapierDebut, -7); rendre(); };
   const lbl = el("span", "verif-jour", libelleSemaine(jours[0], jours[6]));
   const next = el("button", "verif-fleche", "▶");
-  next.disabled = debutSemaine(aujourdHui()) <= semainePapierDebut;
   next.onclick = () => { semainePapierDebut = decalerSemaine(semainePapierDebut, 7); rendre(); };
   nav.appendChild(prev); nav.appendChild(lbl); nav.appendChild(next);
   sec.appendChild(nav);
