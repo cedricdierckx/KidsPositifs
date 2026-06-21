@@ -1290,10 +1290,10 @@ Object.assign(I18N.de, {
 });
 
 /* ---- Espace parents : titres de groupes ---- */
-Object.assign(I18N.fr, { "grp.quotidien": "📋 Au quotidien", "grp.papier": "📄 Semaine papier", "grp.activites": "🎯 Activités & règles du jeu", "grp.enfants": "👧 Les enfants", "grp.famille": "👪 Famille & invitations", "grp.compte": "⚙️ Mon compte & données" });
-Object.assign(I18N.en, { "grp.quotidien": "📋 Daily", "grp.papier": "📄 Paper week", "grp.activites": "🎯 Activities & game rules", "grp.enfants": "👧 The children", "grp.famille": "👪 Family & invitations", "grp.compte": "⚙️ My account & data" });
-Object.assign(I18N.nl, { "grp.quotidien": "📋 Dagelijks", "grp.papier": "📄 Papieren week", "grp.activites": "🎯 Activiteiten & spelregels", "grp.enfants": "👧 De kinderen", "grp.famille": "👪 Gezin & uitnodigingen", "grp.compte": "⚙️ Mijn account & gegevens" });
-Object.assign(I18N.de, { "grp.quotidien": "📋 Täglich", "grp.papier": "📄 Papierwoche", "grp.activites": "🎯 Aktivitäten & Spielregeln", "grp.enfants": "👧 Die Kinder", "grp.famille": "👪 Familie & Einladungen", "grp.compte": "⚙️ Mein Konto & Daten" });
+Object.assign(I18N.fr, { "grp.quotidien": "📋 Au quotidien", "grp.papier": "📄 Semaine papier", "grp.activites": "🎯 Activités & règles du jeu", "grp.enfants": "👧 Les enfants", "grp.famille": "👪 Famille & invitations", "grp.compte": "⚙️ Mon compte & données", "grp.admin": "🛡️ Admin" });
+Object.assign(I18N.en, { "grp.quotidien": "📋 Daily", "grp.papier": "📄 Paper week", "grp.activites": "🎯 Activities & game rules", "grp.enfants": "👧 The children", "grp.famille": "👪 Family & invitations", "grp.compte": "⚙️ My account & data", "grp.admin": "🛡️ Admin" });
+Object.assign(I18N.nl, { "grp.quotidien": "📋 Dagelijks", "grp.papier": "📄 Papieren week", "grp.activites": "🎯 Activiteiten & spelregels", "grp.enfants": "👧 De kinderen", "grp.famille": "👪 Gezin & uitnodigingen", "grp.compte": "⚙️ Mijn account & gegevens", "grp.admin": "🛡️ Admin" });
+Object.assign(I18N.de, { "grp.quotidien": "📋 Täglich", "grp.papier": "📄 Papierwoche", "grp.activites": "🎯 Aktivitäten & Spielregeln", "grp.enfants": "👧 Die Kinder", "grp.famille": "👪 Familie & Einladungen", "grp.compte": "⚙️ Mein Konto & Daten", "grp.admin": "🛡️ Admin" });
 
 /* ---- Semaine papier (suivi sans écran) ---- */
 Object.assign(I18N.fr, {

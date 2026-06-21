@@ -2961,8 +2961,6 @@ function blocCartesSurprisesParents() {
 
 // Onglet actif de l'espace parents (session, non synchronisé).
 let ongletParent = "quotidien";
-// Ordre des onglets de l'espace parents (sert au swipe horizontal).
-const ONGLETS_PARENT = ["quotidien", "papier", "activites", "enfants", "famille", "compte", "stats"];
 
 // Mode parents : Standard (simple) ou Expert (outils avancés). Par défaut
 // Expert pour l'admin ; sinon Standard, sauf préférence enregistrée.
@@ -2975,11 +2973,25 @@ function definirModeExpert(v) {
   etat.reglages.modeExpert = !!v;
   sauver(); rendre();
 }
+// Liste des onglets visibles selon le mode (et l'admin). Les stats sont en
+// mode expert ; les outils admin ont leur propre onglet réservé à l'admin.
+function ongletsParents() {
+  const ids = ["quotidien", "papier", "activites", "enfants", "famille", "compte"];
+  if (estModeExpert()) ids.push("stats");
+  if (typeof estAdmin !== "undefined" && estAdmin) ids.push("admin");
+  return ids;
+}
+const LIBELLES_ONGLETS = {
+  quotidien: "grp.quotidien", papier: "grp.papier", activites: "grp.activites",
+  enfants: "grp.enfants", famille: "grp.famille", compte: "grp.compte",
+  stats: "grp.stats", admin: "grp.admin"
+};
 
 // Change d'onglet parent d'un cran (dir = +1 suivant, -1 précédent), en boucle.
 function changerOngletParentRelatif(dir) {
-  const i = ONGLETS_PARENT.indexOf(ongletParent);
-  ongletParent = ONGLETS_PARENT[(i + dir + ONGLETS_PARENT.length) % ONGLETS_PARENT.length];
+  const ids = ongletsParents();
+  const i = Math.max(0, ids.indexOf(ongletParent));
+  ongletParent = ids[(i + dir + ids.length) % ids.length];
   rendre();
 }
 
@@ -3038,15 +3050,9 @@ function vueReglages(c) {
   c.appendChild(banniere);
 
   // ----- Sous-menu (onglets) pour organiser l'espace parents -----
-  const onglets = [
-    ["quotidien", t("grp.quotidien")],
-    ["papier",    t("grp.papier")],
-    ["activites", t("grp.activites")],
-    ["enfants",   t("grp.enfants")],
-    ["famille",   t("grp.famille")],
-    ["compte",    t("grp.compte")],
-    ["stats",     t("grp.stats")]
-  ];
+  const onglets = ongletsParents().map(id => [id, t(LIBELLES_ONGLETS[id])]);
+  // Si l'onglet courant n'est plus visible (ex. passage en Standard), on revient au 1ᵉʳ.
+  if (!onglets.some(([id]) => id === ongletParent)) ongletParent = onglets[0][0];
   const nav = el("nav", "sous-nav");
   let btnActif = null;
   onglets.forEach(([id, label]) => {
@@ -3121,8 +3127,8 @@ function vueReglages(c) {
   // ----- Missions du jour (sélection par les parents) -----
   c.appendChild(blocMissionsDuJour(enfantActif()));
 
-  // ----- Corrections pour l'enfant sélectionné -----
-  c.appendChild(blocCorrections(enfantActif()));
+  // ----- Corrections fines (ajustements/badges) : mode expert -----
+  if (estModeExpert()) c.appendChild(blocCorrections(enfantActif()));
 
   // ----- Journal des actions récentes (annulation) -----
   c.appendChild(blocJournalActions());
@@ -3162,18 +3168,20 @@ function vueReglages(c) {
   prog.appendChild(el("p", "reglage-aide", t("aide.pin")));
   if (!etat.reglages.codeParent)
     prog.appendChild(el("p", "note", t("par.prog.astuce_pin")));
-  // Seuil d'affichage imagé (sans chiffres) pour les jeunes enfants.
-  const lSeuil = el("label", "champ", t("par.prog.seuil_visuel"));
-  const iSeuil = el("input");
-  iSeuil.type = "number"; iSeuil.min = "0"; iSeuil.max = "12"; iSeuil.inputMode = "numeric";
-  iSeuil.value = (typeof etat.reglages.seuilVisuel === "number") ? etat.reglages.seuilVisuel : 5;
-  iSeuil.onchange = () => {
-    const v = Math.max(0, Math.min(12, parseInt(iSeuil.value, 10) || 0));
-    etat.reglages.seuilVisuel = v; iSeuil.value = v; sauver(); rendre();
-  };
-  lSeuil.appendChild(iSeuil);
-  prog.appendChild(lSeuil);
-  prog.appendChild(el("p", "reglage-aide", t("aide.seuil")));
+  // Seuil d'affichage imagé (sans chiffres) — réglage avancé (mode expert).
+  if (estModeExpert()) {
+    const lSeuil = el("label", "champ", t("par.prog.seuil_visuel"));
+    const iSeuil = el("input");
+    iSeuil.type = "number"; iSeuil.min = "0"; iSeuil.max = "12"; iSeuil.inputMode = "numeric";
+    iSeuil.value = (typeof etat.reglages.seuilVisuel === "number") ? etat.reglages.seuilVisuel : 5;
+    iSeuil.onchange = () => {
+      const v = Math.max(0, Math.min(12, parseInt(iSeuil.value, 10) || 0));
+      etat.reglages.seuilVisuel = v; iSeuil.value = v; sauver(); rendre();
+    };
+    lSeuil.appendChild(iSeuil);
+    prog.appendChild(lSeuil);
+    prog.appendChild(el("p", "reglage-aide", t("aide.seuil")));
+  }
   // Interrupteur : touches d'humour bon enfant (blagues, taquineries…).
   const lHum = el("label", "switch-ligne");
   const iHum = el("input"); iHum.type = "checkbox";
@@ -3338,11 +3346,14 @@ function vueReglages(c) {
   } /* fin sinon-démo */
   } /* fin onglet famille */
 
+  /* ===== ONGLET : Admin (réservé à l'administrateur) ===== */
+  if (ongletParent === "admin" && typeof estAdmin !== "undefined" && estAdmin) {
+    c.appendChild(blocAdmin());
+    c.appendChild(blocDashboardScience());
+  }
+
   /* ===== ONGLET : Mon compte & données ===== */
   if (ongletParent === "compte") {
-  // ----- Administration (réservé aux admins) : en haut pour être visible -----
-  if (typeof estAdmin !== "undefined" && estAdmin) c.appendChild(blocAdmin());
-  if (typeof estAdmin !== "undefined" && estAdmin) c.appendChild(blocDashboardScience());
   // Module bug/suggestion : early adopters uniquement.
   if (typeof estEarlyAdopter !== "function" || estEarlyAdopter()) c.appendChild(blocFeedback());
   if (typeof modeDemo !== "undefined" && modeDemo) {
