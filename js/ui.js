@@ -3109,8 +3109,8 @@ function vueReglages(c) {
   bAjout.onclick = () => { ajouterEnfant(); rendre(); };
   c.appendChild(bAjout);
 
-  // ----- Personnalisation fine par enfant (missions & écosystème) -----
-  c.appendChild(blocPersonnalisation());
+  // ----- Écosystème par enfant : désactivé pour l'instant (peu utile) -----
+  // c.appendChild(blocPersonnalisation());
 
   } /* fin onglet enfants */
 
