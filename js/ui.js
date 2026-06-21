@@ -1451,8 +1451,11 @@ function imprimerFeuilleSemaine(mode) {
   const famille = (typeof familleActive !== "undefined" && familleActive && familleActive.name) ? familleActive.name : "";
   const titreSem = libelleSemaine(jours[0], jours[6]);
 
+  const auj = aujourdHui();
+  const EMO_EVAL = { bien: "😄", moyen: "😐", mauvais: "😠" };
   const blocEnfant = (enf, k) => {
     const coul = enf.couleur || "#f6a623";
+    let coeursSem = 0, gouttesSem = 0;   // déjà gagnés cette semaine (jours écoulés)
     let lignes = "";
     ["famille", "planete"].forEach(catId => {
       const cat = CATEGORIES[catId];
@@ -1461,32 +1464,47 @@ function imprimerFeuilleSemaine(mode) {
       lignes += `<tr class="cat"><td colspan="${mode === "jours" ? 8 : 2}">${cat.monnaieEmoji} ${trData("cat", catId + ".nom", cat.nom)}</td></tr>`;
       ms.forEach(m => {
         const nom = `${m.emoji} ${titreMission(m)} <small>(${cat.monnaieEmoji}${pointsMission(enf, m)})</small>`;
+        // Total déjà fait cette semaine (jours écoulés) pour cette mission.
+        let totMission = 0;
+        jours.forEach(j => { if (j <= auj) totMission += (enf.journal[j] || {})[m.id] || 0; });
+        if (catId === "planete") gouttesSem += totMission * pointsMission(enf, m);
+        else coeursSem += totMission * pointsMission(enf, m);
         if (mode === "jours") {
           lignes += `<tr><td class="m">${nom}</td>` + lettres.map((_, i) => {
-            const planifie = missionActiveJour(enf, m, jours[i]);   // jour prévu ?
-            return planifie ? `<td class="c">☆</td>` : `<td class="c hors">·</td>`;
+            const j = jours[i];
+            if (!missionActiveJour(enf, m, j)) return `<td class="c hors">·</td>`;   // jour non prévu
+            const fait = (enf.journal[j] || {})[m.id] || 0;
+            if (j <= auj && fait) return `<td class="c faite">✓</td>`;               // déjà fait : pré-rempli
+            return `<td class="c">☆</td>`;                                            // à cocher
           }).join("") + `</tr>`;
         } else {
-          lignes += `<tr><td class="m">${nom}</td><td class="c large"></td></tr>`;
+          lignes += `<tr><td class="m">${nom}</td><td class="c large">${totMission || ""}</td></tr>`;
         }
       });
     });
     const entete = (mode === "jours")
       ? `<tr class="head"><th></th>${lettres.map(l => `<th>${l}</th>`).join("")}</tr>`
       : `<tr class="head"><th></th><th>${t("papier.total")}</th></tr>`;
-    // Auto-évaluation du comportement, chaque jour (à entourer par l'enfant).
+    // Auto-évaluation du comportement : pré-remplie pour les jours écoulés.
     const humeur = `<div class="humeur">
         <div class="humeur-t">😊 ${t("papier.humeur")}</div>
         <table class="humeur-tbl">
           <tr class="head"><th></th>${lettres.map(l => `<th>${l}</th>`).join("")}</tr>
-          <tr><td class="m">${t("papier.humeur_jour")}</td>${lettres.map(() => `<td class="hc">😄 😐 😠</td>`).join("")}</tr>
+          <tr><td class="m">${t("papier.humeur_jour")}</td>${lettres.map((_, i) => {
+            const ev = (enf.autoEval || {})[jours[i]];
+            return (ev && jours[i] <= auj)
+              ? `<td class="hc faite">${EMO_EVAL[ev] || ""}</td>`
+              : `<td class="hc">😄 😐 😠</td>`;
+          }).join("")}</tr>
         </table>
       </div>`;
+    const tC = coeursSem ? `<strong>${coeursSem}</strong>` : `<span class="trait"></span>`;
+    const tG = gouttesSem ? `<strong>${gouttesSem}</strong>` : `<span class="trait"></span>`;
     return `<div class="enfant enf-${k}" style="--c:${coul}">
         <h3><span class="em">${enf.emoji}</span> ${echapper(enf.prenom)} <span class="stars">★ ★ ★</span></h3>
         <table>${entete}${lignes}</table>
         ${humeur}
-        <div class="totaux">💛 ${t("money.coeurs")} : <span class="trait"></span>&nbsp;&nbsp; 💧 ${t("money.gouttes")} : <span class="trait"></span></div>
+        <div class="totaux">💛 ${t("money.coeurs")} : ${tC}&nbsp;&nbsp; 💧 ${t("money.gouttes")} : ${tG}</div>
       </div>`;
   };
 
@@ -1514,6 +1532,8 @@ function imprimerFeuilleSemaine(mode) {
       tr.head th{background:#f3f6fa;font-size:10px;width:23px;font-weight:800}
       td.c{width:23px;height:19px;color:#cfd8e0;font-size:12px} td.c.large{width:62px;color:#fff}
       td.c.hors{background:repeating-linear-gradient(45deg,#f4f4f4,#f4f4f4 3px,#eaeaea 3px,#eaeaea 6px);color:#c8c8c8}
+      td.c.faite{background:#e7f7ee;color:#1d7a52;font-weight:800}
+      td.hc.faite{background:#eef6ff;font-size:14px}
       .humeur{margin-top:8px} .humeur-t{font-size:10.5px;font-weight:800;margin-bottom:2px}
       .humeur-tbl td.hc{font-size:11px;letter-spacing:0;white-space:nowrap}
       .totaux{font-size:12px;margin-top:8px;font-weight:700}
