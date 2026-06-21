@@ -851,7 +851,8 @@ function missionsActives(enf, catId, jour) {
 
 /* ---------- Tournantes de tâches (à tour de rôle entre enfants) ----------
  * etat.rotations[] = { id, missions:[ids], enfants:[ids ordonnés],
- *                      periode:"semaine"|"jour", debut:"AAAA-MM-JJ" } */
+ *                      periode:"semaine"|"jour", debut:"AAAA-MM-JJ",
+ *                      joursOff:[0..6] (jours sans tâche, 0=dim … 6=sam) } */
 function enfantDeGardeRotation(rot, jour) {
   const ids = rot.enfants || [];
   if (!ids.length) return null;
@@ -862,22 +863,28 @@ function enfantDeGardeRotation(rot, jour) {
   if (!isFinite(periodes) || periodes < 0) periodes = 0;
   return ids[((periodes % ids.length) + ids.length) % ids.length];
 }
+// Jour « off » d'une tournante (aucune tâche ce jour-là pour personne).
+function jourOffRotation(rot, jour) {
+  if (!Array.isArray(rot.joursOff) || !rot.joursOff.length) return false;
+  return rot.joursOff.includes(new Date(jour + "T00:00:00").getDay());
+}
 function rotationsDe(id) {
   return (etat.rotations || []).filter(r => Array.isArray(r.missions) && r.missions.includes(id));
 }
 // La tournante autorise-t-elle cette mission pour cet enfant ce jour ?
 // (si l'enfant fait partie d'une tournante de cette mission mais que ce n'est
-//  pas son tour, la mission lui est masquée.)
+//  pas son tour, ou que c'est un jour off, la mission lui est masquée.)
 function rotationPermet(enf, id, jour) {
   const rots = rotationsDe(id).filter(r => (r.enfants || []).includes(enf.id));
   if (!rots.length) return true;
-  return rots.some(r => enfantDeGardeRotation(r, jour) === enf.id);
+  return rots.some(r => !jourOffRotation(r, jour) && enfantDeGardeRotation(r, jour) === enf.id);
 }
 // Missions dont c'est le tour de l'enfant aujourd'hui (forcées actives).
 function missionsTournanteDuJour(enf, jour) {
   const out = [];
   (etat.rotations || []).forEach(r => {
     if (!(r.enfants || []).includes(enf.id)) return;
+    if (jourOffRotation(r, jour)) return;                       // jour off : aucune tâche
     if (enfantDeGardeRotation(r, jour) !== enf.id) return;
     (r.missions || []).forEach(id => {
       const m = trouverMission(id);
@@ -886,16 +893,17 @@ function missionsTournanteDuJour(enf, jour) {
   });
   return out;
 }
-function ajouterRotation(missions, enfants, periode, debut) {
+function ajouterRotation(missions, enfants, periode, debut, joursOff) {
   if (!Array.isArray(missions) || !missions.length) return;
-  if (!Array.isArray(enfants) || enfants.length < 2) return;
+  if (!Array.isArray(enfants) || enfants.length < 1) return;   // 1 enfant ou plus
   if (!Array.isArray(etat.rotations)) etat.rotations = [];
   etat.rotations.push({
     id: "rot-" + Date.now().toString(36),
     missions: missions.slice(),
     enfants: enfants.slice(),
     periode: periode === "jour" ? "jour" : "semaine",
-    debut: debut || debutSemaineLundi(aujourdHui())
+    debut: debut || debutSemaineLundi(aujourdHui()),
+    joursOff: Array.isArray(joursOff) ? joursOff.slice() : []
   });
   sauver();
   rendre();

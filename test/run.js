@@ -362,6 +362,21 @@ test("tournante hebdo : alterne l'enfant de garde et masque la tâche aux autres
   assert.ok(!api.missionsTournanteDuJour(eB, "2026-06-17").some(x => x.id === m.id));
 });
 
+test("tournante : jours off + un seul enfant", () => {
+  const { api } = construireContexte();
+  api.familleId = "f"; api.lierEtat(api.etatVierge());
+  const eA = api.etat.enfants[Object.keys(api.etat.enfants)[0]];
+  const m = api.MISSIONS.find(x => x.id === "table_debarr");
+  // Un seul enfant, off le week-end (sam=6, dim=0)
+  api.ajouterRotation([m.id], [eA.id], "semaine", "2026-06-15", [6, 0]);
+  const rot = api.etat.rotations[0];
+  assert.strictEqual(api.jourOffRotation(rot, "2026-06-20"), true);  // samedi
+  assert.strictEqual(api.jourOffRotation(rot, "2026-06-17"), false); // mercredi
+  // En semaine : actif ; le week-end : masqué
+  assert.ok(api.missionsTournanteDuJour(eA, "2026-06-17").some(x => x.id === m.id));
+  assert.ok(!api.missionsTournanteDuJour(eA, "2026-06-20").some(x => x.id === m.id));
+});
+
 /* ---------- Sélection groupée ---------- */
 test("selectionGroupee applique le mode à tous les enfants", () => {
   const { api } = construireContexte();

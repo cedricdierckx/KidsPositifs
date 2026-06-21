@@ -2412,10 +2412,16 @@ function blocTournantes() {
         const e = etat.enfants[id]; if (!e) return "";
         return `<span class="rot-enf${id === garde ? " garde" : ""}">${e.emoji} ${echapper(e.prenom)}</span>`;
       }).join(" → ");
+      const lettresOff = t("planif.jours_courts").split(",");
+      const ordreJ = [1, 2, 3, 4, 5, 6, 0];
+      const offTxt = (r.joursOff && r.joursOff.length)
+        ? " · " + t("rot.off") + " " + ordreJ.filter(wd => r.joursOff.includes(wd)).map(wd => lettresOff[ordreJ.indexOf(wd)]).join(",")
+        : "";
+      const aujOff = jourOffRotation(r, jour);
       const carte = el("div", "rot-item");
       carte.innerHTML = `<div class="rot-ms">${ms}</div>
         <div class="rot-ordre">${ordre}</div>
-        <div class="rot-meta">${r.periode === "jour" ? t("rot.par_jour") : t("rot.par_semaine")} · ${t("rot.tour", { prenom: enfGarde ? echapper(enfGarde.prenom) : "—" })}</div>`;
+        <div class="rot-meta">${r.periode === "jour" ? t("rot.par_jour") : t("rot.par_semaine")} · ${aujOff ? t("rot.off_auj") : t("rot.tour", { prenom: enfGarde ? echapper(enfGarde.prenom) : "—" })}${offTxt}</div>`;
       const sup = el("button", "mini-btn danger", "🗑️");
       sup.onclick = () => { if (confirm(t("rot.confirm_suppr"))) supprimerRotation(r.id); };
       carte.appendChild(sup);
@@ -2426,7 +2432,7 @@ function blocTournantes() {
   }
 
   // --- Création ---
-  if (!rotNouv) rotNouv = { missions: [], enfants: [], periode: "semaine" };
+  if (!rotNouv) rotNouv = { missions: [], enfants: [], periode: "semaine", joursOff: [] };
   const { details, corps } = blocPliable(`➕ ${t("rot.creer")}`, false, "rot-creer");
 
   // Missions (cases à cocher, par catégorie)
@@ -2471,11 +2477,28 @@ function blocTournantes() {
   });
   corps.appendChild(perRow);
 
+  // Jours off (aucune tâche ce jour-là, ex. le week-end)
+  corps.appendChild(el("p", "sous-titre", t("rot.jours_off")));
+  const lettresJ = t("planif.jours_courts").split(",");
+  const ordreJ = [1, 2, 3, 4, 5, 6, 0];   // L→D
+  const offRow = el("div", "planif-jours");
+  ordreJ.forEach((wd, i) => {
+    const on = rotNouv.joursOff.includes(wd);
+    const b = el("button", "jour-chip" + (on ? " on" : ""), lettresJ[i] || String(wd));
+    b.onclick = () => {
+      if (on) rotNouv.joursOff = rotNouv.joursOff.filter(x => x !== wd);
+      else rotNouv.joursOff.push(wd);
+      rendre();
+    };
+    offRow.appendChild(b);
+  });
+  corps.appendChild(offRow);
+
   const bGo = el("button", "gros-bouton planete", t("rot.valider"));
   bGo.onclick = () => {
     if (rotNouv.missions.length < 1) { toast(t("rot.err_mission"), "info"); return; }
-    if (rotNouv.enfants.length < 2) { toast(t("rot.err_enfants"), "info"); return; }
-    ajouterRotation(rotNouv.missions, rotNouv.enfants, rotNouv.periode, debutSemaineLundi(aujourdHui()));
+    if (rotNouv.enfants.length < 1) { toast(t("rot.err_enfants"), "info"); return; }
+    ajouterRotation(rotNouv.missions, rotNouv.enfants, rotNouv.periode, debutSemaineLundi(aujourdHui()), rotNouv.joursOff);
     rotNouv = null;
     toast(t("rot.creee"), "succes");
   };
