@@ -341,6 +341,25 @@ test("un override science (app_config) ajuste le budget et l'âge des missions",
   assert.strictEqual(api.ageMinMission(m), 9);
 });
 
+/* ---------- Sélection groupée ---------- */
+test("selectionGroupee applique le mode à tous les enfants", () => {
+  const { api } = construireContexte();
+  api.familleId = "f"; api.lierEtat(api.etatVierge());
+  const jour = api.aujourdHui ? api.aujourdHui() : null;
+  // « tous » : chaque enfant a toutes les missions
+  api.selectionGroupee("tous");
+  const tout = api.MISSIONS.length;
+  Object.values(api.etat.enfants).forEach(enf => {
+    const plan = api.planEffectif(enf, "2999-01-01"); // un jour très postérieur
+    assert.strictEqual(plan.length, tout);
+  });
+  // « aucun » : plan vide
+  api.selectionGroupee("aucun");
+  Object.values(api.etat.enfants).forEach(enf => {
+    assert.strictEqual(api.planEffectif(enf, "2999-01-01").length, 0);
+  });
+});
+
 /* ---------- Plan « jours suivants » ---------- */
 test("basculerPlan retire une mission pour ce jour ET les suivants", () => {
   const { api } = construireContexte();

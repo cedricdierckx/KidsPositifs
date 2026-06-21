@@ -905,6 +905,28 @@ function reinitPlan(enf, jour) {
   rendre();
 }
 
+// Définit directement le plan d'un enfant à partir d'un jour (sélection groupée).
+function definirPlanComplet(enf, jour, ids) {
+  if (!enf.planJour) enf.planJour = {};
+  enf.planJour[jour] = (ids || []).slice();
+  Object.keys(enf.planJour).forEach(d => { if (d > jour) delete enf.planJour[d]; });
+}
+// Sélection groupée pour TOUS les enfants à partir d'aujourd'hui.
+//  mode : "tous" (toutes les missions) | "recommande" (conseillé par âge) | "aucun".
+function selectionGroupee(mode) {
+  const jour = aujourdHui();
+  const toutesIds = toutesMissions().map(m => m.id);
+  Object.values(etat.enfants).forEach(enf => {
+    let ids;
+    if (mode === "tous") ids = toutesIds.slice();
+    else if (mode === "recommande") ids = idsDefaut(enf);
+    else ids = [];
+    definirPlanComplet(enf, jour, ids);
+  });
+  sauver();
+  rendre();
+}
+
 /* ---------- Mode parents : validation des actions en attente ---------- */
 function confirmerAttente(enf, idx) {
   const a = enf.enAttente[idx];

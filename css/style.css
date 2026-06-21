@@ -219,6 +219,22 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* Réplique rigolote du bandeau dodo */
 .dodo-fun{display:block; font-style:italic; opacity:.9; margin-top:2px}
 
+/* Sélection groupée (matrice missions × enfants) */
+.grp-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.grp-actions .gros-bouton,.grp-actions .btn-secondaire{flex:1;min-width:120px;margin:0}
+.grp-legende{margin:0 0 8px}
+.grp-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.grp-tbl th,.grp-tbl td{border:1px solid #eef2f7;padding:5px 4px;text-align:center}
+.grp-mlbl{text-align:left;font-size:12.5px;line-height:1.15;min-width:130px}
+.grp-mlbl small{display:block;color:var(--doux);font-weight:600}
+.grp-enf{display:inline-flex;width:28px;height:28px;align-items:center;justify-content:center;
+  border-radius:50%;background:#fff;border:2px solid var(--c,#ddd);font-size:16px}
+.grp-cell{position:relative}
+.grp-cell.reco{background:#eefaf2}
+.grp-cell.jeune{background:#fff5f5}
+.grp-cell input{width:20px;height:20px}
+.grp-warn{position:absolute;top:1px;right:2px;font-size:9px}
+
 /* Tableau de bord scientifique (admin) */
 .science-carte{background:linear-gradient(180deg,#f1f7ff,#fff)}
 .sci-texte{width:100%;border:2px solid #e3edf5;border-radius:10px;padding:8px 10px;

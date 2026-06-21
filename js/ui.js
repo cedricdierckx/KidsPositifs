@@ -305,17 +305,24 @@ function brancherSwipeEnfant(zone) {
 }
 
 // Composant « liste déroulante » natif (accessible) : un <details> stylé.
-// titre : texte du résumé ; ouvert : déplié par défaut. Renvoie {details, corps}
-// pour qu'on y ajoute le contenu.
-function blocPliable(titre, ouvert) {
+// titre : texte du résumé ; ouvert : déplié par défaut ; cle : identifiant
+// stable pour mémoriser l'état ouvert/fermé à travers les re-rendus.
+const pliablesOuverts = new Set();
+function blocPliable(titre, ouvert, cle) {
   const d = el("details", "pliable");
-  if (ouvert) d.open = true;
+  const estOuvert = cle ? (pliablesOuverts.has(cle) || (ouvert && !pliablesFermes.has(cle))) : !!ouvert;
+  if (estOuvert) d.open = true;
   const s = el("summary", "pliable-tete", titre);
   const corps = el("div", "pliable-corps");
   d.appendChild(s);
   d.appendChild(corps);
+  if (cle) d.addEventListener("toggle", () => {
+    if (d.open) { pliablesOuverts.add(cle); pliablesFermes.delete(cle); }
+    else { pliablesOuverts.delete(cle); pliablesFermes.add(cle); }
+  });
   return { details: d, corps };
 }
+const pliablesFermes = new Set();   // clés explicitement refermées par l'utilisateur
 
 // Sélecteur de langue « fun » : un bouton-drapeau par langue, celui actif est
 // mis en avant. `onChange` est appelé après le changement de langue.
@@ -2347,6 +2354,64 @@ const histDate = {}; // date sélectionnée pour la correction d'historique, par
 const planDate = {}; // date sélectionnée pour les missions du jour, par enfant
 
 // Sélection des missions proposées à un enfant pour un jour donné.
+// Sélection groupée : une matrice missions × enfants pour tout cocher d'un
+// coup, avec repère visuel de l'adéquation à l'âge de chaque enfant.
+function blocSelectionGroupee() {
+  const sec = el("section", "carte");
+  sec.innerHTML = `<h2>${t("grp_sel.titre")}</h2><p class="note">${t("grp_sel.note")}</p>`;
+  const jour = aujourdHui();
+  const enfants = Object.values(etat.enfants);
+
+  // Actions globales.
+  const actions = el("div", "grp-actions");
+  const mkA = (cls, lab, mode) => {
+    const b = el("button", cls, lab);
+    b.onclick = () => majSansSaut(() => selectionGroupee(mode));
+    return b;
+  };
+  actions.appendChild(mkA("gros-bouton planete", t("grp_sel.recommande"), "recommande"));
+  actions.appendChild(mkA("btn-secondaire", t("grp_sel.tous"), "tous"));
+  actions.appendChild(mkA("btn-secondaire", t("grp_sel.aucun"), "aucun"));
+  sec.appendChild(actions);
+  sec.appendChild(el("p", "note grp-legende", t("grp_sel.legende")));
+
+  ["famille", "planete"].forEach(catId => {
+    const cat = CATEGORIES[catId];
+    const ms = toutesMissions().filter(m => m.cat === catId);
+    if (!ms.length) return;
+    const { details, corps } = blocPliable(`${cat.emoji} ${trData("cat", catId + ".nom", cat.nom)}`, false, "grpsel-" + catId);
+    const tbl = el("table", "grp-tbl");
+    // En-tête : avatars des enfants.
+    let head = `<tr><th class="grp-mlbl"></th>`;
+    enfants.forEach(e => { head += `<th><span class="grp-enf" style="--c:${e.couleur}">${e.emoji}</span></th>`; });
+    head += `</tr>`;
+    tbl.innerHTML = head;
+    ms.forEach(m => {
+      const tr = el("tr");
+      const lbl = el("td", "grp-mlbl");
+      lbl.innerHTML = `${m.emoji} ${titreMission(m)} <small>${t("grp_sel.des_ans", { age: ageMinMission(m) })}</small>`;
+      tr.appendChild(lbl);
+      enfants.forEach(e => {
+        const td = el("td", "grp-cell");
+        const reco = age(e) >= ageMinMission(m);          // adapté à l'âge ?
+        td.classList.add(reco ? "reco" : "jeune");
+        const plan = planEffectif(e, jour);
+        const inclus = plan ? plan.includes(m.id) : idsDefaut(e).includes(m.id);
+        const cb = el("input"); cb.type = "checkbox"; cb.checked = inclus;
+        cb.title = reco ? t("grp_sel.adapte", { prenom: e.prenom }) : t("grp_sel.jeune", { prenom: e.prenom });
+        cb.onchange = () => majSansSaut(() => basculerPlan(e, jour, m.id));
+        td.appendChild(cb);
+        if (!reco) td.appendChild(el("span", "grp-warn", "⚠️"));
+        tr.appendChild(td);
+      });
+      tbl.appendChild(tr);
+    });
+    corps.appendChild(tbl);
+    sec.appendChild(details);
+  });
+  return sec;
+}
+
 function blocMissionsDuJour(enf) {
   const sec = el("section", "carte correction");
   sec.style.setProperty("--c", enf.couleur);
@@ -2370,12 +2435,12 @@ function blocMissionsDuJour(enf) {
     if (!dispo.length) return;
     const choisis = dispo.filter(m => plan ? plan.includes(m.id) : defauts.includes(m.id)).length;
     // Liste déroulante par catégorie (évite une page interminable).
-    const { details, corps } = blocPliable(`${cat.emoji} ${trData("cat", catId + ".nom", cat.nom)} · ${choisis}/${dispo.length}`);
+    const { details, corps } = blocPliable(`${cat.emoji} ${trData("cat", catId + ".nom", cat.nom)} · ${choisis}/${dispo.length}`, false, "mdj-" + enf.id + "-" + catId);
     dispo.forEach(m => {
       const inclus = plan ? plan.includes(m.id) : defauts.includes(m.id);
       const ligne = el("label", "switch-ligne");
       const cb = el("input"); cb.type = "checkbox"; cb.checked = inclus;
-      cb.onchange = () => basculerPlan(enf, jour, m.id);
+      cb.onchange = () => majSansSaut(() => basculerPlan(enf, jour, m.id));
       ligne.appendChild(cb);
       ligne.appendChild(el("span", null, `${m.emoji} ${titreMission(m)} (${cat.monnaieEmoji}${pointsMission(enf, m)})`));
       // Bouton « modifier » : ouvre l'éditeur inline (toutes missions).
@@ -2937,6 +3002,9 @@ function vueReglages(c) {
     });
     c.appendChild(att);
   }
+
+  // ----- Sélection groupée (tous les enfants d'un coup) -----
+  c.appendChild(blocSelectionGroupee());
 
   // ----- Missions du jour (sélection par les parents) -----
   c.appendChild(blocMissionsDuJour(enfantActif()));

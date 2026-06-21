@@ -2295,6 +2295,32 @@ Object.assign(I18N.de, {
   "sci.diffusion": "Eine Idee pro Zeile. Werte gelten beim nächsten Laden für alle Familien."
 });
 
+/* ---- Sélection groupée des missions (tous les enfants) ---- */
+Object.assign(I18N.fr, {
+  "grp_sel.titre": "🗂️ Sélection groupée", "grp_sel.note": "Coche les missions pour tous les enfants d'un coup. Les ⚠️ indiquent les missions au-delà de l'âge conseillé.",
+  "grp_sel.recommande": "✨ Recommandé par âge", "grp_sel.tous": "Tout cocher", "grp_sel.aucun": "Tout décocher",
+  "grp_sel.legende": "✅ adapté à l'âge · ⚠️ au-delà de l'âge conseillé", "grp_sel.des_ans": "dès {age} ans",
+  "grp_sel.adapte": "Adapté à l'âge de {prenom}", "grp_sel.jeune": "Au-delà de l'âge conseillé pour {prenom}"
+});
+Object.assign(I18N.en, {
+  "grp_sel.titre": "🗂️ Bulk selection", "grp_sel.note": "Tick missions for all children at once. ⚠️ marks missions above the recommended age.",
+  "grp_sel.recommande": "✨ Recommended by age", "grp_sel.tous": "Select all", "grp_sel.aucun": "Clear all",
+  "grp_sel.legende": "✅ age-appropriate · ⚠️ above recommended age", "grp_sel.des_ans": "from age {age}",
+  "grp_sel.adapte": "Suitable for {prenom}'s age", "grp_sel.jeune": "Above the recommended age for {prenom}"
+});
+Object.assign(I18N.nl, {
+  "grp_sel.titre": "🗂️ Groepsselectie", "grp_sel.note": "Vink opdrachten voor alle kinderen tegelijk aan. ⚠️ markeert opdrachten boven de aanbevolen leeftijd.",
+  "grp_sel.recommande": "✨ Aanbevolen per leeftijd", "grp_sel.tous": "Alles aanvinken", "grp_sel.aucun": "Alles wissen",
+  "grp_sel.legende": "✅ geschikt voor leeftijd · ⚠️ boven aanbevolen leeftijd", "grp_sel.des_ans": "vanaf {age} jaar",
+  "grp_sel.adapte": "Geschikt voor de leeftijd van {prenom}", "grp_sel.jeune": "Boven de aanbevolen leeftijd voor {prenom}"
+});
+Object.assign(I18N.de, {
+  "grp_sel.titre": "🗂️ Sammelauswahl", "grp_sel.note": "Hake Aufgaben für alle Kinder auf einmal ab. ⚠️ markiert Aufgaben über dem empfohlenen Alter.",
+  "grp_sel.recommande": "✨ Nach Alter empfohlen", "grp_sel.tous": "Alle ankreuzen", "grp_sel.aucun": "Alle abwählen",
+  "grp_sel.legende": "✅ altersgerecht · ⚠️ über empfohlenem Alter", "grp_sel.des_ans": "ab {age} Jahren",
+  "grp_sel.adapte": "Passend für das Alter von {prenom}", "grp_sel.jeune": "Über dem empfohlenen Alter für {prenom}"
+});
+
 /* ---- Tutoriel d'accueil (visite guidée) ---- */
 Object.assign(I18N.fr, {
   "tuto.passer": "Passer", "tuto.precedent": "← Précédent", "tuto.suivant": "Suivant →",

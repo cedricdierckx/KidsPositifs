@@ -90,6 +90,8 @@ function construireContexte() {
       crediterMission, decrediterMission, validerMission, trouverMission, toutesMissions,
       ajouterMissionPerso, planEffectif, missionsActives, basculerPlan, reinitPlan,
       missionsDefautCat, idsDefaut, enfantActif,
+      // sélection groupée
+      selectionGroupee, definirPlanComplet,
       // budget de tâches par âge (≈ 3 min/jour)
       tachesConseillees, nbConseille, missionsConseillees,
       // tableau de bord science
