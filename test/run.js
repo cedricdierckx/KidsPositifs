@@ -323,7 +323,7 @@ test("scienceConf renvoie les défauts sans override", () => {
   const { api } = construireContexte();
   api.familleId = "f"; api.lierEtat(api.etatVierge());
   assert.strictEqual(api.budgetMinJour(), 3);
-  assert.ok(api.tachesConseillees(3) === 3);
+  assert.ok(api.tachesConseillees(3) === 6);
 });
 
 test("un override science (app_config) ajuste le budget et l'âge des missions", () => {
