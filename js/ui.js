@@ -3066,9 +3066,10 @@ function vueReglages(c) {
     nav.appendChild(b);
   });
   c.appendChild(nav);
-  // L'onglet actif est amené à l'écran (sinon il peut rester hors du défilement).
+  // Centre l'onglet actif DANS la barre (défilement horizontal interne
+  // uniquement) — surtout pas scrollIntoView, qui ferait remonter la page.
   if (btnActif) requestAnimationFrame(() => {
-    try { btnActif.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) { /* ignore */ }
+    try { nav.scrollLeft = btnActif.offsetLeft - (nav.clientWidth - btnActif.clientWidth) / 2; } catch (e) { /* ignore */ }
   });
 
   // Indicateur de position : flèches ◀ ▶ + points (le titre est déjà donné
