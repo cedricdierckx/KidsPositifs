@@ -2558,15 +2558,18 @@ function blocMissionsDuJour(enf) {
       cb.onchange = () => majSansSaut(() => basculerPlan(enf, jour, m.id));
       ligne.appendChild(cb);
       ligne.appendChild(el("span", null, `${m.emoji} ${titreMission(m)} (${cat.monnaieEmoji}${pointsMission(enf, m)})`));
-      // Bouton « modifier » : ouvre l'éditeur inline (toutes missions).
-      const edit = el("button", "mini-btn", "✏️");
-      edit.title = t("mdj.modifier");
-      const editeur = blocEditionMission(m, cat);
-      edit.onclick = (e) => {
-        e.preventDefault();
-        editeur.style.display = editeur.style.display === "none" ? "block" : "none";
-      };
-      ligne.appendChild(edit);
+      // Édition fine (renommer/points/planification) : réservée au mode expert.
+      let editeur = null;
+      if (estModeExpert()) {
+        const edit = el("button", "mini-btn", "✏️");
+        edit.title = t("mdj.modifier");
+        editeur = blocEditionMission(m, cat);
+        edit.onclick = (e) => {
+          e.preventDefault();
+          editeur.style.display = editeur.style.display === "none" ? "block" : "none";
+        };
+        ligne.appendChild(edit);
+      }
       if (m.perso) {
         const sup = el("button", "mini-btn danger", "🗑️");
         sup.title = t("mdj.suppr_perso");
@@ -2574,7 +2577,7 @@ function blocMissionsDuJour(enf) {
         ligne.appendChild(sup);
       }
       corps.appendChild(ligne);
-      corps.appendChild(editeur);
+      if (editeur) corps.appendChild(editeur);
     });
     sec.appendChild(details);
   });
@@ -2961,6 +2964,18 @@ let ongletParent = "quotidien";
 // Ordre des onglets de l'espace parents (sert au swipe horizontal).
 const ONGLETS_PARENT = ["quotidien", "papier", "activites", "enfants", "famille", "compte", "stats"];
 
+// Mode parents : Standard (simple) ou Expert (outils avancés). Par défaut
+// Expert pour l'admin ; sinon Standard, sauf préférence enregistrée.
+function estModeExpert() {
+  if (etat.reglages && typeof etat.reglages.modeExpert === "boolean") return etat.reglages.modeExpert;
+  return (typeof estAdmin !== "undefined" && estAdmin);
+}
+function definirModeExpert(v) {
+  if (!etat.reglages) etat.reglages = {};
+  etat.reglages.modeExpert = !!v;
+  sauver(); rendre();
+}
+
 // Change d'onglet parent d'un cran (dir = +1 suivant, -1 précédent), en boucle.
 function changerOngletParentRelatif(dir) {
   const i = ONGLETS_PARENT.indexOf(ongletParent);
@@ -3006,6 +3021,20 @@ function vueReglages(c) {
   blocLang.innerHTML = `<span class="langue-titre">🌐 ${t("langue")}</span>`;
   blocLang.appendChild(selecteurLangueFun(() => rendre()));
   banniere.appendChild(blocLang);
+
+  // Choix Standard / Expert : deux gros boutons « fun » + explication.
+  const exp = estModeExpert();
+  const modeBloc = el("div", "mode-bloc");
+  modeBloc.innerHTML = `<span class="langue-titre">🧭 ${t("mode.titre")}</span>`;
+  const choix = el("div", "mode-choix");
+  const bStd = el("button", "mode-btn" + (!exp ? " on" : ""), `🌿 ${t("mode.standard")}`);
+  bStd.onclick = () => { if (exp) majSansSaut(() => definirModeExpert(false)); };
+  const bExp = el("button", "mode-btn" + (exp ? " on" : ""), `🧪 ${t("mode.expert")}`);
+  bExp.onclick = () => { if (!exp) majSansSaut(() => definirModeExpert(true)); };
+  choix.appendChild(bStd); choix.appendChild(bExp);
+  modeBloc.appendChild(choix);
+  modeBloc.appendChild(el("p", "note mode-aide", t(exp ? "mode.aide_expert" : "mode.aide_standard")));
+  banniere.appendChild(modeBloc);
   c.appendChild(banniere);
 
   // ----- Sous-menu (onglets) pour organiser l'espace parents -----
@@ -3083,11 +3112,11 @@ function vueReglages(c) {
     c.appendChild(att);
   }
 
-  // ----- Sélection groupée (tous les enfants d'un coup) -----
-  c.appendChild(blocSelectionGroupee());
-
-  // ----- Tournantes de tâches entre enfants -----
-  c.appendChild(blocTournantes());
+  // ----- Sélection groupée & tournantes : outils avancés (mode expert) -----
+  if (estModeExpert()) {
+    c.appendChild(blocSelectionGroupee());
+    c.appendChild(blocTournantes());
+  }
 
   // ----- Missions du jour (sélection par les parents) -----
   c.appendChild(blocMissionsDuJour(enfantActif()));
@@ -3126,9 +3155,11 @@ function vueReglages(c) {
   lVal.appendChild(iVal);
   lVal.appendChild(el("span", null, t("par.prog.validation")));
   prog.appendChild(lVal);
+  prog.appendChild(el("p", "reglage-aide", t("aide.validation")));
   const bCp = el("button", "btn-secondaire", etat.reglages.codeParent ? t("par.prog.changer_pin") : t("par.prog.definir_pin"));
   bCp.onclick = definirCodeParent;
   prog.appendChild(bCp);
+  prog.appendChild(el("p", "reglage-aide", t("aide.pin")));
   if (!etat.reglages.codeParent)
     prog.appendChild(el("p", "note", t("par.prog.astuce_pin")));
   // Seuil d'affichage imagé (sans chiffres) pour les jeunes enfants.
@@ -3142,6 +3173,7 @@ function vueReglages(c) {
   };
   lSeuil.appendChild(iSeuil);
   prog.appendChild(lSeuil);
+  prog.appendChild(el("p", "reglage-aide", t("aide.seuil")));
   // Interrupteur : touches d'humour bon enfant (blagues, taquineries…).
   const lHum = el("label", "switch-ligne");
   const iHum = el("input"); iHum.type = "checkbox";
@@ -3150,14 +3182,15 @@ function vueReglages(c) {
   lHum.appendChild(iHum);
   lHum.appendChild(el("span", null, t("par.prog.humour")));
   prog.appendChild(lHum);
+  prog.appendChild(el("p", "reglage-aide", t("aide.humour")));
   // Revoir le tutoriel d'accueil.
   const bTuto = el("button", "btn-secondaire", t("tuto.revoir"));
   bTuto.onclick = () => lancerTuto();
   prog.appendChild(bTuto);
   c.appendChild(prog);
 
-  // ----- Référence : prérequis de chaque espèce de l'écosystème -----
-  c.appendChild(blocEcoReference());
+  // ----- Référence écosystème : détail avancé (mode expert) -----
+  if (estModeExpert()) c.appendChild(blocEcoReference());
 
   } /* fin onglet activités */
 

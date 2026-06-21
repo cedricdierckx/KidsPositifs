@@ -224,6 +224,19 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .mdj-compte.ok{background:#eefaf2;color:#1d7a52}
 .mdj-compte.trop{background:#fff1e6;color:#c0560f}
 
+/* Explication d'un réglage (petit texte gris sous l'option) */
+.reglage-aide{font-size:12px;color:var(--doux);margin:2px 0 12px;line-height:1.4}
+
+/* Mode parents : Standard / Expert */
+.mode-bloc{margin-top:12px}
+.mode-choix{display:flex;gap:8px;margin:6px 0}
+.mode-btn{flex:1;border:2px solid #e3edf5;background:#fff;border-radius:14px;padding:12px 8px;
+  font-weight:800;font-size:14px;color:#54616f;cursor:pointer;transition:transform .12s,border-color .15s,background .15s}
+.mode-btn:hover{transform:translateY(-2px)}
+.mode-btn:active{transform:scale(.95)}
+.mode-btn.on{border-color:#37b985;background:linear-gradient(135deg,#e7faf1,#dff3ff);color:#1d7a52}
+.mode-aide{margin:2px 0 0}
+
 /* Tournantes de tâches */
 .rot-item{position:relative;border:2px solid #e9eef4;border-radius:14px;padding:10px 12px;margin-bottom:8px}
 .rot-ms{font-weight:700;font-size:14px;color:#27384a}

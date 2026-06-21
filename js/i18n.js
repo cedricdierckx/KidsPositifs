@@ -2329,6 +2329,54 @@ Object.assign(I18N.de, {
   "grp_sel.adapte": "Passend für das Alter von {prenom}", "grp_sel.jeune": "Über dem empfohlenen Alter für {prenom}"
 });
 
+/* ---- Explications des réglages ---- */
+Object.assign(I18N.fr, {
+  "aide.validation": "Si activé, chaque mission cochée par l'enfant attend ton ✅ avant d'être comptée. Idéal pour les plus jeunes.",
+  "aide.pin": "Protège l'espace parents et le déverrouillage du minuteur. Récupérable par e-mail si oublié.",
+  "aide.seuil": "En dessous de cet âge, les quantités s'affichent en images (💛💛) plutôt qu'en chiffres, pour les non-lecteurs.",
+  "aide.humour": "Ajoute des petites blagues et taquineries bienveillantes. À couper si tu préfères du sobre."
+});
+Object.assign(I18N.en, {
+  "aide.validation": "If on, each mission ticked by the child waits for your ✅ before counting. Ideal for younger kids.",
+  "aide.pin": "Protects the parents' area and timer unlock. Recoverable by email if forgotten.",
+  "aide.seuil": "Below this age, amounts show as pictures (💛💛) rather than numbers, for non-readers.",
+  "aide.humour": "Adds little kind jokes and teasing. Turn off if you prefer it plain."
+});
+Object.assign(I18N.nl, {
+  "aide.validation": "Indien aan, wacht elke door het kind aangevinkte opdracht op jouw ✅ voordat ze telt. Ideaal voor de jongsten.",
+  "aide.pin": "Beschermt de ouderomgeving en het ontgrendelen van de timer. Herstelbaar via e-mail indien vergeten.",
+  "aide.seuil": "Onder deze leeftijd worden aantallen als plaatjes (💛💛) getoond i.p.v. cijfers, voor niet-lezers.",
+  "aide.humour": "Voegt kleine vriendelijke grapjes toe. Uitschakelen als je het liever sober houdt."
+});
+Object.assign(I18N.de, {
+  "aide.validation": "Wenn aktiv, wartet jede vom Kind angehakte Aufgabe auf dein ✅, bevor sie zählt. Ideal für die Kleinsten.",
+  "aide.pin": "Schützt den Elternbereich und das Entsperren des Timers. Bei Vergessen per E-Mail wiederherstellbar.",
+  "aide.seuil": "Unter diesem Alter werden Mengen als Bilder (💛💛) statt Zahlen angezeigt, für Nicht-Leser.",
+  "aide.humour": "Fügt kleine freundliche Witze hinzu. Ausschalten, wenn du es schlicht magst."
+});
+
+/* ---- Mode parents (standard / expert) ---- */
+Object.assign(I18N.fr, {
+  "mode.titre": "Mode parents", "mode.standard": "Standard", "mode.expert": "Expert",
+  "mode.aide_standard": "Réglages essentiels uniquement : valider, choisir les tâches, corriger. Simple et rapide.",
+  "mode.aide_expert": "Outils avancés débloqués : planification par jours/dates, tournantes, sélection groupée, édition fine des missions, référence écosystème."
+});
+Object.assign(I18N.en, {
+  "mode.titre": "Parent mode", "mode.standard": "Standard", "mode.expert": "Expert",
+  "mode.aide_standard": "Essentials only: validate, choose tasks, correct. Simple and fast.",
+  "mode.aide_expert": "Advanced tools unlocked: day/date scheduling, rotations, bulk selection, fine mission editing, ecosystem reference."
+});
+Object.assign(I18N.nl, {
+  "mode.titre": "Oudermodus", "mode.standard": "Standaard", "mode.expert": "Expert",
+  "mode.aide_standard": "Alleen essentiële instellingen: goedkeuren, taken kiezen, corrigeren. Eenvoudig en snel.",
+  "mode.aide_expert": "Geavanceerde tools: planning per dag/datum, toerbeurten, groepsselectie, fijne bewerking van taken, ecosysteemreferentie."
+});
+Object.assign(I18N.de, {
+  "mode.titre": "Elternmodus", "mode.standard": "Standard", "mode.expert": "Experte",
+  "mode.aide_standard": "Nur das Wesentliche: bestätigen, Aufgaben wählen, korrigieren. Einfach und schnell.",
+  "mode.aide_expert": "Erweiterte Werkzeuge: Tages-/Datumsplanung, Wechsel, Sammelauswahl, feine Aufgabenbearbeitung, Ökosystem-Referenz."
+});
+
 /* ---- Tournantes de tâches ---- */
 Object.assign(I18N.fr, {
   "rot.titre": "🔁 Tournantes de tâches", "rot.note": "Des tâches faites à tour de rôle par les enfants choisis (ex. la table, une semaine sur deux).",
