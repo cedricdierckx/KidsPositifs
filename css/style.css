@@ -266,7 +266,8 @@ main{max-width:680px; margin:0 auto; padding:14px}
   border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.5;color:#3a4a5a;margin-bottom:6px}
 .papier-carte .gros-bouton,.papier-carte .btn-secondaire{width:100%;margin-top:8px}
 /* Encodage de la semaine (grille missions × jours) */
-.enc-modes{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+.enc-modes{display:flex;gap:8px;margin:8px 0 12px}
+.enc-modes .rituel-chip{flex:1;text-align:center;justify-content:center;padding:11px 8px;line-height:1.2}
 .enc-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .enc-grille{min-width:340px;display:flex;flex-direction:column;gap:4px}
 .enc-cat{font-weight:800;font-size:13px;color:#27384a;margin-top:8px}
