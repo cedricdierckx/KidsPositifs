@@ -1555,6 +1555,9 @@ function ajouterEnfant() {
   const enf = enfantVierge({ id, prenom: "Nouvel enfant", naissance: "2020-01-01",
                              sexe: "garcon", emoji: "🧒", couleur: couleurs[n % couleurs.length] });
   appliquerSexe(enf);
+  // Sélection initiale = missions conseillées pour son âge (respecte le budget
+  // de tâches/jour par âge). Le parent peut ensuite ajuster librement.
+  enf.planJour = { [aujourdHui()]: idsDefaut(enf) };
   etat.enfants[id] = enf;
   etat.enfantActif = id;
   sauver();
@@ -1589,8 +1592,10 @@ function ajusterNombreEnfantsCreation(n) {
   while (ids.length < n) {
     const id = "e" + Date.now().toString(36) + ids.length + Math.floor(Math.random() * 1000);
     const couleurs = ["#5b8def", "#39c0a0", "#f6a623", "#e26d9b", "#9b6ef3", "#e2566d"];
-    etat.enfants[id] = enfantVierge({ id, prenom: "Enfant " + (ids.length + 1),
+    const enf = enfantVierge({ id, prenom: "Enfant " + (ids.length + 1),
       naissance: "2020-01-01", sexe: "garcon", emoji: "🧒", couleur: couleurs[ids.length % couleurs.length] });
+    enf.planJour = { [aujourdHui()]: idsDefaut(enf) };   // budget par âge respecté dès la création
+    etat.enfants[id] = enf;
     ids = Object.keys(etat.enfants);
   }
   etat.enfantActif = Object.keys(etat.enfants)[0];
