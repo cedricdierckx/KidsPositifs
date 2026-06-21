@@ -280,6 +280,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .enc-case:active{transform:scale(.88)}
 .enc-case.on{background:#eefaf2;border-color:#7bd3a6}
 .enc-humeur{font-size:16px}
+.enc-case.hors{background:repeating-linear-gradient(45deg,#f4f6f9,#f4f6f9 4px,#eaeef3 4px,#eaeef3 8px);color:#c0c8d0;border-color:#eef2f7}
 
 /* Tutoriel = visite guidée superposée à l'application */
 .tuto-tour{position:fixed; inset:0; z-index:1100}

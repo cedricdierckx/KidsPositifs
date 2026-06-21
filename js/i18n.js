@@ -1306,7 +1306,7 @@ Object.assign(I18N.fr, {
   "papier.mode_detaille": "Détaillé (stats complètes)", "papier.mode_express": "Express (juste les totaux)",
   "papier.express_note": "Totaux de la semaine pour {prenom} :",
   "papier.express_ajouter": "➕ Ajouter au solde", "papier.express_ok": "Totaux ajoutés pour {prenom} ✅",
-  "papier.rien": "Rien à ajouter.", "papier.comportement": "Comportement du jour",
+  "papier.rien": "Rien à ajouter.", "papier.comportement": "Comportement du jour", "papier.hors_jour": "Jour non prévu pour cette tâche",
   "papier.detaille_note": "Touche une case pour cocher/décocher. Le comportement passe par 😄 → 😐 → 😠. Tout est annulable (Actions récentes)."
 });
 Object.assign(I18N.en, {
@@ -1327,7 +1327,7 @@ Object.assign(I18N.en, {
   "papier.mode_detaille": "Detailed (full stats)", "papier.mode_express": "Express (totals only)",
   "papier.express_note": "Weekly totals for {prenom}:",
   "papier.express_ajouter": "➕ Add to balance", "papier.express_ok": "Totals added for {prenom} ✅",
-  "papier.rien": "Nothing to add.", "papier.comportement": "Daily behavior",
+  "papier.rien": "Nothing to add.", "papier.comportement": "Daily behavior", "papier.hors_jour": "Day not scheduled for this task",
   "papier.detaille_note": "Tap a box to check/uncheck. Behavior cycles 😄 → 😐 → 😠. Everything is undoable (Recent actions)."
 });
 Object.assign(I18N.nl, {
@@ -1348,7 +1348,7 @@ Object.assign(I18N.nl, {
   "papier.mode_detaille": "Gedetailleerd (volledige stats)", "papier.mode_express": "Express (alleen totalen)",
   "papier.express_note": "Weektotalen voor {prenom}:",
   "papier.express_ajouter": "➕ Toevoegen aan saldo", "papier.express_ok": "Totalen toegevoegd voor {prenom} ✅",
-  "papier.rien": "Niets toe te voegen.", "papier.comportement": "Gedrag van de dag",
+  "papier.rien": "Niets toe te voegen.", "papier.comportement": "Gedrag van de dag", "papier.hors_jour": "Dag niet gepland voor deze taak",
   "papier.detaille_note": "Tik op een vakje om aan/uit te vinken. Gedrag wisselt 😄 → 😐 → 😠. Alles is omkeerbaar (Recente acties)."
 });
 Object.assign(I18N.de, {
@@ -1369,7 +1369,7 @@ Object.assign(I18N.de, {
   "papier.mode_detaille": "Detailliert (volle Statistik)", "papier.mode_express": "Express (nur Summen)",
   "papier.express_note": "Wochensummen für {prenom}:",
   "papier.express_ajouter": "➕ Zum Guthaben hinzufügen", "papier.express_ok": "Summen für {prenom} hinzugefügt ✅",
-  "papier.rien": "Nichts hinzuzufügen.", "papier.comportement": "Verhalten des Tages",
+  "papier.rien": "Nichts hinzuzufügen.", "papier.comportement": "Verhalten des Tages", "papier.hors_jour": "Tag für diese Aufgabe nicht vorgesehen",
   "papier.detaille_note": "Tippe auf ein Kästchen zum An-/Abhaken. Verhalten wechselt 😄 → 😐 → 😠. Alles ist widerrufbar (Letzte Aktionen)."
 });
 

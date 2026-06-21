@@ -1263,13 +1263,25 @@ function joursSemaine(debut) {
   for (let i = 0; i < 7; i++) { const d = new Date(base); d.setDate(base.getDate() + i); arr.push(dateCle(d)); }
   return arr;
 }
-// Missions à imprimer pour un enfant (sélection du plan, par âge ; on n'applique
-// PAS le filtre de planification jour par jour : la feuille couvre la semaine).
+// Missions à imprimer/encoder pour un enfant sur la semaine sélectionnée :
+// union des missions réellement actives chaque jour (tient compte du plan, de
+// la sélection conseillée, de l'activation par enfant et de la PLANIFICATION
+// jours/dates). Une mission planifiée le week-end n'apparaît que si elle est
+// active au moins un jour de la semaine.
 function missionsFeuille(enf, catId) {
-  const plan = planEffectif(enf, aujourdHui());
-  return plan
-    ? toutesMissions().filter(m => m.cat === catId && m.speciale !== "coucher" && plan.includes(m.id))
-    : missionsDefautCat(enf, catId).filter(m => m.speciale !== "coucher");
+  const debut = semainePapierDebut || debutSemaine(aujourdHui());
+  const jours = joursSemaine(debut);
+  const vues = {};
+  jours.forEach(j => {
+    missionsActives(enf, catId, j).forEach(m => {
+      if (m.speciale !== "coucher") vues[m.id] = m;
+    });
+  });
+  return Object.values(vues);
+}
+// La mission est-elle planifiée/active pour cet enfant ce jour précis ?
+function missionActiveJour(enf, m, jour) {
+  return missionActivePourEnfant(enf, m.id) && missionPlanifieeActive(m, enf, jour);
 }
 
 let semainePapierDebut = null;   // lundi de la semaine sélectionnée (session)
@@ -1392,7 +1404,10 @@ function blocEncoderSemaine() {
       ligne.appendChild(el("span", "enc-lib", `${m.emoji} ${titreMission(m)}`));
       jours.forEach(j => {
         const n = (enf.journal[j] || {})[m.id] || 0;
-        const b = el("button", "enc-case" + (n ? " on" : ""), n ? "✅" : "");
+        const planifie = missionActiveJour(enf, m, j);   // jour prévu pour cette mission ?
+        const b = el("button", "enc-case" + (n ? " on" : "") + (planifie ? "" : " hors"),
+          n ? "✅" : (planifie ? "" : "·"));
+        if (!planifie) b.title = t("papier.hors_jour");
         b.onclick = () => majSansSaut(() => modifierHistorique(enf, j, m, n > 0 ? -1 : +1));
         ligne.appendChild(b);
       });
@@ -1447,7 +1462,10 @@ function imprimerFeuilleSemaine(mode) {
       ms.forEach(m => {
         const nom = `${m.emoji} ${titreMission(m)} <small>(${cat.monnaieEmoji}${pointsMission(enf, m)})</small>`;
         if (mode === "jours") {
-          lignes += `<tr><td class="m">${nom}</td>` + lettres.map(() => `<td class="c">☆</td>`).join("") + `</tr>`;
+          lignes += `<tr><td class="m">${nom}</td>` + lettres.map((_, i) => {
+            const planifie = missionActiveJour(enf, m, jours[i]);   // jour prévu ?
+            return planifie ? `<td class="c">☆</td>` : `<td class="c hors">·</td>`;
+          }).join("") + `</tr>`;
         } else {
           lignes += `<tr><td class="m">${nom}</td><td class="c large"></td></tr>`;
         }
@@ -1495,6 +1513,7 @@ function imprimerFeuilleSemaine(mode) {
       tr.cat td{background:var(--c);color:#fff;text-align:left;font-weight:800;font-size:10.5px;border-color:var(--c)}
       tr.head th{background:#f3f6fa;font-size:10px;width:23px;font-weight:800}
       td.c{width:23px;height:19px;color:#cfd8e0;font-size:12px} td.c.large{width:62px;color:#fff}
+      td.c.hors{background:repeating-linear-gradient(45deg,#f4f4f4,#f4f4f4 3px,#eaeaea 3px,#eaeaea 6px);color:#c8c8c8}
       .humeur{margin-top:8px} .humeur-t{font-size:10.5px;font-weight:800;margin-bottom:2px}
       .humeur-tbl td.hc{font-size:11px;letter-spacing:0;white-space:nowrap}
       .totaux{font-size:12px;margin-top:8px;font-weight:700}
