@@ -15,8 +15,10 @@ body{
 }
 
 /* ---- Barre du haut ---- */
+/* En-tête + barre de minuteur : bloc collant (toujours visible au scroll) */
+.haut-fixe{position:sticky; top:0; z-index:20; background:#fff}
 .topbar{
-  position:sticky; top:0; z-index:20; background:#fff; box-shadow:var(--ombre);
+  position:relative; background:#fff; box-shadow:var(--ombre);
   padding:10px 14px; display:flex; flex-direction:column; gap:10px;
 }
 .logo{font-size:22px; font-weight:800; text-align:center}

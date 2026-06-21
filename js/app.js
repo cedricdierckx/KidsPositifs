@@ -541,8 +541,14 @@ function idAine() {
 }
 // Réinitialise l'affichage : accueil de l'enfant aîné, hors mode parents.
 function vueAccueilAine() {
-  const aine = idAine();
-  if (aine) etat.enfantActif = aine;
+  // Si un minuteur « par enfant » tourne, on reste sur l'enfant en cours
+  // (sinon un rechargement le ferait repartir à zéro en basculant sur l'aîné).
+  if (timerEtat && timerEtat.actif && timerMode() === "parEnfant" && timerEtat.enfant && etat.enfants[timerEtat.enfant]) {
+    etat.enfantActif = timerEtat.enfant;
+  } else {
+    const aine = idAine();
+    if (aine) etat.enfantActif = aine;
+  }
   etat.vue = "accueil";
   modeParents = false;
 }

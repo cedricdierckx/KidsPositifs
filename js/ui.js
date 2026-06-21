@@ -180,6 +180,7 @@ function initSquelette() {
     <div id="confettis"></div>
     <div id="toast" class="toast"></div>
 
+    <div class="haut-fixe">
     <header class="topbar">
       <button id="pastille-inviter" class="pastille-inviter" title="Inviter une autre famille">🎁<span id="pastille-badge" class="pastille-badge"></span></button>
       <button id="timer-btn" class="timer-btn" title="${t("timer.titre")}">⏱️</button>
@@ -191,6 +192,7 @@ function initSquelette() {
       <span id="timer-bandeau-icone" class="timer-bandeau-icone">⏳</span>
       <div class="timer-jauge"><div id="timer-jauge-rempl" class="timer-jauge-rempl"></div></div>
       <span id="timer-bandeau-temps" class="timer-bandeau-temps">--:--</span>
+    </div>
     </div>
 
     <main id="contenu"></main>
@@ -230,6 +232,18 @@ function initSquelette() {
   // Swipe horizontal : change d'enfant (onglets enfants) ou de sous-onglet
   // dans l'espace parents.
   brancherSwipeEnfant(document.getElementById("contenu"));
+
+  // Décourage le rafraîchissement quand le minuteur tourne ou que l'écran est
+  // verrouillé (un enfant pourrait sinon tenter de recharger). L'état est de
+  // toute façon conservé, mais on affiche l'avertissement standard du navigateur.
+  if (!window.__gardeRefresh) {
+    window.__gardeRefresh = true;
+    window.addEventListener("beforeunload", (e) => {
+      if (timerEtat && (timerEtat.actif || timerEtat.verrouille || timerEtat.choix)) {
+        e.preventDefault(); e.returnValue = ""; return "";
+      }
+    });
+  }
 }
 
 // Change d'enfant actif d'un cran (dir = +1 suivant, -1 précédent), en boucle.
