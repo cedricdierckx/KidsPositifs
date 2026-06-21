@@ -265,9 +265,13 @@ function glisserVers(dir, action) {
 // nettement horizontal, assez rapide (≤ 600 ms) et pas trop lent du doigt.
 function brancherSwipeEnfant(zone) {
   if (!zone) return;
+  // Zones à défilement/interaction horizontale propres : on n'y déclenche pas
+  // le swipe de navigation (sinon conflit avec le sous-menu, la grille, etc.).
+  const SANS_SWIPE = ".sous-nav, .enc-scroll, .selecteur, .eco-cartes, .langue-choix, .parent-indic, input, textarea, select";
   let x0 = 0, y0 = 0, t0 = 0, suivi = false;
   zone.addEventListener("touchstart", (e) => {
     if (e.touches.length !== 1) { suivi = false; return; }
+    if (e.target && e.target.closest && e.target.closest(SANS_SWIPE)) { suivi = false; return; }
     x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now(); suivi = true;
   }, { passive: true });
   zone.addEventListener("touchmove", (e) => {
