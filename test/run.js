@@ -341,6 +341,27 @@ test("un override science (app_config) ajuste le budget et l'âge des missions",
   assert.strictEqual(api.ageMinMission(m), 9);
 });
 
+/* ---------- Tournantes de tâches ---------- */
+test("tournante hebdo : alterne l'enfant de garde et masque la tâche aux autres", () => {
+  const { api } = construireContexte();
+  api.familleId = "f"; api.lierEtat(api.etatVierge());
+  const ids = Object.keys(api.etat.enfants);
+  const eA = api.etat.enfants[ids[0]], eB = api.etat.enfants[ids[1]];
+  const m = api.MISSIONS.find(x => x.id === "table_mettre");
+  const lundi = "2026-06-15"; // un lundi
+  api.ajouterRotation([m.id], [eA.id, eB.id], "semaine", lundi);
+  const rot = api.etat.rotations[0];
+  // Semaine 0 -> A de garde ; semaine 1 -> B
+  assert.strictEqual(api.enfantDeGardeRotation(rot, "2026-06-17"), eA.id);
+  assert.strictEqual(api.enfantDeGardeRotation(rot, "2026-06-23"), eB.id);
+  // La tâche n'est permise qu'à l'enfant de garde
+  assert.strictEqual(api.rotationPermet(eA, m.id, "2026-06-17"), true);
+  assert.strictEqual(api.rotationPermet(eB, m.id, "2026-06-17"), false);
+  // Forçage : c'est dans les missions du jour de A, pas de B
+  assert.ok(api.missionsTournanteDuJour(eA, "2026-06-17").some(x => x.id === m.id));
+  assert.ok(!api.missionsTournanteDuJour(eB, "2026-06-17").some(x => x.id === m.id));
+});
+
 /* ---------- Sélection groupée ---------- */
 test("selectionGroupee applique le mode à tous les enfants", () => {
   const { api } = construireContexte();

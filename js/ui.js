@@ -2373,6 +2373,97 @@ const histDate = {}; // date sélectionnée pour la correction d'historique, par
 const planDate = {}; // date sélectionnée pour les missions du jour, par enfant
 
 // Sélection des missions proposées à un enfant pour un jour donné.
+// Tournantes : des tâches effectuées à tour de rôle par les enfants choisis
+// (ex. mettre/débarrasser la table, une semaine sur deux entre 2 enfants).
+let rotNouv = null;   // brouillon de création (session)
+function blocTournantes() {
+  const sec = el("section", "carte");
+  sec.innerHTML = `<h2>${t("rot.titre")}</h2><p class="note">${t("rot.note")}</p>`;
+  const jour = aujourdHui();
+
+  // --- Tournantes existantes ---
+  const liste = etat.rotations || [];
+  if (liste.length) {
+    liste.forEach(r => {
+      const garde = enfantDeGardeRotation(r, jour);
+      const enfGarde = etat.enfants[garde];
+      const ms = (r.missions || []).map(id => { const m = trouverMission(id); return m ? m.emoji + " " + titreMission(m) : id; }).join(", ");
+      const ordre = (r.enfants || []).map(id => {
+        const e = etat.enfants[id]; if (!e) return "";
+        return `<span class="rot-enf${id === garde ? " garde" : ""}">${e.emoji} ${echapper(e.prenom)}</span>`;
+      }).join(" → ");
+      const carte = el("div", "rot-item");
+      carte.innerHTML = `<div class="rot-ms">${ms}</div>
+        <div class="rot-ordre">${ordre}</div>
+        <div class="rot-meta">${r.periode === "jour" ? t("rot.par_jour") : t("rot.par_semaine")} · ${t("rot.tour", { prenom: enfGarde ? echapper(enfGarde.prenom) : "—" })}</div>`;
+      const sup = el("button", "mini-btn danger", "🗑️");
+      sup.onclick = () => { if (confirm(t("rot.confirm_suppr"))) supprimerRotation(r.id); };
+      carte.appendChild(sup);
+      sec.appendChild(carte);
+    });
+  } else {
+    sec.appendChild(el("p", "note", t("rot.aucune")));
+  }
+
+  // --- Création ---
+  if (!rotNouv) rotNouv = { missions: [], enfants: [], periode: "semaine" };
+  const { details, corps } = blocPliable(`➕ ${t("rot.creer")}`, false, "rot-creer");
+
+  // Missions (cases à cocher, par catégorie)
+  corps.appendChild(el("p", "sous-titre", t("rot.choix_missions")));
+  ["famille", "planete"].forEach(catId => {
+    const cat = CATEGORIES[catId];
+    toutesMissions().filter(m => m.cat === catId && m.speciale !== "coucher").forEach(m => {
+      const l = el("label", "switch-ligne");
+      const cb = el("input"); cb.type = "checkbox"; cb.checked = rotNouv.missions.includes(m.id);
+      cb.onchange = () => {
+        if (cb.checked) rotNouv.missions.push(m.id);
+        else rotNouv.missions = rotNouv.missions.filter(x => x !== m.id);
+      };
+      l.appendChild(cb);
+      l.appendChild(el("span", null, `${m.emoji} ${titreMission(m)} <small>(${cat.monnaieEmoji})</small>`));
+      corps.appendChild(l);
+    });
+  });
+
+  // Enfants (ordre = ordre de tour ; clic pour ajouter/retirer)
+  corps.appendChild(el("p", "sous-titre", t("rot.choix_enfants")));
+  const enfRow = el("div", "planif-enfants");
+  Object.values(etat.enfants).forEach(e => {
+    const pos = rotNouv.enfants.indexOf(e.id);
+    const b = el("button", "enf-chip" + (pos >= 0 ? " on" : ""), `${e.emoji} ${echapper(e.prenom)}${pos >= 0 ? " " + (pos + 1) : ""}`);
+    b.onclick = () => {
+      if (pos >= 0) rotNouv.enfants.splice(pos, 1);
+      else rotNouv.enfants.push(e.id);
+      rendre();
+    };
+    enfRow.appendChild(b);
+  });
+  corps.appendChild(enfRow);
+
+  // Période
+  corps.appendChild(el("p", "sous-titre", t("rot.periode")));
+  const perRow = el("div", "enc-modes");
+  [["semaine", t("rot.par_semaine")], ["jour", t("rot.par_jour")]].forEach(([val, lab]) => {
+    const b = el("button", "rituel-chip" + (rotNouv.periode === val ? " on" : ""), lab);
+    b.onclick = () => { rotNouv.periode = val; rendre(); };
+    perRow.appendChild(b);
+  });
+  corps.appendChild(perRow);
+
+  const bGo = el("button", "gros-bouton planete", t("rot.valider"));
+  bGo.onclick = () => {
+    if (rotNouv.missions.length < 1) { toast(t("rot.err_mission"), "info"); return; }
+    if (rotNouv.enfants.length < 2) { toast(t("rot.err_enfants"), "info"); return; }
+    ajouterRotation(rotNouv.missions, rotNouv.enfants, rotNouv.periode, debutSemaineLundi(aujourdHui()));
+    rotNouv = null;
+    toast(t("rot.creee"), "succes");
+  };
+  corps.appendChild(bGo);
+  sec.appendChild(details);
+  return sec;
+}
+
 // Sélection groupée : une matrice missions × enfants pour tout cocher d'un
 // coup, avec repère visuel de l'adéquation à l'âge de chaque enfant.
 function blocSelectionGroupee() {
@@ -2989,6 +3080,9 @@ function vueReglages(c) {
 
   // ----- Sélection groupée (tous les enfants d'un coup) -----
   c.appendChild(blocSelectionGroupee());
+
+  // ----- Tournantes de tâches entre enfants -----
+  c.appendChild(blocTournantes());
 
   // ----- Missions du jour (sélection par les parents) -----
   c.appendChild(blocMissionsDuJour(enfantActif()));

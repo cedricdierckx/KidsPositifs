@@ -2321,6 +2321,36 @@ Object.assign(I18N.de, {
   "grp_sel.adapte": "Passend für das Alter von {prenom}", "grp_sel.jeune": "Über dem empfohlenen Alter für {prenom}"
 });
 
+/* ---- Tournantes de tâches ---- */
+Object.assign(I18N.fr, {
+  "rot.titre": "🔁 Tournantes de tâches", "rot.note": "Des tâches faites à tour de rôle par les enfants choisis (ex. la table, une semaine sur deux).",
+  "rot.aucune": "Aucune tournante pour l'instant.", "rot.creer": "Créer une tournante", "rot.choix_missions": "Tâches concernées",
+  "rot.choix_enfants": "Enfants (dans l'ordre de passage)", "rot.periode": "Rythme", "rot.par_semaine": "Chaque semaine", "rot.par_jour": "Chaque jour",
+  "rot.valider": "✅ Créer la tournante", "rot.creee": "Tournante créée 🔁", "rot.confirm_suppr": "Supprimer cette tournante ?",
+  "rot.tour": "Cette période : {prenom}", "rot.err_mission": "Choisis au moins une tâche.", "rot.err_enfants": "Choisis au moins deux enfants."
+});
+Object.assign(I18N.en, {
+  "rot.titre": "🔁 Task rotations", "rot.note": "Tasks done in turns by the chosen children (e.g. the table, every other week).",
+  "rot.aucune": "No rotation yet.", "rot.creer": "Create a rotation", "rot.choix_missions": "Tasks involved",
+  "rot.choix_enfants": "Children (in turn order)", "rot.periode": "Rhythm", "rot.par_semaine": "Weekly", "rot.par_jour": "Daily",
+  "rot.valider": "✅ Create rotation", "rot.creee": "Rotation created 🔁", "rot.confirm_suppr": "Delete this rotation?",
+  "rot.tour": "This period: {prenom}", "rot.err_mission": "Pick at least one task.", "rot.err_enfants": "Pick at least two children."
+});
+Object.assign(I18N.nl, {
+  "rot.titre": "🔁 Taken bij toerbeurt", "rot.note": "Taken die om beurten door de gekozen kinderen worden gedaan (bv. de tafel, om de week).",
+  "rot.aucune": "Nog geen toerbeurt.", "rot.creer": "Een toerbeurt maken", "rot.choix_missions": "Betrokken taken",
+  "rot.choix_enfants": "Kinderen (in volgorde)", "rot.periode": "Ritme", "rot.par_semaine": "Wekelijks", "rot.par_jour": "Dagelijks",
+  "rot.valider": "✅ Toerbeurt maken", "rot.creee": "Toerbeurt aangemaakt 🔁", "rot.confirm_suppr": "Deze toerbeurt verwijderen?",
+  "rot.tour": "Deze periode: {prenom}", "rot.err_mission": "Kies minstens één taak.", "rot.err_enfants": "Kies minstens twee kinderen."
+});
+Object.assign(I18N.de, {
+  "rot.titre": "🔁 Aufgaben im Wechsel", "rot.note": "Aufgaben, die die gewählten Kinder abwechselnd erledigen (z. B. der Tisch, jede zweite Woche).",
+  "rot.aucune": "Noch kein Wechsel.", "rot.creer": "Einen Wechsel erstellen", "rot.choix_missions": "Betroffene Aufgaben",
+  "rot.choix_enfants": "Kinder (in Reihenfolge)", "rot.periode": "Rhythmus", "rot.par_semaine": "Wöchentlich", "rot.par_jour": "Täglich",
+  "rot.valider": "✅ Wechsel erstellen", "rot.creee": "Wechsel erstellt 🔁", "rot.confirm_suppr": "Diesen Wechsel löschen?",
+  "rot.tour": "Dieser Zeitraum: {prenom}", "rot.err_mission": "Wähle mindestens eine Aufgabe.", "rot.err_enfants": "Wähle mindestens zwei Kinder."
+});
+
 /* ---- Tutoriel d'accueil (visite guidée) ---- */
 Object.assign(I18N.fr, {
   "tuto.passer": "Passer", "tuto.precedent": "← Précédent", "tuto.suivant": "Suivant →",

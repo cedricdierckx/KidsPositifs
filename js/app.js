@@ -361,6 +361,7 @@ function etatVierge() {
     missionsPerso: [],     // missions personnalisées ajoutées par les parents
     missionsModif: {},     // retouches parentales des missions (titre/emoji/points)
     missionsPlanif: {},    // planification des missions (jours/dates/enfants)
+    rotations: [],         // tournantes de tâches entre enfants
     cartesSurprises: cartesSurprisesNeuves(ENFANTS_DEFAUT.length),  // objectifs d'équipe
     reglages: { validationParentale: false, codeParent: "", seuilVisuel: 5, humour: true }
   };
@@ -493,6 +494,7 @@ function normaliser(e) {
   if (typeof e.reglages.seuilVisuel !== "number") e.reglages.seuilVisuel = 5;
   if (typeof e.reglages.humour !== "boolean") e.reglages.humour = true;   // humour ON par défaut
   if (!e.missionsPlanif || typeof e.missionsPlanif !== "object") e.missionsPlanif = {};
+  if (!Array.isArray(e.rotations)) e.rotations = [];
   // Estampille de version : les migrations ci-dessus sont *additives* (on ne
   // supprime jamais de données existantes), garantissant qu'une mise à jour de
   // l'application ne fait jamais perdre la progression d'une famille.
@@ -836,8 +838,78 @@ function missionsActives(enf, catId, jour) {
   const base = plan
     ? toutesMissions().filter(m => m.cat === catId && plan.includes(m.id))
     : missionsConseillees(enf, catId);
-  // Filtres : activation par enfant + planification (jours/dates/enfants).
-  return base.filter(m => missionActivePourEnfant(enf, m.id) && missionPlanifieeActive(m, enf, jour));
+  // Filtres : activation par enfant + planification + tournante (c'est son tour ?).
+  let liste = base.filter(m => missionActivePourEnfant(enf, m.id)
+    && missionPlanifieeActive(m, enf, jour)
+    && rotationPermet(enf, m.id, jour));
+  // Ajoute les missions de tournante dont c'est le tour de l'enfant (forçage).
+  missionsTournanteDuJour(enf, jour).forEach(m => {
+    if (m.cat === catId && !liste.some(x => x.id === m.id)) liste.push(m);
+  });
+  return liste;
+}
+
+/* ---------- Tournantes de tâches (à tour de rôle entre enfants) ----------
+ * etat.rotations[] = { id, missions:[ids], enfants:[ids ordonnés],
+ *                      periode:"semaine"|"jour", debut:"AAAA-MM-JJ" } */
+function enfantDeGardeRotation(rot, jour) {
+  const ids = rot.enfants || [];
+  if (!ids.length) return null;
+  const base = new Date((rot.debut || aujourdHui()) + "T00:00:00");
+  const d = new Date(jour + "T00:00:00");
+  const div = rot.periode === "jour" ? 86400000 : 7 * 86400000;
+  let periodes = Math.floor((d - base) / div);
+  if (!isFinite(periodes) || periodes < 0) periodes = 0;
+  return ids[((periodes % ids.length) + ids.length) % ids.length];
+}
+function rotationsDe(id) {
+  return (etat.rotations || []).filter(r => Array.isArray(r.missions) && r.missions.includes(id));
+}
+// La tournante autorise-t-elle cette mission pour cet enfant ce jour ?
+// (si l'enfant fait partie d'une tournante de cette mission mais que ce n'est
+//  pas son tour, la mission lui est masquée.)
+function rotationPermet(enf, id, jour) {
+  const rots = rotationsDe(id).filter(r => (r.enfants || []).includes(enf.id));
+  if (!rots.length) return true;
+  return rots.some(r => enfantDeGardeRotation(r, jour) === enf.id);
+}
+// Missions dont c'est le tour de l'enfant aujourd'hui (forcées actives).
+function missionsTournanteDuJour(enf, jour) {
+  const out = [];
+  (etat.rotations || []).forEach(r => {
+    if (!(r.enfants || []).includes(enf.id)) return;
+    if (enfantDeGardeRotation(r, jour) !== enf.id) return;
+    (r.missions || []).forEach(id => {
+      const m = trouverMission(id);
+      if (m && missionActivePourEnfant(enf, id) && !out.some(x => x.id === id)) out.push(m);
+    });
+  });
+  return out;
+}
+function ajouterRotation(missions, enfants, periode, debut) {
+  if (!Array.isArray(missions) || !missions.length) return;
+  if (!Array.isArray(enfants) || enfants.length < 2) return;
+  if (!Array.isArray(etat.rotations)) etat.rotations = [];
+  etat.rotations.push({
+    id: "rot-" + Date.now().toString(36),
+    missions: missions.slice(),
+    enfants: enfants.slice(),
+    periode: periode === "jour" ? "jour" : "semaine",
+    debut: debut || debutSemaineLundi(aujourdHui())
+  });
+  sauver();
+  rendre();
+}
+function supprimerRotation(id) {
+  etat.rotations = (etat.rotations || []).filter(r => r.id !== id);
+  sauver();
+  rendre();
+}
+// Lundi de la semaine d'une date (alignement des tournantes hebdomadaires).
+function debutSemaineLundi(cle) {
+  const d = new Date(cle + "T00:00:00");
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return dateCle(d);
 }
 
 /* ---------- Planification des missions (jours / dates / enfants) ----------

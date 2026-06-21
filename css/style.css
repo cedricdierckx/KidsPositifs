@@ -219,6 +219,15 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* Réplique rigolote du bandeau dodo */
 .dodo-fun{display:block; font-style:italic; opacity:.9; margin-top:2px}
 
+/* Tournantes de tâches */
+.rot-item{position:relative;border:2px solid #e9eef4;border-radius:14px;padding:10px 12px;margin-bottom:8px}
+.rot-ms{font-weight:700;font-size:14px;color:#27384a}
+.rot-ordre{margin:4px 0;font-size:13px}
+.rot-enf{display:inline-block;padding:2px 6px;border-radius:8px;background:#f3f6fa;margin:1px}
+.rot-enf.garde{background:#d6f3e2;font-weight:800}
+.rot-meta{font-size:12px;color:var(--doux)}
+.rot-item .mini-btn.danger{position:absolute;top:8px;right:8px}
+
 /* Sélection groupée (matrice missions × enfants) */
 .grp-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
 .grp-actions .gros-bouton,.grp-actions .btn-secondaire{flex:1;min-width:120px;margin:0}
