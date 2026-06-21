@@ -2237,22 +2237,22 @@ Object.assign(I18N.de, {
 
 /* ---- Personnalisation par enfant ---- */
 Object.assign(I18N.fr, {
-  "perso.titre": "🎚️ Personnaliser par enfant", "perso.note": "Active/désactive et ajuste points et coûts pour chaque enfant. Vide = valeur standard.",
+  "perso.titre": "🌱 Écosystème par enfant", "perso.note": "Active/désactive et ajuste le coût des plantes et animaux pour chaque enfant. Vide = valeur standard.",
   "perso.missions": "Missions (actif & points)", "perso.especes": "Plantes & animaux (actif & coût)",
   "perso.actif": "Actif pour cet enfant", "perso.points": "Points", "perso.reinit": "↩️ Tout réinitialiser"
 });
 Object.assign(I18N.en, {
-  "perso.titre": "🎚️ Customize per child", "perso.note": "Enable/disable and adjust points and costs for each child. Empty = standard value.",
+  "perso.titre": "🌱 Ecosystem per child", "perso.note": "Enable/disable and adjust the cost of plants and animals for each child. Empty = standard value.",
   "perso.missions": "Missions (active & points)", "perso.especes": "Plants & animals (active & cost)",
   "perso.actif": "Active for this child", "perso.points": "Points", "perso.reinit": "↩️ Reset all"
 });
 Object.assign(I18N.nl, {
-  "perso.titre": "🎚️ Aanpassen per kind", "perso.note": "Aan/uit en pas punten en kosten per kind aan. Leeg = standaardwaarde.",
+  "perso.titre": "🌱 Ecosysteem per kind", "perso.note": "Aan/uit en pas de kosten van planten en dieren per kind aan. Leeg = standaardwaarde.",
   "perso.missions": "Opdrachten (actief & punten)", "perso.especes": "Planten & dieren (actief & kosten)",
   "perso.actif": "Actief voor dit kind", "perso.points": "Punten", "perso.reinit": "↩️ Alles resetten"
 });
 Object.assign(I18N.de, {
-  "perso.titre": "🎚️ Pro Kind anpassen", "perso.note": "Aktiviere/deaktiviere und passe Punkte und Kosten pro Kind an. Leer = Standardwert.",
+  "perso.titre": "🌱 Ökosystem pro Kind", "perso.note": "Aktiviere/deaktiviere und passe die Kosten von Pflanzen und Tieren pro Kind an. Leer = Standardwert.",
   "perso.missions": "Aufgaben (aktiv & Punkte)", "perso.especes": "Pflanzen & Tiere (aktiv & Kosten)",
   "perso.actif": "Für dieses Kind aktiv", "perso.points": "Punkte", "perso.reinit": "↩️ Alles zurücksetzen"
 });

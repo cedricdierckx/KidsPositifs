@@ -2618,68 +2618,33 @@ function blocPersonnalisation() {
   sec.innerHTML = `<h2>${t("perso.titre")}</h2><p class="note">${t("perso.note")}</p>`;
 
   Object.values(etat.enfants).forEach(enf => {
-    const { details: dEnf, corps: cEnf } = blocPliable(`${enf.emoji} ${echapper(enf.prenom)}`);
+    const { details: dEnf, corps: cEnf } = blocPliable(`${enf.emoji} ${echapper(enf.prenom)}`, false, "perso-" + enf.id);
     dEnf.style.setProperty("--c", enf.couleur);
 
-    // --- Missions ---
-    const { details: dM, corps: cM } = blocPliable(`✅ ${t("perso.missions")}`);
-    ["famille", "planete"].forEach(catId => {
-      const cat = CATEGORIES[catId];
-      const ms = toutesMissions().filter(m => m.cat === catId);
-      if (!ms.length) return;
-      cM.appendChild(el("p", "sous-titre", `${cat.emoji} ${trData("cat", catId + ".nom", cat.nom)}`));
-      ms.forEach(m => {
-        const actif = missionActivePourEnfant(enf, m.id);
-        const ligne = el("div", "perso-ligne" + (actif ? "" : " off"));
-        const cb = el("input"); cb.type = "checkbox"; cb.checked = actif;
-        cb.title = t("perso.actif");
-        cb.onchange = () => definirPersoMission(enf, m.id, "actif", cb.checked ? undefined : false);
-        const lbl = el("span", "perso-lbl", `${m.emoji} ${titreMission(m)}`);
-        const pts = el("input", "perso-num"); pts.type = "number"; pts.min = "1"; pts.max = "20";
-        pts.inputMode = "numeric"; pts.value = pointsMission(enf, m);
-        pts.title = t("perso.points");
-        pts.onchange = () => definirPersoMission(enf, m.id, "points", Math.max(1, parseInt(pts.value, 10) || m.points));
-        const unite = el("span", "perso-unite", cat.monnaieEmoji);
-        ligne.appendChild(cb); ligne.appendChild(lbl); ligne.appendChild(pts); ligne.appendChild(unite);
-        cM.appendChild(ligne);
-      });
-    });
-    dEnf_appendReset(cM, enf, "missions");
-    cEnf.appendChild(dM);
-
-    // --- Écosystème (plantes & animaux) ---
-    const { details: dE, corps: cE } = blocPliable(`🌱 ${t("perso.especes")}`);
+    // Écosystème (plantes & animaux) : activer/désactiver + ajuster le coût.
     TIERS_ECO.forEach(tier => {
-      cE.appendChild(el("p", "sous-titre", `${tier.emoji} ${trData("tier", tier.id, tier.nom)}`));
+      cEnf.appendChild(el("p", "sous-titre", `${tier.emoji} ${trData("tier", tier.id, tier.nom)}`));
       tier.especes.forEach(sp => {
         const actif = especeActivePourEnfant(enf, sp.id);
         const ligne = el("div", "perso-ligne" + (actif ? "" : " off"));
         const cb = el("input"); cb.type = "checkbox"; cb.checked = actif;
-        cb.onchange = () => definirPersoEspece(enf, sp.id, "actif", cb.checked ? undefined : false);
+        cb.onchange = () => majSansSaut(() => definirPersoEspece(enf, sp.id, "actif", cb.checked ? undefined : false));
         const lbl = el("span", "perso-lbl", `${sp.emoji} ${trData("espece", sp.id, sp.nom)}`);
         const cout = el("input", "perso-num"); cout.type = "number"; cout.min = "1";
         cout.inputMode = "numeric"; cout.value = coutEspece(enf, sp);
         cout.onchange = () => definirPersoEspece(enf, sp.id, "cout", Math.max(1, parseInt(cout.value, 10) || sp.cout));
         const unite = el("span", "perso-unite", "💧");
         ligne.appendChild(cb); ligne.appendChild(lbl); ligne.appendChild(cout); ligne.appendChild(unite);
-        cE.appendChild(ligne);
+        cEnf.appendChild(ligne);
       });
     });
-    dEnf_appendReset(cE, enf, "especes");
-    cEnf.appendChild(dE);
+    const bReset = el("button", "btn-secondaire mini-reset", t("perso.reinit"));
+    bReset.onclick = () => { enf.persoEspeces = {}; sauver(); rendre(); };
+    cEnf.appendChild(bReset);
 
     sec.appendChild(dEnf);
   });
   return sec;
-}
-// Petit bouton « tout réinitialiser » pour la personnalisation d'une catégorie.
-function dEnf_appendReset(conteneur, enf, type) {
-  const b = el("button", "btn-secondaire mini-reset", t("perso.reinit"));
-  b.onclick = () => {
-    if (type === "missions") enf.persoMissions = {}; else enf.persoEspeces = {};
-    sauver(); rendre();
-  };
-  conteneur.appendChild(b);
 }
 
 function blocCorrections(enf) {
