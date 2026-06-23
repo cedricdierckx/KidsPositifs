@@ -493,7 +493,21 @@ const BLAGUES_DEFAUT = {
   { q: "Quel est l'animal le plus malin des bois ?", r: "Le renard, il a plus d'un tour dans son sac ! 🦊" },
   { q: "Que fait une pile quand elle est fatiguée ?", r: "Elle se re-charge ! 🔋" },
   { q: "Pourquoi les dentistes sont-ils calmes ?", r: "Parce qu'ils ont la dent dure mais le cœur tendre ! 🦷" },
-  { q: "Qu'est-ce qu'un crocodile qui répare les voitures ?", r: "Un croco-mécano ! 🐊🔧" }
+  { q: "Qu'est-ce qu'un crocodile qui répare les voitures ?", r: "Un croco-mécano ! 🐊🔧" },
+  { q: "Monsieur et Madame Zécomponsair ont une fille, comment s'appelle-t-elle ?", r: "Élodie ! (Élodie Zéponsair) 🤧" },
+  { q: "Que dit un escargot quand il monte sur une tortue ?", r: "« Accroche-toi, on fonce ! » 🐌🐢" },
+  { q: "Pourquoi les éléphants ne montent-ils pas sur les ordinateurs ?", r: "Parce qu'ils ont peur de la souris ! 🐘🖱️" },
+  { q: "Quel est le comble pour un balai ?", r: "Avoir le balai dans la tête ! 🧹" },
+  { q: "Qu'est-ce qui est vert et qui monte et qui descend ?", r: "Un petit pois dans un ascenseur ! 🟢" },
+  { q: "Pourquoi les abeilles ont-elles les cheveux collants ?", r: "Parce qu'elles ont un miel… euh, un peigne à miel ! 🐝" },
+  { q: "Que dit un mur quand on lui pose une question ?", r: "Rien, il reste de marbre ! 🧱" },
+  { q: "Quel est le fruit que les poissons détestent ?", r: "La pêche ! 🎣🍑" },
+  { q: "Comment appelle-t-on un chien qui n'a pas de pattes ?", r: "On ne l'appelle pas, on va le chercher ! 🐕" },
+  { q: "Pourquoi le squelette n'a-t-il pas traversé la route ?", r: "Parce qu'il n'avait pas de tripes ! 💀" },
+  { q: "Que se disent deux brins d'herbe ?", r: "« On est vraiment dans le même pré ! » 🌱" },
+  { q: "Quel est l'animal le plus rapide de la ferme ?", r: "Le poulet, parce qu'il est toujours en train de courir ! 🐔" },
+  { q: "Pourquoi la tomate est-elle devenue rouge ?", r: "Parce qu'elle a vu la salade se déshabiller ! 🍅" },
+  { q: "Que dit un zéro quand il rencontre un autre zéro ?", r: "« On ne vaut rien à deux ! » 0️⃣" }
   ],
   en: [
   { q: "Why did the teddy bear say no to dessert?", r: "Because it was already stuffed! 🧸" },
@@ -518,7 +532,22 @@ const BLAGUES_DEFAUT = {
   { q: "What do you call a dog magician?", r: "A labracadabrador! 🐶✨" },
   { q: "Why did the golfer bring two pairs of pants?", r: "In case he got a hole in one! ⛳" },
   { q: "What did the ocean say to the beach?", r: "Nothing, it just waved! 🌊" },
-  { q: "Why are ghosts bad at lying?", r: "Because you can see right through them! 👻" }
+  { q: "Why are ghosts bad at lying?", r: "Because you can see right through them! 👻" },
+  { q: "What do you call a pile of cats?", r: "A meow-ntain! 🐱⛰️" },
+  { q: "Why did the student eat his homework?", r: "Because the teacher said it was a piece of cake! 🍰" },
+  { q: "What kind of tree fits in your hand?", r: "A palm tree! 🌴" },
+  { q: "Why was the broom late?", r: "It over-swept! 🧹" },
+  { q: "What do you call a cow with no legs?", r: "Ground beef! 🐄" },
+  { q: "Why did the tomato turn red?", r: "Because it saw the salad dressing! 🍅" },
+  { q: "What has ears but cannot hear?", r: "A cornfield! 🌽" },
+  { q: "Why can't you give Elsa a balloon?", r: "Because she'll let it go! 🎈❄️" },
+  { q: "What do you call a snowman in summer?", r: "A puddle! ⛄💧" },
+  { q: "Why did the kid bring a ladder to school?", r: "Because it was high school! 🪜" },
+  { q: "What do you call a duck that gets all A's?", r: "A wise quacker! 🦆" },
+  { q: "Why do bees have sticky hair?", r: "Because they use honeycombs! 🐝" },
+  { q: "What did the left eye say to the right eye?", r: "Between us, something smells! 👀👃" },
+  { q: "What's brown and sticky?", r: "A stick! 🪵" },
+  { q: "Why did the picture go to jail?", r: "Because it was framed! 🖼️" }
   ],
   nl: [
   { q: "Wat is groen en springt door het bos?", r: "Een springspruitje! 🥦" },
@@ -539,7 +568,20 @@ const BLAGUES_DEFAUT = {
   { q: "Waarom kon het skelet niet naar het feest?", r: "Hij had niemand om mee te gaan! 💀" },
   { q: "Wat is rood en slecht voor je tanden?", r: "Een baksteen! 🧱" },
   { q: "Waarom lopen olifanten nooit op de computer?", r: "Ze zijn bang voor de muis! 🐘🖱️" },
-  { q: "Wat doet een spook op een feestje?", r: "Boe-geren! 👻" }
+  { q: "Wat doet een spook op een feestje?", r: "Boe-geren! 👻" },
+  { q: "Waarom werd de tomaat rood?", r: "Omdat hij de sla zag uitkleden! 🍅" },
+  { q: "Wat is bruin en plakt?", r: "Een stok! 🪵" },
+  { q: "Hoe noem je een koe zonder poten?", r: "Gehakt! 🐄" },
+  { q: "Waarom at de leerling zijn huiswerk op?", r: "Omdat de juf zei dat het een makkie was! 🍰" },
+  { q: "Wat heeft oren maar kan niet horen?", r: "Een korenveld! 🌽" },
+  { q: "Waarom kon de bezem niet op tijd komen?", r: "Hij had zich verveegd! 🧹" },
+  { q: "Wat zegt het ene oog tegen het andere?", r: "« Tussen ons in ruikt iets! » 👀👃" },
+  { q: "Hoe noem je een berg katten?", r: "Een miauw-berg! 🐱⛰️" },
+  { q: "Waarom plakken bijen aan elkaar?", r: "Door de honingkam! 🐝" },
+  { q: "Wat doet een sneeuwpop in de zomer?", r: "Een plasje worden! ⛄💧" },
+  { q: "Waarom nam het kind een ladder mee naar school?", r: "Omdat het de hogeschool was! 🪜" },
+  { q: "Wat is geel en schrijft?", r: "Een ballpoint-banaan! 🍌🖊️" },
+  { q: "Waarom huppelt de kangoeroe niet als het regent?", r: "Omdat de jongen binnen zit! 🦘" }
   ],
   de: [
   { q: "Was ist grün und klopft an die Tür?", r: "Ein Klopfsalat! 🥗" },
@@ -559,7 +601,18 @@ const BLAGUES_DEFAUT = {
   { q: "Warum ging das Skelett nicht zur Party?", r: "Es hatte niemanden zum Mitgehen! 💀" },
   { q: "Was ist orange und klingt wie ein Papagei?", r: "Eine Karotte! 🥕" },
   { q: "Warum haben Elefanten Angst vor Computern?", r: "Wegen der Maus! 🐘🖱️" },
-  { q: "Was macht ein Pirat am Computer?", r: "Er drückt die Enter-Taste… arrr! 🏴‍☠️" }
+  { q: "Was macht ein Pirat am Computer?", r: "Er drückt die Enter-Taste… arrr! 🏴‍☠️" },
+  { q: "Warum wurde die Tomate rot?", r: "Weil sie den Salat sich ausziehen sah! 🍅" },
+  { q: "Was ist braun und klebt?", r: "Ein Stock! 🪵" },
+  { q: "Wie nennt man eine Kuh ohne Beine?", r: "Hackfleisch! 🐄" },
+  { q: "Was hat Ohren und kann nicht hören?", r: "Ein Maisfeld! 🌽" },
+  { q: "Warum aß der Schüler seine Hausaufgaben?", r: "Weil der Lehrer sagte, das sei ein Kinderspiel! 🍰" },
+  { q: "Was sagt ein Auge zum anderen?", r: "« Zwischen uns riecht etwas! » 👀👃" },
+  { q: "Wie nennt man einen Berg voller Katzen?", r: "Einen Miau-Berg! 🐱⛰️" },
+  { q: "Was macht ein Schneemann im Sommer?", r: "Eine Pfütze! ⛄💧" },
+  { q: "Warum nahm das Kind eine Leiter mit zur Schule?", r: "Weil es die Hochschule war! 🪜" },
+  { q: "Welcher Baum passt in die Hand?", r: "Eine Handfläche… ein Palm-baum! 🌴" },
+  { q: "Warum war das Bild im Gefängnis?", r: "Weil es gerahmt wurde! 🖼️" }
   ]
 };
 // Compatibilité : l'ancienne constante pointe sur la liste française.
