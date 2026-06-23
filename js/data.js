@@ -479,7 +479,21 @@ const BLAGUES_DEFAUT = {
   { q: "Pourquoi les poissons vivent-ils dans l'eau salée ?", r: "Parce que dans l'eau poivrée, ils éternuent ! 🐟" },
   { q: "Que fait un escargot quand il est en colère ?", r: "Il bave de rage… mais doucement ! 🐌" },
   { q: "Quel est le animal le plus fort en calcul ?", r: "Le pou, parce qu'il fait des additions sur la tête ! 🧮" },
-  { q: "Pourquoi le facteur a-t-il toujours chaud ?", r: "Parce qu'il distribue des lettres brûlantes ! ✉️" }
+  { q: "Pourquoi le facteur a-t-il toujours chaud ?", r: "Parce qu'il distribue des lettres brûlantes ! ✉️" },
+  { q: "Monsieur et Madame Térieur ont un fils, comment s'appelle-t-il ?", r: "Alain ! (Alain Térieur) 🚪" },
+  { q: "Quel est le comble pour un marin ?", r: "Avoir le mal de mer ! ⚓" },
+  { q: "Qu'est-ce qui est petit, carré et jaune ?", r: "Un petit carré jaune ! 🟨" },
+  { q: "Que dit un sportif quand il a soif ?", r: "« J'ai sport-iché ! » 🥤" },
+  { q: "Pourquoi les vaches ferment-elles les yeux pour traverser ?", r: "Pour faire du lait concentré ! 🐄" },
+  { q: "Comment appelle-t-on un chat tout-terrain ?", r: "Un chat-mion ! 🚙🐱" },
+  { q: "Quel est le comble pour un boulanger ?", r: "Rouler des mécaniques alors qu'il roule des pâtes ! 🥖" },
+  { q: "Que dit une assiette à une autre assiette ?", r: "« Ce soir, c'est moi qui régale ! » 🍽️" },
+  { q: "Pourquoi les poissons n'aiment-ils pas jouer au tennis ?", r: "Parce qu'ils ont peur du filet ! 🎾🐟" },
+  { q: "Comment s'appelle un boomerang qui ne revient pas ?", r: "Un bâton ! 🪃" },
+  { q: "Quel est l'animal le plus malin des bois ?", r: "Le renard, il a plus d'un tour dans son sac ! 🦊" },
+  { q: "Que fait une pile quand elle est fatiguée ?", r: "Elle se re-charge ! 🔋" },
+  { q: "Pourquoi les dentistes sont-ils calmes ?", r: "Parce qu'ils ont la dent dure mais le cœur tendre ! 🦷" },
+  { q: "Qu'est-ce qu'un crocodile qui répare les voitures ?", r: "Un croco-mécano ! 🐊🔧" }
   ],
   en: [
   { q: "Why did the teddy bear say no to dessert?", r: "Because it was already stuffed! 🧸" },
@@ -494,7 +508,17 @@ const BLAGUES_DEFAUT = {
   { q: "What did one wall say to the other wall?", r: "« I'll meet you at the corner! » 🧱" },
   { q: "Why don't eggs tell jokes?", r: "They'd crack each other up! 🥚" },
   { q: "What do you call a sleeping dinosaur snack?", r: "A dino-snore-us! 🦖" },
-  { q: "How do you make an octopus laugh?", r: "With ten-tickles! 🐙" }
+  { q: "How do you make an octopus laugh?", r: "With ten-tickles! 🐙" },
+  { q: "Why did the scarecrow win an award?", r: "Because he was outstanding in his field! 🌾" },
+  { q: "What do you call a fake noodle?", r: "An impasta! 🍝" },
+  { q: "Why can't a leopard hide?", r: "Because it's always spotted! 🐆" },
+  { q: "What do you call a boomerang that won't come back?", r: "A stick! 🪃" },
+  { q: "Why did the math book look sad?", r: "Because it had too many problems! 📘" },
+  { q: "What's orange and sounds like a parrot?", r: "A carrot! 🥕" },
+  { q: "What do you call a dog magician?", r: "A labracadabrador! 🐶✨" },
+  { q: "Why did the golfer bring two pairs of pants?", r: "In case he got a hole in one! ⛳" },
+  { q: "What did the ocean say to the beach?", r: "Nothing, it just waved! 🌊" },
+  { q: "Why are ghosts bad at lying?", r: "Because you can see right through them! 👻" }
   ],
   nl: [
   { q: "Wat is groen en springt door het bos?", r: "Een springspruitje! 🥦" },
@@ -507,7 +531,15 @@ const BLAGUES_DEFAUT = {
   { q: "Wat zegt het ene muurtje tegen het andere?", r: "« Tot in de hoek! » 🧱" },
   { q: "Wat is geel en kan niet zwemmen?", r: "Een graafmachine! 🚜" },
   { q: "Hoe noem je een toverhond?", r: "Een labra-goochel-dor! 🐶✨" },
-  { q: "Waarom was de computer ziek?", r: "Hij had een virus gevangen! 💻" }
+  { q: "Waarom was de computer ziek?", r: "Hij had een virus gevangen! 💻" },
+  { q: "Wat krijg je als je een schaap met een kangoeroe kruist?", r: "Een wollen springtrui! 🐑" },
+  { q: "Waarom nam de banaan zonnebrand mee?", r: "Omdat hij anders zou schillen! 🍌" },
+  { q: "Wat zegt een nul tegen een acht?", r: "« Mooie riem! » 8️⃣" },
+  { q: "Hoe noem je een beer zonder tanden?", r: "Een gummibeer! 🐻" },
+  { q: "Waarom kon het skelet niet naar het feest?", r: "Hij had niemand om mee te gaan! 💀" },
+  { q: "Wat is rood en slecht voor je tanden?", r: "Een baksteen! 🧱" },
+  { q: "Waarom lopen olifanten nooit op de computer?", r: "Ze zijn bang voor de muis! 🐘🖱️" },
+  { q: "Wat doet een spook op een feestje?", r: "Boe-geren! 👻" }
   ],
   de: [
   { q: "Was ist grün und klopft an die Tür?", r: "Ein Klopfsalat! 🥗" },
@@ -520,7 +552,14 @@ const BLAGUES_DEFAUT = {
   { q: "Warum war der Computer beim Arzt?", r: "Er hatte einen Virus! 💻" },
   { q: "Wie nennt man einen Zauberhund?", r: "Einen Labra-zauber-dor! 🐶✨" },
   { q: "Was ist gelb und kann nicht schwimmen?", r: "Ein Bagger! 🚜" },
-  { q: "Warum sind Bienen so gut frisiert?", r: "Weil sie immer einen Honig-Kamm haben! 🐝" }
+  { q: "Warum sind Bienen so gut frisiert?", r: "Weil sie immer einen Honig-Kamm haben! 🐝" },
+  { q: "Was sagt eine Null zur Acht?", r: "« Schöner Gürtel! » 8️⃣" },
+  { q: "Warum nahm die Banane Sonnencreme mit?", r: "Damit sie nicht schält! 🍌" },
+  { q: "Wie nennt man einen Bären ohne Zähne?", r: "Einen Gummibären! 🐻" },
+  { q: "Warum ging das Skelett nicht zur Party?", r: "Es hatte niemanden zum Mitgehen! 💀" },
+  { q: "Was ist orange und klingt wie ein Papagei?", r: "Eine Karotte! 🥕" },
+  { q: "Warum haben Elefanten Angst vor Computern?", r: "Wegen der Maus! 🐘🖱️" },
+  { q: "Was macht ein Pirat am Computer?", r: "Er drückt die Enter-Taste… arrr! 🏴‍☠️" }
   ]
 };
 // Compatibilité : l'ancienne constante pointe sur la liste française.
