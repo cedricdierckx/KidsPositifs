@@ -1457,10 +1457,15 @@ function blocEncoderSemaine() {
   });
   sec.appendChild(enfRow);
 
-  // Bascule de mode.
-  const modes = el("div", "enc-modes");
-  [["detaille", t("papier.mode_detaille")], ["express", t("papier.mode_express")]].forEach(([val, lab]) => {
-    const b = el("button", "rituel-chip" + (encodeMode === val ? " on" : ""), lab);
+  // Bascule de mode (contrôle segmenté : icône + titre + courte explication).
+  const modes = el("div", "enc-modes segmente");
+  [["detaille", "📋", t("papier.mode_detaille")], ["express", "⚡", t("papier.mode_express")]].forEach(([val, ico, lab]) => {
+    // Le libellé est de la forme « Titre (explication) » : on sépare les deux.
+    const m = /^(.*?)\s*\((.*)\)\s*$/.exec(lab);
+    const titre = m ? m[1] : lab;
+    const hint = m ? m[2] : "";
+    const b = el("button", "seg seg-mode" + (encodeMode === val ? " actif" : ""));
+    b.innerHTML = `<span class="seg-ico">${ico}</span><span class="seg-txt"><span class="seg-titre">${echapper(titre)}</span>${hint ? `<span class="seg-hint">${echapper(hint)}</span>` : ""}</span>`;
     b.onclick = () => { encodeMode = val; rendre(); };
     modes.appendChild(b);
   });
