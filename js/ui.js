@@ -913,6 +913,32 @@ function blocAdmin() {
         b.onclick();
       };
       ligne.appendChild(plan); ligne.appendChild(open);
+
+      // --- Catégorisation / modération du compte (par e-mail du propriétaire) ---
+      const email = f.owner_email || "";
+      const estEA = dansListeConfig("early_adopters", email);
+      const estBloq = dansListeConfig("comptes_bloques", email);
+      const actions2 = el("div", "adm-actions2");
+      const bEA = el("button", "mini-btn" + (estEA ? " ok" : ""), estEA ? t("admin.ea_oui") : t("admin.ea_non"));
+      bEA.title = t("admin.ea_aide");
+      bEA.disabled = !email;
+      bEA.onclick = async () => { await adminBasculerListe("early_adopters", email, !estEA); toast(t("admin.maj_ok"), "info"); b.onclick(); };
+      const bBloc = el("button", "mini-btn" + (estBloq ? " non" : ""), estBloq ? t("admin.debloquer") : t("admin.bloquer"));
+      bBloc.disabled = !email;
+      bBloc.onclick = async () => {
+        if (!estBloq && !confirm(t("admin.confirm_bloquer", { email }))) return;
+        await adminBasculerListe("comptes_bloques", email, !estBloq); toast(t("admin.maj_ok"), "info"); b.onclick();
+      };
+      const bDel = el("button", "mini-btn danger", "🗑️");
+      bDel.title = t("admin.supprimer");
+      bDel.onclick = async () => {
+        if (!confirm(t("admin.confirm_suppr_compte", { nom: f.name }))) return;
+        if (prompt(t("admin.confirm_suppr_nom", { nom: f.name })) !== f.name) { toast(t("admin.nom_incorrect"), "info"); return; }
+        if (await adminSupprimerFamille(f.id)) { toast(t("admin.supprime_ok", { nom: f.name }), "info"); b.onclick(); }
+      };
+      actions2.appendChild(bEA); actions2.appendChild(bBloc); actions2.appendChild(bDel);
+      ligne.appendChild(actions2);
+      if (estBloq) ligne.classList.add("bloque");
       liste.appendChild(ligne);
     });
   };

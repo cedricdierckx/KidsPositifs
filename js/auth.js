@@ -91,29 +91,75 @@ async function adminDefinirConfig(key, value) {
   return true;
 }
 
-// Early adopters : comptes actuels + créés avant le 1er août 2026. Eux seuls
-// ont accès au module de signalement de bug / suggestion.
+// Listes d'emails gérées par l'admin (stockées dans app_config, en JSON).
+function listeConfig(key) {
+  try {
+    const v = configApp && configApp[key];
+    if (Array.isArray(v)) return v;
+    return v ? JSON.parse(v) : [];
+  } catch { return []; }
+}
+function dansListeConfig(key, email) {
+  const e = (email || "").toLowerCase();
+  return !!e && listeConfig(key).map(x => String(x).toLowerCase()).includes(e);
+}
+// Early adopters : catégorisés par l'admin (app_config) OU comptes anciens.
+// Eux seuls ont le module de suggestion ; et on ne leur propose JAMAIS les dons.
 const EARLY_ADOPTER_LIMITE = "2026-08-01T00:00:00Z";
 function estEarlyAdopter() {
   if (typeof modeDemo !== "undefined" && modeDemo) return true; // démo : module visible
   const u = utilisateur;
+  if (u && u.email && dansListeConfig("early_adopters", u.email)) return true;
   if (!u || !u.created_at) return true;   // par prudence si la date est inconnue
   return new Date(u.created_at) < new Date(EARLY_ADOPTER_LIMITE);
 }
+// Compte bloqué par l'admin (refus d'accès).
+function compteBloque() {
+  return !!(utilisateur && dansListeConfig("comptes_bloques", utilisateur.email));
+}
 
-// Bouton de don : visible pour les admins et pour les familles créées il y a
-// plus d'une semaine (fenêtre glissante) — pas tout de suite après l'inscription.
+// Bouton de don : jamais pour les early adopters ; sinon admins + familles
+// créées il y a plus d'une semaine (fenêtre glissante).
 function donDisponible() {
   if (typeof modeDemo !== "undefined" && modeDemo) return true;   // aperçu en démo
+  if (estEarlyAdopter()) return false;                            // jamais aux early adopters
   if (estAdmin) return true;
   const cree = familleActive && familleActive.created_at;
   if (!cree) return false;
   return (Date.now() - new Date(cree).getTime()) > 7 * 24 * 60 * 60 * 1000;
 }
 
+// Actions admin : catégoriser (early adopter), bloquer, supprimer un compte.
+async function adminBasculerListe(key, email, ajouter) {
+  const e = (email || "").toLowerCase();
+  if (!e) return false;
+  const actuelle = listeConfig(key).map(x => String(x).toLowerCase());
+  const nouvelle = ajouter ? Array.from(new Set([...actuelle, e])) : actuelle.filter(x => x !== e);
+  const ok = await adminDefinirConfig(key, JSON.stringify(nouvelle));
+  if (ok) configApp[key] = JSON.stringify(nouvelle);
+  return ok;
+}
+async function adminSupprimerFamille(id) {
+  const { error } = await sb.rpc("admin_delete_family", { p_family: id });
+  if (error) { toast("Erreur : " + error.message, "info"); return false; }
+  return true;
+}
+
+
 /* ---------- Après connexion : invitation, familles ---------- */
 async function apresConnexion() {
   try { const { data } = await sb.rpc("is_admin"); estAdmin = !!data; } catch { estAdmin = false; }
+
+  // Compte bloqué par l'admin : on refuse l'accès (sauf admin).
+  if (!estAdmin) {
+    try { if (!configApp || !Object.keys(configApp).length) await chargerConfigApp(); } catch (e) { /* ignore */ }
+    if (compteBloque()) {
+      alert(t ? t("compte.bloque") : "Ce compte a été bloqué. Contacte hello@fami.team.");
+      try { await sb.auth.signOut(); } catch (e) { /* ignore */ }
+      location.reload();
+      return;
+    }
+  }
 
   const inv = localStorage.getItem(INVITE_KEY);
   if (inv) { localStorage.removeItem(INVITE_KEY); return ecranInvitation(inv); }

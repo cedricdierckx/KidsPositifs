@@ -1063,9 +1063,12 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .famille-item small{display:block; font-weight:600; color:var(--doux); font-size:12px}
 .invite-box{margin-top:10px; display:flex; flex-direction:column; gap:8px}
 .admin-liste{margin-top:10px}
-.admin-item{display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #eef2f7}
-.adm-info{flex:1; font-size:14px}
+.admin-item{display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:8px 0; border-bottom:1px solid #eef2f7}
+.admin-item.bloque{opacity:.6}
+.adm-info{flex:1 1 100%; font-size:14px}
 .adm-info small{display:block; color:var(--doux)}
+.adm-actions2{display:flex; flex-wrap:wrap; gap:6px; flex:1 1 100%}
+.mini-btn.non{background:#ffe3e3; color:#c0392b}
 
 /* ---- Sélecteur de sexe ---- */
 .segmente{display:flex; gap:8px; margin-top:4px}

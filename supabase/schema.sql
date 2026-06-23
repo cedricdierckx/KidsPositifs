@@ -333,6 +333,14 @@ begin
   update families set plan = coalesce(nullif(p_plan, ''), 'free') where id = p_family;
 end; $$;
 
+-- ---------- RPC admin : supprimer une famille (et ses données) ----------
+create or replace function public.admin_delete_family(p_family uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  delete from families where id = p_family;   -- cascade : membres, état, historique, invites…
+end; $$;
+
 -- =====================================================================
 -- Évolutions anticipées (additives, ré-exécutables) pour éviter de
 -- futures migrations manuelles.
@@ -434,6 +442,7 @@ grant execute on function public.admin_remove_waitlist(text)    to authenticated
 grant execute on function public.is_admin()                     to authenticated;
 grant execute on function public.admin_list_families()          to authenticated;
 grant execute on function public.admin_set_plan(uuid, text)     to authenticated;
+grant execute on function public.admin_delete_family(uuid)      to authenticated;
 grant execute on function public.submit_feedback(text, text, jsonb, uuid) to authenticated;
 grant execute on function public.admin_list_feedback()          to authenticated;
 grant execute on function public.delete_family(uuid)            to authenticated;
