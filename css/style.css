@@ -199,6 +199,8 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .compteur .pip.vide{opacity:.4}
 .compteur .pip-plus{font-size:15px; font-weight:800; color:var(--doux); align-self:center; margin-left:3px}
 .compteur span:not(.big){font-size:12px; color:var(--doux)}
+/* « +N » générique (soldes 💛/💧 et coûts des tout-petits, hors compteur) */
+.pip-plus{font-weight:800; color:var(--doux); margin-left:2px; white-space:nowrap}
 
 .eco-mini{font-size:26px; line-height:1.4}
 .eco-statut{font-weight:700; color:var(--planete)!important}

@@ -1238,7 +1238,9 @@ function repeterEmoji(n, emoji, cap) {
   cap = cap || 6;
   let s = "";
   for (let i = 0; i < Math.min(n, cap); i++) s += emoji;
-  if (n > cap) s += "✨";
+  // Au-delà du plafond : on montre « +N » (plus clair pour les petits qu'une
+  // image vague), au lieu de tronquer ou d'afficher une étoile.
+  if (n > cap) s += `<span class="pip-plus">+${n - cap}</span>`;
   return s || "·";
 }
 
@@ -2291,7 +2293,7 @@ function vueFamille(c) {
   const entete = el("section", "carte entete-cat");
   entete.style.setProperty("--c", cat.couleur);
   const soldeFam = estJeune(enf)
-    ? `<span class="solde-pips">${repeterEmoji(enf.coeurs, cat.monnaieEmoji, 12)}</span>`
+    ? `<span class="solde-pips">${repeterEmoji(enf.coeurs, cat.monnaieEmoji, 10)}</span>`
     : `${cat.monnaieEmoji} <strong>${enf.coeurs}</strong> ${t("money.coeurs")}`;
   entete.innerHTML = `<h1>${cat.emoji} ${t("cat.famille.nom")}</h1>
     <p class="solde">${soldeFam}</p>`;
@@ -2309,7 +2311,7 @@ function vuePlanete(c) {
   const entete = el("section", "carte entete-cat");
   entete.style.setProperty("--c", cat.couleur);
   const soldePla = estJeune(enf)
-    ? `<span class="solde-pips">${repeterEmoji(enf.gouttes, cat.monnaieEmoji, 12)}</span>`
+    ? `<span class="solde-pips">${repeterEmoji(enf.gouttes, cat.monnaieEmoji, 10)}</span>`
     : `${cat.monnaieEmoji} <strong>${enf.gouttes}</strong> ${t("money.gouttes")}`;
   entete.innerHTML = `<h1>${cat.emoji} ${t("cat.planete.nom")}</h1>
     <p>${t("cat.planete.desc")}</p>
@@ -2465,7 +2467,7 @@ function vueAvatar(c) {
 
   const apercu = el("section", "carte avatar-apercu");
   const soldeAv = jeune
-    ? `<span class="solde-pips">${repeterEmoji(enf.coeurs, "💛", 12)}</span>`
+    ? `<span class="solde-pips">${repeterEmoji(enf.coeurs, "💛", 10)}</span>`
     : `💛 <strong>${enf.coeurs}</strong> Cœurs à dépenser`;
   apercu.innerHTML = `<h1>🎨 Mon avatar</h1>
     <div class="avatar-grand">${renduAvatar(enf)}</div>
