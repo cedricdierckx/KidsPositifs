@@ -2531,8 +2531,9 @@ function blocTournantes() {
   bGo.onclick = () => {
     if (rotNouv.missions.length < 1) { toast(t("rot.err_mission"), "info"); return; }
     if (rotNouv.enfants.length < 1) { toast(t("rot.err_enfants"), "info"); return; }
-    ajouterRotation(rotNouv.missions, rotNouv.enfants, rotNouv.periode, debutSemaineLundi(aujourdHui()), rotNouv.joursOff);
+    const { missions, enfants, periode, joursOff } = rotNouv;
     rotNouv = null;
+    ajouterRotation(missions, enfants, periode, debutSemaineLundi(aujourdHui()), joursOff);
     toast(t("rot.creee"), "succes");
   };
   corps.appendChild(bGo);
