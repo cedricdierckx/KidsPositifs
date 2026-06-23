@@ -452,7 +452,25 @@ const BLAGUES = [
   { q: "Que dit un mouton à l'autre pour Noël ?", r: "« Joyeux Noël, je te souhaite plein de bêêêlles choses ! » 🐑" },
   { q: "Pourquoi l'ordinateur est-il allé chez le docteur ?", r: "Parce qu'il avait attrapé un virus ! 💻" },
   { q: "Quel est le gâteau préféré des momies ?", r: "Le roulé… égyptien ! 🎂" },
-  { q: "Que fait un canard dans un magasin ?", r: "Il dit : « Mettez ça sur mon compte… de plumes ! » 🦆" }
+  { q: "Que fait un canard dans un magasin ?", r: "Il dit : « Mettez ça sur mon compte… de plumes ! » 🦆" },
+  { q: "Pourquoi les girafes ont-elles un long cou ?", r: "Parce qu'elles ont les pieds qui sentent mauvais ! 🦒" },
+  { q: "Qu'est-ce qu'un crocodile qui surveille la pharmacie ?", r: "Un croco-dile de garde ! 🐊" },
+  { q: "Que dit une imprimante à une autre imprimante ?", r: "« Dis donc, c'est ta feuille ou c'est la mienne ? » 🖨️" },
+  { q: "Pourquoi les manchots ne prennent-ils jamais l'avion ?", r: "Parce qu'ils préfèrent voyager en costard-cravate ! 🐧" },
+  { q: "Quel est le comble pour un pâtissier ?", r: "Avoir du pain sur la planche ! 🥐" },
+  { q: "Que dit un oignon quand il se cogne ?", r: "« Aïe, j'ai mal à mes pelures ! » 🧅" },
+  { q: "Pourquoi les profs de maths adorent-ils les parcs ?", r: "Parce qu'il y a plein de bancs… euh, de problèmes à résoudre ! ➗" },
+  { q: "Quel est l'animal qui fait le plus de bruit en classe ?", r: "Le ouistiti, parce qu'il n'arrête pas de faire « cheese » ! 🐒" },
+  { q: "Que se passe-t-il quand deux yaourts se rencontrent ?", r: "Rien… ils restent nature ! 🥛" },
+  { q: "Pourquoi le citron a-t-il appelé les pompiers ?", r: "Parce qu'il était pressé ! 🍋" },
+  { q: "Que dit un haricot vert à un haricot rouge ?", r: "« T'as pris un coup de soleil ou quoi ? » 🫘" },
+  { q: "Comment range-t-on un éléphant dans un frigo ?", r: "On ouvre la porte, on met l'éléphant, et on referme ! 🐘" },
+  { q: "Et comment range-t-on une girafe dans le frigo ?", r: "On sort d'abord l'éléphant ! 🦒" },
+  { q: "Quel est le pays préféré des fantômes ?", r: "La Boo-livie ! 👻" },
+  { q: "Pourquoi les abeilles bourdonnent-elles ?", r: "Parce qu'elles ne connaissent pas les paroles ! 🐝" },
+  { q: "Que dit un escargot sur le dos d'une tortue ?", r: "« Youhou ! Ça déménage ! » 🐌" },
+  { q: "Quel est le dessert préféré des sorcières ?", r: "La tarte aux pommes… empoisonnées ! 🧙" },
+  { q: "Pourquoi le robot est-il fâché ?", r: "Parce qu'on lui a tapé sur le système ! 🤖" }
 ];
 
 /* ---- Catalogue des badges (pour l'affichage : gagnés + à débloquer) ----
