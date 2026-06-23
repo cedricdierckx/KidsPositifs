@@ -1139,6 +1139,8 @@ function donnerCarte(carteId, montant) {
     carte.debloqueeLe = aujourdHui();
     toast(t("toast.carte_debloquee", { emoji: carte.emoji, titre: trData("carte", carte.id, carte.titre) }), "succes");
     confettis();
+    // Prévient le parent par e-mail (best-effort, ne bloque pas le jeu).
+    if (typeof notifierCarteDebloquee === "function") notifierCarteDebloquee(carte);
   } else {
     toast(t("toast.carte_don", { montant, emoji: "💛" }), "succes");
   }

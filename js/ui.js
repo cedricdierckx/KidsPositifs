@@ -1140,6 +1140,31 @@ async function envoyerMailFn(payload) {
   }
 }
 
+// Notification e-mail automatique quand une carte surprise est débloquée.
+// Envoyée à l'adresse du compte (le parent) via la fonction commune send-mail.
+// Silencieuse : aucune erreur n'est remontée à l'enfant (envoi best-effort).
+async function notifierCarteDebloquee(carte) {
+  try {
+    if (typeof modeDemo !== "undefined" && modeDemo) return;     // pas d'envoi en démo
+    if (typeof sb === "undefined" || !sb) return;
+    const dest = (typeof utilisateur !== "undefined" && utilisateur && utilisateur.email) ? utilisateur.email : "";
+    if (!dest) return;
+    const titre = trData("carte", carte.id, carte.titre);
+    // Détail des contributions de chaque enfant (esprit d'équipe).
+    const lignes = Object.keys(carte.dons || {})
+      .map(id => {
+        const e = etat.enfants[id];
+        return (e && carte.dons[id] > 0) ? `• ${e.prenom} : ${carte.dons[id]} 💛` : null;
+      })
+      .filter(Boolean);
+    const detail = lignes.length ? ("\n\n" + t("mail.carte_contrib") + "\n" + lignes.join("\n")) : "";
+    const activite = carte.activite ? ("\n\n" + carte.activite) : "";
+    const sujet = t("mail.carte_sujet", { emoji: carte.emoji, titre });
+    const corps = t("mail.carte_corps", { titre, cout: carte.cout }) + activite + detail + "\n\n— FamiTeam 🌟";
+    await envoyerMailFn({ to: dest, subject: sujet, text: corps });
+  } catch (e) { /* envoi best-effort : on n'interrompt jamais le jeu */ }
+}
+
 // Affiche un lien d'invitation copiable.
 function montrerLienInvitation(conteneur, lien, note, mailto) {
   let box = conteneur.querySelector(".invite-box");
