@@ -1197,6 +1197,13 @@ main{max-width:680px; margin:0 auto; padding:14px}
   }
   .acc-col-a{position:sticky; top:90px}
 
+  /* Un peu plus d'air avant les titres de section (Missions Famille/Planète)
+     et avant la carte « Mes badges », comme sur mobile, pour aérer la
+     colonne de droite sur grand écran. */
+  .acc-col-b .titre-cat{margin-top:22px}
+  .acc-col-b .titre-cat:first-child{margin-top:0}
+  .badges-carte{margin-top:22px}
+
   /* Barre de navigation : pilule flottante centrée */
   .navbar{
     left:50%; right:auto; bottom:16px; transform:translateX(-50%);
