@@ -771,6 +771,60 @@ function majPastilleInvit() {
 }
 
 // Panneau d'administration : liste de toutes les familles.
+// Gestion des blagues par langue (admin) : afficher chaque liste, en ajouter
+// et en supprimer. Stockées dans app_config (« blagues_<lang> »), donc actives
+// pour toute l'app. Langue affichée mémorisée le temps de la session.
+let blgLangAdmin = "fr";
+function blocAdminBlagues() {
+  const sec = el("section", "carte");
+  sec.innerHTML = `<h2>🃏 ${t("admin.blg_titre")}</h2><p class="note">${t("admin.blg_note")}</p>`;
+
+  // Choix de la langue (onglets)
+  const onglets = el("div", "blg-langues");
+  Object.keys(BLAGUES_DEFAUT).forEach(lg => {
+    const b = el("button", "blg-lang-btn" + (blgLangAdmin === lg ? " on" : ""), (LANGUES[lg] || lg));
+    b.onclick = () => { blgLangAdmin = lg; rendre(); };
+    onglets.appendChild(b);
+  });
+  sec.appendChild(onglets);
+
+  const lang = BLAGUES_DEFAUT[blgLangAdmin] ? blgLangAdmin : "fr";
+  const liste = blaguesDe(lang);
+  sec.appendChild(el("p", "blg-compte", t("admin.blg_total", { n: liste.length })));
+
+  // Liste des blagues avec suppression
+  const ul = el("div", "blg-liste");
+  liste.forEach((b, i) => {
+    const item = el("div", "blg-item");
+    item.innerHTML = `<div class="blg-txt"><div class="blg-q">${echapper(b.q)}</div><div class="blg-r">${echapper(b.r)}</div></div>`;
+    const del = el("button", "mini-btn danger", "🗑️");
+    del.onclick = async () => {
+      if (!confirm(t("admin.blg_confirm_suppr"))) return;
+      if (await adminSupprimerBlague(lang, i)) { toast(t("admin.maj_ok"), "info"); rendre(); }
+    };
+    item.appendChild(del);
+    ul.appendChild(item);
+  });
+  sec.appendChild(ul);
+
+  // Ajout d'une blague
+  const form = el("div", "blg-form");
+  const inQ = el("input", "blg-input"); inQ.type = "text"; inQ.placeholder = t("admin.blg_q");
+  const inR = el("input", "blg-input"); inR.type = "text"; inR.placeholder = t("admin.blg_r");
+  const add = el("button", "gros-bouton planete", "➕ " + t("admin.blg_ajouter"));
+  add.onclick = async () => {
+    if (await adminAjouterBlague(lang, inQ.value, inR.value)) {
+      toast(t("admin.blg_ajoutee"), "succes");
+      rendre();
+    }
+  };
+  form.appendChild(inQ);
+  form.appendChild(inR);
+  form.appendChild(add);
+  sec.appendChild(form);
+  return sec;
+}
+
 // Tableau de bord « science » (admin) : centralise les paramètres fondés sur
 // la psychologie, la pédagogie et la neurologie. Ajustables par l'admin et un
 // comité d'experts ; enregistrés dans app_config (clé "science"), donc actifs
@@ -3464,6 +3518,7 @@ function vueReglages(c) {
   /* ===== ONGLET : Admin (réservé à l'administrateur) ===== */
   if (ongletParent === "admin" && typeof estAdmin !== "undefined" && estAdmin) {
     c.appendChild(blocAdmin());
+    c.appendChild(blocAdminBlagues());
     c.appendChild(blocDashboardScience());
   }
 

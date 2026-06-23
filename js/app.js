@@ -1376,18 +1376,33 @@ function messageVide(neutre) {
   return humourAleatoire("vide", MESSAGES_VIDES) || neutre;
 }
 // Blague du jour : stable sur la journée (index dérivé de la date locale).
+// Langue courante (repli sur "fr"), même hors navigateur (tests).
+function langueCourante() {
+  return (typeof langue !== "undefined" && BLAGUES_DEFAUT[langue]) ? langue : "fr";
+}
+// Liste effective des blagues d'une langue : surcharge admin (app_config
+// « blagues_<lang> ») si présente, sinon la liste par défaut.
+function blaguesDe(lang) {
+  lang = BLAGUES_DEFAUT[lang] ? lang : "fr";
+  try {
+    if (typeof configApp !== "undefined" && configApp && configApp["blagues_" + lang]) {
+      const v = configApp["blagues_" + lang];
+      const arr = typeof v === "string" ? JSON.parse(v) : v;
+      if (Array.isArray(arr)) return arr;
+    }
+  } catch (e) { /* repli défaut */ }
+  return BLAGUES_DEFAUT[lang] || [];
+}
+
 function blagueDuJour() {
-  if (!Array.isArray(BLAGUES) || !BLAGUES.length) return null;
+  const liste = blaguesDe(langueCourante());
+  if (!liste.length) return null;
   const cle = aujourdHui();
   let somme = 0;
   for (let i = 0; i < cle.length; i++) somme += cle.charCodeAt(i);
-  const idx = somme % BLAGUES.length;
-  const b = BLAGUES[idx];
-  return {
-    idx,
-    q: trData("blague_q", idx, b.q),
-    r: trData("blague_r", idx, b.r)
-  };
+  const idx = somme % liste.length;
+  const b = liste[idx];
+  return { idx, q: b.q, r: b.r };
 }
 
 // Avis sur une blague : "up" (j'aime) / "down" (bof) / null (pas d'avis).

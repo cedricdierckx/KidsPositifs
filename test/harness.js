@@ -121,6 +121,9 @@ function construireContexte() {
       verifierBadges, acheterOption, estDebloque, age, ageDepuis,
       // humour (touches bon enfant, désactivables)
       humourActif, messageVide, blagueDuJour, MESSAGES_VIDES, avisBlague, definirAvisBlague,
+      blaguesDe, langueCourante, BLAGUES_DEFAUT,
+      get langue() { return (typeof langue !== "undefined") ? langue : undefined; },
+      set langue(v) { langue = v; },
       // couche de données isolée (Phase D)
       Store,
       // données de référence

@@ -168,6 +168,25 @@ test("blague: l'avis (j'aime/bof) se pose, bascule et s'enlève au re-clic", () 
   assert.strictEqual(api.avisBlague(idx), null);
 });
 
+test("blagues: liste par langue + surcharge admin via configApp", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  // Chaque langue a sa propre liste par défaut, non vide.
+  ["fr", "en", "nl", "de"].forEach(lg => {
+    assert.ok(Array.isArray(api.BLAGUES_DEFAUT[lg]) && api.BLAGUES_DEFAUT[lg].length > 0);
+    assert.ok(api.blaguesDe(lg).length > 0);
+  });
+  // Surcharge admin : la liste effective suit configApp["blagues_<lang>"].
+  api.configApp = { blagues_fr: JSON.stringify([{ q: "Q?", r: "R!" }]) };
+  assert.strictEqual(api.blaguesDe("fr").length, 1);
+  assert.strictEqual(api.blaguesDe("fr")[0].q, "Q?");
+  // La blague du jour est tirée de la langue courante.
+  api.langue = "fr";
+  const b = api.blagueDuJour();
+  assert.strictEqual(b.q, "Q?");
+});
+
 /* ---------- Planification des missions ---------- */
 test("planification: weekend uniquement filtre les jours de semaine", () => {
   const { api } = construireContexte();

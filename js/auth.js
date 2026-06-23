@@ -145,6 +145,26 @@ async function adminSupprimerFamille(id) {
   return true;
 }
 
+// ---------- Blagues gérées par l'admin (par langue, app_config) ----------
+// On matérialise la liste complète (défaut + modifs) dans « blagues_<lang> »
+// dès la 1ʳᵉ modification ; tant qu'aucune modif, on garde la liste par défaut.
+async function adminAjouterBlague(lang, q, r) {
+  if (!BLAGUES_DEFAUT[lang]) return false;
+  q = (q || "").trim(); r = (r || "").trim();
+  if (!q || !r) { toast(t("admin.blg_vide"), "info"); return false; }
+  const liste = blaguesDe(lang).concat([{ q, r }]);
+  const ok = await adminDefinirConfig("blagues_" + lang, JSON.stringify(liste));
+  if (ok) configApp["blagues_" + lang] = JSON.stringify(liste);
+  return ok;
+}
+async function adminSupprimerBlague(lang, idx) {
+  if (!BLAGUES_DEFAUT[lang]) return false;
+  const liste = blaguesDe(lang).filter((_, i) => i !== idx);
+  const ok = await adminDefinirConfig("blagues_" + lang, JSON.stringify(liste));
+  if (ok) configApp["blagues_" + lang] = JSON.stringify(liste);
+  return ok;
+}
+
 
 /* ---------- Après connexion : invitation, familles ---------- */
 async function apresConnexion() {

@@ -426,7 +426,8 @@ const MESSAGES_VIDES = [
   "Pour l'instant c'est désert… même les fourmis sont parties 🐜",
   "Rien à voir ici… à part ce petit emoji 👀"
 ];
-const BLAGUES = [
+const BLAGUES_DEFAUT = {
+  fr: [
   { q: "Qu'est-ce qui est jaune et qui attend ?", r: "Jonathan ! 🍌" },
   { q: "Qu'est-ce qui est jaune et qui attend… aussi ?", r: "Jonathan le bananier ! 🍌" },
   { q: "Que dit un café qui arrive en retard au travail ?", r: "« Désolé, j'étais dans le pétrin… euh, dans la tasse ! » ☕" },
@@ -470,8 +471,60 @@ const BLAGUES = [
   { q: "Pourquoi les abeilles bourdonnent-elles ?", r: "Parce qu'elles ne connaissent pas les paroles ! 🐝" },
   { q: "Que dit un escargot sur le dos d'une tortue ?", r: "« Youhou ! Ça déménage ! » 🐌" },
   { q: "Quel est le dessert préféré des sorcières ?", r: "La tarte aux pommes… empoisonnées ! 🧙" },
-  { q: "Pourquoi le robot est-il fâché ?", r: "Parce qu'on lui a tapé sur le système ! 🤖" }
-];
+  { q: "Pourquoi le robot est-il fâché ?", r: "Parce qu'on lui a tapé sur le système ! 🤖" },
+  { q: "Comment appelle-t-on un chien magicien ?", r: "Un labra-cadabra-dor ! 🐶✨" },
+  { q: "Pourquoi les bananes ne sont-elles jamais seules ?", r: "Parce qu'elles vont toujours en régime ! 🍌" },
+  { q: "Que dit une fraise à une autre fraise ?", r: "« C'est de ta faute si on est dans le pétrin… euh, dans la confiture ! » 🍓" },
+  { q: "Quel est le comble pour un jardinier ?", r: "Raconter des salades ! 🥗" },
+  { q: "Pourquoi les poissons vivent-ils dans l'eau salée ?", r: "Parce que dans l'eau poivrée, ils éternuent ! 🐟" },
+  { q: "Que fait un escargot quand il est en colère ?", r: "Il bave de rage… mais doucement ! 🐌" },
+  { q: "Quel est le animal le plus fort en calcul ?", r: "Le pou, parce qu'il fait des additions sur la tête ! 🧮" },
+  { q: "Pourquoi le facteur a-t-il toujours chaud ?", r: "Parce qu'il distribue des lettres brûlantes ! ✉️" }
+  ],
+  en: [
+  { q: "Why did the teddy bear say no to dessert?", r: "Because it was already stuffed! 🧸" },
+  { q: "What do you call a dinosaur that is sleeping?", r: "A dino-snore! 🦕" },
+  { q: "Why can't your nose be 12 inches long?", r: "Because then it would be a foot! 👃" },
+  { q: "What do you call cheese that isn't yours?", r: "Nacho cheese! 🧀" },
+  { q: "Why did the cookie go to the doctor?", r: "Because it felt crummy! 🍪" },
+  { q: "What do you call a bear with no teeth?", r: "A gummy bear! 🐻" },
+  { q: "Why did the bicycle fall over?", r: "Because it was two-tired! 🚲" },
+  { q: "What do you call a fish wearing a bowtie?", r: "So-fish-ticated! 🐟" },
+  { q: "Why did the banana go to the party?", r: "Because it was a-peeling! 🍌" },
+  { q: "What did one wall say to the other wall?", r: "« I'll meet you at the corner! » 🧱" },
+  { q: "Why don't eggs tell jokes?", r: "They'd crack each other up! 🥚" },
+  { q: "What do you call a sleeping dinosaur snack?", r: "A dino-snore-us! 🦖" },
+  { q: "How do you make an octopus laugh?", r: "With ten-tickles! 🐙" }
+  ],
+  nl: [
+  { q: "Wat is groen en springt door het bos?", r: "Een springspruitje! 🥦" },
+  { q: "Waarom kan een fiets niet zelf staan?", r: "Omdat hij twee-moe is! 🚲" },
+  { q: "Wat zegt een slak op de rug van een schildpad?", r: "« Joehoe, wat gaat dat hard! » 🐌" },
+  { q: "Hoe noem je een berenklas?", r: "Een knuffel-klas! 🐻" },
+  { q: "Waarom zijn de visjes zo slim?", r: "Omdat ze in scholen zwemmen! 🐟" },
+  { q: "Wat doet een koe in het donker?", r: "Boe roepen! 🐄" },
+  { q: "Waarom huilt de ui?", r: "Omdat zijn vriendje gepeld werd! 🧅" },
+  { q: "Wat zegt het ene muurtje tegen het andere?", r: "« Tot in de hoek! » 🧱" },
+  { q: "Wat is geel en kan niet zwemmen?", r: "Een graafmachine! 🚜" },
+  { q: "Hoe noem je een toverhond?", r: "Een labra-goochel-dor! 🐶✨" },
+  { q: "Waarom was de computer ziek?", r: "Hij had een virus gevangen! 💻" }
+  ],
+  de: [
+  { q: "Was ist grün und klopft an die Tür?", r: "Ein Klopfsalat! 🥗" },
+  { q: "Warum kann ein Fahrrad nicht alleine stehen?", r: "Weil es zu müde ist! 🚲" },
+  { q: "Was sagt ein Wal zum anderen?", r: "« Schwimmst du oft hier vorbei? » 🐋" },
+  { q: "Wie nennt man einen schlafenden Dino?", r: "Ein Dino-schnarch! 🦕" },
+  { q: "Warum weint die Zwiebel?", r: "Weil ihr Freund geschält wurde! 🧅" },
+  { q: "Was macht eine Kuh im Dunkeln?", r: "Sie macht Muuuh! 🐄" },
+  { q: "Was sagt eine Wand zur anderen Wand?", r: "« Wir treffen uns an der Ecke! » 🧱" },
+  { q: "Warum war der Computer beim Arzt?", r: "Er hatte einen Virus! 💻" },
+  { q: "Wie nennt man einen Zauberhund?", r: "Einen Labra-zauber-dor! 🐶✨" },
+  { q: "Was ist gelb und kann nicht schwimmen?", r: "Ein Bagger! 🚜" },
+  { q: "Warum sind Bienen so gut frisiert?", r: "Weil sie immer einen Honig-Kamm haben! 🐝" }
+  ]
+};
+// Compatibilité : l'ancienne constante pointe sur la liste française.
+const BLAGUES = BLAGUES_DEFAUT.fr;
 
 /* ---- Catalogue des badges (pour l'affichage : gagnés + à débloquer) ----
  * Doit rester synchronisé avec les conditions d'attribution dans
