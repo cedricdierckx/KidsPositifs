@@ -427,14 +427,32 @@ const MESSAGES_VIDES = [
   "Rien à voir ici… à part ce petit emoji 👀"
 ];
 const BLAGUES = [
-  { q: "Quel est le comble pour un jardinier ?", r: "Raconter des salades ! 🥗" },
-  { q: "Que dit un escargot quand il croise une limace ?", r: "« Regarde, un nudiste ! » 🐌" },
-  { q: "Pourquoi les poissons détestent l'ordinateur ?", r: "Ils ont peur du Net ! 🐟" },
-  { q: "Quel animal ne dit jamais la vérité ?", r: "Le menteur… euh, le lézard, il bluffe ! 🦎" },
-  { q: "Que fait une fraise sur un cheval ?", r: "Tagada, tagada ! 🍓" },
-  { q: "Pourquoi le livre de maths est triste ?", r: "Il a trop de problèmes ! 📘" },
-  { q: "Quel est le fruit le plus rigolo ?", r: "La poire… elle est marrante ! 🍐" },
-  { q: "Que dit un mur à un autre mur ?", r: "« On se retrouve au coin ! » 🧱" }
+  { q: "Qu'est-ce qui est jaune et qui attend ?", r: "Jonathan ! 🍌" },
+  { q: "Qu'est-ce qui est jaune et qui attend… aussi ?", r: "Jonathan le bananier ! 🍌" },
+  { q: "Que dit un café qui arrive en retard au travail ?", r: "« Désolé, j'étais dans le pétrin… euh, dans la tasse ! » ☕" },
+  { q: "Pourquoi les plongeurs plongent-ils toujours en arrière ?", r: "Parce que sinon ils tombent dans le bateau ! 🤿" },
+  { q: "Quel est l'animal le plus heureux ?", r: "Le hibou, parce que sa femme est chouette ! 🦉" },
+  { q: "Que se disent deux chats amoureux ?", r: "« On est félins pour l'autre ! » 🐱" },
+  { q: "Comment appelle-t-on un chat tombé dans un pot de peinture le jour de Noël ?", r: "Un chat-mallow… non, un chat-peint de Noël ! 🎄🐈" },
+  { q: "Pourquoi les abeilles ont-elles du miel collant ?", r: "Parce qu'elles utilisent un peigne qui n'a pas de dents ! 🐝" },
+  { q: "Quel est le comble pour un électricien ?", r: "Ne pas être au courant ! ⚡" },
+  { q: "Que fait une vache quand elle ferme les yeux ?", r: "Du lait concentré ! 🐄" },
+  { q: "Pourquoi est-ce que les squelettes ne se battent jamais entre eux ?", r: "Ils n'ont pas le cœur à ça ! 💀" },
+  { q: "Quel est le sport préféré des insectes ?", r: "Le criquet ! 🦗" },
+  { q: "Que dit un zéro à un huit ?", r: "« Eh, jolie ceinture ! » 8️⃣" },
+  { q: "Pourquoi le ballon de foot est-il toujours fatigué ?", r: "Parce que tout le monde lui tape dessus ! ⚽" },
+  { q: "Quel est le fruit qui voyage le plus ?", r: "Le kiwi, parce qu'il a toujours son passeport… euh, son duvet ! 🥝" },
+  { q: "Que dit un crocodile qui vend des lunettes ?", r: "« Lacoste, c'est moins cher chez moi ! » 🐊" },
+  { q: "Pourquoi les poules ne sont-elles jamais perdues ?", r: "Parce qu'elles ont toujours leur GPS… le coq-pit ! 🐔" },
+  { q: "Comment s'appelle un dinosaure qui dort ?", r: "Un dino-ronfle ! 🦕" },
+  { q: "Quel est le comble pour un fantôme ?", r: "Avoir une peur bleue ! 👻" },
+  { q: "Que dit une maman tomate à son bébé tomate qui traîne ?", r: "« Allez, ketchup ! » 🍅" },
+  { q: "Pourquoi les pingouins portent-ils un nœud papillon ?", r: "Parce qu'ils sont toujours bien habillés en costard ! 🐧" },
+  { q: "Quel légume fait peur aux pirates ?", r: "Le chou-fleur… non, le navet à l'abordage ! 🥦" },
+  { q: "Que dit un mouton à l'autre pour Noël ?", r: "« Joyeux Noël, je te souhaite plein de bêêêlles choses ! » 🐑" },
+  { q: "Pourquoi l'ordinateur est-il allé chez le docteur ?", r: "Parce qu'il avait attrapé un virus ! 💻" },
+  { q: "Quel est le gâteau préféré des momies ?", r: "Le roulé… égyptien ! 🎂" },
+  { q: "Que fait un canard dans un magasin ?", r: "Il dit : « Mettez ça sur mon compte… de plumes ! » 🦆" }
 ];
 
 /* ---- Catalogue des badges (pour l'affichage : gagnés + à débloquer) ----

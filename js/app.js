@@ -1384,9 +1384,21 @@ function blagueDuJour() {
   const idx = somme % BLAGUES.length;
   const b = BLAGUES[idx];
   return {
+    idx,
     q: trData("blague_q", idx, b.q),
     r: trData("blague_r", idx, b.r)
   };
+}
+
+// Avis sur une blague : "up" (j'aime) / "down" (bof) / null (pas d'avis).
+function avisBlague(idx) {
+  return (etat.blaguesAvis && etat.blaguesAvis[idx]) || null;
+}
+function definirAvisBlague(idx, avis) {
+  if (!etat.blaguesAvis) etat.blaguesAvis = {};
+  if (etat.blaguesAvis[idx] === avis) delete etat.blaguesAvis[idx]; // re-clic = on enlève l'avis
+  else etat.blaguesAvis[idx] = avis;
+  sauver();
 }
 
 function feterGain(mission) {

@@ -120,7 +120,7 @@ function construireContexte() {
       // badges & divers
       verifierBadges, acheterOption, estDebloque, age, ageDepuis,
       // humour (touches bon enfant, désactivables)
-      humourActif, messageVide, blagueDuJour, MESSAGES_VIDES,
+      humourActif, messageVide, blagueDuJour, MESSAGES_VIDES, avisBlague, definirAvisBlague,
       // couche de données isolée (Phase D)
       Store,
       // données de référence

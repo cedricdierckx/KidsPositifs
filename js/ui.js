@@ -1645,13 +1645,31 @@ function blocBlagueDuJour() {
   const rTxt = el("p", "blague-r");
   rTxt.textContent = b.r;
   rTxt.style.display = "none";
+  // Avis sur la blague (j'aime / bof) — révélé en même temps que la réponse.
+  const avisRow = el("div", "blague-avis");
+  avisRow.style.display = "none";
+  const majAvis = () => {
+    const a = avisBlague(b.idx);
+    bUp.classList.toggle("on", a === "up");
+    bDown.classList.toggle("on", a === "down");
+  };
+  const bUp = el("button", "blague-avis-btn", "😂 " + t("blague.jaime"));
+  const bDown = el("button", "blague-avis-btn", "😐 " + t("blague.bof"));
+  bUp.onclick = () => { definirAvisBlague(b.idx, "up"); majAvis(); if (avisBlague(b.idx) === "up") confettis(); };
+  bDown.onclick = () => { definirAvisBlague(b.idx, "down"); majAvis(); };
+  avisRow.appendChild(bUp);
+  avisRow.appendChild(bDown);
+  majAvis();
+
   rep.onclick = () => {
     rTxt.style.display = "block";
     rep.style.display = "none";
+    avisRow.style.display = "flex";
     confettis();
   };
   sec.appendChild(rep);
   sec.appendChild(rTxt);
+  sec.appendChild(avisRow);
   return sec;
 }
 

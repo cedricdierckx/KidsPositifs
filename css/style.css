@@ -218,6 +218,11 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .blague-reveal:hover{transform:scale(1.05)}
 .blague-reveal:active{transform:scale(.94)}
 .blague-r{margin-top:8px; font-size:17px; font-weight:800; color:#c0468a; animation:glisseGauche .25s ease-out}
+.blague-avis{display:flex; gap:8px; margin-top:10px}
+.blague-avis-btn{flex:1; border:2px solid #f0d7e6; background:#fff; border-radius:12px;
+  padding:9px 10px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; transition:.15s}
+.blague-avis-btn:hover{transform:translateY(-1px)}
+.blague-avis-btn.on{border-color:#c0468a; background:#fff0f7; color:#c0468a}
 /* Réplique rigolote du bandeau dodo */
 .dodo-fun{display:block; font-style:italic; opacity:.9; margin-top:2px}
 

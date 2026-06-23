@@ -151,6 +151,21 @@ test("humour: désactivé, messageVide renvoie le texte neutre et blagueDuJour r
   assert.strictEqual(api.messageVide("NEUTRE"), "NEUTRE");
   const b = api.blagueDuJour();          // la blague existe indépendamment du réglage
   assert.ok(b && b.q && b.r);
+  assert.strictEqual(typeof b.idx, "number");
+});
+
+test("blague: l'avis (j'aime/bof) se pose, bascule et s'enlève au re-clic", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  const idx = api.blagueDuJour().idx;
+  assert.strictEqual(api.avisBlague(idx), null);
+  api.definirAvisBlague(idx, "up");
+  assert.strictEqual(api.avisBlague(idx), "up");
+  api.definirAvisBlague(idx, "down");   // change d'avis
+  assert.strictEqual(api.avisBlague(idx), "down");
+  api.definirAvisBlague(idx, "down");   // re-clic = on enlève
+  assert.strictEqual(api.avisBlague(idx), null);
 });
 
 /* ---------- Planification des missions ---------- */

@@ -2160,25 +2160,25 @@ Object.assign(I18N.de, { "par.prog.seuil_visuel": "Bildanzeige (ohne Zahlen) bis
 /* ---- Humour : réglage, blague du jour, répliques dodo ---- */
 Object.assign(I18N.fr, {
   "par.prog.humour": "Touches d'humour (blagues, taquineries) 😄",
-  "blague.titre": "🃏 La blague du jour", "blague.reveler": "Voir la réponse 👀",
+  "blague.titre": "🃏 La blague du jour", "blague.reveler": "Voir la réponse 👀", "blague.jaime": "J'adore !", "blague.bof": "Bof…",
   "dodo.fun_soir": "Psst… le marchand de sable chauffe les moteurs 😴",
   "dodo.fun_nuit": "Même les doudous sont déjà au lit 🧸"
 });
 Object.assign(I18N.en, {
   "par.prog.humour": "Humor touches (jokes, teasing) 😄",
-  "blague.titre": "🃏 Joke of the day", "blague.reveler": "See the answer 👀",
+  "blague.titre": "🃏 Joke of the day", "blague.reveler": "See the answer 👀", "blague.jaime": "Love it!", "blague.bof": "Meh…",
   "dodo.fun_soir": "Psst… the sandman is warming up 😴",
   "dodo.fun_nuit": "Even the teddies are already in bed 🧸"
 });
 Object.assign(I18N.nl, {
   "par.prog.humour": "Humortoetsen (grapjes, plagerijtjes) 😄",
-  "blague.titre": "🃏 Mop van de dag", "blague.reveler": "Bekijk het antwoord 👀",
+  "blague.titre": "🃏 Mop van de dag", "blague.reveler": "Bekijk het antwoord 👀", "blague.jaime": "Toppie!", "blague.bof": "Bwah…",
   "dodo.fun_soir": "Psst… het zandmannetje warmt op 😴",
   "dodo.fun_nuit": "Zelfs de knuffels liggen al in bed 🧸"
 });
 Object.assign(I18N.de, {
   "par.prog.humour": "Humor-Elemente (Witze, Neckereien) 😄",
-  "blague.titre": "🃏 Witz des Tages", "blague.reveler": "Antwort anzeigen 👀",
+  "blague.titre": "🃏 Witz des Tages", "blague.reveler": "Antwort anzeigen 👀", "blague.jaime": "Super!", "blague.bof": "Naja…",
   "dodo.fun_soir": "Psst… das Sandmännchen wärmt sich auf 😴",
   "dodo.fun_nuit": "Sogar die Kuscheltiere sind schon im Bett 🧸"
 });
