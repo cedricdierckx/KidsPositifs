@@ -2397,7 +2397,8 @@ Object.assign(I18N.fr, {
   "rot.valider": "✅ Créer la tournante", "rot.creee": "Tournante créée 🔁", "rot.confirm_suppr": "Supprimer cette tournante ?",
   "rot.tour": "Cette période : {prenom}", "rot.err_mission": "Choisis au moins une tâche.", "rot.err_enfants": "Choisis au moins un enfant.", "rot.jours_off": "Jours off (aucune tâche)", "rot.off": "Off :", "rot.off_auj": "Jour off aujourd\u2019hui",
   "rot.periode_aide": "\u00ab Chaque semaine \u00bb : un enfant garde la t\u00e2che toute la semaine, puis \u00e7a change. \u00ab Chaque jour \u00bb : \u00e7a change chaque jour.",
-  "rot.priorite_aide": "Important : d\u00e9sactive ces t\u00e2ches dans la liste individuelle de chaque enfant concern\u00e9 (Enfants \u2192 Missions), sinon elles continueront \u00e0 appara\u00eetre tous les jours en plus de la tournante."
+  "rot.priorite_aide": "Important : d\u00e9sactive ces t\u00e2ches dans la liste individuelle de chaque enfant concern\u00e9 (Enfants \u2192 Missions), sinon elles continueront \u00e0 appara\u00eetre tous les jours en plus de la tournante.",
+  "rot.demain_titre": "Demain, c'est ton tour pour :"
 });
 Object.assign(I18N.en, {
   "rot.titre": "🔁 Task rotations", "rot.note": "Tasks done in turns by the chosen children (e.g. the table, every other week).",
@@ -2406,7 +2407,8 @@ Object.assign(I18N.en, {
   "rot.valider": "✅ Create rotation", "rot.creee": "Rotation created 🔁", "rot.confirm_suppr": "Delete this rotation?",
   "rot.tour": "This period: {prenom}", "rot.err_mission": "Pick at least one task.", "rot.err_enfants": "Pick at least one child.", "rot.jours_off": "Off days (no task)", "rot.off": "Off:", "rot.off_auj": "Day off today",
   "rot.periode_aide": "\"Weekly\": one child keeps the task all week, then it changes. \"Daily\": it changes every day.",
-  "rot.priorite_aide": "Important: turn off these tasks in each involved child's individual list (Children → Tasks), otherwise they'll keep appearing every day on top of the rotation."
+  "rot.priorite_aide": "Important: turn off these tasks in each involved child's individual list (Children → Tasks), otherwise they'll keep appearing every day on top of the rotation.",
+  "rot.demain_titre": "Tomorrow it's your turn for:"
 });
 Object.assign(I18N.nl, {
   "rot.titre": "🔁 Taken bij toerbeurt", "rot.note": "Taken die om beurten door de gekozen kinderen worden gedaan (bv. de tafel, om de week).",
@@ -2415,7 +2417,8 @@ Object.assign(I18N.nl, {
   "rot.valider": "✅ Toerbeurt maken", "rot.creee": "Toerbeurt aangemaakt 🔁", "rot.confirm_suppr": "Deze toerbeurt verwijderen?",
   "rot.tour": "Deze periode: {prenom}", "rot.err_mission": "Kies minstens één taak.", "rot.err_enfants": "Kies minstens één kind.", "rot.jours_off": "Vrije dagen (geen taak)", "rot.off": "Vrij:", "rot.off_auj": "Vandaag vrij",
   "rot.periode_aide": "\"Wekelijks\": één kind doet de taak de hele week, daarna wisselt het. \"Dagelijks\": het wisselt elke dag.",
-  "rot.priorite_aide": "Belangrijk: schakel deze taken uit in de individuele lijst van elk betrokken kind (Kinderen → Taken), anders blijven ze elke dag verschijnen naast de toerbeurt."
+  "rot.priorite_aide": "Belangrijk: schakel deze taken uit in de individuele lijst van elk betrokken kind (Kinderen → Taken), anders blijven ze elke dag verschijnen naast de toerbeurt.",
+  "rot.demain_titre": "Morgen ben jij aan de beurt voor:"
 });
 Object.assign(I18N.de, {
   "rot.titre": "🔁 Aufgaben im Wechsel", "rot.note": "Aufgaben, die die gewählten Kinder abwechselnd erledigen (z. B. der Tisch, jede zweite Woche).",
@@ -2424,7 +2427,8 @@ Object.assign(I18N.de, {
   "rot.valider": "✅ Wechsel erstellen", "rot.creee": "Wechsel erstellt 🔁", "rot.confirm_suppr": "Diesen Wechsel löschen?",
   "rot.tour": "Dieser Zeitraum: {prenom}", "rot.err_mission": "Wähle mindestens eine Aufgabe.", "rot.err_enfants": "Wähle mindestens ein Kind.", "rot.jours_off": "Freie Tage (keine Aufgabe)", "rot.off": "Frei:", "rot.off_auj": "Heute frei",
   "rot.periode_aide": "„Wöchentlich“: Ein Kind übernimmt die Aufgabe die ganze Woche, dann wechselt es. „Täglich“: Es wechselt jeden Tag.",
-  "rot.priorite_aide": "Wichtig: Deaktiviere diese Aufgaben in der individuellen Liste jedes betroffenen Kindes (Kinder → Aufgaben), sonst erscheinen sie weiterhin täglich zusätzlich zum Wechsel."
+  "rot.priorite_aide": "Wichtig: Deaktiviere diese Aufgaben in der individuellen Liste jedes betroffenen Kindes (Kinder → Aufgaben), sonst erscheinen sie weiterhin täglich zusätzlich zum Wechsel.",
+  "rot.demain_titre": "Morgen bist du dran für:"
 });
 
 /* ---- Tutoriel d'accueil (visite guidée) ---- */

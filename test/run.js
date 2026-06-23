@@ -377,6 +377,20 @@ test("tournante : jours off + un seul enfant", () => {
   assert.ok(!api.missionsTournanteDuJour(eA, "2026-06-20").some(x => x.id === m.id));
 });
 
+test("tournante : la tâche de demain revient à l'enfant de garde du lendemain", () => {
+  const { api } = construireContexte();
+  api.familleId = "f"; api.lierEtat(api.etatVierge());
+  const ids = Object.keys(api.etat.enfants);
+  const eA = api.etat.enfants[ids[0]], eB = api.etat.enfants[ids[1]];
+  const m = api.MISSIONS.find(x => x.id === "table_mettre");
+  // Rotation quotidienne démarrant le 2026-06-15 : J0=A, J1=B, J2=A...
+  api.ajouterRotation([m.id], [eA.id, eB.id], "jour", "2026-06-15");
+  assert.strictEqual(api.demain("2026-06-15"), "2026-06-16");
+  // Le 15, c'est A de garde ; demain (le 16) ce sera B
+  assert.ok(api.missionsTournanteDuJour(eB, api.demain("2026-06-15")).some(x => x.id === m.id));
+  assert.ok(!api.missionsTournanteDuJour(eA, api.demain("2026-06-15")).some(x => x.id === m.id));
+});
+
 /* ---------- Sélection groupée ---------- */
 test("selectionGroupee applique le mode à tous les enfants", () => {
   const { api } = construireContexte();

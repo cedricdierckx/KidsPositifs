@@ -1246,6 +1246,10 @@ function vueAccueil(c) {
   colB.appendChild(titrePla);
   colB.appendChild(grilleMissions("planete"));
 
+  // Tournantes : annonce de la (des) tâche(s) de demain pour cet enfant.
+  const td = blocTournanteDemain(enf);
+  if (td) colB.appendChild(td);
+
   // Badges (seuls les badges réalisés sont affichés)
   colB.appendChild(blocBadges(enf));
 
@@ -1866,6 +1870,19 @@ function blocCartesSurprises(enf) {
   });
   sec.querySelectorAll(".cs-faite-btn").forEach(b =>
     b.onclick = () => marquerCarteFaite(b.dataset.faite));
+  return sec;
+}
+
+// Tournantes : prévient l'enfant de la (des) tâche(s) dont il sera de garde
+// DEMAIN, pour qu'il s'y prépare. Rien d'affiché s'il n'a pas de tour demain.
+function blocTournanteDemain(enf) {
+  const dem = demain();
+  const missions = missionsTournanteDuJour(enf, dem);
+  if (!missions.length) return null;
+  const sec = el("section", "carte tournante-demain");
+  const liste = missions.map(m => `${m.emoji} ${titreMission(m)}`).join(", ");
+  sec.innerHTML = `<div class="td-titre">🔁 ${t("rot.demain_titre")}</div>
+    <div class="td-taches">${liste}</div>`;
   return sec;
 }
 

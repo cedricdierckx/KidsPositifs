@@ -248,6 +248,9 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .rot-meta{font-size:12px;color:var(--doux)}
 .rot-item .mini-btn.danger{position:absolute;top:8px;right:8px}
 .rot-priorite-aide{background:#fff6e0;border:1px solid #f3d98a;border-radius:10px;padding:8px 10px;margin:8px 0}
+.tournante-demain{background:linear-gradient(180deg,#eef6ff,#e3f0ff);border:1px solid #c4ddf5}
+.tournante-demain .td-titre{font-weight:800;font-size:15px;color:#2c5a8c}
+.tournante-demain .td-taches{font-size:16px;font-weight:700;margin-top:4px}
 .rot-periode-aide{margin:4px 0 12px;font-size:13px}
 
 /* Sélection groupée (matrice missions × enfants) */

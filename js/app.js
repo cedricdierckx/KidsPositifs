@@ -515,6 +515,12 @@ function dateCle(d) {
 function aujourdHui() {
   return dateCle(new Date());
 }
+// Clé du lendemain d'un jour AAAA-MM-JJ (par défaut : demain).
+function demain(jour) {
+  const d = new Date((jour || aujourdHui()) + "T00:00:00");
+  d.setDate(d.getDate() + 1);
+  return dateCle(d);
+}
 // Âge en années révolues à partir d'une date AAAA-MM-JJ.
 function ageDepuis(dateNaissance) {
   const n = new Date(dateNaissance);
