@@ -1203,6 +1203,10 @@ function pointsVisuels(points, emoji, jeune) {
 function vueAccueil(c) {
   const enf = enfantActif();
 
+  // Mode révision (parent) : bannière de navigation par jour, EN HAUT, pour
+  // bien voir quel jour on est en train de modifier.
+  if (retroActif) c.appendChild(blocVerifJours(enf));
+
   // Disposition 2 colonnes sur grand écran, empilée sur mobile/tablette.
   const layout = el("div", "accueil-layout");
   const colA = el("div", "acc-col acc-col-a"); // profil + dodo (latéral sur desktop)
@@ -1249,8 +1253,8 @@ function vueAccueil(c) {
   const blg = blocBlagueDuJour();
   if (blg) colB.appendChild(blg);
 
-  // Section discrète (bas de page) : vérifier/compléter les jours précédents.
-  c.appendChild(blocVerifJours(enf));
+  // Section discrète (bas de page) : activer le mode révision (uniquement au repos).
+  if (!retroActif) c.appendChild(blocVerifJours(enf));
 }
 
 // État local (session) du mode « vérification des jours précédents ».
@@ -1270,6 +1274,8 @@ function activerModeRetro() {
   });
 }
 function quitterModeRetro() { retroActif = false; rendre(); }
+// Jour affiché sur l'accueil : le jour en révision si actif, sinon aujourd'hui.
+function jourAffiche() { return (retroActif && retroJour) ? retroJour : aujourdHui(); }
 function decalerJourRetro(delta) {
   const d = new Date((retroJour || aujourdHui()) + "T00:00:00");
   d.setDate(d.getDate() + delta);
@@ -1592,53 +1598,34 @@ function imprimerFeuilleSemaine(mode) {
   setTimeout(() => { try { w.focus(); w.print(); } catch (e) { /* impression annulée */ } }, 350);
 }
 
+// Au repos : un lien discret (PIN) pour activer le mode révision.
+// Actif : une bannière compacte (◀ jour ▶ + Terminer) placée en haut de
+// l'accueil ; les missions s'adaptent alors directement dans la grille standard.
 function blocVerifJours(enf) {
-  const sec = el("section", "carte verif-jours" + (retroActif ? " ouvert" : ""));
   if (!retroActif) {
+    const sec = el("section", "carte verif-jours");
     const b = el("button", "verif-activer", t("retro.activer"));
     b.onclick = () => activerModeRetro();
     sec.appendChild(b);
     return sec;
   }
-
   retroJour = retroJour || aujourdHui();
-  const estAujourdhui = retroJour >= aujourdHui();
-
-  const tete = el("div", "verif-tete");
-  tete.innerHTML = `<h2>${t("retro.titre", { prenom: echapper(enf.prenom) })}</h2>`;
-  const bQuit = el("button", "mini-btn", t("retro.quitter"));
-  bQuit.onclick = quitterModeRetro;
-  tete.appendChild(bQuit);
-  sec.appendChild(tete);
-
-  // Navigation entre les jours.
+  const estAuj = retroJour >= aujourdHui();
+  const sec = el("section", "carte revision-banniere");
+  sec.innerHTML = `<div class="rev-titre">✏️ ${t("retro.modif_jour")}</div>`;
   const nav = el("div", "verif-nav");
   const prev = el("button", "verif-fleche", "◀");
   prev.onclick = () => decalerJourRetro(-1);
-  const lbl = el("span", "verif-jour", libelleJour(retroJour) + (estAujourdhui ? " · " + t("retro.aujourdhui") : ""));
+  const lbl = el("span", "verif-jour rev-jour", libelleJour(retroJour) + (estAuj ? " · " + t("retro.aujourdhui") : ""));
   const next = el("button", "verif-fleche", "▶");
-  next.disabled = estAujourdhui;
+  next.disabled = estAuj;
   next.onclick = () => decalerJourRetro(1);
   nav.appendChild(prev); nav.appendChild(lbl); nav.appendChild(next);
   sec.appendChild(nav);
-
-  // Toutes les missions adaptées à l'âge, cochables pour le jour sélectionné.
-  const journalJour = enf.journal[retroJour] || {};
-  ["famille", "planete"].forEach(catId => {
-    const cat = CATEGORIES[catId];
-    const titre = el("h3", "verif-cat", catId === "famille" ? t("home.missions_famille") : t("home.missions_planete"));
-    sec.appendChild(titre);
-    toutesMissions().filter(m => m.cat === catId && m.speciale !== "coucher" && age(enf) >= m.ageMin).forEach(m => {
-      const n = journalJour[m.id] || 0;
-      const ligne = el("button", "verif-ligne" + (n ? " fait" : ""));
-      ligne.innerHTML = `<span class="vl-check">${n ? "✅" : "⬜"}</span>
-        <span class="vl-info">${m.emoji} ${titreMission(m)} <small>${cat.monnaieEmoji}${pointsMission(enf, m)}${n > 1 ? " ×" + n : ""}</small></span>`;
-      ligne.onclick = () => modifierHistorique(enf, retroJour, m, n > 0 ? -1 : +1);
-      sec.appendChild(ligne);
-    });
-  });
-
-  sec.appendChild(el("p", "note", t("retro.note")));
+  sec.appendChild(el("p", "note", t("retro.note2")));
+  const bq = el("button", "gros-bouton planete", t("retro.quitter"));
+  bq.onclick = quitterModeRetro;
+  sec.appendChild(bq);
   return sec;
 }
 
@@ -1764,7 +1751,7 @@ function bandeauDodo(enf) {
 function grilleMissions(catId) {
   const enf = enfantActif();
   const cat = CATEGORIES[catId];
-  const jour = aujourdHui();
+  const jour = jourAffiche();           // jour en révision (parent) ou aujourd'hui
   const journalJour = enf.journal[jour] || {};
   const liste = el("section", "missions");
   // La mission spéciale "coucher" est affichée à part (bandeau dodo).
@@ -1776,14 +1763,20 @@ function grilleMissions(catId) {
   const jeune = estJeune(enf);
   actives.forEach(m => {
     const fait = (journalJour[m.id] || 0) >= 1;
-    const enAttente = enf.enAttente.some(a => a.missionId === m.id && a.jour === jour);
-    const carte = el("button", "mission" + (fait ? " fait" : "") + (enAttente ? " attente" : ""));
+    const enAttente = !retroActif && enf.enAttente.some(a => a.missionId === m.id && a.jour === jour);
+    const carte = el("button", "mission" + (fait ? " fait" : "") + (enAttente ? " attente" : "") + (retroActif ? " revision" : ""));
     const recompense = pointsVisuels(pointsMission(enf, m), cat.monnaieEmoji, jeune);
     carte.innerHTML = `
       <span class="m-emoji">${m.emoji}</span>
       <span class="m-titre">${titreMission(m)}</span>
       <span class="m-points">${fait ? "✅" : (enAttente ? "⏳" : recompense)}</span>`;
-    carte.onclick = () => validerMission(m);
+    // En révision (parent) : un tap (dé)valide directement pour le jour affiché.
+    carte.onclick = () => {
+      if (retroActif) {
+        const n = (enf.journal[jour] || {})[m.id] || 0;
+        majSansSaut(() => modifierHistorique(enf, jour, m, n > 0 ? -1 : +1));
+      } else validerMission(m);
+    };
     liste.appendChild(carte);
   });
   return liste;

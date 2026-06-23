@@ -2190,7 +2190,8 @@ Object.assign(I18N.fr, {
   "retro.titre": "Vérifier les missions de {prenom}",
   "retro.quitter": "Terminer",
   "retro.aujourdhui": "aujourd'hui",
-  "retro.note": "Touche une mission pour la cocher ou la décocher pour le jour affiché. Les soldes sont ajustés automatiquement."
+  "retro.note": "Touche une mission pour la cocher ou la décocher pour le jour affiché. Les soldes sont ajustés automatiquement.",
+  "retro.modif_jour": "Tu modifies un jour précédent", "retro.note2": "Utilise ◀ ▶ pour changer de jour. Touche les missions ci-dessous pour les (dé)cocher pour ce jour.", "retro.terminer": "Terminer"
 });
 Object.assign(I18N.en, {
   "retro.activer": "🔧 Check previous days (parent)",
@@ -2198,7 +2199,8 @@ Object.assign(I18N.en, {
   "retro.titre": "Check {prenom}'s missions",
   "retro.quitter": "Done",
   "retro.aujourdhui": "today",
-  "retro.note": "Tap a mission to check or uncheck it for the selected day. Balances adjust automatically."
+  "retro.note": "Tap a mission to check or uncheck it for the selected day. Balances adjust automatically.",
+  "retro.modif_jour": "You are editing a previous day", "retro.note2": "Use ◀ ▶ to change day. Tap the missions below to (un)check them for that day.", "retro.terminer": "Done"
 });
 Object.assign(I18N.nl, {
   "retro.activer": "🔧 Vorige dagen controleren (ouder)",
@@ -2206,7 +2208,8 @@ Object.assign(I18N.nl, {
   "retro.titre": "Opdrachten van {prenom} controleren",
   "retro.quitter": "Klaar",
   "retro.aujourdhui": "vandaag",
-  "retro.note": "Tik op een opdracht om ze aan of uit te vinken voor de gekozen dag. Saldo's worden automatisch aangepast."
+  "retro.note": "Tik op een opdracht om ze aan of uit te vinken voor de gekozen dag. Saldo's worden automatisch aangepast.",
+  "retro.modif_jour": "Je bewerkt een vorige dag", "retro.note2": "Gebruik ◀ ▶ om van dag te wisselen. Tik op de opdrachten hieronder om ze voor die dag aan/uit te vinken.", "retro.terminer": "Klaar"
 });
 Object.assign(I18N.de, {
   "retro.activer": "🔧 Frühere Tage prüfen (Eltern)",
@@ -2214,7 +2217,8 @@ Object.assign(I18N.de, {
   "retro.titre": "Aufgaben von {prenom} prüfen",
   "retro.quitter": "Fertig",
   "retro.aujourdhui": "heute",
-  "retro.note": "Tippe auf eine Aufgabe, um sie für den gewählten Tag an- oder abzuhaken. Guthaben wird automatisch angepasst."
+  "retro.note": "Tippe auf eine Aufgabe, um sie für den gewählten Tag an- oder abzuhaken. Guthaben wird automatisch angepasst.",
+  "retro.modif_jour": "Du bearbeitest einen früheren Tag", "retro.note2": "Mit ◀ ▶ den Tag wechseln. Tippe unten auf die Aufgaben, um sie für diesen Tag an-/abzuhaken.", "retro.terminer": "Fertig"
 });
 
 /* ---- Planification des missions (jours / dates / enfants) ---- */

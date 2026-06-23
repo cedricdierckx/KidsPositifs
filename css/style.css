@@ -352,6 +352,15 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .enf-chip.on{background:linear-gradient(135deg,#ffe1a8,#ffc97a); border-color:#f6a623; color:#7a4e10}
 .planif-aide{margin-top:8px}
 
+/* Mode révision : bannière de navigation par jour (en haut de l'accueil) */
+.revision-banniere{background:linear-gradient(135deg,#fff4e0,#ffe6ef); border:2px dashed #f6a623; text-align:center}
+.rev-titre{font-weight:800; font-size:16px; color:#27384a; margin-bottom:6px}
+.rev-jour{font-size:16px; text-transform:capitalize}
+.revision-banniere .verif-nav{margin:6px 0 4px}
+.revision-banniere .gros-bouton{width:100%; margin-top:6px}
+/* Tuiles de mission en mode révision : on signale qu'on édite un jour passé */
+.mission.revision{outline:2px dashed #f6a623; outline-offset:-2px}
+
 /* Section discrète « vérifier les jours précédents » (bas d'accueil) */
 .verif-jours{margin-top:18px}
 .verif-jours:not(.ouvert){background:transparent; box-shadow:none; padding:4px; text-align:center}
