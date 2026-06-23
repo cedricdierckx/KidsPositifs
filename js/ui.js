@@ -2467,6 +2467,7 @@ function blocTournantes() {
   // --- Création ---
   if (!rotNouv) rotNouv = { missions: [], enfants: [], periode: "semaine", joursOff: [] };
   const { details, corps } = blocPliable(`➕ ${t("rot.creer")}`, false, "rot-creer");
+  corps.appendChild(el("p", "note rot-priorite-aide", `⚠️ ${t("rot.priorite_aide")}`));
 
   // Missions (cases à cocher, par catégorie)
   corps.appendChild(el("p", "sous-titre", t("rot.choix_missions")));
@@ -2502,13 +2503,14 @@ function blocTournantes() {
 
   // Période
   corps.appendChild(el("p", "sous-titre", t("rot.periode")));
-  const perRow = el("div", "enc-modes");
-  [["semaine", t("rot.par_semaine")], ["jour", t("rot.par_jour")]].forEach(([val, lab]) => {
-    const b = el("button", "rituel-chip" + (rotNouv.periode === val ? " on" : ""), lab);
+  const perRow = el("div", "segmente");
+  [["semaine", "🗓️ " + t("rot.par_semaine")], ["jour", "☀️ " + t("rot.par_jour")]].forEach(([val, lab]) => {
+    const b = el("button", "seg" + (rotNouv.periode === val ? " actif" : ""), lab);
     b.onclick = () => { rotNouv.periode = val; rendre(); };
     perRow.appendChild(b);
   });
   corps.appendChild(perRow);
+  corps.appendChild(el("p", "note rot-periode-aide", t("rot.periode_aide")));
 
   // Jours off (aucune tâche ce jour-là, ex. le week-end)
   corps.appendChild(el("p", "sous-titre", t("rot.jours_off")));
