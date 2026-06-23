@@ -1171,11 +1171,11 @@ function rendreSelecteur() {
 // (qui ne lisent pas encore les chiffres). Plafonné pour rester lisible.
 function compteurVisuel(emoji, n, jeune) {
   if (!jeune) return `<span class="big">${emoji} ${n}</span>`;
-  const CAP = 12;
+  const CAP = 10;
   if (!n) return `<span class="pips"><span class="pip vide">·</span></span>`;
   let pips = "";
   for (let i = 0; i < Math.min(n, CAP); i++) pips += `<span class="pip">${emoji}</span>`;
-  if (n > CAP) pips += `<span class="pip-plus">✨</span>`;
+  if (n > CAP) pips += `<span class="pip-plus">+${n - CAP}</span>`;
   return `<span class="pips" title="${n}">${pips}</span>`;
 }
 

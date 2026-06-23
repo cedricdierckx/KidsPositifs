@@ -197,7 +197,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .compteur .pips{display:flex; flex-wrap:wrap; justify-content:center; gap:1px; max-width:150px; line-height:1.1}
 .compteur .pip{font-size:18px}
 .compteur .pip.vide{opacity:.4}
-.compteur .pip-plus{font-size:16px; align-self:center}
+.compteur .pip-plus{font-size:15px; font-weight:800; color:var(--doux); align-self:center; margin-left:3px}
 .compteur span:not(.big){font-size:12px; color:var(--doux)}
 
 .eco-mini{font-size:26px; line-height:1.4}
@@ -1188,7 +1188,8 @@ main{max-width:680px; margin:0 auto; padding:14px}
   .topbar .logo{grid-column:2; text-align:center}
   /* On réserve de la place à droite pour la pastille minuteur (absolue), afin
      qu'elle ne recouvre pas le dernier enfant du sélecteur. */
-  .topbar .selecteur{grid-column:3; justify-content:flex-end; padding-right:104px}
+  .topbar .selecteur{grid-column:3; justify-content:flex-end; gap:12px; padding-right:104px}
+  .topbar .pastille{padding:8px 14px; min-width:72px}
   .pastille-inviter{width:40px; height:40px; font-size:21px}
 
   /* Accueil sur 2 colonnes : profil/dodo à gauche, le reste à droite */
