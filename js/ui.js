@@ -757,8 +757,7 @@ function majPastilleInvit() {
   if (typeof modeDemo !== "undefined" && modeDemo) { badge.style.display = "none"; return; }
   const illimiteInv = (typeof INVITATIONS_ILLIMITEES !== "undefined" && INVITATIONS_ILLIMITEES) || (typeof estAdmin !== "undefined" && estAdmin);
   if (illimiteInv) {
-    badge.textContent = (typeof estAdmin !== "undefined" && estAdmin) ? "👑" : "∞";
-    badge.style.display = "flex";
+    badge.style.display = "none";          // illimité : pas de pastille de quota
     pInv.classList.add("a-des-invit");
     return;
   }
