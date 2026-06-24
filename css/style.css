@@ -1110,6 +1110,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .seg{flex:1; padding:12px; border:2px solid #e3edf5; background:#fff; border-radius:12px;
   font-size:15px; font-weight:700; cursor:pointer; font-family:inherit}
 .seg.actif{border-color:var(--c,#39c0a0); background:#f1faf6}
+.enc-nav-semaine{margin:6px 0 12px}
 /* Contrôle segmenté riche (Détaillé / Express de la semaine papier) */
 .enc-modes.segmente{margin:8px 0 12px}
 .seg-mode{display:flex; align-items:center; gap:10px; text-align:left; padding:11px 12px; transition:.15s}

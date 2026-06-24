@@ -1524,6 +1524,18 @@ function blocEncoderSemaine() {
   }
 
   // -- Mode détaillé : grille missions × 7 jours + comportement --
+  // Navigation entre semaines (◀ / libellé / ▶) : permet de remplir la feuille
+  // d'une semaine précédente (ou de préparer une semaine à venir).
+  const navS = el("div", "verif-nav enc-nav-semaine");
+  const prevS = el("button", "verif-fleche", "◀");
+  prevS.onclick = () => { semainePapierDebut = decalerSemaine(semainePapierDebut || debutSemaine(aujourdHui()), -7); rendre(); };
+  const estSemaineCourante = (semainePapierDebut || debutSemaine(aujourdHui())) >= debutSemaine(aujourdHui());
+  const lblS = el("span", "verif-jour", libelleSemaine(jours[0], jours[6]) + (estSemaineCourante ? " · " + t("papier.semaine_actuelle") : ""));
+  const nextS = el("button", "verif-fleche", "▶");
+  nextS.onclick = () => { semainePapierDebut = decalerSemaine(semainePapierDebut || debutSemaine(aujourdHui()), 7); rendre(); };
+  navS.appendChild(prevS); navS.appendChild(lblS); navS.appendChild(nextS);
+  sec.appendChild(navS);
+
   const scroll = el("div", "enc-scroll");
   const grille = el("div", "enc-grille");
   // En-tête (jours).

@@ -1319,7 +1319,7 @@ Object.assign(I18N.de, { "grp.quotidien": "📋 Täglich", "grp.papier": "📄 P
 Object.assign(I18N.fr, {
   "papier.titre": "📄 Suivi papier de la semaine",
   "papier.intro": "Pour limiter le temps d'écran : suivez les missions sur papier toute la semaine, puis encodez-les ici une seule fois. L'app sert de mémoire et de statistiques.",
-  "papier.format": "Choisis la mise en page à imprimer :",
+  "papier.format": "Choisis la mise en page à imprimer :", "papier.semaine_actuelle": "semaine en cours",
   "papier.imprimer_jours": "🖨️ Imprimer — 7 cases par jour",
   "papier.imprimer_total": "🖨️ Imprimer — 1 total par semaine",
   "papier.encodage_bientot": "💡 L'encodage de la feuille dans l'app arrive très bientôt.",
@@ -1340,7 +1340,7 @@ Object.assign(I18N.fr, {
 Object.assign(I18N.en, {
   "papier.titre": "📄 Paper tracking for the week",
   "papier.intro": "To limit screen time: track missions on paper all week, then enter them here just once. The app acts as memory and statistics.",
-  "papier.format": "Choose the layout to print:",
+  "papier.format": "Choose the layout to print:", "papier.semaine_actuelle": "current week",
   "papier.imprimer_jours": "🖨️ Print — 7 boxes per day",
   "papier.imprimer_total": "🖨️ Print — 1 weekly total",
   "papier.encodage_bientot": "💡 Entering the sheet into the app is coming very soon.",
@@ -1361,7 +1361,7 @@ Object.assign(I18N.en, {
 Object.assign(I18N.nl, {
   "papier.titre": "📄 Papieren weekoverzicht",
   "papier.intro": "Om schermtijd te beperken: volg de opdrachten de hele week op papier en voer ze hier één keer in. De app dient als geheugen en statistiek.",
-  "papier.format": "Kies de af te drukken lay-out:",
+  "papier.format": "Kies de af te drukken lay-out:", "papier.semaine_actuelle": "huidige week",
   "papier.imprimer_jours": "🖨️ Afdrukken — 7 vakjes per dag",
   "papier.imprimer_total": "🖨️ Afdrukken — 1 weektotaal",
   "papier.encodage_bientot": "💡 Het invoeren van het blad in de app komt zeer binnenkort.",
@@ -1382,7 +1382,7 @@ Object.assign(I18N.nl, {
 Object.assign(I18N.de, {
   "papier.titre": "📄 Papier-Wochenübersicht",
   "papier.intro": "Um Bildschirmzeit zu begrenzen: Verfolge die Aufgaben die ganze Woche auf Papier und gib sie hier nur einmal ein. Die App dient als Gedächtnis und Statistik.",
-  "papier.format": "Wähle das zu druckende Layout:",
+  "papier.format": "Wähle das zu druckende Layout:", "papier.semaine_actuelle": "aktuelle Woche",
   "papier.imprimer_jours": "🖨️ Drucken — 7 Kästchen pro Tag",
   "papier.imprimer_total": "🖨️ Drucken — 1 Wochensumme",
   "papier.encodage_bientot": "💡 Die Eingabe des Blatts in die App kommt sehr bald.",
