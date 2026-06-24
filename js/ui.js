@@ -155,9 +155,10 @@ function modaleParrainage() {
 
   const zone = ov.querySelector("#pm-zone");
   const bCreer = ov.querySelector("#pm-creer");
+  const illimite = (typeof INVITATIONS_ILLIMITEES !== "undefined" && INVITATIONS_ILLIMITEES) || (typeof estAdmin !== "undefined" && estAdmin);
   const majQuota = () => parrainageRestant().then(n => {
     const q = ov.querySelector("#pm-quota");
-    if (typeof estAdmin !== "undefined" && estAdmin) { q.innerHTML = t("parr.illimite"); bCreer.disabled = false; }
+    if (illimite) { q.innerHTML = t("parr.illimite"); bCreer.disabled = false; }
     else { q.innerHTML = t("parr.restant", { n }); bCreer.disabled = n <= 0; }
   });
   majQuota();
@@ -754,8 +755,10 @@ function majPastilleInvit() {
   const badge = document.getElementById("pastille-badge");
   if (!pInv || !badge) return;
   if (typeof modeDemo !== "undefined" && modeDemo) { badge.style.display = "none"; return; }
-  if (typeof estAdmin !== "undefined" && estAdmin) {
-    badge.textContent = "👑"; badge.style.display = "flex";
+  const illimiteInv = (typeof INVITATIONS_ILLIMITEES !== "undefined" && INVITATIONS_ILLIMITEES) || (typeof estAdmin !== "undefined" && estAdmin);
+  if (illimiteInv) {
+    badge.textContent = (typeof estAdmin !== "undefined" && estAdmin) ? "👑" : "∞";
+    badge.style.display = "flex";
     pInv.classList.add("a-des-invit");
     return;
   }
@@ -3507,9 +3510,10 @@ function vueReglages(c) {
   par.appendChild(bPar);
   c.appendChild(par);
   // Affiche le quota + reflète le nombre restant dans le bouton lui-même.
+  const illimitePar = (typeof INVITATIONS_ILLIMITEES !== "undefined" && INVITATIONS_ILLIMITEES) || estAdmin;
   const majQuotaPar = (n) => {
     const q = par.querySelector("#par-quota");
-    if (estAdmin) {
+    if (illimitePar) {
       q.innerHTML = t("parr.illimite"); q.className = "parr-quota ok";
       bPar.disabled = false; bPar.textContent = t("parr.creer");
     } else {

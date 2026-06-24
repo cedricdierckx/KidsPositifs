@@ -23,9 +23,12 @@ const INVITE_KEY = "kp_pending_invite";
 const PARRAIN_KEY = "kp_pending_parrain";   // parrainage : créer SA propre famille
 
 // Interrupteur global des inscriptions :
-//   false = sur invitation/parrainage uniquement (+ liste d'attente)  ← provisoire
+//   false = sur invitation/parrainage uniquement (+ liste d'attente)
 //   true  = inscriptions ouvertes à tous
-const INSCRIPTIONS_OUVERTES = false;
+const INSCRIPTIONS_OUVERTES = true;
+
+// Invitations/parrainages : plus aucune limite de nombre (true = illimité).
+const INVITATIONS_ILLIMITEES = true;
 
 document.addEventListener("DOMContentLoaded", demarrer);
 
@@ -322,7 +325,7 @@ async function creerParrainage() {
   return location.origin + location.pathname + "?parrain=" + data;
 }
 async function parrainageRestant() {
-  if (estAdmin) return 999;
+  if (INVITATIONS_ILLIMITEES || estAdmin) return 999;   // illimité
   const { data, error } = await sb.rpc("referral_quota", { p_family: familleId });
   return error ? 0 : (data || 0);
 }

@@ -221,28 +221,21 @@ create policy "members read referrals" on public.referrals
   for select using (is_family_member(family_id) or is_admin());
 
 -- Quota hebdomadaire restant (3 / semaine ; illimité pour les admins).
+-- Invitations/parrainages illimités : plus aucune limite de nombre.
 create or replace function public.referral_quota(p_family uuid)
 returns integer language plpgsql security definer set search_path = public as $$
-declare utilises integer;
 begin
   if is_admin() then return 999; end if;
   if not is_family_member(p_family) then raise exception 'Accès refusé'; end if;
-  select count(*) into utilises from referrals
-    where family_id = p_family and created_at > now() - interval '7 days';
-  return greatest(0, 3 - utilises);
+  return 999;   -- illimité
 end; $$;
 
--- Crée un lien de parrainage (respecte le quota, sauf admin).
+-- Crée un lien de parrainage (illimité : aucun quota).
 create or replace function public.create_referral(p_family uuid)
 returns uuid language plpgsql security definer set search_path = public as $$
-declare t uuid; utilises integer;
+declare t uuid;
 begin
   if not is_family_member(p_family) and not is_admin() then raise exception 'Accès refusé'; end if;
-  if not is_admin() then
-    select count(*) into utilises from referrals
-      where family_id = p_family and created_at > now() - interval '7 days';
-    if utilises >= 3 then raise exception 'Quota atteint : 3 invitations par semaine.'; end if;
-  end if;
   insert into referrals(family_id, created_by) values (p_family, auth.uid()) returning token into t;
   return t;
 end; $$;
