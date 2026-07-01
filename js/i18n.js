@@ -876,7 +876,21 @@ Object.assign(I18N.en, {
   "encour.4": "You take care of others, that's precious! 🤗",
   "encour.5": "The planet says thank you! 🌍",
   "encour.6": "Little by little, you're growing up! 🚀",
-  "encour.7": "Your heart is full of kindness! 💖"
+  "encour.7": "Your heart is full of kindness! 💖",
+  "compliment_serie.0": "{prenom} has kept up « {mission} » {n} days in a row — what wonderful consistency! 🌟",
+  "compliment_serie.1": "For {n} days now, {prenom} never forgets « {mission} ». A real habit is forming, well done to them! 💪",
+  "compliment_serie.2": "{prenom} has stuck with « {mission} » for {n} days. That's exactly how good habits are born! 🌱",
+  "compliment_serie.3": "{n} days in a row for « {mission} »: tell {prenom} you noticed the effort, it means a lot! 💛",
+  "compliment_serie.4": "{prenom}'s perseverance on « {mission} » ({n} days in a row) deserves to be recognized today! 👏",
+  "compliment_progres.0": "{prenom} is really improving on « {mission} »: {semaine} times this week versus {avant} last week. The effort is paying off! 🚀",
+  "compliment_progres.1": "Great progress from {prenom} with « {mission} »: from {avant} to {semaine} times in one week. A kind word will make all the difference! 🌈",
+  "compliment_progres.2": "{prenom} is improving day by day on « {mission} ». Show them you notice the progress — it's the best motivator! 🔑",
+  "compliment_regularite.0": "{prenom} was active {n} days this week. Take a moment to praise them, even for the small things! 🤗",
+  "compliment_regularite.1": "This week, {prenom} showed up {n} out of {total} days. It's the perfect time to value their consistency, not just the results! 💫",
+  "compliment_regularite.2": "{prenom} is moving at their own pace, {n} active days this week. A simple “I'm proud of you” can change everything today! 💖",
+  "compliment_bienvenue.0": "{prenom} is still discovering FamiTeam: every small step deserves to be noticed. A kind word today can start a great habit! 🌱",
+  "compliment_bienvenue.1": "No streak to highlight yet for {prenom}, but it's the perfect moment to encourage them with a sincere compliment! 💛",
+  "compliment_bienvenue.2": "{prenom} is starting their journey. Praise the effort rather than the result: that's what builds self-confidence! 🌟"
 });
 
 Object.assign(I18N.nl, {
@@ -967,7 +981,21 @@ Object.assign(I18N.nl, {
   "encour.4": "Je zorgt voor anderen, dat is kostbaar! 🤗",
   "encour.5": "De planeet zegt dankjewel! 🌍",
   "encour.6": "Stap voor stap word je groot! 🚀",
-  "encour.7": "Je hart is vol vriendelijkheid! 💖"
+  "encour.7": "Je hart is vol vriendelijkheid! 💖",
+  "compliment_serie.0": "{prenom} doet « {mission} » al {n} dagen na elkaar — wat een mooie regelmaat! 🌟",
+  "compliment_serie.1": "{prenom} vergeet « {mission} » al {n} dagen niet meer. Er groeit een echte gewoonte, goed gedaan! 💪",
+  "compliment_serie.2": "{prenom} blijft trouw aan « {mission} », al {n} dagen. Zo ontstaan precies goede gewoontes! 🌱",
+  "compliment_serie.3": "{n} dagen op rij voor « {mission} »: zeg tegen {prenom} dat je dit hebt opgemerkt, het betekent veel! 💛",
+  "compliment_serie.4": "De doorzettingskracht van {prenom} bij « {mission} » ({n} dagen op rij) verdient het om vandaag benoemd te worden! 👏",
+  "compliment_progres.0": "{prenom} maakt echt vooruitgang met « {mission} »: {semaine} keer deze week tegenover {avant} vorige week. De inspanning loont! 🚀",
+  "compliment_progres.1": "Mooie vooruitgang van {prenom} met « {mission} »: van {avant} naar {semaine} keer in één week. Een lief woordje maakt het verschil! 🌈",
+  "compliment_progres.2": "{prenom} verbetert dag na dag bij « {mission} ». Laat merken dat je de vooruitgang ziet, dat is de beste motivatie! 🔑",
+  "compliment_regularite.0": "{prenom} was deze week {n} dagen actief. Neem even de tijd om te feliciteren, ook voor de kleine dingen! 🤗",
+  "compliment_regularite.1": "Deze week was {prenom} {n} van de {total} dagen aanwezig. Dit is het moment om de volharding te waarderen, niet alleen de resultaten! 💫",
+  "compliment_regularite.2": "{prenom} gaat op eigen tempo vooruit, {n} actieve dagen deze week. Een simpel « ik ben trots op je » kan vandaag alles veranderen! 💖",
+  "compliment_bienvenue.0": "{prenom} ontdekt FamiTeam nog: elke kleine stap verdient het om opgemerkt te worden. Een lief woordje vandaag kan een mooie gewoonte starten! 🌱",
+  "compliment_bienvenue.1": "Nog geen reeks om te benoemen voor {prenom}, maar dit is het perfecte moment om aan te moedigen met een oprecht compliment! 💛",
+  "compliment_bienvenue.2": "{prenom} begint aan het avontuur. Waardeer de inspanning in plaats van het resultaat: zo bouw je zelfvertrouwen op! 🌟"
 });
 
 Object.assign(I18N.de, {
@@ -1058,7 +1086,21 @@ Object.assign(I18N.de, {
   "encour.4": "Du sorgst dich um andere, das ist wertvoll! 🤗",
   "encour.5": "Der Planet sagt danke! 🌍",
   "encour.6": "Schritt für Schritt wirst du groß! 🚀",
-  "encour.7": "Dein Herz ist voller Freundlichkeit! 💖"
+  "encour.7": "Dein Herz ist voller Freundlichkeit! 💖",
+  "compliment_serie.0": "{prenom} macht « {mission} » schon {n} Tage in Folge — was für eine schöne Beständigkeit! 🌟",
+  "compliment_serie.1": "Seit {n} Tagen vergisst {prenom} « {mission} » nie. Eine echte Gewohnheit entsteht, gut gemacht! 💪",
+  "compliment_serie.2": "{prenom} bleibt seit {n} Tagen bei « {mission} » dran. Genau so entstehen gute Gewohnheiten! 🌱",
+  "compliment_serie.3": "{n} Tage in Folge für « {mission} »: sag {prenom}, dass dir das aufgefallen ist, das bedeutet viel! 💛",
+  "compliment_serie.4": "Die Beharrlichkeit von {prenom} bei « {mission} » ({n} Tage in Folge) verdient heute Anerkennung! 👏",
+  "compliment_progres.0": "{prenom} macht bei « {mission} » wirklich Fortschritte: {semaine} Mal diese Woche gegenüber {avant} letzte Woche. Die Mühe zahlt sich aus! 🚀",
+  "compliment_progres.1": "Schöner Fortschritt von {prenom} bei « {mission} »: von {avant} auf {semaine} Mal in einer Woche. Ein liebes Wort macht den Unterschied! 🌈",
+  "compliment_progres.2": "{prenom} verbessert sich Tag für Tag bei « {mission} ». Zeig, dass du den Fortschritt bemerkst — das motiviert am meisten! 🔑",
+  "compliment_regularite.0": "{prenom} war diese Woche {n} Tage aktiv. Nimm dir einen Moment zum Loben, auch für die kleinen Dinge! 🤗",
+  "compliment_regularite.1": "Diese Woche war {prenom} {n} von {total} Tagen dabei. Der perfekte Moment, um die Beständigkeit zu würdigen, nicht nur die Ergebnisse! 💫",
+  "compliment_regularite.2": "{prenom} geht in seinem/ihrem eigenen Tempo voran, {n} aktive Tage diese Woche. Ein einfaches „Ich bin stolz auf dich“ kann heute alles verändern! 💖",
+  "compliment_bienvenue.0": "{prenom} entdeckt FamiTeam noch: jeder kleine Schritt verdient Beachtung. Ein liebes Wort heute kann eine schöne Gewohnheit starten! 🌱",
+  "compliment_bienvenue.1": "Noch keine Serie zum Hervorheben bei {prenom}, aber der perfekte Moment, um mit einem ehrlichen Kompliment zu ermutigen! 💛",
+  "compliment_bienvenue.2": "{prenom} beginnt sein/ihr Abenteuer. Lobe die Anstrengung statt des Ergebnisses: so entsteht Selbstvertrauen! 🌟"
 });
 
 /* ---- Touches d'humour (FR = repli depuis data.js ; ici EN/NL/DE) ---- */
