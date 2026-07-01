@@ -211,6 +211,11 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* ---- Badges « fun » (médailles) ---- */
 .badges-carte{background:linear-gradient(180deg,#fffaf0,#fff4f8)}
 
+/* Carte « Compliment du jour » (espace parent) */
+.compliment-carte{background:linear-gradient(180deg,#fff0f6,#fff8ec); border:1px solid #f6d3e4}
+.compliment-texte{font-size:16px; font-weight:700; color:#8a3a5a; line-height:1.5; margin:6px 0}
+.compliment-aide{margin-top:8px}
+
 /* Carte « Blague du jour » */
 .blague-carte{background:linear-gradient(180deg,#fff7e6,#ffeef6)}
 .blague-q{font-size:16px; font-weight:600; color:#3a4a5a}

@@ -404,6 +404,35 @@ const ENCOURAGEMENTS = [
   "Ton cœur est rempli de gentillesse ! 💖"
 ];
 
+/* ---- Compliments du jour (espace parent) ------------------------------
+ * Corpus de repli en français ; traduits via i18n (trData) si besoin.
+ * Inspirés de la parentalité positive (Papa Positive) : on valorise l'effort,
+ * la régularité et la progression plutôt que le résultat brut. Utilisés par
+ * complimentDuJour() (app.js) avec les variables {prenom}, {mission}, {n},
+ * {semaine} (jours cette semaine) et {avant} (jours la semaine précédente). */
+const COMPLIMENTS_SERIE = [
+  "{prenom} enchaîne {n} jours d'affilée pour « {mission} » — quelle belle régularité ! 🌟",
+  "Depuis {n} jours, {prenom} n'oublie jamais « {mission} ». Une vraie habitude est en train de naître, bravo à lui/elle ! 💪",
+  "{prenom} est fidèle au poste pour « {mission} » depuis {n} jours. C'est exactement comme ça que naissent les bonnes habitudes ! 🌱",
+  "{n} jours de suite pour « {mission} » : dis à {prenom} que tu as remarqué ses efforts, ça compte énormément pour lui/elle ! 💛",
+  "La persévérance de {prenom} sur « {mission} » ({n} jours d'affilée) mérite d'être soulignée aujourd'hui ! 👏"
+];
+const COMPLIMENTS_PROGRES = [
+  "{prenom} progresse vraiment sur « {mission} » : {semaine} fois cette semaine contre {avant} la semaine dernière. Les efforts paient ! 🚀",
+  "Belle évolution pour {prenom} avec « {mission} » : de {avant} à {semaine} fois en une semaine. Un petit mot d'encouragement fera toute la différence ! 🌈",
+  "{prenom} s'améliore de jour en jour sur « {mission} ». Montre-lui/elle que tu vois ses progrès, c'est le meilleur des moteurs ! 🔑"
+];
+const COMPLIMENTS_REGULARITE = [
+  "{prenom} a été actif(ve) {n} jours cette semaine. Prends un instant pour le/la féliciter, même pour les petites choses ! 🤗",
+  "Cette semaine, {prenom} s'est engagé(e) {n} jours sur {total}. C'est le moment de valoriser sa constance, pas seulement les résultats ! 💫",
+  "{prenom} avance à son rythme, {n} jours actifs cette semaine. Un simple « je suis fier/fière de toi » peut tout changer aujourd'hui ! 💖"
+];
+const COMPLIMENTS_BIENVENUE = [
+  "{prenom} découvre encore FamiTeam : chaque petit pas mérite d'être remarqué. Un mot doux aujourd'hui peut lancer une belle habitude ! 🌱",
+  "Pas encore de série à souligner pour {prenom}, mais c'est le moment idéal pour l'encourager à se lancer avec un compliment sincère ! 💛",
+  "{prenom} commence son aventure. Valorise l'effort plutôt que le résultat : c'est ce qui construit la confiance en soi ! 🌟"
+];
+
 /* ---- Touches d'humour bon enfant (désactivables par les parents) ----
  * Corpus de repli en français ; traduits via i18n (trData).
  * - TAQUINERIES : félicitations rigolotes (mêlées aux ENCOURAGEMENTS).

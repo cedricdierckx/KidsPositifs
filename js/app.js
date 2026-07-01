@@ -1418,6 +1418,110 @@ function definirAvisBlague(idx, avis) {
   sauver();
 }
 
+/* ---------- Compliment du jour (espace parent) -------------------------
+ * Repère, pour un enfant, la mission la plus régulière (série de jours
+ * consécutifs) ou la plus en progression cette semaine, et propose au
+ * parent une phrase d'encouragement personnalisée et concrète (esprit
+ * parentalité positive : on valorise l'effort et la constance). */
+// Nombre de jours consécutifs (en remontant depuis `finJour`) où la mission
+// a été validée au moins une fois.
+function streakMission(enf, missionId, finJour) {
+  let n = 0;
+  let cle = finJour || aujourdHui();
+  while ((enf.journal[cle] || {})[missionId] > 0) {
+    n++;
+    const d = new Date(cle + "T00:00:00");
+    d.setDate(d.getDate() - 1);
+    cle = dateCle(d);
+  }
+  return n;
+}
+// Nombre de jours (sur `nbJours`, en remontant depuis `finJour` inclus) où
+// la mission a été validée au moins une fois.
+function comptageMissionPeriode(enf, missionId, finJour, nbJours) {
+  let cle = finJour;
+  let n = 0;
+  for (let i = 0; i < nbJours; i++) {
+    if ((enf.journal[cle] || {})[missionId] > 0) n++;
+    const d = new Date(cle + "T00:00:00");
+    d.setDate(d.getDate() - 1);
+    cle = dateCle(d);
+  }
+  return n;
+}
+// Nombre de jours (sur `nbJours`) où l'enfant a validé AU MOINS une mission.
+function joursActifsPeriode(enf, finJour, nbJours) {
+  let cle = finJour;
+  let n = 0;
+  for (let i = 0; i < nbJours; i++) {
+    const j = enf.journal[cle];
+    if (j && Object.values(j).some(v => v > 0)) n++;
+    const d = new Date(cle + "T00:00:00");
+    d.setDate(d.getDate() - 1);
+    cle = dateCle(d);
+  }
+  return n;
+}
+// Remplace {var} dans un gabarit de phrase (même logique que t(), mais pour
+// un texte de données brut, pas une clé i18n).
+function remplirGabarit(gabarit, vars) {
+  let s = gabarit;
+  for (const k in vars) s = s.split("{" + k + "}").join(vars[k]);
+  return s;
+}
+// Choix déterministe (stable pour la journée) dans un tableau, à partir
+// d'une graine textuelle — évite que le compliment change à chaque rendu.
+function choixDuJour(graine, taille) {
+  let somme = 0;
+  for (let i = 0; i < graine.length; i++) somme += graine.charCodeAt(i);
+  return somme % taille;
+}
+function complimentDuJour(enf) {
+  if (!enf) return null;
+  const jour = aujourdHui();
+  const missions = toutesMissions().filter(m => missionActivePourEnfant(enf, m.id));
+
+  // 1) Série en cours la plus longue (≥ 3 jours) : régularité à féliciter.
+  let meilleure = null;
+  missions.forEach(m => {
+    const n = streakMission(enf, m.id, jour);
+    if (n >= 3 && (!meilleure || n > meilleure.n)) meilleure = { m, n };
+  });
+  if (meilleure) {
+    const idx = choixDuJour(jour + enf.id + meilleure.m.id, COMPLIMENTS_SERIE.length);
+    const gabarit = trData("compliment_serie", idx, COMPLIMENTS_SERIE[idx]);
+    return { type: "serie", texte: remplirGabarit(gabarit, { prenom: enf.prenom, mission: titreMission(meilleure.m), n: meilleure.n }) };
+  }
+
+  // 2) Progression cette semaine par rapport à la semaine précédente.
+  const veilleSemaine = (() => { const d = new Date(jour + "T00:00:00"); d.setDate(d.getDate() - 7); return dateCle(d); })();
+  let progres = null;
+  missions.forEach(m => {
+    const semaine = comptageMissionPeriode(enf, m.id, jour, 7);
+    const avant = comptageMissionPeriode(enf, m.id, veilleSemaine, 7);
+    const delta = semaine - avant;
+    if (semaine >= 2 && delta >= 1 && (!progres || delta > progres.delta)) progres = { m, semaine, avant, delta };
+  });
+  if (progres) {
+    const idx = choixDuJour(jour + enf.id + progres.m.id + "p", COMPLIMENTS_PROGRES.length);
+    const gabarit = trData("compliment_progres", idx, COMPLIMENTS_PROGRES[idx]);
+    return { type: "progres", texte: remplirGabarit(gabarit, { prenom: enf.prenom, mission: titreMission(progres.m), semaine: progres.semaine, avant: progres.avant }) };
+  }
+
+  // 3) Régularité générale (au moins des jours actifs cette semaine).
+  const actifs = joursActifsPeriode(enf, jour, 7);
+  if (actifs >= 2) {
+    const idx = choixDuJour(jour + enf.id + "r", COMPLIMENTS_REGULARITE.length);
+    const gabarit = trData("compliment_regularite", idx, COMPLIMENTS_REGULARITE[idx]);
+    return { type: "regularite", texte: remplirGabarit(gabarit, { prenom: enf.prenom, n: actifs, total: 7 }) };
+  }
+
+  // 4) Repli : encouragement de bienvenue (enfant récent ou peu actif).
+  const idx = choixDuJour(jour + enf.id + "b", COMPLIMENTS_BIENVENUE.length);
+  const gabarit = trData("compliment_bienvenue", idx, COMPLIMENTS_BIENVENUE[idx]);
+  return { type: "bienvenue", texte: remplirGabarit(gabarit, { prenom: enf.prenom }) };
+}
+
 function feterGain(mission) {
   const cat = CATEGORIES[mission.cat];
   // 1 fois sur ~3, une taquinerie rigolote à la place de l'encouragement (si humour ON).

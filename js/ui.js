@@ -1773,6 +1773,20 @@ function blocBlagueDuJour() {
   return sec;
 }
 
+// Compliment du jour (espace parent) : une phrase d'encouragement concrète,
+// basée sur la régularité/progression réelle de l'enfant sur une tâche
+// précise (esprit « parentalité positive »). Se renouvelle chaque jour.
+function blocComplimentDuJour(enf) {
+  const sec = el("section", "carte compliment-carte");
+  if (!enf) { sec.style.display = "none"; return sec; }
+  const c = complimentDuJour(enf);
+  if (!c) { sec.style.display = "none"; return sec; }
+  sec.innerHTML = `<h2>💌 ${t("compliment.titre")}</h2>
+    <p class="compliment-texte">${echapper(c.texte)}</p>
+    <p class="note compliment-aide">${t("compliment.aide")}</p>`;
+  return sec;
+}
+
 // Widget d'évaluation de la journée (Bien / Moyen / Pas top).
 // mode "enfant" = auto-évaluation ; mode "parent" = évaluation par un parent.
 function blocEval(enf, mode) {
@@ -3302,6 +3316,11 @@ function vueReglages(c) {
 
   /* ===== ONGLET : Au quotidien ===== */
   if (ongletParent === "quotidien") {
+
+  // ----- Compliment du jour : un mot d'encouragement concret à dire à
+  // l'enfant, basé sur sa régularité/progression réelle (parentalité
+  // positive). Tout en haut : c'est la première chose à voir chaque jour. -----
+  c.appendChild(blocComplimentDuJour(enfantActif()));
 
   // ----- Comportement de l'enfant (évaluation parent) : en 1ʳᵉ place -----
   c.appendChild(blocEval(enfantActif(), "parent"));

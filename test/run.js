@@ -21,6 +21,13 @@ function enfantNeuf(api) {
 }
 function missionFamille(api) { return api.MISSIONS.find(m => m.cat === "famille"); }
 function missionPlanete(api) { return api.MISSIONS.find(m => m.cat === "planete"); }
+// Décale une date AAAA-MM-JJ de `n` jours (n négatif = dans le passé).
+function decalerJour(cle, n) {
+  const d = new Date(cle + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, "0"), j = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${j}`;
+}
 
 /* ---------- Garde-fous & migrations ---------- */
 test("etatNonVide distingue un état vide d'un état peuplé", () => {
@@ -185,6 +192,60 @@ test("blagues: liste par langue + surcharge admin via configApp", () => {
   api.langue = "fr";
   const b = api.blagueDuJour();
   assert.strictEqual(b.q, "Q?");
+});
+
+/* ---------- Compliment du jour (espace parent) ---------- */
+test("compliment: une série de 3+ jours consécutifs est détectée et félicitée", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  const enf = enfantNeuf(api);
+  const m = missionFamille(api);
+  const aujourdhui = api.aujourdHui();
+  [0, -1, -2].forEach(dec => api.modifierHistorique(enf, decalerJour(aujourdhui, dec), m, +1));
+  assert.strictEqual(api.streakMission(enf, m.id, aujourdhui), 3);
+  const c = api.complimentDuJour(enf);
+  assert.strictEqual(c.type, "serie");
+  assert.ok(c.texte.includes(enf.prenom));
+});
+
+test("compliment: la série s'interrompt si un jour est manqué", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  const enf = enfantNeuf(api);
+  const m = missionFamille(api);
+  const aujourdhui = api.aujourdHui();
+  api.modifierHistorique(enf, decalerJour(aujourdhui, 0), m, +1);
+  // -1 manqué volontairement
+  api.modifierHistorique(enf, decalerJour(aujourdhui, -2), m, +1);
+  assert.strictEqual(api.streakMission(enf, m.id, aujourdhui), 1);
+});
+
+test("compliment: progression cette semaine vs la semaine précédente", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  const enf = enfantNeuf(api);
+  const m = missionFamille(api);
+  const aujourdhui = api.aujourdHui();
+  // Cette semaine (0..-6) : 3 fois. Semaine précédente (-7..-13) : 1 fois.
+  [0, -2, -4].forEach(dec => api.modifierHistorique(enf, decalerJour(aujourdhui, dec), m, +1));
+  api.modifierHistorique(enf, decalerJour(aujourdhui, -9), m, +1);
+  assert.strictEqual(api.comptageMissionPeriode(enf, m.id, aujourdhui, 7), 3);
+  assert.strictEqual(api.comptageMissionPeriode(enf, m.id, decalerJour(aujourdhui, -7), 7), 1);
+  const c = api.complimentDuJour(enf);
+  assert.strictEqual(c.type, "progres");
+});
+
+test("compliment: repli sur un message de bienvenue pour un enfant sans historique", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  const enf = enfantNeuf(api);
+  const c = api.complimentDuJour(enf);
+  assert.strictEqual(c.type, "bienvenue");
+  assert.ok(c.texte.includes(enf.prenom));
 });
 
 /* ---------- Planification des missions ---------- */
