@@ -1316,11 +1316,13 @@ function verifierBadges(enf) {
 /* ---------- Auto-évaluation (enfant) & évaluation (parent) ---------- */
 const EVAL_VALEURS = ["bien", "moyen", "mauvais"];
 // L'enfant évalue sa propre journée depuis sa page d'accueil.
+// En mode révision (« jours précédents »), on enregistre au jour affiché et
+// non à aujourd'hui, pour que le comportement soit consigné à la bonne date.
 function definirAutoEval(valeur) {
   if (!EVAL_VALEURS.includes(valeur)) return;
   const enf = enfantActif();
   if (!enf.autoEval) enf.autoEval = {};
-  const jour = aujourdHui();
+  const jour = (typeof jourAffiche === "function") ? jourAffiche() : aujourdHui();
   if (enf.autoEval[jour] === valeur) delete enf.autoEval[jour];  // re-toucher = annuler
   else enf.autoEval[jour] = valeur;
   sauver();
