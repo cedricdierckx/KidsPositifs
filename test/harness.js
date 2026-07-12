@@ -104,6 +104,8 @@ function construireContexte() {
       definirPlanifMission, basculerPlanifElement, planifMission, missionPlanifieeActive,
       // encodage semaine papier
       definirAutoEvalJour, cyclerAutoEvalJour, modifierHistorique, ajusterMonnaie,
+      // auto-évaluation (enfant) — dépend du jour affiché (mode révision)
+      definirAutoEval, definirEvalParent,
       // personnalisation par enfant
       pointsMission, missionActivePourEnfant, definirPersoMission,
       coutEspece, especeActivePourEnfant, definirPersoEspece,

@@ -1821,10 +1821,11 @@ function blocEval(enf, mode) {
     return sec;
   }
 
-  // Enfant : uniquement aujourd'hui, en grand et expressif.
+  // Enfant : le jour affiché (aujourd'hui, ou le jour révisé en mode révision),
+  // en grand et expressif.
   sec.className = "carte eval-carte eval-enfant";
   sec.innerHTML = `<h2>${t("eval.titre_enfant")}</h2>`;
-  const courant = (enf.autoEval || {})[aujourdHui()];
+  const courant = (enf.autoEval || {})[jourAffiche()];
   const row = el("div", "eval-choix-grand");
   CHOIX.forEach(([v, e]) => {
     const b = el("button", "eval-gros eval-" + v + (courant === v ? " actif" : ""));

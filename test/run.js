@@ -313,6 +313,33 @@ test("comportement par jour : cyclerAutoEvalJour parcourt bien→moyen→mauvais
   api.cyclerAutoEvalJour(enf, j); assert.strictEqual(enf.autoEval[j], undefined);
 });
 
+test("auto-évaluation enfant : sans mode révision, enregistre à aujourd'hui", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  const enf = api.etat.enfants[Object.keys(api.etat.enfants)[0]];
+  api.etat.enfantActif = enf.id;
+  api.definirAutoEval("bien");
+  assert.strictEqual(enf.autoEval[api.aujourdHui()], "bien");
+});
+
+test("auto-évaluation enfant : en mode révision, enregistre au jour affiché (pas aujourd'hui)", () => {
+  const { contexte, api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  const enf = api.etat.enfants[Object.keys(api.etat.enfants)[0]];
+  api.etat.enfantActif = enf.id;
+  // Simule le mode révision : le jour affiché est un jour antérieur.
+  const jourPasse = decalerJour(api.aujourdHui(), -3);
+  contexte.jourAffiche = () => jourPasse;
+  api.definirAutoEval("moyen");
+  assert.strictEqual(enf.autoEval[jourPasse], "moyen");        // consigné au bon jour
+  assert.strictEqual(enf.autoEval[api.aujourdHui()], undefined); // et surtout pas à aujourd'hui
+  // Re-toucher la même valeur annule l'évaluation de ce jour.
+  api.definirAutoEval("moyen");
+  assert.strictEqual(enf.autoEval[jourPasse], undefined);
+});
+
 /* ---------- Crédit / décrédit de mission ---------- */
 test("crediterMission ajoute points et journal (catégorie famille = cœurs)", () => {
   const { api } = construireContexte();
