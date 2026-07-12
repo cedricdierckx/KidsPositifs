@@ -942,7 +942,9 @@ function blocDashboardScience() {
   return sec;
 }
 
-function blocAdmin() {
+// Sous-section « Familles » de l'onglet Admin : liste de toutes les familles
+// (plan, modération, suppression) + liste d'attente des candidats.
+function blocAdminFamilles() {
   const sec = el("section", "carte");
   sec.innerHTML = `<h2>${t("admin.titre")}</h2>
     <p class="note">${t("admin.note")}</p>`;
@@ -1038,6 +1040,13 @@ function blocAdmin() {
     });
   };
   sec.appendChild(bW); sec.appendChild(listeW);
+  return sec;
+}
+
+// Sous-section « Config » de l'onglet Admin : test d'envoi d'e-mail + liens de
+// dons Stripe. Réglages globaux de l'application (écriture réservée aux admins).
+function blocAdminConfig() {
+  const sec = el("section", "carte");
 
   // ----- Test d'envoi d'e-mail (via la fonction commune send-mail / SMTP OVH) -----
   // Envoie un vrai e-mail de test depuis hello@fami.team — même chemin que les
@@ -1116,6 +1125,63 @@ function blocAdmin() {
   };
   sec.appendChild(bDon);
   return sec;
+}
+
+/* ---------- Espace Admin : sous-sections ----------
+ * L'onglet Admin est organisé en sous-sections navigables (comme l'espace
+ * parents). Chaque sous-section est indépendante et rendue à la demande.
+ * Les sous-sections Stats / Retours / Système accueilleront les lots B→F. */
+
+// Sous-section active de l'onglet Admin (session, non synchronisée).
+let sousOngletAdmin = "familles";
+const SOUS_ONGLETS_ADMIN = [
+  ["stats",    "admin.nav_stats"],
+  ["familles", "admin.nav_familles"],
+  ["retours",  "admin.nav_retours"],
+  ["contenu",  "admin.nav_contenu"],
+  ["config",   "admin.nav_config"],
+  ["systeme",  "admin.nav_systeme"],
+];
+
+// Carte « bientôt disponible » pour les sous-sections encore à construire.
+function blocAdminBientot(titre, desc) {
+  const sec = el("section", "carte admin-bientot");
+  sec.innerHTML = `<h2>${titre}</h2><p class="note">${desc}</p>
+    <p class="admin-bientot-badge">🚧 ${t("admin.bientot")}</p>`;
+  return sec;
+}
+
+// Rendu de l'onglet Admin : barre de sous-navigation + sous-section active.
+function vueAdmin(c) {
+  const nav = el("nav", "sous-nav admin-sous-nav");
+  SOUS_ONGLETS_ADMIN.forEach(([id, cle]) => {
+    const b = el("button", "sous-nav-btn" + (sousOngletAdmin === id ? " actif" : ""), t(cle));
+    b.onclick = () => { sousOngletAdmin = id; rendre(); };
+    nav.appendChild(b);
+  });
+  c.appendChild(nav);
+
+  switch (sousOngletAdmin) {
+    case "stats":
+      c.appendChild(blocAdminBientot("📊 " + t("admin.nav_stats"), t("admin.stats_desc")));
+      break;
+    case "familles":
+      c.appendChild(blocAdminFamilles());
+      break;
+    case "retours":
+      c.appendChild(blocAdminBientot("💬 " + t("admin.nav_retours"), t("admin.retours_desc")));
+      break;
+    case "contenu":
+      c.appendChild(blocAdminBlagues());
+      c.appendChild(blocDashboardScience());
+      break;
+    case "config":
+      c.appendChild(blocAdminConfig());
+      break;
+    case "systeme":
+      c.appendChild(blocAdminBientot("🛠️ " + t("admin.nav_systeme"), t("admin.systeme_desc")));
+      break;
+  }
 }
 
 // Envoi d'e-mail via la fonction commune send-mail.
@@ -3584,9 +3650,7 @@ function vueReglages(c) {
 
   /* ===== ONGLET : Admin (réservé à l'administrateur) ===== */
   if (ongletParent === "admin" && typeof estAdmin !== "undefined" && estAdmin) {
-    c.appendChild(blocAdmin());
-    c.appendChild(blocAdminBlagues());
-    c.appendChild(blocDashboardScience());
+    vueAdmin(c);
   }
 
   /* ===== ONGLET : Mon compte & données ===== */
