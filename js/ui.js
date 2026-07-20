@@ -3669,6 +3669,10 @@ function vueReglages(c) {
   const bDeco = el("button", "btn-secondaire", t("compte.deconnexion"));
   bDeco.onclick = deconnexion;
   cpt.appendChild(bDeco);
+  const liensLegaux = el("p", "note");
+  liensLegaux.innerHTML = `<a href="mentions-legales.html">Mentions légales</a> ·
+    <a href="confidentialite.html">Politique de confidentialité</a>`;
+  cpt.appendChild(liensLegaux);
   c.appendChild(cpt);
 
   const actions = el("section", "carte");

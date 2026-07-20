@@ -482,6 +482,10 @@ function ecranAuth() {
           </div>
           <hr style="border:none;border-top:1px solid #e3edf5;margin:14px 0">
           <button id="b-demo" class="btn-secondaire">${t("auth.demo")}</button>
+          <p class="note" style="margin-top:14px">
+            <a href="mentions-legales.html">Mentions légales</a> ·
+            <a href="confidentialite.html">Politique de confidentialité</a>
+          </p>
         </div>
       </section>
     </div>`;
