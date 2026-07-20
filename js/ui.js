@@ -1151,6 +1151,109 @@ function blocAdminBientot(titre, desc) {
   return sec;
 }
 
+// Graphique en barres minimaliste (SVG vanilla, sans dépendance externe).
+// `serie` = [{ semaine: "AAAA-MM-JJ", n: nombre }]. Échappe les valeurs.
+function miniGraphBarres(serie, couleur) {
+  if (!serie || !serie.length) return `<p class="note">${t("stats.aucune_donnee")}</p>`;
+  const W = 520, H = 140, padB = 22, padL = 6, padT = 8;
+  const n = serie.length;
+  const maxV = Math.max(1, ...serie.map(p => p.n || 0));
+  const bw = (W - padL * 2) / n;
+  const barres = serie.map((p, i) => {
+    const h = Math.round(((p.n || 0) / maxV) * (H - padB - padT));
+    const x = padL + i * bw;
+    const y = H - padB - h;
+    const w = Math.max(2, bw - 4);
+    // Étiquette du mois (jour 1-7 = début de semaine) : mois abrégé au 1er de chaque mois.
+    let lbl = "";
+    try {
+      const d = new Date(p.semaine + "T00:00:00");
+      if (d.getDate() <= 7) lbl = d.toLocaleDateString(langue, { month: "short" });
+    } catch (e) { /* ignore */ }
+    const tt = `${p.semaine} : ${p.n}`;
+    return `<g><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${couleur}">`
+      + `<title>${echapper(tt)}</title></rect>`
+      + (lbl ? `<text x="${x + w / 2}" y="${H - 6}" font-size="10" fill="#8aa0b0" text-anchor="middle">${echapper(lbl)}</text>` : "")
+      + `</g>`;
+  }).join("");
+  return `<svg class="mini-graph" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img">${barres}</svg>`;
+}
+
+// Une carte « chiffre clé » (grande valeur + libellé + précision facultative).
+function carteStat(emoji, valeur, label, precision) {
+  return `<div class="stat-carte">
+    <div class="stat-emoji">${emoji}</div>
+    <div class="stat-valeur">${valeur}</div>
+    <div class="stat-label">${label}</div>
+    ${precision ? `<div class="stat-precision">${precision}</div>` : ""}
+  </div>`;
+}
+
+// Sous-section « Stats » : chiffres clés + évolution (inscriptions & activité)
+// + derniers arrivants. Toutes les données proviennent de RPC en lecture seule.
+function blocAdminStats() {
+  const sec = el("section", "carte");
+  sec.innerHTML = `<h2>📊 ${t("admin.nav_stats")}</h2><p class="note">${t("admin.stats_desc")}</p>`;
+  const b = el("button", "btn-secondaire", t("stats.charger"));
+  const corps = el("div", "admin-stats-corps");
+  b.onclick = async () => {
+    b.disabled = true; b.textContent = t("common.chargement");
+    const [s, insc, act, recentes] = await Promise.all([
+      adminStats(), adminSerieInscriptions(), adminSerieActivite(), adminFamillesRecentes(8)
+    ]);
+    b.disabled = false; b.textContent = t("stats.recharger");
+    corps.innerHTML = "";
+    if (!s) { corps.appendChild(el("p", "note", t("stats.aucune_donnee"))); return; }
+
+    // --- Chiffres clés ---
+    const grille = el("div", "stat-grille");
+    grille.innerHTML = [
+      carteStat("👨‍👩‍👧", s.familles_total, t("stats.familles"),
+        t("stats.familles_nouv", { s7: s.familles_7j, s30: s.familles_30j })),
+      carteStat("🧒", s.enfants_total, t("stats.enfants")),
+      carteStat("👤", s.membres_total, t("stats.membres")),
+      carteStat("✅", s.actives_7j, t("stats.actives"),
+        t("stats.actives_detail", { j1: s.actives_1j, j30: s.actives_30j })),
+      carteStat("⭐", s.plan_premium, t("stats.premium"),
+        t("stats.free_detail", { n: s.plan_free })),
+      carteStat("🎁", s.referrals_acceptes, t("stats.parrainages")),
+      carteStat("⏳", s.waitlist_total, t("stats.attente")),
+      carteStat("💬", s.feedback_total, t("stats.retours"),
+        t("stats.retours_detail", { bugs: s.feedback_bugs, sugg: s.feedback_suggestions })),
+    ].join("");
+    corps.appendChild(grille);
+
+    // --- Évolution : inscriptions par semaine ---
+    corps.appendChild(el("h3", "stat-titre", "📈 " + t("stats.inscriptions")));
+    const g1 = el("div", "stat-graph-box"); g1.innerHTML = miniGraphBarres(insc, "#5b8def");
+    corps.appendChild(g1);
+
+    // --- Évolution : familles actives par semaine ---
+    corps.appendChild(el("h3", "stat-titre", "🔥 " + t("stats.activite")));
+    const g2 = el("div", "stat-graph-box"); g2.innerHTML = miniGraphBarres(act, "#2bb3c0");
+    corps.appendChild(g2);
+
+    // --- Derniers arrivants ---
+    corps.appendChild(el("h3", "stat-titre", "🆕 " + t("stats.recentes")));
+    if (!recentes.length) {
+      corps.appendChild(el("p", "note", t("stats.aucune_donnee")));
+    } else {
+      const liste = el("div", "admin-liste");
+      recentes.forEach(f => {
+        const d = f.created_at ? new Date(f.created_at).toLocaleDateString(langue) : "—";
+        const ligne = el("div", "admin-item");
+        ligne.innerHTML = `<div class="adm-info"><strong>${echapper(f.name || "?")}</strong>
+          <small>${echapper(f.owner_email || "?")} · ${t("stats.inscrite_le", { date: d })}</small></div>`;
+        liste.appendChild(ligne);
+      });
+      corps.appendChild(liste);
+    }
+  };
+  sec.appendChild(b);
+  sec.appendChild(corps);
+  return sec;
+}
+
 // Rendu de l'onglet Admin : barre de sous-navigation + sous-section active.
 function vueAdmin(c) {
   const nav = el("nav", "sous-nav admin-sous-nav");
@@ -1163,7 +1266,7 @@ function vueAdmin(c) {
 
   switch (sousOngletAdmin) {
     case "stats":
-      c.appendChild(blocAdminBientot("📊 " + t("admin.nav_stats"), t("admin.stats_desc")));
+      c.appendChild(blocAdminStats());
       break;
     case "familles":
       c.appendChild(blocAdminFamilles());

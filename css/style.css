@@ -956,6 +956,17 @@ main{max-width:680px; margin:0 auto; padding:14px}
   background:#f1faf6; border:2px dashed #bfe3d2; border-radius:14px;
   color:#2f9e6f; font-weight:800; font-size:14px}
 
+/* Sous-section Admin « Stats » : cartes de chiffres clés + graphiques */
+.stat-grille{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin:12px 0}
+.stat-carte{background:#f7fbff; border:2px solid #e3edf5; border-radius:14px; padding:12px; text-align:center}
+.stat-emoji{font-size:22px}
+.stat-valeur{font-size:26px; font-weight:900; color:var(--famille); line-height:1.1; margin-top:2px}
+.stat-label{font-size:12px; font-weight:800; color:var(--doux); margin-top:2px}
+.stat-precision{font-size:11px; color:#8aa0b0; margin-top:3px}
+.stat-titre{margin:16px 0 6px; font-size:15px}
+.stat-graph-box{background:#fbfdff; border:2px solid #e3edf5; border-radius:14px; padding:10px}
+.mini-graph{display:block; width:100%; height:140px}
+
 /* Indicateur de page de l'espace parents (titre courant + points + flèches) */
 .parent-indic{display:flex; align-items:center; gap:10px; margin:2px 0 12px}
 .parent-indic-fleche{flex:0 0 auto; width:38px; height:34px; border:none; border-radius:10px;

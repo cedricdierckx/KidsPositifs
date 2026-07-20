@@ -405,6 +405,28 @@ async function adminMajPlan(familyId, plan) {
   if (error) toast("Erreur : " + error.message, "info");
 }
 
+// ---------- Statistiques d'utilisation (admin, lecture seule) ----------
+async function adminStats() {
+  const { data, error } = await sb.rpc("admin_stats");
+  if (error) { toast("Erreur stats : " + error.message, "info"); return null; }
+  return data || null;
+}
+async function adminSerieInscriptions() {
+  const { data, error } = await sb.rpc("admin_series_inscriptions");
+  if (error) { toast("Erreur stats : " + error.message, "info"); return []; }
+  return data || [];
+}
+async function adminSerieActivite() {
+  const { data, error } = await sb.rpc("admin_series_activite");
+  if (error) { toast("Erreur stats : " + error.message, "info"); return []; }
+  return data || [];
+}
+async function adminFamillesRecentes(limite) {
+  const { data, error } = await sb.rpc("admin_list_families_recent", { p_limit: limite || 10 });
+  if (error) { toast("Erreur stats : " + error.message, "info"); return []; }
+  return data || [];
+}
+
 function planLibelle() {
   if (!familleActive) return "";
   return familleActive.plan === "premium" ? "Premium ⭐" : "Gratuite";
