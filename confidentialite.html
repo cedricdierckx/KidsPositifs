@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6a623">
+  <title>Politique de confidentialité — FamiTeam</title>
+  <link rel="stylesheet" href="css/style.css?v=89">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌟</text></svg>">
+  <style>
+    body{padding:24px 16px 60px}
+    .page-legale{max-width:640px; margin:0 auto}
+    .page-legale .carte{text-align:left; margin-bottom:16px}
+    .page-legale h1{font-size:26px}
+    .page-legale h2{font-size:18px; margin-top:1.2em}
+    .page-legale p, .page-legale li{color:var(--doux); line-height:1.6; font-size:15px}
+    .page-legale .retour{display:inline-block; margin-bottom:16px; color:#3a7bd5; text-decoration:none; font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="page-legale">
+    <a class="retour" href="index.html">← Retour à FamiTeam</a>
+    <section class="carte">
+      <div class="code-logo">🌟</div>
+      <h1>Politique de confidentialité</h1>
+      <p>[Nom de l'éditeur à compléter] — [adresse à compléter] — contact : [email à compléter]</p>
+
+      <h2>Responsable du traitement</h2>
+      <p>Le responsable du traitement des données est [Nom de l'éditeur à compléter], [adresse à compléter],
+        joignable à [email à compléter].</p>
+
+      <h2>Données collectées</h2>
+      <ul>
+        <li>Compte parent : adresse e-mail et mot de passe (géré par Supabase Auth).</li>
+        <li>Famille : nom de la famille, plan (gratuit/premium).</li>
+        <li>Profils des enfants créés par les parents : prénom, date de naissance, sexe (pour l'avatar),
+          emoji et couleur choisis. Aucune donnée de contact d'enfant n'est demandée.</li>
+        <li>Activité quotidienne : missions/comportements positifs cochés, points et « compliments »
+          gagnés, historique de l'état familial (sauvegardes automatiques).</li>
+        <li>Éventuellement : messages envoyés via le formulaire de signalement (bug/suggestion), avec
+          l'e-mail du compte associé.</li>
+      </ul>
+
+      <h2>Finalités du traitement</h2>
+      <p>Ces données sont utilisées uniquement pour faire fonctionner l'application : authentifier les
+        parents, synchroniser l'état familial entre les appareils, afficher les avatars et progrès des
+        enfants, et répondre aux demandes de support.</p>
+
+      <h2>Base légale</h2>
+      <p>Le traitement repose sur l'exécution du contrat (fourniture du service demandé par le parent) et,
+        pour les données concernant les enfants, sur le consentement du parent qui crée et gère leurs
+        profils en son nom.</p>
+
+      <h2>Où sont stockées les données</h2>
+      <p>Les données sont hébergées chez <strong>Supabase</strong> (base PostgreSQL) et protégées par des
+        règles d'accès strictes (Row Level Security) : chaque famille n'accède qu'à ses propres données.
+        L'authentification se fait par e-mail/mot de passe ou lien magique, et les échanges avec le serveur
+        sont chiffrés en transit (HTTPS).</p>
+
+      <h2>Durée de conservation</h2>
+      <p>Les données sont conservées tant que le compte famille existe. L'historique automatique des états
+        familiaux est limité aux 40 dernières sauvegardes par famille. En cas de suppression du compte
+        famille, toutes les données associées (membres, état, historique, invitations) sont supprimées
+        définitivement.</p>
+
+      <h2>Vos droits</h2>
+      <p>Conformément au RGPD, vous disposez d'un droit d'accès, de rectification, de suppression et de
+        portabilité de vos données et de celles de vos enfants. L'application propose déjà un export de vos
+        données et la suppression définitive du compte famille depuis l'espace « Mon compte ». Pour toute
+        autre demande, contactez [email à compléter].</p>
+
+      <h2>Stockage local</h2>
+      <p>L'application utilise le stockage local du navigateur (localStorage) pour garder votre session,
+        mémoriser la famille active et un cache hors-ligne de l'état familial, afin d'accélérer l'affichage
+        et de permettre une utilisation temporaire sans connexion. Aucun cookie de suivi publicitaire n'est
+        utilisé.</p>
+
+      <h2>Contact</h2>
+      <p>Pour toute question relative à vos données personnelles, contactez [email à compléter].</p>
+    </section>
+  </div>
+</body>
+</html>
