@@ -419,6 +419,66 @@ begin
 end; $$;
 
 -- =====================================================================
+-- ACTIVITÉ D'USAGE (ouvertures de l'app) — mesure côté application
+-- ---------------------------------------------------------------------
+-- Une app statique ne voit pas les logs serveur : on mesure donc l'activité
+-- côté client, très sobrement. Une ligne par (jour, famille, type). Aucune
+-- donnée nominative d'enfant. Sert aux « familles actives » réelles.
+-- =====================================================================
+create table if not exists public.usage_events (
+  day date not null default current_date,
+  family_id uuid references public.families(id) on delete cascade,
+  kind text not null default 'open',            -- 'open' (ouverture de l'app)
+  count integer not null default 0,
+  primary key (day, family_id, kind)
+);
+create index if not exists idx_usage_day on public.usage_events(day);
+alter table public.usage_events enable row level security;
+-- Lecture réservée aux admins ; l'écriture ne passe QUE par track_usage.
+drop policy if exists "admins read usage" on public.usage_events;
+create policy "admins read usage" on public.usage_events for select using (is_admin());
+
+-- RPC : incrémente le compteur d'usage du jour pour une famille. Best-effort :
+-- silencieuse si la famille est absente ou l'appelant non membre (ne bloque
+-- jamais le client). Security definer => pas besoin de policy d'écriture.
+create or replace function public.track_usage(p_family uuid, p_kind text default 'open')
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if p_family is null or not is_family_member(p_family) then return; end if;
+  insert into usage_events(day, family_id, kind, count)
+    values (current_date, p_family, coalesce(nullif(trim(p_kind), ''), 'open'), 1)
+  on conflict (day, family_id, kind) do update set count = usage_events.count + 1;
+end; $$;
+
+-- RPC admin : agrégats d'usage (familles actives jour / 7 j / 30 j + ouvertures).
+create or replace function public.admin_usage_stats()
+returns json language plpgsql security definer set search_path = public as $$
+declare resultat json;
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  select json_build_object(
+    'actifs_jour',    (select count(distinct family_id) from usage_events where day = current_date),
+    'actifs_7j',      (select count(distinct family_id) from usage_events where day >= current_date - 6),
+    'actifs_30j',     (select count(distinct family_id) from usage_events where day >= current_date - 29),
+    'ouvertures_30j', (select coalesce(sum(count), 0) from usage_events where kind = 'open' and day >= current_date - 29)
+  ) into resultat;
+  return resultat;
+end; $$;
+
+-- RPC admin : familles actives par jour (30 derniers jours).
+create or replace function public.admin_series_usage()
+returns table(jour date, familles integer)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  return query
+    select u.day as jour, count(distinct u.family_id)::int as familles
+    from usage_events u
+    where u.day >= current_date - 29
+    group by u.day order by u.day;
+end; $$;
+
+-- =====================================================================
 -- Évolutions anticipées (additives, ré-exécutables) pour éviter de
 -- futures migrations manuelles.
 -- =====================================================================
@@ -541,6 +601,9 @@ grant execute on function public.admin_stats()                  to authenticated
 grant execute on function public.admin_series_inscriptions()    to authenticated;
 grant execute on function public.admin_series_activite()        to authenticated;
 grant execute on function public.admin_list_families_recent(integer) to authenticated;
+grant execute on function public.track_usage(uuid, text)        to authenticated;
+grant execute on function public.admin_usage_stats()            to authenticated;
+grant execute on function public.admin_series_usage()           to authenticated;
 grant execute on function public.submit_feedback(text, text, jsonb, uuid) to authenticated;
 grant execute on function public.admin_list_feedback()          to authenticated;
 grant execute on function public.admin_set_feedback_status(bigint, text) to authenticated;

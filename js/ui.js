@@ -1198,8 +1198,9 @@ function blocAdminStats() {
   const corps = el("div", "admin-stats-corps");
   b.onclick = async () => {
     b.disabled = true; b.textContent = t("common.chargement");
-    const [s, insc, act, recentes] = await Promise.all([
-      adminStats(), adminSerieInscriptions(), adminSerieActivite(), adminFamillesRecentes(8)
+    const [s, insc, act, recentes, usage, usageSerie] = await Promise.all([
+      adminStats(), adminSerieInscriptions(), adminSerieActivite(), adminFamillesRecentes(8),
+      adminUsageStats(), adminSerieUsage()
     ]);
     b.disabled = false; b.textContent = t("stats.recharger");
     corps.innerHTML = "";
@@ -1232,6 +1233,25 @@ function blocAdminStats() {
     corps.appendChild(el("h3", "stat-titre", "🔥 " + t("stats.activite")));
     const g2 = el("div", "stat-graph-box"); g2.innerHTML = miniGraphBarres(act, "#2bb3c0");
     corps.appendChild(g2);
+
+    // --- Activité web (ouvertures de l'app, mesure côté client) ---
+    corps.appendChild(el("h3", "stat-titre", "🌐 " + t("stats.usage_titre")));
+    if (usage) {
+      const gu = el("div", "stat-grille");
+      gu.innerHTML = [
+        carteStat("📅", usage.actifs_jour, t("stats.usage_jour")),
+        carteStat("🗓️", usage.actifs_7j, t("stats.usage_7j")),
+        carteStat("📆", usage.actifs_30j, t("stats.usage_30j")),
+        carteStat("👆", usage.ouvertures_30j, t("stats.usage_ouvertures")),
+      ].join("");
+      corps.appendChild(gu);
+    }
+    // Graphique : familles actives par jour (30 j). On mappe {jour,familles}
+    // vers la forme attendue par miniGraphBarres {semaine,n}.
+    const usageBarres = (usageSerie || []).map(u => ({ semaine: u.jour, n: u.familles }));
+    const gu2 = el("div", "stat-graph-box"); gu2.innerHTML = miniGraphBarres(usageBarres, "#e88b2f");
+    corps.appendChild(gu2);
+    corps.appendChild(el("p", "note", t("stats.usage_note")));
 
     // --- Derniers arrivants ---
     corps.appendChild(el("h3", "stat-titre", "🆕 " + t("stats.recentes")));

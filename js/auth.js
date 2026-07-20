@@ -225,8 +225,24 @@ async function ouvrirFamille(f) {
   document.removeEventListener("visibilitychange", auRetour);
   document.addEventListener("visibilitychange", auRetour);
   verifierParrainages();                  // féliciter le parrain si un filleul a rejoint
+  pingUsage();                            // mesure d'activité (best-effort, 1×/jour)
 }
 function auRetour() { if (!document.hidden) { tirerEtat(); if (typeof majDodo === "function") majDodo(); } }
+
+// Ping d'usage : une fois par jour et par famille (best-effort, jamais bloquant).
+// Sert aux statistiques « familles actives ». N'écrit jamais dans family_state.
+async function pingUsage() {
+  try {
+    if (typeof modeDemo !== "undefined" && modeDemo) return;          // pas en démo
+    if (!familleActive || !familleActive.id || familleActive.id === "_demo") return;
+    if (typeof sb === "undefined" || !sb) return;
+    const cle = "famiteam_ping_" + familleActive.id;
+    const auj = new Date().toISOString().slice(0, 10);               // AAAA-MM-JJ (local suffisant)
+    if (localStorage.getItem(cle) === auj) return;                   // déjà pingé aujourd'hui
+    localStorage.setItem(cle, auj);
+    await sb.rpc("track_usage", { p_family: familleActive.id, p_kind: "open" });
+  } catch (e) { /* best-effort : on n'interrompt jamais l'app */ }
+}
 
 /* ---------- Synchronisation de l'état de jeu ----------
  * Toute la logique d'accès aux tables `family_state(_history)` et au temps
@@ -423,6 +439,18 @@ async function adminSerieActivite() {
 }
 async function adminFamillesRecentes(limite) {
   const { data, error } = await sb.rpc("admin_list_families_recent", { p_limit: limite || 10 });
+  if (error) { toast("Erreur stats : " + error.message, "info"); return []; }
+  return data || [];
+}
+
+// ---------- Activité d'usage (admin, lecture seule) ----------
+async function adminUsageStats() {
+  const { data, error } = await sb.rpc("admin_usage_stats");
+  if (error) { toast("Erreur stats : " + error.message, "info"); return null; }
+  return data || null;
+}
+async function adminSerieUsage() {
+  const { data, error } = await sb.rpc("admin_series_usage");
   if (error) { toast("Erreur stats : " + error.message, "info"); return []; }
   return data || [];
 }
