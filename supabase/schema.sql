@@ -335,6 +335,89 @@ begin
 end; $$;
 
 -- =====================================================================
+-- STATISTIQUES D'UTILISATION (admin, lecture seule)
+-- ---------------------------------------------------------------------
+-- Toutes ces fonctions sont en LECTURE SEULE (aucune écriture) et
+-- réservées aux administrateurs. Elles n'exposent aucune donnée
+-- nominative d'enfant : uniquement des agrégats.
+-- =====================================================================
+
+-- ---------- RPC admin : agrégats globaux (une seule ligne JSON) ----------
+-- Chiffres clés : familles (total / nouvelles 7-30 j), membres, enfants,
+-- familles actives (1/7/30 j via family_state.updated_at), répartition des
+-- plans, parrainages acceptés, liste d'attente, retours utilisateurs.
+create or replace function public.admin_stats()
+returns json language plpgsql security definer set search_path = public as $$
+declare resultat json;
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  select json_build_object(
+    'familles_total',       (select count(*) from families),
+    'familles_7j',          (select count(*) from families where created_at >= now() - interval '7 days'),
+    'familles_30j',         (select count(*) from families where created_at >= now() - interval '30 days'),
+    'membres_total',        (select count(*) from family_members),
+    'enfants_total',        coalesce((select sum((select count(*) from jsonb_object_keys(s.data -> 'enfants')))
+                                       from family_state s
+                                       where jsonb_typeof(s.data -> 'enfants') = 'object'), 0),
+    'actives_1j',           (select count(*) from family_state where updated_at >= now() - interval '1 day'),
+    'actives_7j',           (select count(*) from family_state where updated_at >= now() - interval '7 days'),
+    'actives_30j',          (select count(*) from family_state where updated_at >= now() - interval '30 days'),
+    'plan_free',            (select count(*) from families where plan = 'free'),
+    'plan_premium',         (select count(*) from families where plan = 'premium'),
+    'referrals_acceptes',   (select count(*) from referrals where accepted_at is not null),
+    'waitlist_total',       (select count(*) from waitlist),
+    'feedback_total',       (select count(*) from feedback),
+    'feedback_bugs',        (select count(*) from feedback where type = 'bug'),
+    'feedback_suggestions', (select count(*) from feedback where type = 'suggestion')
+  ) into resultat;
+  return resultat;
+end; $$;
+
+-- ---------- RPC admin : inscriptions par semaine (26 dernières) ----------
+create or replace function public.admin_series_inscriptions()
+returns table(semaine date, n integer)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  return query
+    select date_trunc('week', f.created_at)::date as semaine, count(*)::int as n
+    from families f
+    where f.created_at >= date_trunc('week', now()) - interval '25 weeks'
+    group by 1 order by 1;
+end; $$;
+
+-- ---------- RPC admin : familles actives par semaine (26 dernières) ----------
+-- Déduite de l'historique déjà collecté (family_state_history) : une famille
+-- est « active » une semaine si son état a été archivé (donc modifié) cette
+-- semaine-là. Aucune collecte supplémentaire nécessaire.
+create or replace function public.admin_series_activite()
+returns table(semaine date, n integer)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  return query
+    select date_trunc('week', h.saved_at)::date as semaine, count(distinct h.family_id)::int as n
+    from family_state_history h
+    where h.saved_at >= date_trunc('week', now()) - interval '25 weeks'
+    group by 1 order by 1;
+end; $$;
+
+-- ---------- RPC admin : derniers arrivants (nouvelles familles) ----------
+create or replace function public.admin_list_families_recent(p_limit integer default 10)
+returns table(id uuid, name text, owner_email text, created_at timestamptz)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  return query
+    select f.id, f.name::text,
+      (select u.email::text from auth.users u where u.id = f.owner_id),
+      f.created_at
+    from families f
+    order by f.created_at desc
+    limit greatest(1, least(coalesce(p_limit, 10), 100));
+end; $$;
+
+-- =====================================================================
 -- Évolutions anticipées (additives, ré-exécutables) pour éviter de
 -- futures migrations manuelles.
 -- =====================================================================
@@ -436,6 +519,10 @@ grant execute on function public.is_admin()                     to authenticated
 grant execute on function public.admin_list_families()          to authenticated;
 grant execute on function public.admin_set_plan(uuid, text)     to authenticated;
 grant execute on function public.admin_delete_family(uuid)      to authenticated;
+grant execute on function public.admin_stats()                  to authenticated;
+grant execute on function public.admin_series_inscriptions()    to authenticated;
+grant execute on function public.admin_series_activite()        to authenticated;
+grant execute on function public.admin_list_families_recent(integer) to authenticated;
 grant execute on function public.submit_feedback(text, text, jsonb, uuid) to authenticated;
 grant execute on function public.admin_list_feedback()          to authenticated;
 grant execute on function public.delete_family(uuid)            to authenticated;
