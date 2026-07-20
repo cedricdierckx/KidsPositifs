@@ -1254,15 +1254,127 @@ function blocAdminStats() {
   return sec;
 }
 
+/* ---------- Sous-section « Retours » (bugs & suggestions) ---------- */
+// Cache de session : la liste chargée + le filtre courant. Le nombre de retours
+// non lus alimente le badge de la sous-navigation (voir vueAdmin).
+let adminRetoursCache = null;
+let adminRetoursFiltre = "tous";   // 'tous' | 'non_lus' | 'bug' | 'suggestion'
+let adminRetoursNonLus = null;     // null = inconnu (pas encore chargé)
+let _badgeRetoursFait = false;     // évite de recharger le badge à chaque rendu
+
+// Recalcule le nombre de retours non lus depuis le cache.
+function majCompteNonLus() {
+  adminRetoursNonLus = (adminRetoursCache || []).filter(f => f.status === "nouveau").length;
+}
+
+// Une ligne de retour : type, auteur, date, statut, message + actions.
+function ligneRetour(f) {
+  const d = f.created_at ? new Date(f.created_at).toLocaleString(langue) : "—";
+  const statut = f.status || "nouveau";
+  const ligne = el("div", "admin-item retour-item statut-" + statut);
+  const typeEmoji = f.type === "bug" ? "🐞" : "💡";
+  const libStatut = { nouveau: t("retours.st_nouveau"), lu: t("retours.st_lu"), traite: t("retours.st_traite") }[statut] || t("retours.st_nouveau");
+  const info = el("div", "adm-info");
+  info.innerHTML = `<strong>${typeEmoji} ${echapper(f.email || "?")}</strong>
+    <small>${echapper(d)} · <span class="retour-statut st-${statut}">${libStatut}</span></small>
+    <div class="retour-msg">${echapper(f.message || "")}</div>`;
+  ligne.appendChild(info);
+
+  const actions = el("div", "adm-actions2");
+  const bouton = (val, label) => {
+    const btn = el("button", "mini-btn" + (statut === val ? " ok" : ""), label);
+    btn.onclick = async () => {
+      if (await adminMajStatutFeedback(f.id, val)) {
+        f.status = val;          // met à jour le cache en place
+        majCompteNonLus();
+        rendre();
+      }
+    };
+    return btn;
+  };
+  actions.appendChild(bouton("lu", "👁️ " + t("retours.marquer_lu")));
+  actions.appendChild(bouton("traite", "✅ " + t("retours.marquer_traite")));
+  // Répondre : brouillon e-mail prérempli (depuis le client mail de l'admin).
+  if (f.email) {
+    const rep = el("a", "mini-btn btn-mail", "✉️ " + t("retours.repondre"));
+    const sujet = t("retours.mail_sujet", { app: APP_NOM });
+    const corps = t("retours.mail_corps", { message: f.message || "" });
+    rep.href = `mailto:${encodeURIComponent(f.email)}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
+    actions.appendChild(rep);
+  }
+  ligne.appendChild(actions);
+  return ligne;
+}
+
+// Sous-section « Retours » : liste filtrable des bugs & suggestions, avec
+// gestion du statut (nouveau / lu / traité) et réponse par e-mail.
+function blocAdminRetours() {
+  const sec = el("section", "carte");
+  sec.innerHTML = `<h2>💬 ${t("admin.nav_retours")}</h2><p class="note">${t("admin.retours_desc")}</p>`;
+  const b = el("button", "btn-secondaire", adminRetoursCache ? t("retours.recharger") : t("retours.charger"));
+  const corps = el("div", "admin-retours-corps");
+
+  const rendreListe = () => {
+    corps.innerHTML = "";
+    if (!adminRetoursCache) return;
+    if (!adminRetoursCache.length) { corps.appendChild(el("p", "note", t("retours.aucun"))); return; }
+    // Filtres.
+    const filtres = el("div", "retours-filtres");
+    [["tous", "retours.f_tous"], ["non_lus", "retours.f_non_lus"], ["bug", "retours.f_bugs"], ["suggestion", "retours.f_suggestions"]]
+      .forEach(([id, cle]) => {
+        const fb = el("button", "mini-btn" + (adminRetoursFiltre === id ? " ok" : ""), t(cle));
+        fb.onclick = () => { adminRetoursFiltre = id; rendreListe(); };
+        filtres.appendChild(fb);
+      });
+    corps.appendChild(filtres);
+    // Liste filtrée.
+    const liste = adminRetoursCache.filter(f =>
+      adminRetoursFiltre === "tous" ? true
+        : adminRetoursFiltre === "non_lus" ? (f.status || "nouveau") === "nouveau"
+        : f.type === adminRetoursFiltre);
+    corps.appendChild(el("p", "note", t("retours.compte", { n: liste.length })));
+    const box = el("div", "admin-liste");
+    liste.forEach(f => box.appendChild(ligneRetour(f)));
+    corps.appendChild(box);
+  };
+
+  b.onclick = async () => {
+    b.disabled = true; b.textContent = t("common.chargement");
+    adminRetoursCache = await adminListerFeedback();
+    majCompteNonLus();
+    b.disabled = false; b.textContent = t("retours.recharger");
+    rendreListe();
+  };
+  sec.appendChild(b); sec.appendChild(corps);
+  if (adminRetoursCache) rendreListe();   // déjà chargé cette session
+  return sec;
+}
+
 // Rendu de l'onglet Admin : barre de sous-navigation + sous-section active.
 function vueAdmin(c) {
   const nav = el("nav", "sous-nav admin-sous-nav");
   SOUS_ONGLETS_ADMIN.forEach(([id, cle]) => {
     const b = el("button", "sous-nav-btn" + (sousOngletAdmin === id ? " actif" : ""), t(cle));
+    // Badge « n non lus » sur la sous-section Retours.
+    if (id === "retours" && adminRetoursNonLus > 0) {
+      b.appendChild(el("span", "sous-nav-pin", String(adminRetoursNonLus)));
+    }
     b.onclick = () => { sousOngletAdmin = id; rendre(); };
     nav.appendChild(b);
   });
   c.appendChild(nav);
+
+  // Précharge une fois le nombre de retours non lus (best-effort) pour le badge.
+  if (!_badgeRetoursFait) {
+    _badgeRetoursFait = true;
+    (async () => {
+      const s = await adminStats();
+      if (s && typeof s.feedback_non_lus === "number" && adminRetoursNonLus === null) {
+        adminRetoursNonLus = s.feedback_non_lus;
+        if (etat.vue === "reglages" && ongletParent === "admin") rendre();
+      }
+    })();
+  }
 
   switch (sousOngletAdmin) {
     case "stats":
@@ -1272,7 +1384,7 @@ function vueAdmin(c) {
       c.appendChild(blocAdminFamilles());
       break;
     case "retours":
-      c.appendChild(blocAdminBientot("💬 " + t("admin.nav_retours"), t("admin.retours_desc")));
+      c.appendChild(blocAdminRetours());
       break;
     case "contenu":
       c.appendChild(blocAdminBlagues());

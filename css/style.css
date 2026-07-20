@@ -967,6 +967,16 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .stat-graph-box{background:#fbfdff; border:2px solid #e3edf5; border-radius:14px; padding:10px}
 .mini-graph{display:block; width:100%; height:140px}
 
+/* Sous-section Admin « Retours » : filtres + lignes de feedback */
+.retours-filtres{display:flex; flex-wrap:wrap; gap:6px; margin:8px 0}
+.retour-item{flex-direction:column; align-items:stretch}
+.retour-msg{margin-top:4px; font-size:14px; color:#33475b; white-space:pre-wrap; word-break:break-word}
+.retour-statut{font-weight:800; border-radius:8px; padding:1px 6px}
+.retour-statut.st-nouveau{background:#fdeef2; color:#e2566d}
+.retour-statut.st-lu{background:#eef4fb; color:#5b8def}
+.retour-statut.st-traite{background:#eef9f2; color:#2f9e6f}
+.retour-item.statut-traite{opacity:.72}
+
 /* Indicateur de page de l'espace parents (titre courant + points + flèches) */
 .parent-indic{display:flex; align-items:center; gap:10px; margin:2px 0 12px}
 .parent-indic-fleche{flex:0 0 auto; width:38px; height:34px; border:none; border-radius:10px;

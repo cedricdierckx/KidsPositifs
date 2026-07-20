@@ -427,6 +427,18 @@ async function adminFamillesRecentes(limite) {
   return data || [];
 }
 
+// ---------- Retours utilisateurs (admin) ----------
+async function adminListerFeedback() {
+  const { data, error } = await sb.rpc("admin_list_feedback");
+  if (error) { toast("Erreur retours : " + error.message, "info"); return []; }
+  return data || [];
+}
+async function adminMajStatutFeedback(id, statut) {
+  const { error } = await sb.rpc("admin_set_feedback_status", { p_id: id, p_status: statut });
+  if (error) { toast("Erreur : " + error.message, "info"); return false; }
+  return true;
+}
+
 function planLibelle() {
   if (!familleActive) return "";
   return familleActive.plan === "premium" ? "Premium ⭐" : "Gratuite";

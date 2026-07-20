@@ -368,7 +368,8 @@ begin
     'waitlist_total',       (select count(*) from waitlist),
     'feedback_total',       (select count(*) from feedback),
     'feedback_bugs',        (select count(*) from feedback where type = 'bug'),
-    'feedback_suggestions', (select count(*) from feedback where type = 'suggestion')
+    'feedback_suggestions', (select count(*) from feedback where type = 'suggestion'),
+    'feedback_non_lus',     (select count(*) from feedback where status = 'nouveau')
   ) into resultat;
   return resultat;
 end; $$;
@@ -460,14 +461,31 @@ begin
             left(p_message, 4000), p_context);
 end; $$;
 
--- RPC admin : consulter les retours.
+-- Statut de traitement d'un retour (additif, non destructif) :
+--   'nouveau' (non lu) | 'lu' | 'traite'.
+alter table public.feedback add column if not exists status text not null default 'nouveau';
+
+-- RPC admin : consulter les retours (avec statut). La signature de retour
+-- change : on supprime d'abord l'ancienne version (create or replace ne peut
+-- pas modifier les colonnes de sortie).
+drop function if exists public.admin_list_feedback();
 create or replace function public.admin_list_feedback()
-returns table(id bigint, created_at timestamptz, type text, message text, email text, family_id uuid)
+returns table(id bigint, created_at timestamptz, type text, message text, email text, family_id uuid, status text)
 language plpgsql security definer set search_path = public as $$
 begin
   if not is_admin() then raise exception 'Accès refusé'; end if;
-  return query select f.id, f.created_at, f.type::text, f.message, f.email::text, f.family_id
+  return query select f.id, f.created_at, f.type::text, f.message, f.email::text, f.family_id, f.status::text
                from feedback f order by f.created_at desc;
+end; $$;
+
+-- RPC admin : changer le statut d'un retour (lu / traité / nouveau).
+create or replace function public.admin_set_feedback_status(p_id bigint, p_status text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  update feedback
+    set status = case when p_status in ('nouveau', 'lu', 'traite') then p_status else 'nouveau' end
+    where id = p_id;
 end; $$;
 
 -- ---------- Configuration globale de l'app (éditable par les admins) ----------
@@ -525,6 +543,7 @@ grant execute on function public.admin_series_activite()        to authenticated
 grant execute on function public.admin_list_families_recent(integer) to authenticated;
 grant execute on function public.submit_feedback(text, text, jsonb, uuid) to authenticated;
 grant execute on function public.admin_list_feedback()          to authenticated;
+grant execute on function public.admin_set_feedback_status(bigint, text) to authenticated;
 grant execute on function public.delete_family(uuid)            to authenticated;
 
 -- ---------- Temps réel sur l'état de jeu (tolérant si déjà activé) ----------
