@@ -1370,6 +1370,68 @@ function blocAdminRetours() {
   return sec;
 }
 
+// Met en forme une taille en octets (Ko / Mo / Go).
+function octetsLisibles(n) {
+  n = Number(n) || 0;
+  if (n < 1024) return n + " o";
+  const u = ["Ko", "Mo", "Go", "To"];
+  let i = -1;
+  do { n /= 1024; i++; } while (n >= 1024 && i < u.length - 1);
+  return n.toFixed(n >= 10 ? 0 : 1) + " " + u[i];
+}
+
+// Déduit l'URL du tableau de bord Supabase à partir de SUPABASE_URL
+// (https://<ref>.supabase.co → https://supabase.com/dashboard/project/<ref>).
+function lienDashboardSupabase() {
+  try {
+    const cfg = (typeof window !== "undefined" && window.KP_CONFIG) ? window.KP_CONFIG : {};
+    const m = (cfg.SUPABASE_URL || "").match(/https?:\/\/([a-z0-9]+)\.supabase\.co/i);
+    return m ? `https://supabase.com/dashboard/project/${m[1]}` : "https://supabase.com/dashboard";
+  } catch (e) { return "https://supabase.com/dashboard"; }
+}
+
+// Sous-section « Système » : stockage (base de données) + liens vers les
+// tableaux de bord. L'export et la migration sont ajoutés au lot F.
+function blocAdminSysteme() {
+  const sec = el("section", "carte");
+  sec.innerHTML = `<h2>🛠️ ${t("admin.nav_systeme")}</h2><p class="note">${t("admin.systeme_desc")}</p>`;
+
+  // ----- Stockage / base de données -----
+  sec.appendChild(el("h3", "stat-titre", "💾 " + t("sys.stockage")));
+  const b = el("button", "btn-secondaire", t("sys.charger"));
+  const corps = el("div", "admin-sys-corps");
+  b.onclick = async () => {
+    b.disabled = true; b.textContent = t("common.chargement");
+    const s = await adminDbStats();
+    b.disabled = false; b.textContent = t("sys.recharger");
+    corps.innerHTML = "";
+    if (!s) { corps.appendChild(el("p", "note", t("stats.aucune_donnee"))); return; }
+    corps.appendChild(el("p", "sys-total", t("sys.db_total", { taille: octetsLisibles(s.db_taille_octets) })));
+    const liste = el("div", "admin-liste");
+    (s.tables || []).forEach(tb => {
+      const ligne = el("div", "admin-item");
+      ligne.innerHTML = `<div class="adm-info"><strong>${echapper(tb.nom)}</strong>
+        <small>${t("sys.lignes", { n: tb.lignes })} · ${octetsLisibles(tb.taille_octets)}</small></div>`;
+      liste.appendChild(ligne);
+    });
+    corps.appendChild(liste);
+  };
+  sec.appendChild(b); sec.appendChild(corps);
+
+  // ----- Réseau / bande passante : liens vers les tableaux de bord -----
+  sec.appendChild(el("h3", "stat-titre", "🌐 " + t("sys.reseau")));
+  sec.appendChild(el("p", "note", t("sys.reseau_note")));
+  const liens = el("div", "sys-liens");
+  const lienSb = el("a", "btn-secondaire", "🗄️ " + t("sys.dashboard_supabase"));
+  lienSb.href = lienDashboardSupabase(); lienSb.target = "_blank"; lienSb.rel = "noopener";
+  const lienVc = el("a", "btn-secondaire", "▲ " + t("sys.dashboard_vercel"));
+  lienVc.href = "https://vercel.com/dashboard"; lienVc.target = "_blank"; lienVc.rel = "noopener";
+  liens.appendChild(lienSb); liens.appendChild(lienVc);
+  sec.appendChild(liens);
+
+  return sec;
+}
+
 // Rendu de l'onglet Admin : barre de sous-navigation + sous-section active.
 function vueAdmin(c) {
   const nav = el("nav", "sous-nav admin-sous-nav");
@@ -1414,7 +1476,7 @@ function vueAdmin(c) {
       c.appendChild(blocAdminConfig());
       break;
     case "systeme":
-      c.appendChild(blocAdminBientot("🛠️ " + t("admin.nav_systeme"), t("admin.systeme_desc")));
+      c.appendChild(blocAdminSysteme());
       break;
   }
 }

@@ -478,6 +478,29 @@ begin
     group by u.day order by u.day;
 end; $$;
 
+-- ---------- RPC admin : stockage (taille de la base et par table) ----------
+-- Taille totale de la base + taille et nombre de lignes (estimé) par table du
+-- schéma public. Lecture seule. Les octets sont mis en forme côté client.
+create or replace function public.admin_db_stats()
+returns json language plpgsql security definer set search_path = public as $$
+declare resultat json;
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  select json_build_object(
+    'db_taille_octets', pg_database_size(current_database()),
+    'tables', (
+      select coalesce(json_agg(json_build_object(
+        'nom',            t.relname,
+        'taille_octets',  pg_total_relation_size(t.relid),
+        'lignes',         t.n_live_tup
+      ) order by pg_total_relation_size(t.relid) desc), '[]'::json)
+      from pg_stat_user_tables t
+      where t.schemaname = 'public'
+    )
+  ) into resultat;
+  return resultat;
+end; $$;
+
 -- =====================================================================
 -- Évolutions anticipées (additives, ré-exécutables) pour éviter de
 -- futures migrations manuelles.
@@ -604,6 +627,7 @@ grant execute on function public.admin_list_families_recent(integer) to authenti
 grant execute on function public.track_usage(uuid, text)        to authenticated;
 grant execute on function public.admin_usage_stats()            to authenticated;
 grant execute on function public.admin_series_usage()           to authenticated;
+grant execute on function public.admin_db_stats()               to authenticated;
 grant execute on function public.submit_feedback(text, text, jsonb, uuid) to authenticated;
 grant execute on function public.admin_list_feedback()          to authenticated;
 grant execute on function public.admin_set_feedback_status(bigint, text) to authenticated;

@@ -454,6 +454,11 @@ async function adminSerieUsage() {
   if (error) { toast("Erreur stats : " + error.message, "info"); return []; }
   return data || [];
 }
+async function adminDbStats() {
+  const { data, error } = await sb.rpc("admin_db_stats");
+  if (error) { toast("Erreur stockage : " + error.message, "info"); return null; }
+  return data || null;
+}
 
 // ---------- Retours utilisateurs (admin) ----------
 async function adminListerFeedback() {
