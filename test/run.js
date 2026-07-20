@@ -313,6 +313,46 @@ test("comportement par jour : cyclerAutoEvalJour parcourt bien→moyen→mauvais
   api.cyclerAutoEvalJour(enf, j); assert.strictEqual(enf.autoEval[j], undefined);
 });
 
+/* ---------- i18n : parité des traductions de l'espace admin (lots A→F) ---------- */
+test("i18n : les clés admin/stats/retours/sys existent dans les 4 langues", () => {
+  const { api } = construireContexte();
+  const langues = Object.keys(api.LANGUES);              // fr, en, nl, de
+  assert.deepStrictEqual(langues.sort(), ["de", "en", "fr", "nl"]);
+  const prefixes = ["admin.", "stats.", "retours.", "sys."];
+  // Référence : toutes les clés françaises de ces namespaces.
+  const clesRef = Object.keys(api.I18N.fr).filter(k => prefixes.some(p => k.startsWith(p)));
+  assert.ok(clesRef.length > 30, "attendu de nombreuses clés admin/stats/retours/sys");
+  const manquantes = [];
+  langues.forEach(lg => {
+    clesRef.forEach(k => {
+      const v = api.I18N[lg][k];
+      if (typeof v !== "string" || v.length === 0) manquantes.push(lg + " → " + k);
+    });
+  });
+  assert.strictEqual(manquantes.length, 0,
+    "traductions manquantes : " + manquantes.slice(0, 10).join(", "));
+});
+
+test("i18n : les placeholders {var} sont cohérents entre langues (namespaces admin)", () => {
+  const { api } = construireContexte();
+  const langues = Object.keys(api.LANGUES);
+  const prefixes = ["admin.", "stats.", "retours.", "sys."];
+  const clesRef = Object.keys(api.I18N.fr).filter(k => prefixes.some(p => k.startsWith(p)));
+  const jeton = s => (String(s).match(/\{[a-zA-Z0-9_]+\}/g) || []).sort();
+  const ecarts = [];
+  clesRef.forEach(k => {
+    const ref = jeton(api.I18N.fr[k]);
+    langues.forEach(lg => {
+      if (lg === "fr") return;
+      const v = api.I18N[lg][k];
+      if (typeof v === "string" && JSON.stringify(jeton(v)) !== JSON.stringify(ref)) {
+        ecarts.push(lg + " → " + k);
+      }
+    });
+  });
+  assert.strictEqual(ecarts.length, 0, "placeholders divergents : " + ecarts.slice(0, 10).join(", "));
+});
+
 test("auto-évaluation enfant : sans mode révision, enregistre à aujourd'hui", () => {
   const { api } = construireContexte();
   api.familleId = "f1";

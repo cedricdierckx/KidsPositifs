@@ -128,6 +128,8 @@ function construireContexte() {
       blaguesDe, langueCourante, BLAGUES_DEFAUT,
       get langue() { return (typeof langue !== "undefined") ? langue : undefined; },
       set langue(v) { langue = v; },
+      // internationalisation (parité des traductions)
+      I18N, LANGUES, t,
       // couche de données isolée (Phase D)
       Store,
       // données de référence
