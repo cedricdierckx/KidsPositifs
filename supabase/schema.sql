@@ -478,6 +478,35 @@ begin
     group by u.day order by u.day;
 end; $$;
 
+-- ---------- RPC admin : export intégral (sauvegarde JSON) ----------
+-- Filet de sécurité indépendant de pg_dump : renvoie l'ensemble des données
+-- applicatives en un seul objet JSON, téléchargeable côté client. Utile pour
+-- vérification croisée après migration. Lecture seule, réservé aux admins.
+-- L'historique est déjà borné à 40 instantanés/famille (déclencheur d'archivage).
+create or replace function public.admin_export_all()
+returns json language plpgsql security definer set search_path = public as $$
+declare resultat json;
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  select json_build_object(
+    'export_version',        1,
+    'genere_le',             now(),
+    'families',              (select coalesce(json_agg(f), '[]'::json) from families f),
+    'family_members',        (select coalesce(json_agg(json_build_object(
+                                 'family_id', m.family_id, 'user_id', m.user_id, 'role', m.role,
+                                 'email', (select u.email from auth.users u where u.id = m.user_id),
+                                 'created_at', m.created_at)), '[]'::json) from family_members m),
+    'family_state',          (select coalesce(json_agg(s), '[]'::json) from family_state s),
+    'family_state_history',  (select coalesce(json_agg(h), '[]'::json) from family_state_history h),
+    'app_config',            (select coalesce(json_agg(c), '[]'::json) from app_config c),
+    'feedback',              (select coalesce(json_agg(fb), '[]'::json) from feedback fb),
+    'referrals',             (select coalesce(json_agg(r), '[]'::json) from referrals r),
+    'waitlist',              (select coalesce(json_agg(w), '[]'::json) from waitlist w),
+    'usage_events',          (select coalesce(json_agg(ue), '[]'::json) from usage_events ue)
+  ) into resultat;
+  return resultat;
+end; $$;
+
 -- ---------- RPC admin : stockage (taille de la base et par table) ----------
 -- Taille totale de la base + taille et nombre de lignes (estimé) par table du
 -- schéma public. Lecture seule. Les octets sont mis en forme côté client.
@@ -628,6 +657,7 @@ grant execute on function public.track_usage(uuid, text)        to authenticated
 grant execute on function public.admin_usage_stats()            to authenticated;
 grant execute on function public.admin_series_usage()           to authenticated;
 grant execute on function public.admin_db_stats()               to authenticated;
+grant execute on function public.admin_export_all()             to authenticated;
 grant execute on function public.submit_feedback(text, text, jsonb, uuid) to authenticated;
 grant execute on function public.admin_list_feedback()          to authenticated;
 grant execute on function public.admin_set_feedback_status(bigint, text) to authenticated;

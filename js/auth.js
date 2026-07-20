@@ -459,6 +459,11 @@ async function adminDbStats() {
   if (error) { toast("Erreur stockage : " + error.message, "info"); return null; }
   return data || null;
 }
+async function adminExportAll() {
+  const { data, error } = await sb.rpc("admin_export_all");
+  if (error) { toast("Erreur export : " + error.message, "info"); return null; }
+  return data || null;
+}
 
 // ---------- Retours utilisateurs (admin) ----------
 async function adminListerFeedback() {

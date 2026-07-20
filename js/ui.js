@@ -1429,7 +1429,50 @@ function blocAdminSysteme() {
   liens.appendChild(lienSb); liens.appendChild(lienVc);
   sec.appendChild(liens);
 
+  // ----- Sauvegarde & migration -----
+  sec.appendChild(el("h3", "stat-titre", "📦 " + t("sys.migration")));
+  sec.appendChild(el("p", "note", t("sys.migration_note")));
+  const actions = el("div", "sys-liens");
+
+  // Export complet des données (JSON téléchargé).
+  const bExport = el("button", "btn-secondaire", "💾 " + t("sys.export"));
+  bExport.onclick = async () => {
+    bExport.disabled = true; bExport.textContent = t("common.chargement");
+    const data = await adminExportAll();
+    bExport.disabled = false; bExport.textContent = "💾 " + t("sys.export");
+    if (!data) return;
+    const jour = new Date().toISOString().slice(0, 10);
+    telechargerJSON("famiteam-export-" + jour + ".json", data);
+    toast(t("sys.export_ok"), "succes");
+  };
+  actions.appendChild(bExport);
+
+  // Téléchargement du code (archive ZIP GitHub — dépôt privé : connexion requise).
+  const lienCode = el("a", "btn-secondaire", "⬇️ " + t("sys.code"));
+  lienCode.href = "https://github.com/cedricdierckx/kidspositifs/archive/refs/heads/main.zip";
+  lienCode.target = "_blank"; lienCode.rel = "noopener";
+  actions.appendChild(lienCode);
+
+  // Guide de migration (fichier MIGRATION.md du dépôt).
+  const lienGuide = el("a", "btn-secondaire", "📖 " + t("sys.guide"));
+  lienGuide.href = "https://github.com/cedricdierckx/kidspositifs/blob/main/MIGRATION.md";
+  lienGuide.target = "_blank"; lienGuide.rel = "noopener";
+  actions.appendChild(lienGuide);
+
+  sec.appendChild(actions);
   return sec;
+}
+
+// Télécharge un objet en fichier JSON (côté client, sans dépendance).
+function telechargerJSON(nomFichier, obj) {
+  try {
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = nomFichier;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+  } catch (e) { toast(t("sys.export_ko"), "info"); }
 }
 
 // Rendu de l'onglet Admin : barre de sous-navigation + sous-section active.
