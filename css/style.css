@@ -147,6 +147,10 @@ body{
   align-items:center; min-width:64px; cursor:pointer; transition:.15s;
 }
 .pastille .pastille-emoji{font-size:26px}
+/* Vignette avatar dans le sélecteur d'enfant (remplace l'emoji générique) */
+.pastille .pastille-av{width:34px; height:34px; display:block; border-radius:10px;
+  overflow:hidden; background:#fff}
+.pastille .pastille-av .av-svg{width:100%; height:100%; display:block}
 .pastille .pastille-nom{font-size:12px; font-weight:700; max-width:64px;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .pastille.actif{border-color:var(--c); background:#fff; transform:translateY(-2px)}
@@ -505,6 +509,10 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .mission.fait .m-points{color:var(--planete)}
 .mission.rep{border-color:#d9d2f0}
 .reparation{border-top:6px solid #a78bfa}
+/* Mode d'emploi du cadre « Oups, ça arrive… » (destiné aux parents) */
+.rep-quand{font-size:13px; color:var(--doux); margin:6px 0 10px}
+.rep-etapes{margin:2px 0 10px; padding-left:22px; font-size:14px; line-height:1.5}
+.rep-etapes li{margin-bottom:6px}
 
 /* ---- Écosystème ---- */
 .eco-carte{background:linear-gradient(180deg,#eaf7ff,#f4fff6)}
@@ -1181,6 +1189,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
   /* Sélecteur d'enfant : grandes pastilles faciles à toucher */
   .pastille{min-width:78px; padding:9px 12px; border-radius:18px}
   .pastille .pastille-emoji{font-size:32px}
+  .pastille .pastille-av{width:42px; height:42px; border-radius:12px}
   .pastille .pastille-nom{font-size:13px; max-width:78px}
 
   /* Avatar d'accueil plus présent + compteurs plus gros */

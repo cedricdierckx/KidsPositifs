@@ -353,6 +353,26 @@ test("i18n : les placeholders {var} sont cohérents entre langues (namespaces ad
   assert.strictEqual(ecarts.length, 0, "placeholders divergents : " + ecarts.slice(0, 10).join(", "));
 });
 
+test("i18n : le mode d'emploi « Oups, ça arrive… » existe dans les 4 langues", () => {
+  const { api } = construireContexte();
+  const langues = Object.keys(api.LANGUES);
+  const cles = Object.keys(api.I18N.fr).filter(k => k.startsWith("rep."));
+  assert.ok(cles.includes("rep.aide.titre") && cles.includes("rep.etape1"),
+    "le mode d'emploi parents doit être traduit (clés rep.*)");
+  const jeton = s => (String(s).match(/\{[a-zA-Z0-9_]+\}/g) || []).sort();
+  const soucis = [];
+  cles.forEach(k => {
+    langues.forEach(lg => {
+      const v = api.I18N[lg][k];
+      if (typeof v !== "string" || !v.length) { soucis.push(lg + " → " + k + " (manquant)"); return; }
+      if (lg !== "fr" && JSON.stringify(jeton(v)) !== JSON.stringify(jeton(api.I18N.fr[k]))) {
+        soucis.push(lg + " → " + k + " (placeholder)");
+      }
+    });
+  });
+  assert.strictEqual(soucis.length, 0, soucis.slice(0, 10).join(", "));
+});
+
 test("auto-évaluation enfant : sans mode révision, enregistre à aujourd'hui", () => {
   const { api } = construireContexte();
   api.familleId = "f1";

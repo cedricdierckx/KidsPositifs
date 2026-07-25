@@ -1642,13 +1642,23 @@ function majPastilleAttente() {
 }
 
 /* ---------- Sélecteur d'enfant ---------- */
+// Vignette d'un enfant : son avatar personnalisé (SVG) plutôt qu'un emoji
+// générique — l'enfant se reconnaît immédiatement. Repli sur l'emoji si
+// l'avatar n'est pas (encore) disponible.
+function vignetteEnfant(enf) {
+  if (enf.avatar && typeof buildAvatar === "function") {
+    return `<span class="pastille-av">${buildAvatar(enf.avatar)}</span>`;
+  }
+  return `<span class="pastille-emoji">${enf.emoji}</span>`;
+}
+
 function rendreSelecteur() {
   const s = $("#selecteur-enfant");
   s.innerHTML = "";
   Object.values(etat.enfants).forEach(enf => {
     const b = el("button", "pastille" + (enf.id === etat.enfantActif ? " actif" : ""));
     b.style.setProperty("--c", enf.couleur);
-    b.innerHTML = `<span class="pastille-emoji">${enf.emoji}</span><span class="pastille-nom">${enf.prenom}</span>`;
+    b.innerHTML = `${vignetteEnfant(enf)}<span class="pastille-nom">${echapper(enf.prenom)}</span>`;
     b.onclick = () => { etat.enfantActif = enf.id; ecrireCache(); rendre(); };
     s.appendChild(b);
   });
@@ -2731,11 +2741,28 @@ function blocDon() {
 }
 
 // Défis réparation (alternative bienveillante à la punition).
+// Ce bloc est affiché dans l'espace parents : le mode d'emploi ci-dessous
+// s'adresse donc au parent, qui coche le geste AVEC l'enfant.
 function blocReparation() {
   const enf = enfantActif();
   const jeune = estJeune(enf);
   const rep = el("section", "carte reparation");
-  rep.innerHTML = `<h2>${t("rep.titre")}</h2><p>${t("rep.texte")}</p>`;
+  rep.innerHTML = `<h2>${t("rep.titre")}</h2>
+    <p>${t("rep.texte")}</p>
+    <p class="rep-quand">${t("rep.quand", { prenom: echapper(enf.prenom) })}</p>`;
+
+  // « Comment ça marche ? » — replié par défaut, pour ne pas alourdir l'écran
+  // tout en levant l'incompréhension la plus fréquente des parents.
+  const { details, corps } = blocPliable(t("rep.aide.titre"), false, "rep-aide");
+  corps.innerHTML = `<ol class="rep-etapes">
+      <li>${t("rep.etape1")}</li>
+      <li>${t("rep.etape2")}</li>
+      <li>${t("rep.etape3")}</li>
+    </ol>
+    <p class="reglage-aide">${t("rep.aide.annuler")}</p>
+    <p class="reglage-aide">${t("rep.aide.pourquoi")}</p>`;
+  rep.appendChild(details);
+
   const g = el("div", "missions");
   DEFIS_REPARATION.forEach(d => {
     const actif = reparationActive(enf, d.id);
