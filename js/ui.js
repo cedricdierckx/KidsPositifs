@@ -503,7 +503,7 @@ function afficherChoixEnfant() {
   dispo.forEach(enf => {
     const reste = tempsRestantEnfant(enf.id);
     cartes += `<button class="choix-enf" data-id="${enf.id}" style="--c:${enf.couleur}">
-        <span class="choix-emoji">${enf.emoji}</span>
+        ${vignetteEnfant(enf, "moyen")}
         <span class="choix-nom">${echapper(enf.prenom)}</span>
         <span class="choix-temps">${mmss(reste)}</span>
       </button>`;
@@ -572,7 +572,7 @@ function majAffichagePrep(restePrep) {
   const em = ov.querySelector("#prep-emoji");
   const ti = ov.querySelector("#prep-titre");
   const nu = ov.querySelector("#prep-num");
-  if (em && enf) em.textContent = enf.emoji;
+  if (em && enf) em.innerHTML = vignetteEnfant(enf, "grand");
   if (ti && enf) ti.textContent = t("prep.titre", { prenom: enf.prenom });
   const sec = Math.max(0, Math.ceil(restePrep / 1000));
   if (nu) {
@@ -697,7 +697,7 @@ function modaleTimerOptions() {
   } else {
     Object.values(etat.enfants).forEach(enf => {
       const reste = tempsRestantLive(enf.id);
-      const b = el("button", "enf-chip", `${enf.emoji} ${echapper(enf.prenom)} · +${duree} min <small>(${mmss(reste)})</small>`);
+      const b = el("button", "enf-chip", `${echapper(enf.prenom)} · +${duree} min <small>(${mmss(reste)})</small>`);
       b.onclick = () => { ajouterTempsEnfant(enf.id, ms); toast(t("timer.temps_ajoute_enf", { prenom: enf.prenom, min: duree }), "succes"); fermer(); };
       zone.appendChild(b);
     });
@@ -1643,13 +1643,15 @@ function majPastilleAttente() {
 
 /* ---------- Sélecteur d'enfant ---------- */
 // Vignette d'un enfant : son avatar personnalisé (SVG) plutôt qu'un emoji
-// générique — l'enfant se reconnaît immédiatement. Repli sur l'emoji si
-// l'avatar n'est pas (encore) disponible.
-function vignetteEnfant(enf) {
-  if (enf.avatar && typeof buildAvatar === "function") {
-    return `<span class="pastille-av">${buildAvatar(enf.avatar)}</span>`;
+// générique — l'enfant se reconnaît immédiatement. `taille` = "mini",
+// "moyen" ou "grand" (voir CSS .av-vignette). L'emoji ne sert plus que de
+// repli si l'avatar n'est pas (encore) disponible.
+function vignetteEnfant(enf, taille) {
+  const cls = "av-vignette" + (taille ? " " + taille : "");
+  if (enf && enf.avatar && typeof buildAvatar === "function") {
+    return `<span class="${cls}">${buildAvatar(enf.avatar)}</span>`;
   }
-  return `<span class="pastille-emoji">${enf.emoji}</span>`;
+  return `<span class="pastille-emoji">${(enf && enf.emoji) || "🙂"}</span>`;
 }
 
 function rendreSelecteur() {
@@ -1894,7 +1896,7 @@ function blocEncoderSemaine() {
   // Sélection de l'enfant à encoder.
   const enfRow = el("div", "planif-enfants");
   Object.values(etat.enfants).forEach(e => {
-    const b = el("button", "enf-chip" + (e.id === etat.enfantActif ? " on" : ""), `${e.emoji} ${echapper(e.prenom)}`);
+    const b = el("button", "enf-chip" + (e.id === etat.enfantActif ? " on" : ""), echapper(e.prenom));
     b.onclick = () => { etat.enfantActif = e.id; ecrireCache(); rendre(); };
     enfRow.appendChild(b);
   });
@@ -2067,7 +2069,7 @@ function imprimerFeuilleSemaine(mode) {
     const tC = coeursSem ? `<strong>${coeursSem}</strong>` : `<span class="trait"></span>`;
     const tG = gouttesSem ? `<strong>${gouttesSem}</strong>` : `<span class="trait"></span>`;
     return `<div class="enfant enf-${k}" style="--c:${coul}">
-        <h3><span class="em">${enf.emoji}</span> ${echapper(enf.prenom)} <span class="stars">★ ★ ★</span></h3>
+        <h3>${vignetteEnfant(enf, "mini")} ${echapper(enf.prenom)} <span class="stars">★ ★ ★</span></h3>
         <table>${entete}${lignes}</table>
         ${humeur}
         <div class="totaux">💛 ${t("money.coeurs")} : ${tC}&nbsp;&nbsp; 💧 ${t("money.gouttes")} : ${tG}</div>
@@ -2360,7 +2362,7 @@ function blocCartesSurprises(enf) {
     // Contributions des enfants (esprit d'équipe).
     const dons = Object.keys(c.dons || {})
       .filter(id => etat.enfants[id] && c.dons[id] > 0)
-      .map(id => `<span class="cs-contrib-item">${etat.enfants[id].emoji || "🙂"} ${c.dons[id]}</span>`)
+      .map(id => `<span class="cs-contrib-item">${echapper(etat.enfants[id].prenom)} ${c.dons[id]}</span>`)
       .join("");
     // Jauge très visuelle : piste colorée + coureur qui avance vers le cadeau.
     const jauge = `<div class="cs-jauge">
@@ -2554,7 +2556,7 @@ function blocStatistiques() {
     const joursActifs = Object.keys(enf.journal).length;
 
     if (!joursActifs) {
-      sec.innerHTML = `<h3 class="stat-nom">${enf.emoji} ${echapper(enf.prenom)}</h3>
+      sec.innerHTML = `<h3 class="stat-nom">${echapper(enf.prenom)}</h3>
         <p class="note">${t("stats.aucune")}</p>`;
       wrap.appendChild(sec);
       return;
@@ -2578,7 +2580,7 @@ function blocStatistiques() {
     const pctFam = totalPts ? Math.round((enf.coeursTotal / totalPts) * 100) : 50;
     const pctPla = 100 - pctFam;
 
-    let html = `<h3 class="stat-nom">${enf.emoji} ${echapper(enf.prenom)} <small>(${t("home.ans", { age: age(enf) })})</small></h3>
+    let html = `<h3 class="stat-nom">${echapper(enf.prenom)} <small>(${t("home.ans", { age: age(enf) })})</small></h3>
       <div class="stat-chiffres">
         <span class="stat-puce">💛 ${enf.coeursTotal}</span>
         <span class="stat-puce">💧 ${enf.gouttesTotal}</span>
@@ -3026,7 +3028,7 @@ function blocTournantes() {
       const ms = (r.missions || []).map(id => { const m = trouverMission(id); return m ? m.emoji + " " + titreMission(m) : id; }).join(", ");
       const ordre = (r.enfants || []).map(id => {
         const e = etat.enfants[id]; if (!e) return "";
-        return `<span class="rot-enf${id === garde ? " garde" : ""}">${e.emoji} ${echapper(e.prenom)}</span>`;
+        return `<span class="rot-enf${id === garde ? " garde" : ""}">${echapper(e.prenom)}</span>`;
       }).join(" → ");
       const lettresOff = t("planif.jours_courts").split(",");
       const ordreJ = [1, 2, 3, 4, 5, 6, 0];
@@ -3074,7 +3076,7 @@ function blocTournantes() {
   const enfRow = el("div", "planif-enfants");
   Object.values(etat.enfants).forEach(e => {
     const pos = rotNouv.enfants.indexOf(e.id);
-    const b = el("button", "enf-chip" + (pos >= 0 ? " on" : ""), `${e.emoji} ${echapper(e.prenom)}${pos >= 0 ? " " + (pos + 1) : ""}`);
+    const b = el("button", "enf-chip" + (pos >= 0 ? " on" : ""), `${echapper(e.prenom)}${pos >= 0 ? " " + (pos + 1) : ""}`);
     b.onclick = () => {
       if (pos >= 0) rotNouv.enfants.splice(pos, 1);
       else rotNouv.enfants.push(e.id);
@@ -3155,7 +3157,7 @@ function blocSelectionGroupee() {
     const tbl = el("table", "grp-tbl");
     // En-tête : avatars des enfants.
     let head = `<tr><th class="grp-mlbl"></th>`;
-    enfants.forEach(e => { head += `<th><span class="grp-enf" style="--c:${e.couleur}">${e.emoji}</span></th>`; });
+    enfants.forEach(e => { head += `<th><span class="grp-enf" style="--c:${e.couleur}">${vignetteEnfant(e, "mini")}</span></th>`; });
     head += `</tr>`;
     tbl.innerHTML = head;
     ms.forEach(m => {
@@ -3196,7 +3198,7 @@ function blocMissionsDuJour(enf) {
   const totalSel = selIds.length;
   const conseille = tachesConseillees(age(enf));
   const trop = totalSel > conseille;
-  sec.innerHTML = `<h2>${t("mdj.titre", { enf: enf.emoji + " " + enf.prenom })}</h2>
+  sec.innerHTML = `<h2>${t("mdj.titre", { enf: echapper(enf.prenom) })}</h2>
     <p class="note">${t("mdj.note")}</p>
     <p class="note mdj-budget">${t("mdj.budget", { n: conseille, min: budgetMinJour() })}</p>
     <p class="mdj-compte ${trop ? "trop" : "ok"}">${t(trop ? "mdj.trop" : "mdj.compte", { sel: totalSel, n: conseille })}</p>`;
@@ -3345,7 +3347,7 @@ function blocPlanifMission(m) {
   Object.values(etat.enfants).forEach(enf => {
     const actif = (p.enfants || []).includes(enf.id);
     // vide = tous les enfants ; on coche visuellement « tous » si aucune restriction
-    const b = el("button", "enf-chip" + (actif ? " on" : ""), `${enf.emoji} ${echapper(enf.prenom)}`);
+    const b = el("button", "enf-chip" + (actif ? " on" : ""), echapper(enf.prenom));
     b.onclick = (e) => { e.preventDefault(); basculerPlanifElement(m.id, "enfants", enf.id); };
     enfRow.appendChild(b);
   });
@@ -3398,7 +3400,7 @@ function blocPersonnalisation() {
   sec.innerHTML = `<h2>${t("perso.titre")}</h2><p class="note">${t("perso.note")}</p>`;
 
   Object.values(etat.enfants).forEach(enf => {
-    const { details: dEnf, corps: cEnf } = blocPliable(`${enf.emoji} ${echapper(enf.prenom)}`, false, "perso-" + enf.id);
+    const { details: dEnf, corps: cEnf } = blocPliable(echapper(enf.prenom), false, "perso-" + enf.id);
     dEnf.style.setProperty("--c", enf.couleur);
 
     // Écosystème (plantes & animaux) : activer/désactiver + ajuster le coût.
@@ -3430,7 +3432,7 @@ function blocPersonnalisation() {
 function blocCorrections(enf) {
   const sec = el("section", "carte correction");
   sec.style.setProperty("--c", enf.couleur);
-  sec.innerHTML = `<h2>${t("cor.titre", { enf: enf.emoji + " " + enf.prenom })}</h2>
+  sec.innerHTML = `<h2>${t("cor.titre", { enf: echapper(enf.prenom) })}</h2>
     <p class="note">${t("cor.note")}</p>`;
 
   // -- Ajusteurs de monnaie --
@@ -3635,12 +3637,21 @@ function definirModeExpert(v) {
   etat.reglages.modeExpert = !!v;
   sauver(); rendre();
 }
-// Liste des onglets visibles selon le mode (et l'admin). Les stats sont en
-// mode expert ; les outils admin ont leur propre onglet réservé à l'admin.
+// Liste des onglets visibles selon le mode (et l'admin).
+//   Mode simplifié : 4 onglets seulement, dans l'ordre où un parent qui
+//     découvre l'app en a besoin (aujourd'hui → mes enfants → activités →
+//     réglages). Rien n'est perdu : la semaine papier, le programme, la
+//     famille et le compte sont regroupés dans ces onglets (cf. sectionVisible).
+//   Mode expert : un onglet par sujet, plus les statistiques.
 function ongletsParents() {
-  const ids = ["quotidien", "papier", "activites", "enfants", "famille", "compte"];
-  if (estModeExpert()) ids.push("stats");
-  if (typeof estAdmin !== "undefined" && estAdmin) ids.push("admin");
+  const admin = (typeof estAdmin !== "undefined" && estAdmin);
+  if (!estModeExpert()) {
+    const ids = ["quotidien", "enfants", "activites", "compte"];
+    if (admin) ids.push("admin");
+    return ids;
+  }
+  const ids = ["quotidien", "papier", "activites", "enfants", "famille", "compte", "stats"];
+  if (admin) ids.push("admin");
   return ids;
 }
 const LIBELLES_ONGLETS = {
@@ -3648,6 +3659,25 @@ const LIBELLES_ONGLETS = {
   enfants: "grp.enfants", famille: "grp.famille", compte: "grp.compte",
   stats: "grp.stats", admin: "grp.admin"
 };
+// Libellé d'un onglet : en mode simplifié, « Mon compte & données » devient
+// « Réglages » puisqu'il regroupe aussi le programme, la famille et le mode.
+function libelleOnglet(id) {
+  if (id === "compte" && !estModeExpert()) return t("grp.reglages");
+  return t(LIBELLES_ONGLETS[id]);
+}
+// Une « section » est un bloc de contenu ; en mode simplifié plusieurs
+// sections partagent un même onglet.
+function sectionVisible(section) {
+  const exp = estModeExpert();
+  switch (section) {
+    // Semaine papier : onglet dédié en expert, dépliant sous « Activités » sinon.
+    case "papier":  return ongletParent === (exp ? "papier" : "activites");
+    // Famille & invitations : onglet dédié en expert, dans « Réglages » sinon.
+    case "famille": return ongletParent === (exp ? "famille" : "compte");
+    case "stats":   return exp && ongletParent === "stats";  // outil avancé
+    default:        return ongletParent === section;
+  }
+}
 
 // Change d'onglet parent d'un cran (dir = +1 suivant, -1 précédent), en boucle.
 function changerOngletParentRelatif(dir) {
@@ -3667,160 +3697,89 @@ function bandeauDemo() {
   return d;
 }
 
-function vueReglages(c) {
-  const totalAttente = Object.values(etat.enfants).reduce((s, e) => s + e.enAttente.length, 0);
+/* ---------- Premiers pas (mode simplifié) ----------
+ * Carte d'accueil pour un parent qui découvre FamiTeam : trois gestes, dans
+ * l'ordre, avec l'état réel de chacun (fait / à faire). Disparaît d'elle-même
+ * quand les trois sont faits, ou si le parent la masque. */
 
-  // ----- Écran verrouillé (mode parents inactif) -----
-  if (!modeParents) {
-    const v = el("section", "carte");
-    v.innerHTML = `<h1>${t("par.verrou.titre")}</h1>
-      <p>${t("par.verrou.desc")}</p>
-      ${totalAttente ? `<p class="note">${t("par.verrou.attente", { n: totalAttente })}</p>` : ""}
-      <p class="note">${t("par.verrou.esprit")}</p>`;
-    const b = el("button", "gros-bouton planete", t("par.verrou.activer"));
-    b.onclick = activerModeParents;
-    v.appendChild(b);
-    c.appendChild(v);
-    return;
-  }
+// Les prénoms d'usine (« Aîné(e) », « Petit(e) »…) signalent un profil pas
+// encore renseigné.
+function profilsRenseignes() {
+  const defauts = (typeof ENFANTS_DEFAUT !== "undefined") ? ENFANTS_DEFAUT.map(e => e.prenom) : [];
+  return Object.values(etat.enfants).every(e =>
+    e.prenom && e.prenom.trim() && !defauts.includes(e.prenom.trim()));
+}
+// Le parent a-t-il déjà composé une liste de missions (au lieu du défaut) ?
+function missionsChoisies() {
+  return Object.values(etat.enfants).some(e => planEffectif(e, aujourdHui()) !== null);
+}
+// Une mission a-t-elle déjà été validée aujourd'hui (la boucle tourne) ?
+function journeeEntamee() {
+  const auj = aujourdHui();
+  return Object.values(etat.enfants).some(e =>
+    e.journal && e.journal[auj] && Object.keys(e.journal[auj]).length > 0);
+}
 
-  // ----- Bandeau mode parents actif -----
-  const banniere = el("section", "carte");
-  banniere.innerHTML = `<h1>${t("par.actif.titre")} <span class="badge">${t("par.actif.badge")}</span></h1>`;
-  const bq = el("button", "btn-secondaire", t("par.actif.quitter"));
-  bq.onclick = quitterModeParents;
-  banniere.appendChild(bq);
-  // Sélecteur de langue « fun » : boutons drapeaux (plutôt qu'une liste).
-  const blocLang = el("div", "langue-bloc");
-  blocLang.innerHTML = `<span class="langue-titre">🌐 ${t("langue")}</span>`;
-  blocLang.appendChild(selecteurLangueFun(() => rendre()));
-  banniere.appendChild(blocLang);
+function blocPremiersPas() {
+  if (etat.reglages && etat.reglages.premiersPasVus) return null;
+  const etapes = [
+    { fait: profilsRenseignes(), titre: t("pp.e1_t"), desc: t("pp.e1_d"), onglet: "enfants", bouton: t("pp.e1_b") },
+    { fait: missionsChoisies(),  titre: t("pp.e2_t"), desc: t("pp.e2_d") },
+    { fait: journeeEntamee(),    titre: t("pp.e3_t"), desc: t("pp.e3_d") }
+  ];
+  if (etapes.every(e => e.fait)) return null;      // plus rien à expliquer
 
-  // Choix Standard / Expert : deux gros boutons « fun » + explication.
-  const exp = estModeExpert();
-  const modeBloc = el("div", "mode-bloc");
-  modeBloc.innerHTML = `<span class="langue-titre">🧭 ${t("mode.titre")}</span>`;
-  const choix = el("div", "mode-choix");
-  const bStd = el("button", "mode-btn" + (!exp ? " on" : ""), `🌿 ${t("mode.standard")}`);
-  bStd.onclick = () => { if (exp) majSansSaut(() => definirModeExpert(false)); };
-  const bExp = el("button", "mode-btn" + (exp ? " on" : ""), `🧪 ${t("mode.expert")}`);
-  bExp.onclick = () => { if (!exp) majSansSaut(() => definirModeExpert(true)); };
-  choix.appendChild(bStd); choix.appendChild(bExp);
-  modeBloc.appendChild(choix);
-  modeBloc.appendChild(el("p", "note mode-aide", t(exp ? "mode.aide_expert" : "mode.aide_standard")));
-  banniere.appendChild(modeBloc);
-  c.appendChild(banniere);
-
-  // ----- Sous-menu (onglets) pour organiser l'espace parents -----
-  const onglets = ongletsParents().map(id => [id, t(LIBELLES_ONGLETS[id])]);
-  // Si l'onglet courant n'est plus visible (ex. passage en Standard), on revient au 1ᵉʳ.
-  if (!onglets.some(([id]) => id === ongletParent)) ongletParent = onglets[0][0];
-  const nav = el("nav", "sous-nav");
-  let btnActif = null;
-  onglets.forEach(([id, label]) => {
-    const b = el("button", "sous-nav-btn" + (ongletParent === id ? " actif" : ""), label);
-    if (ongletParent === id) btnActif = b;
-    if (id === "quotidien" && totalAttente) {
-      const pin = el("span", "sous-nav-pin", String(totalAttente));
-      b.appendChild(pin);
+  const sec = el("section", "carte premiers-pas");
+  sec.innerHTML = `<h2>${t("pp.titre")}</h2><p class="note">${t("pp.sous")}</p>`;
+  const liste = el("ol", "pp-liste");
+  etapes.forEach((e, i) => {
+    const li = el("li", "pp-etape" + (e.fait ? " fait" : ""));
+    li.innerHTML = `<span class="pp-num">${e.fait ? "✅" : (i + 1)}</span>
+      <span class="pp-corps"><strong>${e.titre}</strong><small>${e.desc}</small></span>`;
+    if (!e.fait && e.onglet) {
+      const b = el("button", "mini-btn", e.bouton);
+      b.onclick = () => { ongletParent = e.onglet; rendre(); };
+      li.querySelector(".pp-corps").appendChild(b);
     }
-    b.onclick = () => { ongletParent = id; rendre(); };
-    nav.appendChild(b);
+    liste.appendChild(li);
   });
-  c.appendChild(nav);
-  // Centre l'onglet actif DANS la barre (défilement horizontal interne
-  // uniquement) — surtout pas scrollIntoView, qui ferait remonter la page.
-  if (btnActif) requestAnimationFrame(() => {
-    try { nav.scrollLeft = btnActif.offsetLeft - (nav.clientWidth - btnActif.clientWidth) / 2; } catch (e) { /* ignore */ }
-  });
+  sec.appendChild(liste);
+  const bTuto = el("button", "btn-secondaire", t("tuto.revoir"));
+  bTuto.onclick = () => lancerTuto();
+  sec.appendChild(bTuto);
+  const bMasquer = el("button", "lien-oubli", t("pp.masquer"));
+  bMasquer.onclick = () => {
+    if (!etat.reglages) etat.reglages = {};
+    etat.reglages.premiersPasVus = true;
+    sauver(); rendre();
+  };
+  sec.appendChild(bMasquer);
+  return sec;
+}
 
-  // Indicateur de position : flèches ◀ ▶ + points (le titre est déjà donné
-  // par l'onglet actif surligné juste au-dessus — on évite le doublon).
-  const idxOnglet = onglets.findIndex(([id]) => id === ongletParent);
-  const indic = el("div", "parent-indic");
-  const prevB = el("button", "parent-indic-fleche", "◀");
-  prevB.onclick = () => glisserVers(-1, () => changerOngletParentRelatif(-1));
-  const nextB = el("button", "parent-indic-fleche", "▶");
-  nextB.onclick = () => glisserVers(1, () => changerOngletParentRelatif(1));
-  const centre = el("div", "parent-indic-centre");
-  centre.innerHTML = `<span class="parent-indic-dots">${onglets.map((_, k) =>
-    `<span class="pi-dot${k === idxOnglet ? " on" : ""}"></span>`).join("")}</span>`;
-  indic.appendChild(prevB); indic.appendChild(centre); indic.appendChild(nextB);
-  c.appendChild(indic);
-
-  /* ===== ONGLET : Au quotidien ===== */
-  if (ongletParent === "quotidien") {
-
-  // ----- Compliment du jour : un mot d'encouragement concret à dire à
-  // l'enfant, basé sur sa régularité/progression réelle (parentalité
-  // positive). Tout en haut : c'est la première chose à voir chaque jour. -----
-  c.appendChild(blocComplimentDuJour(enfantActif()));
-
-  // ----- Comportement de l'enfant (évaluation parent) : en 1ʳᵉ place -----
-  c.appendChild(blocEval(enfantActif(), "parent"));
-
-  // ----- Défis réparation ("Oups, ça arrive…") : accès rapide -----
-  c.appendChild(blocReparation());
-
-  // ----- Soutien (don facultatif) : admins + familles de plus d'une semaine -----
-  if (typeof donDisponible !== "function" || donDisponible()) c.appendChild(blocDon());
-
-  // ----- Validations en attente (affichées seulement s'il y en a) -----
-  if (totalAttente) {
-    const att = el("section", "carte");
-    att.innerHTML = `<h2>${t("par.attente.titre", { n: totalAttente })}</h2>`;
-    Object.values(etat.enfants).forEach(enf => {
-      enf.enAttente.forEach((a, idx) => {
-        const cat = CATEGORIES[a.cat];
-        const ligne = el("div", "attente-ligne");
-        ligne.innerHTML = `<span class="att-info">${enf.emoji} <strong>${enf.prenom}</strong> — ${a.emoji || ""} ${trData("mission", a.missionId, a.titre)}
-          <small>(${a.jour}) +${a.points} ${cat ? cat.monnaieEmoji : ""}</small></span>`;
-        const ok = el("button", "mini-btn ok", "✅");
-        ok.onclick = () => confirmerAttente(enf, idx);
-        const non = el("button", "mini-btn non", "✖️");
-        non.onclick = () => refuserAttente(enf, idx);
-        ligne.appendChild(ok); ligne.appendChild(non);
-        att.appendChild(ligne);
-      });
+// ----- Validations en attente (mission cochée par l'enfant, à confirmer) -----
+function blocAttente(total) {
+  const att = el("section", "carte");
+  att.innerHTML = `<h2>${t("par.attente.titre", { n: total })}</h2>`;
+  Object.values(etat.enfants).forEach(enf => {
+    enf.enAttente.forEach((a, idx) => {
+      const cat = CATEGORIES[a.cat];
+      const ligne = el("div", "attente-ligne");
+      ligne.innerHTML = `<span class="att-info"><strong>${echapper(enf.prenom)}</strong> — ${a.emoji || ""} ${trData("mission", a.missionId, a.titre)}
+        <small>(${a.jour}) +${a.points} ${cat ? cat.monnaieEmoji : ""}</small></span>`;
+      const ok = el("button", "mini-btn ok", "✅");
+      ok.onclick = () => confirmerAttente(enf, idx);
+      const non = el("button", "mini-btn non", "✖️");
+      non.onclick = () => refuserAttente(enf, idx);
+      ligne.appendChild(ok); ligne.appendChild(non);
+      att.appendChild(ligne);
     });
-    c.appendChild(att);
-  }
+  });
+  return att;
+}
 
-  // ----- Sélection groupée & tournantes : outils avancés (mode expert) -----
-  if (estModeExpert()) {
-    c.appendChild(blocSelectionGroupee());
-    c.appendChild(blocTournantes());
-  }
-
-  // ----- Missions du jour (sélection par les parents) -----
-  c.appendChild(blocMissionsDuJour(enfantActif()));
-
-  // ----- Corrections fines (ajustements/badges) : mode expert -----
-  if (estModeExpert()) c.appendChild(blocCorrections(enfantActif()));
-
-  // ----- Journal des actions récentes (annulation) -----
-  c.appendChild(blocJournalActions());
-
-  } /* fin onglet quotidien */
-
-  /* ===== ONGLET : Semaine papier ===== */
-  if (ongletParent === "papier") {
-    c.appendChild(blocSemainePapier());
-    c.appendChild(blocEncoderSemaine());
-  }
-
-  /* ===== ONGLET : Statistiques ===== */
-  if (ongletParent === "stats") {
-    c.appendChild(blocStatistiques());
-  }
-
-  /* ===== ONGLET : Activités & règles du jeu ===== */
-  if (ongletParent === "activites") {
-
-  // ----- Cartes surprises (activités famille) -----
-  c.appendChild(blocCartesSurprisesParents());
-
-  // ----- Réglages du programme (validation parentale + code PIN) -----
+// ----- Réglages du programme (validation parentale, code PIN, humour…) -----
+function blocProgramme() {
   const prog = el("section", "carte");
   prog.innerHTML = `<h2>${t("par.prog.titre")}</h2>`;
   const lVal = el("label", "switch-ligne");
@@ -3863,91 +3822,30 @@ function vueReglages(c) {
   const bTuto = el("button", "btn-secondaire", t("tuto.revoir"));
   bTuto.onclick = () => lancerTuto();
   prog.appendChild(bTuto);
-  c.appendChild(prog);
+  return prog;
+}
 
-  // ----- Référence écosystème : détail avancé (mode expert) -----
-  if (estModeExpert()) c.appendChild(blocEcoReference());
+// ----- Choix Standard / Expert (deux gros boutons + explication) -----
+function blocModeParents() {
+  const exp = estModeExpert();
+  const modeBloc = el("div", "mode-bloc");
+  modeBloc.innerHTML = `<span class="langue-titre">🧭 ${t("mode.titre")}</span>`;
+  const choix = el("div", "mode-choix");
+  const bStd = el("button", "mode-btn" + (!exp ? " on" : ""), `🌿 ${t("mode.standard")}`);
+  bStd.onclick = () => { if (exp) majSansSaut(() => definirModeExpert(false)); };
+  const bExp = el("button", "mode-btn" + (exp ? " on" : ""), `🧪 ${t("mode.expert")}`);
+  bExp.onclick = () => { if (!exp) majSansSaut(() => definirModeExpert(true)); };
+  choix.appendChild(bStd); choix.appendChild(bExp);
+  modeBloc.appendChild(choix);
+  modeBloc.appendChild(el("p", "note mode-aide", t(exp ? "mode.aide_expert" : "mode.aide_standard")));
+  return modeBloc;
+}
 
-  } /* fin onglet activités */
+// ----- Famille, invitations, parrainage, abonnement -----
+// `c` = conteneur d'accueil (l'onglet lui-même, ou le corps d'un dépliant).
+function sectionsFamille(c) {
+  if (typeof modeDemo !== "undefined" && modeDemo) { c.appendChild(bandeauDemo()); return; }
 
-  /* ===== ONGLET : Les enfants ===== */
-  if (ongletParent === "enfants") {
-
-  // ----- Profils -----
-  Object.values(etat.enfants).forEach(enf => {
-    const sec = el("section", "carte reglage-enfant");
-    sec.style.setProperty("--c", enf.couleur);
-    const enTete = el("div", "reglage-entete");
-    enTete.innerHTML = `<h2>${enf.emoji} ${enf.prenom}</h2>`;
-    if (Object.keys(etat.enfants).length > 1) {
-      const bSup = el("button", "mini-btn danger", t("profil.supprimer"));
-      bSup.onclick = () => supprimerEnfant(enf.id);
-      enTete.appendChild(bSup);
-    }
-    sec.appendChild(enTete);
-
-    const lPrenom = el("label", "champ", t("profil.prenom"));
-    const iPrenom = el("input");
-    iPrenom.value = enf.prenom;
-    iPrenom.oninput = () => { majEnfant(enf.id, "prenom", iPrenom.value); rendreSelecteur(); };
-    lPrenom.appendChild(iPrenom);
-
-    const lDate = el("label", "champ", t("profil.naissance"));
-    const iDate = el("input");
-    iDate.type = "date"; iDate.value = enf.naissance; iDate.max = aujourdHui(); iDate.min = "2008-01-01";
-    iDate.onchange = () => { majEnfant(enf.id, "naissance", iDate.value || enf.naissance); rendreSelecteur(); rendre(); };
-    lDate.appendChild(iDate);
-
-    const lSexe = el("label", "champ", t("profil.sexe"));
-    const iSexe = el("div", "segmente");
-    ["fille", "garcon"].forEach(s => {
-      const b = el("button", "seg" + (enf.sexe === s ? " actif" : ""), s === "fille" ? t("profil.fille") : t("profil.garcon"));
-      b.onclick = () => { majEnfant(enf.id, "sexe", s); rendre(); };
-      iSexe.appendChild(b);
-    });
-    lSexe.appendChild(iSexe);
-
-    const lEmoji = el("label", "champ", t("profil.emoji"));
-    const iEmoji = el("input");
-    iEmoji.value = enf.emoji; iEmoji.maxLength = 4;
-    iEmoji.oninput = () => { majEnfant(enf.id, "emoji", iEmoji.value); rendreSelecteur(); };
-    lEmoji.appendChild(iEmoji);
-
-    const lCouleur = el("label", "champ", t("profil.couleur"));
-    const iCouleur = el("input");
-    iCouleur.type = "color"; iCouleur.value = enf.couleur;
-    iCouleur.oninput = () => majEnfant(enf.id, "couleur", iCouleur.value);
-    lCouleur.appendChild(iCouleur);
-
-    const lDodo = el("label", "champ", t("profil.coucher"));
-    const iDodo = el("input");
-    iDodo.type = "time"; iDodo.value = enf.heureCoucher || "19:30";
-    iDodo.onchange = () => { majEnfant(enf.id, "heureCoucher", iDodo.value || "19:30"); rendre(); };
-    lDodo.appendChild(iDodo);
-
-    const stats = el("p", "note", t("profil.stats", { age: age(enf), c: enf.coeursTotal, g: enf.gouttesTotal, e: nbTotalEspeces(enf), b: enf.badges.length }));
-
-    [lPrenom, lDate, lSexe, lEmoji, lCouleur, lDodo, stats].forEach(x => sec.appendChild(x));
-    c.appendChild(sec);
-  });
-
-  // ----- Ajouter un enfant -----
-  const bAjout = el("button", "gros-bouton famille", t("profil.ajouter_enfant"));
-  bAjout.onclick = () => { ajouterEnfant(); rendre(); };
-  c.appendChild(bAjout);
-
-  // ----- Écosystème par enfant : désactivé pour l'instant (peu utile) -----
-  // c.appendChild(blocPersonnalisation());
-
-  } /* fin onglet enfants */
-
-  /* ===== ONGLET : Famille & invitations ===== */
-  if (ongletParent === "famille") {
-  if (typeof modeDemo !== "undefined" && modeDemo) {
-    c.appendChild(bandeauDemo());   // pas de famille/abonnement/admin en démo
-  } else {
-
-  // ----- Famille & invitations -----
   const fam = el("section", "carte");
   fam.innerHTML = `<h2>${t("fam.titre")}</h2>
     <p>${t("fam.label", { nom: familleActive ? echapper(familleActive.name) : "—" })}</p>
@@ -4011,24 +3909,14 @@ function vueReglages(c) {
     abo.appendChild(bAbo);
     c.appendChild(abo);
   }
+}
 
-  } /* fin sinon-démo */
-  } /* fin onglet famille */
-
-  /* ===== ONGLET : Admin (réservé à l'administrateur) ===== */
-  if (ongletParent === "admin" && typeof estAdmin !== "undefined" && estAdmin) {
-    vueAdmin(c);
-  }
-
-  /* ===== ONGLET : Mon compte & données ===== */
-  if (ongletParent === "compte") {
+// ----- Compte, données, récupération, suppression -----
+function sectionsCompte(c) {
   // Module bug/suggestion : early adopters uniquement.
   if (typeof estEarlyAdopter !== "function" || estEarlyAdopter()) c.appendChild(blocFeedback());
-  if (typeof modeDemo !== "undefined" && modeDemo) {
-    c.appendChild(bandeauDemo());
-  } else {
+  if (typeof modeDemo !== "undefined" && modeDemo) { c.appendChild(bandeauDemo()); return; }
 
-  // ----- Compte -----
   const cpt = el("section", "carte");
   const u = typeof utilisateurCourant === "function" ? utilisateurCourant() : null;
   cpt.innerHTML = `<h2>${t("compte.titre")}</h2>
@@ -4065,9 +3953,248 @@ function vueReglages(c) {
     danger.appendChild(bDel);
     c.appendChild(danger);
   }
+}
 
-  } /* fin sinon-démo */
-  } /* fin onglet compte */
+function vueReglages(c) {
+  const totalAttente = Object.values(etat.enfants).reduce((s, e) => s + e.enAttente.length, 0);
+  const exp = estModeExpert();
+
+  // ----- Écran verrouillé (mode parents inactif) -----
+  if (!modeParents) {
+    const v = el("section", "carte");
+    v.innerHTML = `<h1>${t("par.verrou.titre")}</h1>
+      <p>${t("par.verrou.desc")}</p>
+      ${totalAttente ? `<p class="note">${t("par.verrou.attente", { n: totalAttente })}</p>` : ""}
+      <p class="note">${t("par.verrou.esprit")}</p>`;
+    const b = el("button", "gros-bouton planete", t("par.verrou.activer"));
+    b.onclick = activerModeParents;
+    v.appendChild(b);
+    c.appendChild(v);
+    return;
+  }
+
+  // ----- Bandeau mode parents actif -----
+  const banniere = el("section", "carte");
+  banniere.innerHTML = `<h1>${t("par.actif.titre")} <span class="badge">${t("par.actif.badge")}</span></h1>`;
+  const bq = el("button", "btn-secondaire", t("par.actif.quitter"));
+  bq.onclick = quitterModeParents;
+  banniere.appendChild(bq);
+  // Sélecteur de langue « fun » : boutons drapeaux (plutôt qu'une liste).
+  const blocLang = el("div", "langue-bloc");
+  blocLang.innerHTML = `<span class="langue-titre">🌐 ${t("langue")}</span>`;
+  blocLang.appendChild(selecteurLangueFun(() => rendre()));
+  banniere.appendChild(blocLang);
+  // Le choix Standard / Expert n'encombre l'entrée qu'en mode expert ; en mode
+  // simplifié il vit tout en bas de l'onglet « Réglages ».
+  if (exp) banniere.appendChild(blocModeParents());
+  c.appendChild(banniere);
+
+  // ----- Sous-menu (onglets) pour organiser l'espace parents -----
+  const onglets = ongletsParents().map(id => [id, libelleOnglet(id)]);
+  // Si l'onglet courant n'est plus visible (ex. passage en Standard), on revient au 1ᵉʳ.
+  if (!onglets.some(([id]) => id === ongletParent)) ongletParent = onglets[0][0];
+  const nav = el("nav", "sous-nav");
+  let btnActif = null;
+  onglets.forEach(([id, label]) => {
+    const b = el("button", "sous-nav-btn" + (ongletParent === id ? " actif" : ""), label);
+    if (ongletParent === id) btnActif = b;
+    if (id === "quotidien" && totalAttente) {
+      const pin = el("span", "sous-nav-pin", String(totalAttente));
+      b.appendChild(pin);
+    }
+    b.onclick = () => { ongletParent = id; rendre(); };
+    nav.appendChild(b);
+  });
+  c.appendChild(nav);
+  // Centre l'onglet actif DANS la barre (défilement horizontal interne
+  // uniquement) — surtout pas scrollIntoView, qui ferait remonter la page.
+  if (btnActif) requestAnimationFrame(() => {
+    try { nav.scrollLeft = btnActif.offsetLeft - (nav.clientWidth - btnActif.clientWidth) / 2; } catch (e) { /* ignore */ }
+  });
+
+  // Indicateur de position : flèches ◀ ▶ + points (le titre est déjà donné
+  // par l'onglet actif surligné juste au-dessus — on évite le doublon).
+  const idxOnglet = onglets.findIndex(([id]) => id === ongletParent);
+  const indic = el("div", "parent-indic");
+  const prevB = el("button", "parent-indic-fleche", "◀");
+  prevB.onclick = () => glisserVers(-1, () => changerOngletParentRelatif(-1));
+  const nextB = el("button", "parent-indic-fleche", "▶");
+  nextB.onclick = () => glisserVers(1, () => changerOngletParentRelatif(1));
+  const centre = el("div", "parent-indic-centre");
+  centre.innerHTML = `<span class="parent-indic-dots">${onglets.map((_, k) =>
+    `<span class="pi-dot${k === idxOnglet ? " on" : ""}"></span>`).join("")}</span>`;
+  indic.appendChild(prevB); indic.appendChild(centre); indic.appendChild(nextB);
+  c.appendChild(indic);
+
+  /* ===== ONGLET : Aujourd'hui ===== */
+  if (sectionVisible("quotidien")) {
+
+  if (!exp) {
+    // Mode simplifié : l'ordre suit le geste réel du parent — ce qu'il y a à
+    // faire d'abord, les encouragements ensuite.
+    const pp = blocPremiersPas();
+    if (pp) c.appendChild(pp);
+    if (totalAttente) c.appendChild(blocAttente(totalAttente));
+    c.appendChild(blocMissionsDuJour(enfantActif()));
+    c.appendChild(blocEval(enfantActif(), "parent"));
+    c.appendChild(blocReparation());
+    c.appendChild(blocComplimentDuJour(enfantActif()));
+    if (typeof donDisponible !== "function" || donDisponible()) c.appendChild(blocDon());
+    c.appendChild(blocJournalActions());
+  } else {
+    // ----- Compliment du jour : un mot d'encouragement concret à dire à
+    // l'enfant, basé sur sa régularité/progression réelle (parentalité
+    // positive). Tout en haut : c'est la première chose à voir chaque jour. -----
+    c.appendChild(blocComplimentDuJour(enfantActif()));
+
+    // ----- Comportement de l'enfant (évaluation parent) : en 1ʳᵉ place -----
+    c.appendChild(blocEval(enfantActif(), "parent"));
+
+    // ----- Défis réparation ("Oups, ça arrive…") : accès rapide -----
+    c.appendChild(blocReparation());
+
+    // ----- Soutien (don facultatif) : admins + familles de plus d'une semaine -----
+    if (typeof donDisponible !== "function" || donDisponible()) c.appendChild(blocDon());
+
+    // ----- Validations en attente (affichées seulement s'il y en a) -----
+    if (totalAttente) c.appendChild(blocAttente(totalAttente));
+
+    // ----- Sélection groupée & tournantes : outils avancés -----
+    c.appendChild(blocSelectionGroupee());
+    c.appendChild(blocTournantes());
+
+    // ----- Missions du jour (sélection par les parents) -----
+    c.appendChild(blocMissionsDuJour(enfantActif()));
+
+    // ----- Corrections fines (ajustements/badges) -----
+    c.appendChild(blocCorrections(enfantActif()));
+
+    // ----- Journal des actions récentes (annulation) -----
+    c.appendChild(blocJournalActions());
+  }
+
+  } /* fin onglet quotidien */
+
+  /* ===== ONGLET : Statistiques (expert) ===== */
+  if (sectionVisible("stats")) {
+    c.appendChild(blocStatistiques());
+  }
+
+  /* ===== ONGLET : Activités & récompenses ===== */
+  if (sectionVisible("activites")) {
+    // ----- Cartes surprises (activités famille) -----
+    c.appendChild(blocCartesSurprisesParents());
+    // En expert, cet onglet porte aussi le programme et la référence écosystème
+    // (en simplifié, le programme vit dans « Réglages »).
+    if (exp) {
+      c.appendChild(blocProgramme());
+      c.appendChild(blocEcoReference());
+    }
+  }
+
+  /* ===== Semaine papier : onglet dédié en expert, dépliant en simplifié ===== */
+  if (sectionVisible("papier")) {
+    if (exp) {
+      c.appendChild(blocSemainePapier());
+      c.appendChild(blocEncoderSemaine());
+    } else {
+      const { details, corps } = blocPliable(t("grp.papier"), false, "std-papier");
+      corps.appendChild(el("p", "note", t("papier.pour_quoi")));
+      corps.appendChild(blocSemainePapier());
+      corps.appendChild(blocEncoderSemaine());
+      c.appendChild(details);
+    }
+  }
+
+  /* ===== ONGLET : Mes enfants ===== */
+  if (sectionVisible("enfants")) {
+
+  // ----- Profils -----
+  Object.values(etat.enfants).forEach(enf => {
+    const sec = el("section", "carte reglage-enfant");
+    sec.style.setProperty("--c", enf.couleur);
+    const enTete = el("div", "reglage-entete");
+    enTete.innerHTML = `<h2>${vignetteEnfant(enf, "mini")} ${echapper(enf.prenom)}</h2>`;
+    if (Object.keys(etat.enfants).length > 1) {
+      const bSup = el("button", "mini-btn danger", t("profil.supprimer"));
+      bSup.onclick = () => supprimerEnfant(enf.id);
+      enTete.appendChild(bSup);
+    }
+    sec.appendChild(enTete);
+
+    const lPrenom = el("label", "champ", t("profil.prenom"));
+    const iPrenom = el("input");
+    iPrenom.value = enf.prenom;
+    iPrenom.oninput = () => { majEnfant(enf.id, "prenom", iPrenom.value); rendreSelecteur(); };
+    lPrenom.appendChild(iPrenom);
+
+    const lDate = el("label", "champ", t("profil.naissance"));
+    const iDate = el("input");
+    iDate.type = "date"; iDate.value = enf.naissance; iDate.max = aujourdHui(); iDate.min = "2008-01-01";
+    iDate.onchange = () => { majEnfant(enf.id, "naissance", iDate.value || enf.naissance); rendreSelecteur(); rendre(); };
+    lDate.appendChild(iDate);
+
+    const lSexe = el("label", "champ", t("profil.sexe"));
+    const iSexe = el("div", "segmente");
+    ["fille", "garcon"].forEach(s => {
+      const b = el("button", "seg" + (enf.sexe === s ? " actif" : ""), s === "fille" ? t("profil.fille") : t("profil.garcon"));
+      b.onclick = () => { majEnfant(enf.id, "sexe", s); rendre(); };
+      iSexe.appendChild(b);
+    });
+    lSexe.appendChild(iSexe);
+
+    // L'emoji d'enfant n'est plus affiché nulle part (l'avatar le remplace) :
+    // le champ a donc disparu. La donnée reste en base, sans usage visible.
+
+    const lCouleur = el("label", "champ", t("profil.couleur"));
+    const iCouleur = el("input");
+    iCouleur.type = "color"; iCouleur.value = enf.couleur;
+    iCouleur.oninput = () => majEnfant(enf.id, "couleur", iCouleur.value);
+    lCouleur.appendChild(iCouleur);
+
+    const lDodo = el("label", "champ", t("profil.coucher"));
+    const iDodo = el("input");
+    iDodo.type = "time"; iDodo.value = enf.heureCoucher || "19:30";
+    iDodo.onchange = () => { majEnfant(enf.id, "heureCoucher", iDodo.value || "19:30"); rendre(); };
+    lDodo.appendChild(iDodo);
+
+    const stats = el("p", "note", t("profil.stats", { age: age(enf), c: enf.coeursTotal, g: enf.gouttesTotal, e: nbTotalEspeces(enf), b: enf.badges.length }));
+
+    [lPrenom, lDate, lSexe, lCouleur, lDodo, stats].forEach(x => sec.appendChild(x));
+    c.appendChild(sec);
+  });
+
+  // ----- Ajouter un enfant -----
+  const bAjout = el("button", "gros-bouton famille", t("profil.ajouter_enfant"));
+  bAjout.onclick = () => { ajouterEnfant(); rendre(); };
+  c.appendChild(bAjout);
+
+  } /* fin onglet enfants */
+
+  /* ===== ONGLET : Admin (réservé à l'administrateur) ===== */
+  if (ongletParent === "admin" && typeof estAdmin !== "undefined" && estAdmin) {
+    vueAdmin(c);
+  }
+
+  /* ===== Réglages : programme, famille, compte =====
+   * Expert : « Activités » porte le programme, « Famille » et « Mon compte »
+   * ont leur onglet. Simplifié : tout est ici, en dépliants pour rester lisible. */
+  if (exp) {
+    if (sectionVisible("famille")) sectionsFamille(c);
+    if (ongletParent === "compte") sectionsCompte(c);
+  } else if (ongletParent === "compte") {
+    const dep = (titre, cle, remplir, ouvert) => {
+      const { details, corps } = blocPliable(titre, !!ouvert, cle);
+      remplir(corps);
+      c.appendChild(details);
+    };
+    dep(t("regl.programme"), "std-prog", (x) => x.appendChild(blocProgramme()), true);
+    dep(t("regl.famille"), "std-fam", (x) => sectionsFamille(x));
+    dep(t("regl.compte"), "std-cpt", (x) => sectionsCompte(x));
+    const modeCarte = el("section", "carte");
+    modeCarte.appendChild(blocModeParents());
+    c.appendChild(modeCarte);
+  }
 }
 
 // Module de signalement (bug / suggestion) — réservé aux early adopters.

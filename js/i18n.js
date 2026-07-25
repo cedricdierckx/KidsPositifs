@@ -1444,10 +1444,10 @@ Object.assign(I18N.de, {
 });
 
 /* ---- Espace parents : titres de groupes ---- */
-Object.assign(I18N.fr, { "grp.quotidien": "📋 Au quotidien", "grp.papier": "📄 Semaine papier", "grp.activites": "🎯 Activités & règles du jeu", "grp.enfants": "👧 Les enfants", "grp.famille": "👪 Famille & invitations", "grp.compte": "⚙️ Mon compte & données", "grp.admin": "🛡️ Admin" });
-Object.assign(I18N.en, { "grp.quotidien": "📋 Daily", "grp.papier": "📄 Paper week", "grp.activites": "🎯 Activities & game rules", "grp.enfants": "👧 The children", "grp.famille": "👪 Family & invitations", "grp.compte": "⚙️ My account & data", "grp.admin": "🛡️ Admin" });
-Object.assign(I18N.nl, { "grp.quotidien": "📋 Dagelijks", "grp.papier": "📄 Papieren week", "grp.activites": "🎯 Activiteiten & spelregels", "grp.enfants": "👧 De kinderen", "grp.famille": "👪 Gezin & uitnodigingen", "grp.compte": "⚙️ Mijn account & gegevens", "grp.admin": "🛡️ Admin" });
-Object.assign(I18N.de, { "grp.quotidien": "📋 Täglich", "grp.papier": "📄 Papierwoche", "grp.activites": "🎯 Aktivitäten & Spielregeln", "grp.enfants": "👧 Die Kinder", "grp.famille": "👪 Familie & Einladungen", "grp.compte": "⚙️ Mein Konto & Daten", "grp.admin": "🛡️ Admin" });
+Object.assign(I18N.fr, { "grp.quotidien": "📋 Aujourd'hui", "grp.papier": "📄 Semaine papier", "grp.activites": "🎁 Activités & récompenses", "grp.enfants": "👧 Mes enfants", "grp.famille": "👪 Famille & invitations", "grp.compte": "⚙️ Mon compte & données", "grp.admin": "🛡️ Admin" });
+Object.assign(I18N.en, { "grp.quotidien": "📋 Today", "grp.papier": "📄 Paper week", "grp.activites": "🎁 Activities & rewards", "grp.enfants": "👧 My children", "grp.famille": "👪 Family & invitations", "grp.compte": "⚙️ My account & data", "grp.admin": "🛡️ Admin" });
+Object.assign(I18N.nl, { "grp.quotidien": "📋 Vandaag", "grp.papier": "📄 Papieren week", "grp.activites": "🎁 Activiteiten & beloningen", "grp.enfants": "👧 Mijn kinderen", "grp.famille": "👪 Gezin & uitnodigingen", "grp.compte": "⚙️ Mijn account & gegevens", "grp.admin": "🛡️ Admin" });
+Object.assign(I18N.de, { "grp.quotidien": "📋 Heute", "grp.papier": "📄 Papierwoche", "grp.activites": "🎁 Aktivitäten & Belohnungen", "grp.enfants": "👧 Meine Kinder", "grp.famille": "👪 Familie & Einladungen", "grp.compte": "⚙️ Mein Konto & Daten", "grp.admin": "🛡️ Admin" });
 
 /* ---- Semaine papier (suivi sans écran) ---- */
 Object.assign(I18N.fr, {
@@ -2516,22 +2516,22 @@ Object.assign(I18N.de, {
 /* ---- Mode parents (standard / expert) ---- */
 Object.assign(I18N.fr, {
   "mode.titre": "Mode parents", "mode.standard": "Standard", "mode.expert": "Expert",
-  "mode.aide_standard": "Réglages essentiels uniquement : valider, choisir les tâches, corriger. Simple et rapide.",
+  "mode.aide_standard": "L'essentiel en 4 onglets : ce qu'il y a à faire aujourd'hui, mes enfants, les activités, les réglages.",
   "mode.aide_expert": "Outils avancés débloqués : planification par jours/dates, tournantes, sélection groupée, édition fine des missions, référence écosystème."
 });
 Object.assign(I18N.en, {
   "mode.titre": "Parent mode", "mode.standard": "Standard", "mode.expert": "Expert",
-  "mode.aide_standard": "Essentials only: validate, choose tasks, correct. Simple and fast.",
+  "mode.aide_standard": "The essentials in 4 tabs: what to do today, my children, activities, settings.",
   "mode.aide_expert": "Advanced tools unlocked: day/date scheduling, rotations, bulk selection, fine mission editing, ecosystem reference."
 });
 Object.assign(I18N.nl, {
   "mode.titre": "Oudermodus", "mode.standard": "Standaard", "mode.expert": "Expert",
-  "mode.aide_standard": "Alleen essentiële instellingen: goedkeuren, taken kiezen, corrigeren. Eenvoudig en snel.",
+  "mode.aide_standard": "Het essentiële in 4 tabbladen: wat vandaag te doen valt, mijn kinderen, de activiteiten, de instellingen.",
   "mode.aide_expert": "Geavanceerde tools: planning per dag/datum, toerbeurten, groepsselectie, fijne bewerking van taken, ecosysteemreferentie."
 });
 Object.assign(I18N.de, {
   "mode.titre": "Elternmodus", "mode.standard": "Standard", "mode.expert": "Experte",
-  "mode.aide_standard": "Nur das Wesentliche: bestätigen, Aufgaben wählen, korrigieren. Einfach und schnell.",
+  "mode.aide_standard": "Das Wesentliche in 4 Reitern: was heute zu tun ist, meine Kinder, die Aktivitäten, die Einstellungen.",
   "mode.aide_expert": "Erweiterte Werkzeuge: Tages-/Datumsplanung, Wechsel, Sammelauswahl, feine Aufgabenbearbeitung, Ökosystem-Referenz."
 });
 
@@ -2664,3 +2664,73 @@ Object.assign(I18N.fr, { "admin.support_email": "Adresse de support (réception 
 Object.assign(I18N.en, { "admin.support_email": "Support address (receives feedback)" });
 Object.assign(I18N.nl, { "admin.support_email": "Support-adres (ontvangt feedback)" });
 Object.assign(I18N.de, { "admin.support_email": "Support-Adresse (empfängt Rückmeldungen)" });
+
+/* ---- Espace parents simplifié : premiers pas & regroupements ---- */
+Object.assign(I18N.fr, {
+  "grp.reglages": "⚙️ Réglages",
+  "regl.programme": "🎛️ Le programme (validation, code parent…)",
+  "regl.famille": "👪 Ma famille & invitations",
+  "regl.compte": "🔐 Mon compte & mes données",
+  "papier.pour_quoi": "Facultatif : la semaine à imprimer, pour cocher à la main (frigo) puis encoder ici en une fois.",
+  "pp.titre": "🚀 Premiers pas",
+  "pp.sous": "Trois gestes et c'est parti. Compte deux minutes par jour, pas plus.",
+  "pp.e1_t": "Renseigne tes enfants",
+  "pp.e1_d": "Prénom et date de naissance : les missions et l'affichage s'adaptent tout seuls à l'âge.",
+  "pp.e1_b": "Ouvrir « Mes enfants »",
+  "pp.e2_t": "Choisis 2 ou 3 missions pour aujourd'hui",
+  "pp.e2_d": "Juste en dessous ⬇️ Peu de missions = plus de réussites. Tu peux changer chaque jour.",
+  "pp.e3_t": "Ce soir, coche avec ton enfant",
+  "pp.e3_d": "Sur son écran d'accueil : il coche ce qu'il a fait, gagne des 💛 et fait grandir son avatar.",
+  "pp.masquer": "Masquer ces conseils"
+});
+Object.assign(I18N.en, {
+  "grp.reglages": "⚙️ Settings",
+  "regl.programme": "🎛️ The programme (approval, parent code…)",
+  "regl.famille": "👪 My family & invitations",
+  "regl.compte": "🔐 My account & my data",
+  "papier.pour_quoi": "Optional: the printable week, to tick by hand (on the fridge) and enter here in one go.",
+  "pp.titre": "🚀 First steps",
+  "pp.sous": "Three moves and you're set. Two minutes a day, no more.",
+  "pp.e1_t": "Fill in your children",
+  "pp.e1_d": "First name and date of birth: missions and display adapt to their age by themselves.",
+  "pp.e1_b": "Open “My children”",
+  "pp.e2_t": "Pick 2 or 3 missions for today",
+  "pp.e2_d": "Right below ⬇️ Fewer missions means more wins. You can change them every day.",
+  "pp.e3_t": "Tonight, tick them off with your child",
+  "pp.e3_d": "On their home screen: they tick what they did, earn 💛 and grow their avatar.",
+  "pp.masquer": "Hide these tips"
+});
+Object.assign(I18N.nl, {
+  "grp.reglages": "⚙️ Instellingen",
+  "regl.programme": "🎛️ Het programma (goedkeuring, oudercode…)",
+  "regl.famille": "👪 Mijn gezin & uitnodigingen",
+  "regl.compte": "🔐 Mijn account & mijn gegevens",
+  "papier.pour_quoi": "Optioneel: de week om af te drukken, met de hand aan te vinken (koelkast) en hier in één keer in te voeren.",
+  "pp.titre": "🚀 Eerste stappen",
+  "pp.sous": "Drie handelingen en je bent vertrokken. Reken op twee minuten per dag, niet meer.",
+  "pp.e1_t": "Vul je kinderen in",
+  "pp.e1_d": "Voornaam en geboortedatum: de opdrachten en de weergave passen zich automatisch aan de leeftijd aan.",
+  "pp.e1_b": "„Mijn kinderen” openen",
+  "pp.e2_t": "Kies 2 of 3 opdrachten voor vandaag",
+  "pp.e2_d": "Net hieronder ⬇️ Minder opdrachten = meer succes. Je mag elke dag wisselen.",
+  "pp.e3_t": "Vink vanavond samen met je kind af",
+  "pp.e3_d": "Op zijn startscherm: het kind vinkt af wat het deed, verdient 💛 en laat zijn avatar groeien.",
+  "pp.masquer": "Deze tips verbergen"
+});
+Object.assign(I18N.de, {
+  "grp.reglages": "⚙️ Einstellungen",
+  "regl.programme": "🎛️ Das Programm (Bestätigung, Eltern-PIN…)",
+  "regl.famille": "👪 Meine Familie & Einladungen",
+  "regl.compte": "🔐 Mein Konto & meine Daten",
+  "papier.pour_quoi": "Optional: die Woche zum Ausdrucken, per Hand abhaken (Kühlschrank) und hier in einem Zug eintragen.",
+  "pp.titre": "🚀 Erste Schritte",
+  "pp.sous": "Drei Handgriffe und es läuft. Rechne mit zwei Minuten pro Tag, nicht mehr.",
+  "pp.e1_t": "Trage deine Kinder ein",
+  "pp.e1_d": "Vorname und Geburtsdatum: Aufgaben und Anzeige passen sich dem Alter von selbst an.",
+  "pp.e1_b": "„Meine Kinder“ öffnen",
+  "pp.e2_t": "Wähle 2 oder 3 Aufgaben für heute",
+  "pp.e2_d": "Direkt darunter ⬇️ Weniger Aufgaben = mehr Erfolge. Du kannst sie täglich ändern.",
+  "pp.e3_t": "Heute Abend gemeinsam abhaken",
+  "pp.e3_d": "Auf dem Startbildschirm des Kindes: es hakt ab, was es geschafft hat, erhält 💛 und lässt seinen Avatar wachsen.",
+  "pp.masquer": "Diese Tipps ausblenden"
+});

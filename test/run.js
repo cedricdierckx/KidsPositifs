@@ -353,12 +353,15 @@ test("i18n : les placeholders {var} sont cohérents entre langues (namespaces ad
   assert.strictEqual(ecarts.length, 0, "placeholders divergents : " + ecarts.slice(0, 10).join(", "));
 });
 
-test("i18n : le mode d'emploi « Oups, ça arrive… » existe dans les 4 langues", () => {
+test("i18n : mode d'emploi « Oups » et premiers pas traduits dans les 4 langues", () => {
   const { api } = construireContexte();
   const langues = Object.keys(api.LANGUES);
-  const cles = Object.keys(api.I18N.fr).filter(k => k.startsWith("rep."));
+  const prefixes = ["rep.", "pp.", "regl.", "grp."];
+  const cles = Object.keys(api.I18N.fr).filter(k => prefixes.some(p => k.startsWith(p)));
   assert.ok(cles.includes("rep.aide.titre") && cles.includes("rep.etape1"),
     "le mode d'emploi parents doit être traduit (clés rep.*)");
+  assert.ok(cles.includes("pp.e1_t") && cles.includes("grp.reglages"),
+    "les premiers pas et les onglets doivent être traduits (pp.*, grp.*)");
   const jeton = s => (String(s).match(/\{[a-zA-Z0-9_]+\}/g) || []).sort();
   const soucis = [];
   cles.forEach(k => {

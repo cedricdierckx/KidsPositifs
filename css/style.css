@@ -150,10 +150,15 @@ body{
   align-items:center; min-width:64px; cursor:pointer; transition:.15s;
 }
 .pastille .pastille-emoji{font-size:26px}
-/* Vignette avatar dans le sélecteur d'enfant (remplace l'emoji générique) */
-.pastille .pastille-av{width:34px; height:34px; display:block; border-radius:10px;
-  overflow:hidden; background:#fff}
-.pastille .pastille-av .av-svg{width:100%; height:100%; display:block}
+/* Vignette avatar : identifie un enfant partout dans l'app (l'emoji d'enfant
+   n'est plus affiché). Trois tailles : mini (en ligne), défaut, moyen, grand. */
+.av-vignette{width:34px; height:34px; display:block; border-radius:10px;
+  overflow:hidden; background:#fff; flex:0 0 auto}
+.av-vignette .av-svg{width:100%; height:100%; display:block}
+.av-vignette.mini{width:24px; height:24px; border-radius:7px; display:inline-block;
+  vertical-align:-6px}
+.av-vignette.moyen{width:52px; height:52px; border-radius:14px; margin:0 auto}
+.av-vignette.grand{width:96px; height:96px; border-radius:20px; margin:0 auto}
 .pastille .pastille-nom{font-size:12px; font-weight:700; max-width:64px;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .pastille.actif{border-color:var(--c); background:#fff; transform:translateY(-2px)}
@@ -296,7 +301,8 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .grp-mlbl{text-align:left;font-size:12.5px;line-height:1.15;min-width:130px}
 .grp-mlbl small{display:block;color:var(--doux);font-weight:600}
 .grp-enf{display:inline-flex;width:28px;height:28px;align-items:center;justify-content:center;
-  border-radius:50%;background:#fff;border:2px solid var(--c,#ddd);font-size:16px}
+  border-radius:50%;background:#fff;border:2px solid var(--c,#ddd);font-size:16px;overflow:hidden}
+.grp-enf .av-vignette.mini{width:24px;height:24px;border-radius:50%;vertical-align:0}
 .grp-cell{position:relative}
 .grp-cell.reco{background:#eefaf2}
 .grp-cell.jeune{background:#fff5f5}
@@ -512,6 +518,19 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .mission.fait .m-points{color:var(--planete)}
 .mission.rep{border-color:#d9d2f0}
 .reparation{border-top:6px solid #a78bfa}
+/* Premiers pas : les 3 gestes à connaître quand on découvre l'app */
+.premiers-pas{border-top:6px solid var(--famille,#f6a623)}
+.pp-liste{list-style:none; margin:10px 0 4px; padding:0; display:flex;
+  flex-direction:column; gap:12px}
+.pp-etape{display:flex; gap:10px; align-items:flex-start}
+.pp-num{flex:0 0 26px; width:26px; height:26px; border-radius:50%;
+  background:#f6a623; color:#fff; font-weight:900; font-size:14px;
+  display:flex; align-items:center; justify-content:center}
+.pp-etape.fait{opacity:.6}
+.pp-etape.fait .pp-num{background:#eaf7ef; color:#1d7a52}
+.pp-corps{display:flex; flex-direction:column; gap:3px; min-width:0}
+.pp-corps small{color:var(--doux); font-size:12.5px; line-height:1.45}
+.pp-corps .mini-btn{align-self:flex-start; margin-top:5px}
 /* Mode d'emploi du cadre « Oups, ça arrive… » (destiné aux parents) */
 .rep-quand{font-size:13px; color:var(--doux); margin:6px 0 10px}
 .rep-etapes{margin:2px 0 10px; padding-left:22px; font-size:14px; line-height:1.5}
@@ -1192,7 +1211,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
   /* Sélecteur d'enfant : grandes pastilles faciles à toucher */
   .pastille{min-width:78px; padding:9px 12px; border-radius:18px}
   .pastille .pastille-emoji{font-size:32px}
-  .pastille .pastille-av{width:42px; height:42px; border-radius:12px}
+  .pastille .av-vignette{width:42px; height:42px; border-radius:12px}
   .pastille .pastille-nom{font-size:13px; max-width:78px}
 
   /* Avatar d'accueil plus présent + compteurs plus gros */
