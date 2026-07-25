@@ -71,11 +71,11 @@ const CROISSANCE_CHANTIERS = [
     but: "Savoir précisément ce qui est permis avant d'investir une heure de plus.",
     kpi: "Un cadre écrit, validé, qui ne se rediscute plus",
     etapes: [
-      { id: "c_cadre_1", titre: "Écrire la question en cinq lignes", min: 20, detail: "Application gratuite, pas de recettes, dons éventuels, développée sur temps libre : est-ce compatible ? Sous quelle forme ?" },
+      { id: "c_cadre_1", titre: "Écrire la question en cinq lignes", min: 20, detail: "Application gratuite, pas de recettes, dons éventuels, développée sur temps libre : est-ce compatible ? Sous quelle forme ?" , fait: true },
       { id: "c_cadre_2", titre: "Interroger la Chambre", min: 30, detail: "Poser la question par écrit et garder la réponse. C'est ce document qui gouverne tout le reste du plan." },
       { id: "c_cadre_3", titre: "Trancher la forme", min: 45, detail: "Projet personnel non marchand (défaut), ASBL, ou cession de l'exploitation à un tiers. Choisir la plus simple qui tienne." },
-      { id: "c_cadre_4", titre: "Séparer les deux mondes", min: 20, detail: "Ni le titre ni l'étude n'apparaissent dans la communication ; adresse et contact distincts." },
-      { id: "c_cadre_5", titre: "Mettre les pages légales en accord", min: 25, detail: "Mentions légales et politique de confidentialité doivent refléter la forme retenue." }
+      { id: "c_cadre_4", titre: "Séparer les deux mondes", min: 20, detail: "Ni le titre ni l'étude n'apparaissent dans la communication ; adresse et contact distincts." , fait: true },
+      { id: "c_cadre_5", titre: "Mettre les pages légales en accord", min: 25, detail: "Mentions légales et politique de confidentialité doivent refléter la forme retenue." , fait: true }
     ]
   },
   {
@@ -84,9 +84,9 @@ const CROISSANCE_CHANTIERS = [
     kpi: "Familles actives 7 j (étoile du Nord) · activation J+1",
     etapes: [
       { id: "c_mesure_1", titre: "Définir l'étoile du Nord", min: 10, detail: "Familles actives sur 7 jours. Tout le reste est secondaire.", fait: true },
-      { id: "c_mesure_2", titre: "Vérifier les séries de l'onglet Stats", min: 15, detail: "usage_events et les graphiques d'activité doivent être cohérents." },
-      { id: "c_mesure_3", titre: "Mesurer l'activation J+1", min: 30, detail: "Part des familles inscrites ayant validé une mission le lendemain. Cible : 60 %." },
-      { id: "c_mesure_4", titre: "Tracer l'origine des inscriptions", min: 40, detail: "Champ source sur la liste d'attente : parrainage, école, presse, bouche-à-oreille." },
+      { id: "c_mesure_2", titre: "Vérifier les séries de l'onglet Stats", min: 15, detail: "usage_events et les graphiques d'activité doivent être cohérents." , fait: true },
+      { id: "c_mesure_3", titre: "Mesurer l'activation J+1", min: 30, detail: "Part des familles inscrites ayant validé une mission le lendemain. Cible : 60 %." , fait: true },
+      { id: "c_mesure_4", titre: "Tracer l'origine des inscriptions", min: 40, detail: "Champ source sur la liste d'attente : parrainage, école, presse, bouche-à-oreille." , fait: true },
       { id: "c_mesure_5", titre: "Relevé mensuel, pas hebdomadaire", min: 10, detail: "À une heure par semaine, un relevé par mois suffit. Noter une décision, pas un tableau." }
     ]
   },

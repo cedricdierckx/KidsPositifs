@@ -1375,3 +1375,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .croiss-perim.plus-tard{background:#fff6e6; color:#a97a1e}
 .croiss-attenue{opacity:.62}
 .croiss-attenue:hover{opacity:1}
+.croiss-sources{margin-top:8px}
+.croiss-source-l{display:flex; justify-content:space-between; gap:10px; font-size:13px;
+  padding:6px 0; border-bottom:1px solid #eef3f8}
+.croiss-source-l:last-child{border-bottom:none}

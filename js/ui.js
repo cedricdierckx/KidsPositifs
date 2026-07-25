@@ -1564,6 +1564,7 @@ function blocAdminCroissance(c) {
   } else {
     tete.appendChild(el("p", "note", t("croiss.tout_fait")));
   }
+  tete.appendChild(el("p", "note croiss-url", t("croiss.url", { url: "famiteam.com/croissance" })));
   const lienPlan = el("a", "btn-secondaire", "📄 " + t("croiss.doc"));
   lienPlan.href = "https://github.com/cedricdierckx/kidspositifs/blob/main/PLAN-COMMERCIAL.md";
   lienPlan.target = "_blank"; lienPlan.rel = "noopener";
@@ -1622,18 +1623,33 @@ function blocAdminCroissance(c) {
     <div id="croiss-kpi" class="stat-grille"><p class="note">${t("common.chargement")}</p></div>`;
   c.appendChild(kpi);
   (async () => {
-    const [s, u] = await Promise.all([adminStats(), adminUsageStats()]);
+    const [s, u, a, src] = await Promise.all([
+      adminStats(), adminUsageStats(),
+      (typeof adminActivation === "function") ? adminActivation() : null,
+      (typeof adminSources === "function") ? adminSources() : []
+    ]);
     const grille = kpi.querySelector("#croiss-kpi");
     if (!grille) return;
     if (!s && !u) { grille.innerHTML = `<p class="note">${t("croiss.kpi_ko")}</p>`; return; }
     const v = (o, k) => (o && o[k] != null) ? o[k] : "—";
     grille.innerHTML =
       carteStat("⭐", v(u, "actifs_7j"), t("croiss.kpi_actives"), t("croiss.kpi_actives_p")) +
+      carteStat("🚀", (a && a.taux != null) ? a.taux + " %" : "—", t("croiss.kpi_activation"),
+                (a && a.eligibles != null) ? t("croiss.kpi_activation_p", { n: a.eligibles }) : "") +
       carteStat("👪", v(s, "familles_total"), t("croiss.kpi_familles")) +
       carteStat("🌱", v(s, "familles_30j"), t("croiss.kpi_nouvelles")) +
       carteStat("🎁", v(s, "referrals_acceptes"), t("croiss.kpi_parrainages")) +
       carteStat("📋", v(s, "waitlist_total"), t("croiss.kpi_attente")) +
       carteStat("📈", v(u, "ouvertures_30j"), t("croiss.kpi_ouvertures"));
+
+    // Origine des inscriptions : ce qui amène réellement des familles.
+    if (Array.isArray(src) && src.length) {
+      const tbl = el("div", "croiss-sources");
+      tbl.innerHTML = `<p class="stat-graph-titre">${t("croiss.sources")}</p>` +
+        src.map(r => `<div class="croiss-source-l"><span>${echapper(r.source)}</span>
+          <span><strong>${r.familles}</strong> ${t("croiss.sources_fam")}${r.attente ? ` · ${r.attente} ${t("croiss.sources_att")}` : ""}</span></div>`).join("");
+      kpi.appendChild(tbl);
+    }
   })();
 
   /* ----- Les chantiers, phase par phase ----- */

@@ -150,12 +150,16 @@ create policy "admins read admins" on public.app_admins
   for select using (is_admin());
 
 -- ---------- RPC : créer une famille (+ membre owner + état vide) ----------
-create or replace function public.create_family(p_name text)
+-- La signature a gagné un paramètre `p_source` : on supprime l'ancienne pour
+-- éviter toute ambiguïté de résolution côté PostgREST.
+drop function if exists public.create_family(text);
+create or replace function public.create_family(p_name text, p_source text default null)
 returns uuid language plpgsql security definer set search_path = public as $$
 declare fid uuid;
 begin
-  insert into families(name, owner_id)
-    values (coalesce(nullif(trim(p_name), ''), 'Ma famille'), auth.uid())
+  insert into families(name, owner_id, source)
+    values (coalesce(nullif(trim(p_name), ''), 'Ma famille'), auth.uid(),
+            left(nullif(trim(coalesce(p_source, '')), ''), 60))
     returning id into fid;
   insert into family_members(family_id, user_id, role) values (fid, auth.uid(), 'owner');
   insert into family_state(family_id, data) values (fid, '{}'::jsonb);
@@ -277,21 +281,24 @@ alter table public.waitlist enable row level security;
 -- Pas de politique SELECT pour le public : on lit la liste via une RPC admin.
 
 -- Rejoindre la liste d'attente (ouvert à tous, même sans compte).
-create or replace function public.join_waitlist(p_email text)
+drop function if exists public.join_waitlist(text);
+create or replace function public.join_waitlist(p_email text, p_source text default null)
 returns void language plpgsql security definer set search_path = public as $$
 begin
   if coalesce(trim(p_email), '') = '' then raise exception 'E-mail requis'; end if;
-  insert into waitlist(email) values (lower(trim(p_email)))
+  insert into waitlist(email, source)
+    values (lower(trim(p_email)), left(nullif(trim(coalesce(p_source, '')), ''), 60))
     on conflict (email) do nothing;
 end; $$;
 
 -- RPC admin : consulter la liste d'attente.
+drop function if exists public.admin_list_waitlist();
 create or replace function public.admin_list_waitlist()
-returns table(email text, created_at timestamptz)
+returns table(email text, created_at timestamptz, source text)
 language plpgsql security definer set search_path = public as $$
 begin
   if not is_admin() then raise exception 'Accès refusé'; end if;
-  return query select w.email::text, w.created_at from waitlist w order by w.created_at;
+  return query select w.email::text, w.created_at, w.source::text from waitlist w order by w.created_at;
 end; $$;
 
 -- RPC admin : retirer un candidat de la liste d'attente (approuvé ou refusé).
@@ -632,9 +639,71 @@ begin
   delete from families where id = p_family;
 end; $$;
 
+-- =====================================================================
+-- MESURE : origine des inscriptions & activation J+1
+-- ---------------------------------------------------------------------
+-- Chantier « Socle de mesure » : savoir ce qui amène des familles, et
+-- quelle part d'entre elles démarre réellement. Additif et ré-exécutable.
+-- =====================================================================
+alter table public.waitlist add column if not exists source text;
+alter table public.families add column if not exists source text;
+
+-- Activation J+1 : part des familles dont l'état a été enregistré dans les
+-- 48 h suivant la création (trace d'un usage réel). On exclut les familles
+-- créées il y a moins de 2 jours : elles n'ont pas encore eu leur chance.
+create or replace function public.admin_activation()
+returns json language plpgsql security definer set search_path = public as $$
+declare resultat json;
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  select json_build_object(
+    'fenetre_jours', 30,
+    'eligibles', count(*),
+    'activees',  count(*) filter (where a.activee),
+    'taux', case when count(*) = 0 then null
+                 else round(100.0 * count(*) filter (where a.activee) / count(*)) end
+  ) into resultat
+  from (
+    select f.id,
+      exists (
+        select 1 from family_state_history h
+        where h.family_id = f.id and h.saved_at <= f.created_at + interval '48 hours'
+      ) or exists (
+        select 1 from usage_events u
+        where u.family_id = f.id and u.day <= (f.created_at + interval '48 hours')::date
+      ) as activee
+    from families f
+    where f.created_at <= now() - interval '2 days'
+      and f.created_at >= now() - interval '30 days'
+  ) a;
+  return resultat;
+end; $$;
+
+-- Origine des inscriptions, agrégée sur 90 jours.
+create or replace function public.admin_sources()
+returns table(source text, familles integer, attente integer)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  return query
+    select coalesce(s.src, 'inconnu')::text as source,
+           sum(s.f)::int as familles,
+           sum(s.w)::int as attente
+    from (
+      select coalesce(nullif(f.source, ''), 'inconnu') as src, 1 as f, 0 as w
+        from families f where f.created_at >= now() - interval '90 days'
+      union all
+      select coalesce(nullif(w.source, ''), 'inconnu') as src, 0 as f, 1 as w
+        from waitlist w where w.created_at >= now() - interval '90 days'
+    ) s
+    group by 1
+    order by 2 desc, 3 desc;
+end; $$;
+
 -- ---------- Droits d'exécution ----------
-grant execute on function public.create_family(text)            to authenticated;
-grant execute on function public.set_app_config(text, text)     to authenticated;grant execute on function public.create_invite(uuid, text)      to authenticated;
+grant execute on function public.create_family(text, text)            to authenticated;
+grant execute on function public.set_app_config(text, text)     to authenticated;
+grant execute on function public.create_invite(uuid, text)      to authenticated;
 grant execute on function public.invite_info(uuid)              to authenticated;
 grant execute on function public.accept_invite(uuid)            to authenticated;
 grant execute on function public.referral_quota(uuid)           to authenticated;
@@ -642,8 +711,10 @@ grant execute on function public.create_referral(uuid)          to authenticated
 grant execute on function public.referral_info(uuid)            to anon, authenticated;
 grant execute on function public.claim_referral(uuid, uuid)     to authenticated;
 grant execute on function public.referral_accepted_count(uuid)  to authenticated;
-grant execute on function public.join_waitlist(text)            to anon, authenticated;
+grant execute on function public.join_waitlist(text, text)            to anon, authenticated;
 grant execute on function public.admin_list_waitlist()          to authenticated;
+grant execute on function public.admin_activation()             to authenticated;
+grant execute on function public.admin_sources()                to authenticated;
 grant execute on function public.admin_remove_waitlist(text)    to authenticated;
 grant execute on function public.is_admin()                     to authenticated;
 grant execute on function public.admin_list_families()          to authenticated;

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6a623">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Développement — FamiTeam</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+  <!-- Raccourci d'administration : famiteam.com/croissance ouvre directement
+       l'onglet Admin → Croissance. La page ne fait que rediriger ; l'accès
+       reste protégé par la connexion et par le rôle admin (RLS + is_admin).
+       Un non-administrateur atterrit simplement sur l'application. -->
+  <script>
+    location.replace("/#croissance");
+  </script>
+  <style>
+    body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+      display:flex;align-items:center;justify-content:center;height:100vh;margin:0;
+      background:#eef3f8;color:#54616f}
+  </style>
+</head>
+<body>
+  <p>Ouverture de FamiTeam… <a href="/#croissance">continuer</a></p>
+</body>
+</html>

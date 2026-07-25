@@ -2769,6 +2769,12 @@ Object.assign(I18N.fr, {
   "croiss.plus_tard": "plus tard",
   "croiss.duree": "Durée :",
   "croiss.duree_val": "≈ {min} min",
+  "croiss.kpi_activation": "Activation J+1",
+  "croiss.kpi_activation_p": "sur {n} familles",
+  "croiss.sources": "D'où viennent les inscriptions (90 j)",
+  "croiss.sources_fam": "familles",
+  "croiss.sources_att": "en attente",
+  "croiss.url": "Accès direct : {url} (ouvre cet onglet, réservé à l'administrateur).",
   "croiss.err": "Enregistrement impossible."
 });
 Object.assign(I18N.en, {
@@ -2804,6 +2810,12 @@ Object.assign(I18N.en, {
   "croiss.plus_tard": "later",
   "croiss.duree": "Duration:",
   "croiss.duree_val": "≈ {min} min",
+  "croiss.kpi_activation": "Day-1 activation",
+  "croiss.kpi_activation_p": "out of {n} families",
+  "croiss.sources": "Where sign-ups come from (90 d)",
+  "croiss.sources_fam": "families",
+  "croiss.sources_att": "waiting",
+  "croiss.url": "Direct link: {url} (opens this tab, admins only).",
   "croiss.err": "Could not save."
 });
 Object.assign(I18N.nl, {
@@ -2839,6 +2851,12 @@ Object.assign(I18N.nl, {
   "croiss.plus_tard": "later",
   "croiss.duree": "Duur:",
   "croiss.duree_val": "≈ {min} min",
+  "croiss.kpi_activation": "Activering dag 1",
+  "croiss.kpi_activation_p": "op {n} gezinnen",
+  "croiss.sources": "Waar de inschrijvingen vandaan komen (90 d)",
+  "croiss.sources_fam": "gezinnen",
+  "croiss.sources_att": "wachtend",
+  "croiss.url": "Rechtstreekse link: {url} (opent dit tabblad, enkel voor beheerders).",
   "croiss.err": "Bewaren mislukt."
 });
 Object.assign(I18N.de, {
@@ -2874,5 +2892,11 @@ Object.assign(I18N.de, {
   "croiss.plus_tard": "später",
   "croiss.duree": "Dauer:",
   "croiss.duree_val": "≈ {min} Min.",
+  "croiss.kpi_activation": "Aktivierung Tag 1",
+  "croiss.kpi_activation_p": "von {n} Familien",
+  "croiss.sources": "Woher die Anmeldungen kommen (90 T)",
+  "croiss.sources_fam": "Familien",
+  "croiss.sources_att": "wartend",
+  "croiss.url": "Direktlink: {url} (öffnet diesen Reiter, nur für Administratoren).",
   "croiss.err": "Speichern fehlgeschlagen."
 });

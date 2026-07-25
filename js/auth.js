@@ -41,6 +41,8 @@ async function demarrer() {
   Store.init(sb);                          // couche de données isolée (Phase D)
   chargerConfigApp();                      // réglages globaux (ex. lien de don Stripe)
 
+  memoriserSource();                       // d'où vient ce visiteur (avant tout nettoyage d'URL)
+
   // Jeton d'invitation éventuellement présent dans l'URL (?invite=...)
   const params = new URLSearchParams(location.search);
   const inv = params.get("invite");
@@ -203,6 +205,21 @@ async function chargerFamilles() {
   mesFamilles = error ? [] : (data || []);
 }
 
+/* Raccourcis d'URL (#croissance, #admin) : ouvrent directement une section de
+ * l'espace admin après connexion. Sans effet pour un non-administrateur : le
+ * contenu reste protégé côté serveur (RLS + is_admin) et côté affichage. */
+function ouvrirRaccourciURL() {
+  const cle = (location.hash || "").replace(/^#/, "").trim();
+  if (!cle) return;
+  const raccourcis = { croissance: "croissance", admin: "stats" };
+  if (!raccourcis[cle]) return;
+  if (!estAdmin) return;                 // estAdmin est résolu dans apresConnexion()
+  etat.vue = "reglages";                 // le code parent reste demandé s'il existe
+  if (typeof ongletParent !== "undefined") ongletParent = "admin";
+  if (typeof sousOngletAdmin !== "undefined") sousOngletAdmin = raccourcis[cle];
+  history.replaceState(null, "", location.pathname);   // on nettoie l'URL
+}
+
 async function ouvrirFamille(f) {
   // On annule toute sauvegarde différée de la famille précédente (sinon elle
   // risquerait d'écraser la nouvelle famille avec l'ancien état).
@@ -219,6 +236,7 @@ async function ouvrirFamille(f) {
   if (cache) lierEtat(cache);             // affichage instantané / hors-ligne
   await chargerEtatFamille();
   vueAccueilAine();                       // toujours démarrer sur l'accueil de l'aîné
+  ouvrirRaccourciURL();                   // /croissance → Admin → Croissance
   rendre();
   if (typeof verifierTuto === "function") verifierTuto();   // tutoriel au 1ᵉʳ lancement
   abonnerRealtime();
@@ -314,9 +332,33 @@ async function deconnexion() {
   location.reload();
 }
 
+/* ---------- Origine de l'inscription ----------
+ * Mémorisée à la toute première visite (?src=… , ?utm_source=… , sinon le
+ * domaine référent), puis transmise à la création de famille et à la liste
+ * d'attente. Sert au chantier « Socle de mesure » : savoir ce qui amène des
+ * familles. Aucune donnée personnelle : un simple mot-clé. */
+const SOURCE_KEY = "kp_source";
+function memoriserSource() {
+  try {
+    if (localStorage.getItem(SOURCE_KEY)) return;          // la première visite fait foi
+    const p = new URLSearchParams(location.search);
+    let src = (p.get("src") || p.get("utm_source") || "").trim().toLowerCase();
+    if (!src && document.referrer) {
+      try {
+        const h = new URL(document.referrer).hostname.replace(/^www\./, "");
+        if (h && h !== location.hostname) src = h;
+      } catch (e) { /* référent illisible */ }
+    }
+    if (src) localStorage.setItem(SOURCE_KEY, src.slice(0, 60));
+  } catch (e) { /* stockage indisponible : on s'en passe */ }
+}
+function sourceInscription() {
+  try { return localStorage.getItem(SOURCE_KEY) || null; } catch (e) { return null; }
+}
+
 /* ---------- Familles & invitations ---------- */
 async function creerFamille(nom, nbEnfants) {
-  const { data, error } = await sb.rpc("create_family", { p_name: nom });
+  const { data, error } = await sb.rpc("create_family", { p_name: nom, p_source: sourceInscription() });
   if (error) { alert("Erreur : " + error.message); return; }
   await chargerFamilles();
   const f = mesFamilles.find(x => x.id === data) || mesFamilles[mesFamilles.length - 1];
@@ -376,8 +418,20 @@ function inscriptionAutorisee() {
 }
 // Rejoindre la liste d'attente (candidats sans invitation).
 async function rejoindreListeAttente(email) {
-  const { error } = await sb.rpc("join_waitlist", { p_email: email });
+  const { error } = await sb.rpc("join_waitlist", { p_email: email, p_source: sourceInscription() });
   return error;
+}
+// RPC admin : activation J+1 (part des familles qui ont vraiment démarré).
+async function adminActivation() {
+  const { data, error } = await sb.rpc("admin_activation");
+  if (error) { toast("Erreur admin : " + error.message, "info"); return null; }
+  return data || null;
+}
+// RPC admin : origine des inscriptions (90 jours).
+async function adminSources() {
+  const { data, error } = await sb.rpc("admin_sources");
+  if (error) { toast("Erreur admin : " + error.message, "info"); return []; }
+  return data || [];
 }
 // RPC admin : consulter la liste d'attente.
 async function adminListerAttente() {
