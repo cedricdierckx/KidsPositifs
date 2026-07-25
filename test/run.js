@@ -376,6 +376,43 @@ test("i18n : mode d'emploi « Oups » et premiers pas traduits dans les 4 langue
   assert.strictEqual(soucis.length, 0, soucis.slice(0, 10).join(", "));
 });
 
+/* ---------- Plan de développement commercial (onglet Admin « Croissance ») ---------- */
+test("croissance : chantiers bien formés, identifiants uniques, phases connues", () => {
+  const { api } = construireContexte();
+  const phases = api.CROISSANCE_PHASES.map(p => p.id);
+  assert.ok(phases.length >= 4, "au moins 4 phases");
+  const vus = new Set();
+  api.CROISSANCE_CHANTIERS.forEach(ch => {
+    assert.ok(ch.id && ch.titre && ch.but && ch.kpi, "chantier incomplet : " + ch.id);
+    assert.ok(phases.includes(ch.phase), "phase inconnue pour " + ch.id);
+    assert.ok(Array.isArray(ch.etapes) && ch.etapes.length >= 3, "trop peu d'étapes : " + ch.id);
+    assert.ok(!vus.has(ch.id), "identifiant de chantier en double : " + ch.id);
+    vus.add(ch.id);
+    ch.etapes.forEach(e => {
+      assert.ok(e.id && e.titre, "étape incomplète dans " + ch.id);
+      assert.ok(!vus.has(e.id), "identifiant d'étape en double : " + e.id);
+      vus.add(e.id);
+    });
+  });
+  // Chaque phase porte au moins un chantier (sinon l'onglet affiche du vide).
+  phases.forEach(p => assert.ok(api.chantiersDePhase(p).length > 0, "phase vide : " + p));
+});
+
+test("croissance : chaque e-mail référencé existe et est complet", () => {
+  const { api } = construireContexte();
+  const ids = new Set();
+  api.CROISSANCE_MAILS.forEach(m => {
+    assert.ok(m.id && m.titre && m.dest && m.quand && m.sujet && m.corps, "e-mail incomplet : " + m.id);
+    assert.ok(!ids.has(m.id), "identifiant d'e-mail en double : " + m.id);
+    ids.add(m.id);
+  });
+  const references = [];
+  api.CROISSANCE_CHANTIERS.forEach(ch => ch.etapes.forEach(e => { if (e.mail) references.push([ch.id, e.mail]); }));
+  references.forEach(([chantier, mail]) =>
+    assert.ok(api.mailCroissance(mail), `e-mail « ${mail} » référencé par ${chantier} mais introuvable`));
+  assert.ok(references.length >= 10, "le plan doit s'appuyer sur ses modèles d'e-mails");
+});
+
 test("auto-évaluation enfant : sans mode révision, enregistre à aujourd'hui", () => {
   const { api } = construireContexte();
   api.familleId = "f1";

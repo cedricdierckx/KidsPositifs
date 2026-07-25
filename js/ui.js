@@ -1135,12 +1135,13 @@ function blocAdminConfig() {
 // Sous-section active de l'onglet Admin (session, non synchronisée).
 let sousOngletAdmin = "familles";
 const SOUS_ONGLETS_ADMIN = [
-  ["stats",    "admin.nav_stats"],
-  ["familles", "admin.nav_familles"],
-  ["retours",  "admin.nav_retours"],
-  ["contenu",  "admin.nav_contenu"],
-  ["config",   "admin.nav_config"],
-  ["systeme",  "admin.nav_systeme"],
+  ["stats",      "admin.nav_stats"],
+  ["croissance", "admin.nav_croissance"],
+  ["familles",   "admin.nav_familles"],
+  ["retours",    "admin.nav_retours"],
+  ["contenu",    "admin.nav_contenu"],
+  ["config",     "admin.nav_config"],
+  ["systeme",    "admin.nav_systeme"],
 ];
 
 // Carte « bientôt disponible » pour les sous-sections encore à construire.
@@ -1475,6 +1476,205 @@ function telechargerJSON(nomFichier, obj) {
   } catch (e) { toast(t("sys.export_ko"), "info"); }
 }
 
+/* ---------- Admin : développement commercial (chantiers & e-mails) ----------
+ * Le plan lui-même vit dans js/croissance.js (données) et PLAN-COMMERCIAL.md
+ * (analyse). Ici on affiche l'avancement et on l'enregistre dans app_config
+ * (clé « croissance »), écrite par la RPC set_app_config réservée aux admins.
+ * Format stocké : { etapes: { <idEtape>: "AAAA-MM-JJ" | false }, notes: { <idChantier>: texte } } */
+function croissanceEtat() {
+  try {
+    const brut = (typeof configApp !== "undefined") ? configApp.croissance : null;
+    const o = brut ? (typeof brut === "string" ? JSON.parse(brut) : brut) : {};
+    return { etapes: o.etapes || {}, notes: o.notes || {} };
+  } catch (e) { return { etapes: {}, notes: {} }; }
+}
+// Une étape est faite si l'admin l'a cochée, ou si elle est marquée comme
+// déjà livrée dans le plan et n'a pas été décochée depuis.
+function croissanceEtapeFaite(etape, etat) {
+  const v = (etat || croissanceEtat()).etapes[etape.id];
+  if (v === false) return false;
+  if (v) return true;
+  return !!etape.fait;
+}
+async function croissanceEnregistrer(etat) {
+  const ok = await adminDefinirConfig("croissance", JSON.stringify(etat));
+  if (!ok) toast(t("croiss.err"), "info");
+  return ok;
+}
+function croissanceAvancement(chantier, etat) {
+  const faites = chantier.etapes.filter(e => croissanceEtapeFaite(e, etat)).length;
+  return { faites, total: chantier.etapes.length,
+           pct: Math.round((faites / Math.max(1, chantier.etapes.length)) * 100) };
+}
+// Première étape non faite, dans l'ordre des phases : « la prochaine action ».
+function croissanceProchaine(etat) {
+  for (const ph of CROISSANCE_PHASES) {
+    for (const ch of chantiersDePhase(ph.id)) {
+      const e = ch.etapes.find(x => !croissanceEtapeFaite(x, etat));
+      if (e) return { phase: ph, chantier: ch, etape: e };
+    }
+  }
+  return null;
+}
+
+// Copie un texte dans le presse-papiers (avec repli pour les navigateurs
+// anciens ou les contextes non sécurisés).
+function copierTexte(txt) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt);
+      toast(t("croiss.copie"), "succes");
+      return;
+    }
+  } catch (e) { /* repli ci-dessous */ }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove();
+    toast(t("croiss.copie"), "succes");
+  } catch (e) { toast(t("croiss.copie_ko"), "info"); }
+}
+
+function blocAdminCroissance(c) {
+  const etat0 = croissanceEtat();
+
+  /* ----- En-tête : cap, avancement global, prochaine action ----- */
+  const tete = el("section", "carte croiss-tete");
+  const totalEtapes = CROISSANCE_CHANTIERS.reduce((s, ch) => s + ch.etapes.length, 0);
+  const totalFaites = CROISSANCE_CHANTIERS.reduce(
+    (s, ch) => s + ch.etapes.filter(e => croissanceEtapeFaite(e, etat0)).length, 0);
+  const pctGlobal = Math.round((totalFaites / Math.max(1, totalEtapes)) * 100);
+  tete.innerHTML = `<h2>${t("croiss.titre")}</h2>
+    <p class="note">${t("croiss.sous")}</p>
+    <div class="progress"><div class="progress-bar" style="width:${pctGlobal}%"></div></div>
+    <p class="croiss-compte">${t("croiss.avancement", { faites: totalFaites, total: totalEtapes, pct: pctGlobal })}</p>`;
+  const prochaine = croissanceProchaine(etat0);
+  if (prochaine) {
+    const p = el("div", "croiss-prochaine");
+    p.innerHTML = `<span class="croiss-etiquette">${t("croiss.prochaine")}</span>
+      <strong>${prochaine.chantier.emoji} ${echapper(prochaine.chantier.titre)}</strong>
+      <span>${echapper(prochaine.etape.titre)}</span>`;
+    tete.appendChild(p);
+  } else {
+    tete.appendChild(el("p", "note", t("croiss.tout_fait")));
+  }
+  const lienPlan = el("a", "btn-secondaire", "📄 " + t("croiss.doc"));
+  lienPlan.href = "https://github.com/cedricdierckx/kidspositifs/blob/main/PLAN-COMMERCIAL.md";
+  lienPlan.target = "_blank"; lienPlan.rel = "noopener";
+  tete.appendChild(lienPlan);
+  c.appendChild(tete);
+
+  /* ----- Chiffres réels (étoile du Nord et compagnie) ----- */
+  const kpi = el("section", "carte");
+  kpi.innerHTML = `<h2>${t("croiss.kpi_titre")}</h2>
+    <p class="note">${t("croiss.kpi_sous")}</p>
+    <div id="croiss-kpi" class="stat-grille"><p class="note">${t("common.chargement")}</p></div>`;
+  c.appendChild(kpi);
+  (async () => {
+    const [s, u] = await Promise.all([adminStats(), adminUsageStats()]);
+    const grille = kpi.querySelector("#croiss-kpi");
+    if (!grille) return;
+    if (!s && !u) { grille.innerHTML = `<p class="note">${t("croiss.kpi_ko")}</p>`; return; }
+    const v = (o, k) => (o && o[k] != null) ? o[k] : "—";
+    grille.innerHTML =
+      carteStat("⭐", v(u, "actifs_7j"), t("croiss.kpi_actives"), t("croiss.kpi_actives_p")) +
+      carteStat("👪", v(s, "familles_total"), t("croiss.kpi_familles")) +
+      carteStat("🌱", v(s, "familles_30j"), t("croiss.kpi_nouvelles")) +
+      carteStat("🎁", v(s, "referrals_acceptes"), t("croiss.kpi_parrainages")) +
+      carteStat("📋", v(s, "waitlist_total"), t("croiss.kpi_attente")) +
+      carteStat("📈", v(u, "ouvertures_30j"), t("croiss.kpi_ouvertures"));
+  })();
+
+  /* ----- Les chantiers, phase par phase ----- */
+  CROISSANCE_PHASES.forEach(ph => {
+    const secPh = el("section", "carte croiss-phase");
+    secPh.innerHTML = `<h2>${echapper(ph.titre)}</h2><p class="note">${echapper(ph.sous)}</p>`;
+    chantiersDePhase(ph.id).forEach(ch => {
+      const av = croissanceAvancement(ch, etat0);
+      const titre = `${ch.emoji} ${echapper(ch.titre)} <span class="croiss-badge${av.pct === 100 ? " ok" : ""}">${av.faites}/${av.total}</span>`;
+      const { details, corps } = blocPliable(titre, false, "croiss-" + ch.id);
+      corps.innerHTML = `<p class="croiss-but"><strong>${t("croiss.but")}</strong> ${echapper(ch.but)}</p>
+        <p class="note"><strong>${t("croiss.kpi")}</strong> ${echapper(ch.kpi)}</p>`;
+
+      ch.etapes.forEach(etape => {
+        const faite = croissanceEtapeFaite(etape, etat0);
+        const l = el("label", "switch-ligne croiss-etape" + (faite ? " faite" : ""));
+        const i = el("input"); i.type = "checkbox"; i.checked = faite;
+        i.onchange = async () => {
+          const etat = croissanceEtat();
+          etat.etapes[etape.id] = i.checked ? aujourdHui() : false;
+          i.disabled = true;
+          await croissanceEnregistrer(etat);
+          i.disabled = false;
+          majSansSaut(() => rendre());
+        };
+        l.appendChild(i);
+        const txt = el("span", "croiss-etape-txt");
+        txt.innerHTML = `<strong>${echapper(etape.titre)}</strong><small>${echapper(etape.detail || "")}</small>`;
+        l.appendChild(txt);
+        corps.appendChild(l);
+
+        // Modèle d'e-mail rattaché à l'étape : accès direct.
+        const m = etape.mail ? mailCroissance(etape.mail) : null;
+        if (m) {
+          const b = el("button", "mini-btn croiss-mail-lien", "✉️ " + t("croiss.voir_mail"));
+          b.onclick = () => {
+            croissanceMailOuvert = m.id;
+            rendre();
+            // Le modèle vit en bas de la page : on y amène l'admin.
+            requestAnimationFrame(() => {
+              const n = document.getElementById("cm-" + m.id);
+              if (n) try { n.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) { /* ignore */ }
+            });
+          };
+          corps.appendChild(b);
+        }
+      });
+
+      // Note libre par chantier (contacts, décisions, apprentissages).
+      const lNote = el("label", "champ", t("croiss.note"));
+      const ta = el("textarea", "croiss-note");
+      ta.rows = 2; ta.value = etat0.notes[ch.id] || "";
+      ta.placeholder = t("croiss.note_ph");
+      ta.onchange = async () => {
+        const etat = croissanceEtat();
+        etat.notes[ch.id] = ta.value.trim();
+        await croissanceEnregistrer(etat);
+        toast(t("croiss.note_ok"), "succes");
+      };
+      lNote.appendChild(ta);
+      corps.appendChild(lNote);
+
+      secPh.appendChild(details);
+    });
+    c.appendChild(secPh);
+  });
+
+  /* ----- Bibliothèque de modèles d'e-mails ----- */
+  const secMails = el("section", "carte");
+  secMails.innerHTML = `<h2>${t("croiss.mails_titre")}</h2>
+    <p class="note">${t("croiss.mails_sous")}</p>`;
+  CROISSANCE_MAILS.forEach(m => {
+    const ouvert = croissanceMailOuvert === m.id;
+    const { details, corps } = blocPliable(`✉️ ${echapper(m.titre)}`, ouvert, "croissmail-" + m.id);
+    details.id = "cm-" + m.id;                 // cible du lien « Modèle d'e-mail »
+    corps.innerHTML = `<p class="note"><strong>${t("croiss.mail_dest")}</strong> ${echapper(m.dest)}<br>
+      <strong>${t("croiss.mail_quand")}</strong> ${echapper(m.quand)}</p>
+      <p class="croiss-sujet"><strong>${t("croiss.mail_sujet")}</strong> ${echapper(m.sujet)}</p>
+      <pre class="croiss-corps">${echapper(m.corps)}</pre>`;
+    const bCopier = el("button", "btn-secondaire", "📋 " + t("croiss.copier"));
+    bCopier.onclick = () => copierTexte(m.sujet + "\n\n" + m.corps);
+    corps.appendChild(bCopier);
+    const bMail = el("a", "btn-secondaire", "✉️ " + t("croiss.ouvrir_mail"));
+    bMail.href = "mailto:?subject=" + encodeURIComponent(m.sujet) + "&body=" + encodeURIComponent(m.corps);
+    corps.appendChild(bMail);
+    secMails.appendChild(details);
+  });
+  c.appendChild(secMails);
+}
+// Modèle d'e-mail à déplier au prochain rendu (session).
+let croissanceMailOuvert = null;
+
 // Rendu de l'onglet Admin : barre de sous-navigation + sous-section active.
 function vueAdmin(c) {
   const nav = el("nav", "sous-nav admin-sous-nav");
@@ -1504,6 +1704,9 @@ function vueAdmin(c) {
   switch (sousOngletAdmin) {
     case "stats":
       c.appendChild(blocAdminStats());
+      break;
+    case "croissance":
+      blocAdminCroissance(c);
       break;
     case "familles":
       c.appendChild(blocAdminFamilles());

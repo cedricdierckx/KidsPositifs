@@ -1,7 +1,7 @@
 /* =====================================================================
  * FamiTeam — Banc d'essai headless (Phase A)
  * ---------------------------------------------------------------------
- * Charge js/i18n.js + js/data.js + js/app.js dans un contexte Node isolé
+ * Charge js/i18n.js + js/data.js + js/croissance.js + js/app.js dans un contexte isolé
  * (module `vm`), avec des bouchons (stubs) minimalistes pour le DOM, le
  * navigateur et le stockage local. Aucune dépendance externe.
  *
@@ -134,9 +134,11 @@ function construireContexte() {
       Store,
       // données de référence
       CATEGORIES, MISSIONS, TIERS_ECO, ENFANTS_DEFAUT, ETAT_VERSION,
+      // plan de développement commercial (admin)
+      CROISSANCE_PHASES, CROISSANCE_CHANTIERS, CROISSANCE_MAILS, chantiersDePhase, mailCroissance,
     };
   `;
-  const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/app.js"), lire("js/store.js"), epilogue].join("\n;\n");
+  const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/croissance.js"), lire("js/app.js"), lire("js/store.js"), epilogue].join("\n;\n");
   vm.runInContext(source, contexte, { filename: "famiteam-bundle.js" });
   return { contexte, api: contexte.contexteExports };
 }
