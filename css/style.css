@@ -159,6 +159,12 @@ body{
   vertical-align:-6px}
 .av-vignette.moyen{width:52px; height:52px; border-radius:14px; margin:0 auto}
 .av-vignette.grand{width:96px; height:96px; border-radius:20px; margin:0 auto}
+/* Repli quand l'avatar ne peut pas être dessiné : initiale sur fond coloré. */
+.av-vignette.initiale{display:flex; align-items:center; justify-content:center;
+  background:var(--c,#5b8def); color:#fff; font-weight:900; font-size:17px}
+.av-vignette.mini.initiale{font-size:12px}
+.av-vignette.moyen.initiale{font-size:24px}
+.av-vignette.grand.initiale{font-size:42px}
 .pastille .pastille-nom{font-size:12px; font-weight:700; max-width:64px;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .pastille.actif{border-color:var(--c); background:#fff; transform:translateY(-2px)}
@@ -1355,3 +1361,17 @@ main{max-width:680px; margin:0 auto; padding:14px}
   background:#f7fbff; border:2px solid #e3edf5; border-radius:12px; padding:10px;
   margin:6px 0 10px; overflow-x:auto}
 .croiss-mail-lien{margin:-2px 0 10px 34px}
+.croiss-contraintes{border-top:6px solid #a78bfa}
+.croiss-contrainte{margin-bottom:10px}
+.croiss-contrainte-t{margin:0 0 2px; font-size:15px}
+.croiss-conseq{margin:4px 0 0; padding-left:20px; font-size:13px; line-height:1.5; color:#54616f}
+.croiss-conseq li{margin-bottom:3px}
+.croiss-semaine{border-top:6px solid var(--planete,#39c0a0)}
+.croiss-min{display:inline-block; margin-left:4px; padding:0 6px; border-radius:20px;
+  background:#eef3f8; color:#5b6b7b; font-size:11px; font-weight:800; vertical-align:1px}
+.croiss-rituel{margin-top:10px; line-height:1.7}
+.croiss-perim{display:inline-block; padding:1px 7px; border-radius:20px; font-size:11px; font-weight:800}
+.croiss-perim.hors{background:#fdf0f4; color:#b0537a}
+.croiss-perim.plus-tard{background:#fff6e6; color:#a97a1e}
+.croiss-attenue{opacity:.62}
+.croiss-attenue:hover{opacity:1}

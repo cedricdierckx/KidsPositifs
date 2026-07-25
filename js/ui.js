@@ -1540,14 +1540,20 @@ function blocAdminCroissance(c) {
 
   /* ----- En-tête : cap, avancement global, prochaine action ----- */
   const tete = el("section", "carte croiss-tete");
-  const totalEtapes = CROISSANCE_CHANTIERS.reduce((s, ch) => s + ch.etapes.length, 0);
-  const totalFaites = CROISSANCE_CHANTIERS.reduce(
+  // L'avancement ne compte que le périmètre « cœur » : les chantiers hors
+  // périmètre sont conservés pour mémoire, pas pour être faits.
+  const coeur = CROISSANCE_CHANTIERS.filter(ch => ch.perimetre === "coeur");
+  const totalEtapes = coeur.reduce((s, ch) => s + ch.etapes.length, 0);
+  const totalFaites = coeur.reduce(
     (s, ch) => s + ch.etapes.filter(e => croissanceEtapeFaite(e, etat0)).length, 0);
+  const heures = Math.round(coeur.reduce((s, ch) => s + ch.etapes
+    .filter(e => !croissanceEtapeFaite(e, etat0)).reduce((x, e) => x + (e.min || 0), 0), 0) / 60);
   const pctGlobal = Math.round((totalFaites / Math.max(1, totalEtapes)) * 100);
   tete.innerHTML = `<h2>${t("croiss.titre")}</h2>
     <p class="note">${t("croiss.sous")}</p>
     <div class="progress"><div class="progress-bar" style="width:${pctGlobal}%"></div></div>
-    <p class="croiss-compte">${t("croiss.avancement", { faites: totalFaites, total: totalEtapes, pct: pctGlobal })}</p>`;
+    <p class="croiss-compte">${t("croiss.avancement", { faites: totalFaites, total: totalEtapes, pct: pctGlobal })}
+      — ${t("croiss.reste", { h: heures, sem: heures })}</p>`;
   const prochaine = croissanceProchaine(etat0);
   if (prochaine) {
     const p = el("div", "croiss-prochaine");
@@ -1563,6 +1569,51 @@ function blocAdminCroissance(c) {
   lienPlan.target = "_blank"; lienPlan.rel = "noopener";
   tete.appendChild(lienPlan);
   c.appendChild(tete);
+
+  /* ----- Les deux contraintes : elles gouvernent tout le plan ----- */
+  const contr = el("section", "carte croiss-contraintes");
+  contr.innerHTML = `<h2>${t("croiss.contraintes")}</h2>`;
+  CROISSANCE_CONTRAINTES.forEach(k => {
+    const d = el("div", "croiss-contrainte");
+    d.innerHTML = `<p class="croiss-contrainte-t">${k.emoji} <strong>${echapper(k.titre)}</strong></p>
+      <p class="note">${echapper(k.detail)}</p>
+      <ul class="croiss-conseq">${k.consequences.map(x => `<li>${echapper(x)}</li>`).join("")}</ul>`;
+    contr.appendChild(d);
+  });
+  c.appendChild(contr);
+
+  /* ----- La séance de la semaine : ce qui tient dans une heure ----- */
+  const sem = el("section", "carte croiss-semaine");
+  const choix = seanceDeLaSemaine(e => croissanceEtapeFaite(e, etat0), 60);
+  const totalMin = choix.reduce((s, x) => s + (x.etape.min || 15), 0);
+  sem.innerHTML = `<h2>${t("croiss.semaine")}</h2>
+    <p class="note">${t("croiss.semaine_sous", { min: totalMin })}</p>`;
+  if (!choix.length) {
+    sem.appendChild(el("p", "note", t("croiss.tout_fait")));
+  } else {
+    choix.forEach(({ chantier, etape }) => {
+      const l = el("label", "switch-ligne croiss-etape");
+      const i = el("input"); i.type = "checkbox";
+      i.onchange = async () => {
+        const etat = croissanceEtat();
+        etat.etapes[etape.id] = i.checked ? aujourdHui() : false;
+        i.disabled = true;
+        await croissanceEnregistrer(etat);
+        i.disabled = false;
+        majSansSaut(() => rendre());
+      };
+      l.appendChild(i);
+      const txt = el("span", "croiss-etape-txt");
+      txt.innerHTML = `<strong>${echapper(etape.titre)} <span class="croiss-min">${etape.min || 15} min</span></strong>
+        <small>${chantier.emoji} ${echapper(chantier.titre)} — ${echapper(etape.detail || "")}</small>`;
+      l.appendChild(txt);
+      sem.appendChild(l);
+    });
+  }
+  const rit = el("p", "note croiss-rituel");
+  rit.innerHTML = CROISSANCE_RITUEL.map(r => `<strong>${echapper(r.titre)}</strong> ${echapper(r.detail)}`).join("<br>");
+  sem.appendChild(rit);
+  c.appendChild(sem);
 
   /* ----- Chiffres réels (étoile du Nord et compagnie) ----- */
   const kpi = el("section", "carte");
@@ -1591,10 +1642,13 @@ function blocAdminCroissance(c) {
     secPh.innerHTML = `<h2>${echapper(ph.titre)}</h2><p class="note">${echapper(ph.sous)}</p>`;
     chantiersDePhase(ph.id).forEach(ch => {
       const av = croissanceAvancement(ch, etat0);
-      const titre = `${ch.emoji} ${echapper(ch.titre)} <span class="croiss-badge${av.pct === 100 ? " ok" : ""}">${av.faites}/${av.total}</span>`;
+      const marque = ch.perimetre === "hors" ? ` <span class="croiss-perim hors">${t("croiss.hors")}</span>`
+                   : ch.perimetre === "plus_tard" ? ` <span class="croiss-perim plus-tard">${t("croiss.plus_tard")}</span>` : "";
+      const titre = `${ch.emoji} ${echapper(ch.titre)}${marque} <span class="croiss-badge${av.pct === 100 ? " ok" : ""}">${av.faites}/${av.total}</span>`;
       const { details, corps } = blocPliable(titre, false, "croiss-" + ch.id);
+      if (ch.perimetre !== "coeur") details.classList.add("croiss-attenue");
       corps.innerHTML = `<p class="croiss-but"><strong>${t("croiss.but")}</strong> ${echapper(ch.but)}</p>
-        <p class="note"><strong>${t("croiss.kpi")}</strong> ${echapper(ch.kpi)}</p>`;
+        <p class="note"><strong>${t("croiss.kpi")}</strong> ${echapper(ch.kpi)} · <strong>${t("croiss.duree")}</strong> ${t("croiss.duree_val", { min: dureeChantier(ch) })}</p>`;
 
       ch.etapes.forEach(etape => {
         const faite = croissanceEtapeFaite(etape, etat0);
@@ -1610,7 +1664,8 @@ function blocAdminCroissance(c) {
         };
         l.appendChild(i);
         const txt = el("span", "croiss-etape-txt");
-        txt.innerHTML = `<strong>${echapper(etape.titre)}</strong><small>${echapper(etape.detail || "")}</small>`;
+        txt.innerHTML = `<strong>${echapper(etape.titre)}${etape.min ? ` <span class="croiss-min">${etape.min} min</span>` : ""}</strong>
+          <small>${echapper(etape.detail || "")}</small>`;
         l.appendChild(txt);
         corps.appendChild(l);
 
@@ -1851,10 +1906,18 @@ function majPastilleAttente() {
 // repli si l'avatar n'est pas (encore) disponible.
 function vignetteEnfant(enf, taille) {
   const cls = "av-vignette" + (taille ? " " + taille : "");
-  if (enf && enf.avatar && typeof buildAvatar === "function") {
-    return `<span class="${cls}">${buildAvatar(enf.avatar)}</span>`;
-  }
-  return `<span class="pastille-emoji">${(enf && enf.emoji) || "🙂"}</span>`;
+  try {
+    if (enf && enf.avatar && typeof buildAvatar === "function") {
+      const svg = buildAvatar(enf.avatar);
+      if (svg && svg.indexOf("<svg") >= 0) return `<span class="${cls}">${svg}</span>`;
+    }
+  } catch (e) { /* avatar illisible : on retombe sur l'initiale ci-dessous */ }
+  // Repli : l'initiale du prénom sur la couleur de l'enfant. Jamais de vide —
+  // une vignette absente est pire qu'une vignette simple.
+  const brut = (enf && enf.prenom) ? enf.prenom.trim().charAt(0).toUpperCase() : "?";
+  const initiale = brut.replace(/[&<>"']/g, "");
+  const couleur = (enf && enf.couleur) ? enf.couleur : "#5b8def";
+  return `<span class="${cls} initiale" style="--c:${couleur}">${initiale || "?"}</span>`;
 }
 
 function rendreSelecteur() {

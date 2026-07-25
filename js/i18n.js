@@ -2761,6 +2761,14 @@ Object.assign(I18N.fr, {
   "croiss.mail_dest": "Pour :", "croiss.mail_quand": "Quand :", "croiss.mail_sujet": "Objet :",
   "croiss.copier": "Copier le texte", "croiss.ouvrir_mail": "Ouvrir dans ma messagerie",
   "croiss.copie": "Texte copié.", "croiss.copie_ko": "Copie impossible : sélectionne le texte à la main.",
+  "croiss.contraintes": "Mes deux contraintes",
+  "croiss.semaine": "🗓️ Ma séance de la semaine",
+  "croiss.semaine_sous": "Ce qui tient dans une heure, dans l'ordre du plan ({min} min au total). Ce qui n'y entre pas attend la semaine prochaine.",
+  "croiss.reste": "il reste ≈ {h} h de travail, soit ≈ {sem} semaines",
+  "croiss.hors": "hors périmètre",
+  "croiss.plus_tard": "plus tard",
+  "croiss.duree": "Durée :",
+  "croiss.duree_val": "≈ {min} min",
   "croiss.err": "Enregistrement impossible."
 });
 Object.assign(I18N.en, {
@@ -2788,6 +2796,14 @@ Object.assign(I18N.en, {
   "croiss.mail_dest": "To:", "croiss.mail_quand": "When:", "croiss.mail_sujet": "Subject:",
   "croiss.copier": "Copy the text", "croiss.ouvrir_mail": "Open in my mail app",
   "croiss.copie": "Text copied.", "croiss.copie_ko": "Copy failed: please select the text manually.",
+  "croiss.contraintes": "My two constraints",
+  "croiss.semaine": "🗓️ This week's session",
+  "croiss.semaine_sous": "What fits in one hour, in plan order ({min} min in total). Whatever doesn't fit waits for next week.",
+  "croiss.reste": "≈ {h} h of work left, i.e. ≈ {sem} weeks",
+  "croiss.hors": "out of scope",
+  "croiss.plus_tard": "later",
+  "croiss.duree": "Duration:",
+  "croiss.duree_val": "≈ {min} min",
   "croiss.err": "Could not save."
 });
 Object.assign(I18N.nl, {
@@ -2815,6 +2831,14 @@ Object.assign(I18N.nl, {
   "croiss.mail_dest": "Voor:", "croiss.mail_quand": "Wanneer:", "croiss.mail_sujet": "Onderwerp:",
   "croiss.copier": "Tekst kopiëren", "croiss.ouvrir_mail": "In mijn mailprogramma openen",
   "croiss.copie": "Tekst gekopieerd.", "croiss.copie_ko": "Kopiëren mislukt: selecteer de tekst manueel.",
+  "croiss.contraintes": "Mijn twee beperkingen",
+  "croiss.semaine": "🗓️ Mijn sessie van deze week",
+  "croiss.semaine_sous": "Wat in één uur past, in de volgorde van het plan ({min} min in totaal). Wat er niet in past, wacht tot volgende week.",
+  "croiss.reste": "nog ≈ {h} u werk, oftewel ≈ {sem} weken",
+  "croiss.hors": "buiten bereik",
+  "croiss.plus_tard": "later",
+  "croiss.duree": "Duur:",
+  "croiss.duree_val": "≈ {min} min",
   "croiss.err": "Bewaren mislukt."
 });
 Object.assign(I18N.de, {
@@ -2842,5 +2866,13 @@ Object.assign(I18N.de, {
   "croiss.mail_dest": "An:", "croiss.mail_quand": "Wann:", "croiss.mail_sujet": "Betreff:",
   "croiss.copier": "Text kopieren", "croiss.ouvrir_mail": "In meinem Mailprogramm öffnen",
   "croiss.copie": "Text kopiert.", "croiss.copie_ko": "Kopieren fehlgeschlagen: Text bitte manuell markieren.",
+  "croiss.contraintes": "Meine zwei Einschränkungen",
+  "croiss.semaine": "🗓️ Meine Sitzung dieser Woche",
+  "croiss.semaine_sous": "Was in eine Stunde passt, in der Reihenfolge des Plans (insgesamt {min} Min.). Was nicht hineinpasst, wartet bis nächste Woche.",
+  "croiss.reste": "noch ≈ {h} Std. Arbeit, also ≈ {sem} Wochen",
+  "croiss.hors": "außerhalb des Rahmens",
+  "croiss.plus_tard": "später",
+  "croiss.duree": "Dauer:",
+  "croiss.duree_val": "≈ {min} Min.",
   "croiss.err": "Speichern fehlgeschlagen."
 });

@@ -398,6 +398,44 @@ test("croissance : chantiers bien formés, identifiants uniques, phases connues"
   phases.forEach(p => assert.ok(api.chantiersDePhase(p).length > 0, "phase vide : " + p));
 });
 
+test("croissance : périmètre déclaré et durées chiffrées sur chaque étape", () => {
+  const { api } = construireContexte();
+  const perimetres = ["coeur", "plus_tard", "hors"];
+  api.CROISSANCE_CHANTIERS.forEach(ch => {
+    assert.ok(perimetres.includes(ch.perimetre), "périmètre inconnu pour " + ch.id);
+    ch.etapes.forEach(e => {
+      assert.strictEqual(typeof e.min, "number", "durée manquante : " + e.id);
+      assert.ok(e.min >= 0 && e.min <= 60, "durée hors bornes (0-60 min) : " + e.id);
+    });
+  });
+  // Il doit rester du travail « cœur » : sinon le plan ne sert à rien.
+  assert.ok(api.CROISSANCE_CHANTIERS.some(ch => ch.perimetre === "coeur"), "aucun chantier au cœur du plan");
+  // Aucune étape ne peut dépasser la séance hebdomadaire d'une heure.
+  const trop = api.CROISSANCE_CHANTIERS.filter(ch => ch.perimetre === "coeur")
+    .flatMap(ch => ch.etapes).filter(e => (e.min || 0) > 60);
+  assert.strictEqual(trop.length, 0, "étape plus longue qu'une séance : " + trop.map(e => e.id).join(", "));
+});
+
+test("croissance : la séance de la semaine tient dans le budget d'une heure", () => {
+  const { api } = construireContexte();
+  const faites = new Set();
+  const estFaite = (e) => faites.has(e.id) || !!e.fait;
+  // Trois semaines de suite : chaque séance tient dans l'heure et progresse.
+  for (let semaine = 0; semaine < 3; semaine++) {
+    const choix = api.seanceDeLaSemaine(estFaite, 60);
+    assert.ok(choix.length > 0, "séance vide en semaine " + (semaine + 1));
+    const total = choix.reduce((s, x) => s + (x.etape.min || 15), 0);
+    assert.ok(total <= 60, `séance de ${total} min en semaine ${semaine + 1}`);
+    choix.forEach(x => {
+      assert.strictEqual(x.chantier.perimetre, "coeur", "étape hors périmètre proposée : " + x.etape.id);
+      faites.add(x.etape.id);
+    });
+  }
+  // Une fois tout fait, la séance est vide (et non en boucle infinie).
+  api.CROISSANCE_CHANTIERS.forEach(ch => ch.etapes.forEach(e => faites.add(e.id)));
+  assert.strictEqual(api.seanceDeLaSemaine(estFaite, 60).length, 0, "séance non vide alors que tout est fait");
+});
+
 test("croissance : chaque e-mail référencé existe et est complet", () => {
   const { api } = construireContexte();
   const ids = new Set();

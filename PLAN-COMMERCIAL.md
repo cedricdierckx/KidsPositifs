@@ -1,15 +1,68 @@
-# FamiTeam — Analyse de marché & business plan
+# FamiTeam — Analyse de marché & plan de développement
 
 > Document de travail, révisé le 25 juillet 2026.
 > Le **suivi d'avancement** vit dans l'application : espace parents → Admin →
-> onglet **📈 Croissance**. Le plan détaillé (chantiers, étapes, e-mails) est
-> défini dans `js/croissance.js`. Ce document porte l'analyse ; l'app porte
-> l'exécution.
+> onglet **📈 Croissance**. Le plan détaillé (contraintes, chantiers, durées,
+> e-mails) est défini dans `js/croissance.js`. Ce document porte l'analyse ;
+> l'app porte l'exécution.
 
 **Avertissement sur les chiffres.** Chaque estimation est suivie d'un degré de
-certitude. Les données publiées sur le marché des applications de parentalité
-varient d'un facteur deux selon les cabinets ; les projections de FamiTeam sont
-des hypothèses de travail à confronter au réel, pas des prévisions.
+certitude. Les données publiées sur ce marché varient d'un facteur deux selon
+les cabinets ; les projections propres à FamiTeam sont des hypothèses de
+travail, pas des prévisions.
+
+---
+
+## 0. Les deux contraintes — elles gouvernent tout le reste
+
+Ce plan n'est pas un plan de start-up. Il est écrit sous deux contraintes
+fermes, énoncées par le fondateur, et **toute recommandation qui les
+contredirait est écartée d'office**.
+
+### 0.1 « Cela ne peut pas devenir mon activité professionnelle »
+
+Le fondateur est **notaire**. La profession est incompatible avec l'exercice
+d'une activité commerciale. FamiTeam reste donc un **projet personnel, non
+marchand par défaut**.
+
+Conséquences, appliquées dans tout le document :
+
+- **Pas d'abonnement payant, pas de vente B2B, pas d'affiliation, pas de
+  publicité achetée.** Les chantiers correspondants sont marqués *hors
+  périmètre* et conservés uniquement pour mémoire.
+- Recette envisageable : **le don**, destiné à couvrir les frais techniques —
+  et sous la forme que le cadre déontologique autorisera.
+- **Séparation stricte** : ni le titre, ni l'étude, ni les coordonnées
+  professionnelles n'apparaissent dans la communication du projet.
+- Si le projet devait un jour dépasser ce cadre, les voies à examiner sont
+  l'**ASBL**, la **cession de l'exploitation** à un tiers, ou une
+  **participation passive** sans gestion.
+
+**Certitude sur le principe d'incompatibilité : 85 %. Sur son application
+exacte à une application gratuite développée sur temps libre : 45 %.** C'est
+insuffisant pour engager quoi que ce soit : **la première étape du plan est
+d'interroger la Chambre par écrit** (modèle d'e-mail `m_chambre` fourni). Tant
+que la réponse n'est pas là, rien de ce qui touche à l'argent ne bouge.
+
+### 0.2 « Une heure par semaine »
+
+**52 heures par an.** C'est la ressource la plus rare du projet, plus rare que
+l'argent. Conséquences :
+
+- **Chaque étape du plan porte une durée estimée**, et l'onglet Croissance
+  compose la séance hebdomadaire à partir de ce budget de 60 minutes.
+- **Tout ce qui est récurrent doit être automatisé une fois** (e-mails de
+  bienvenue et de relance, rapport mensuel, FAQ) — sinon le temps disponible
+  part en gestes répétitifs.
+- **Un plafond de familles est assumé** (voir § 3.3) : le support croît avec
+  les usagers et ne se délègue pas.
+- **Une seule action par semaine.** Deux chantiers menés en parallèle, c'est
+  zéro chantier terminé.
+- Les canaux à cycle long — vente aux employeurs, mutuelles, publicité —
+  coûtent plus d'heures qu'ils n'en rapportent : écartés.
+
+Le plan « cœur » représente **≈ 35 heures**, soit **environ neuf mois** à ce
+rythme. C'est le calendrier réaliste, et il est affiché en tête de l'onglet.
 
 ---
 
@@ -19,23 +72,19 @@ FamiTeam est une application **web** (aucun téléchargement, aucun magasin
 d'applications) qui aide les enfants de **2 à 7 ans** à adopter des
 comportements positifs, dans l'esprit de la parentalité bienveillante.
 
-- L'enfant coche ses missions du jour, gagne des **cœurs 💛** (famille) et des
-  **gouttes 💧** (planète), fait grandir un **avatar** et un **écosystème**.
+- L'enfant coche ses missions du jour, gagne des **cœurs 💛** et des
+  **gouttes 💧**, fait grandir un **avatar** et un **écosystème**.
 - Les parents choisissent les missions, valident si besoin, et disposent d'un
   espace dédié : comportement du jour, compliment du jour, semaine papier.
 - **Aucun point n'est jamais retiré.** En cas d'incident, l'enfant réalise un
   **geste de réparation**, et c'est ce geste qui est récompensé.
-- Multi-familles, temps réel entre appareils, fonctionnement hors-ligne,
-  quatre langues (FR, EN, NL, DE), hébergement européen, aucune publicité.
+- Multi-familles, temps réel, hors-ligne, quatre langues, hébergement
+  européen, aucune publicité.
 
-### Ce qui est déjà construit (actif, pas projet)
-
-Comptes et familles, invitations, **parrainage 3 familles/semaine**, liste
-d'attente, rôles admin, retours utilisateurs, statistiques d'usage, export de
-données, suppression de compte, pages légales, e-mails transactionnels,
-tutoriel, espace parents simplifié. Le champ `plan` (`free`/`premium`) existe
-déjà en base : **brancher un paiement ne demande pas de refonte** (certitude
-95 %, vérifié dans `supabase/schema.sql`).
+Déjà construit : comptes, invitations, **parrainage 3 familles/semaine**,
+liste d'attente, espace admin, retours utilisateurs, statistiques d'usage,
+export et suppression des données, pages légales, e-mails transactionnels,
+tutoriel, espace parents simplifié.
 
 ---
 
@@ -43,216 +92,205 @@ déjà en base : **brancher un paiement ne demande pas de refonte** (certitude
 
 ### 2.1 Taille du marché
 
-Le marché mondial des applications de parentalité est estimé entre **1,1 et
-1,9 milliard USD en 2026**, avec une croissance annuelle de **11 à 13 %**
+Marché mondial des applications de parentalité : **1,1 à 1,9 Md USD en 2026**,
+croissance **11 à 13 %/an**
 ([Coherent Market Insights](https://www.coherentmarketinsights.com/industry-reports/global-parenting-apps-market),
 [InsightAce](https://www.insightaceanalytic.com/report/parenting-apps-market/3219),
 [Business Research Insights](https://www.businessresearchinsights.com/market-reports/parenting-apps-market-113806)).
-L'écart entre sources reflète des périmètres différents (suivi de grossesse,
-contrôle parental, organisation familiale). **Certitude sur l'ordre de
-grandeur : 75 % ; sur le chiffre exact : 40 %.**
+**Certitude sur l'ordre de grandeur : 75 % ; sur le chiffre exact : 40 %.**
 
-Ce chiffre mondial n'est pas notre marché. Le nôtre se calcule par le bas :
+Ce chiffre est sans objet direct ici : le projet ne vise pas une part de
+marché mais un nombre de familles servies. Il sert seulement à situer le
+contexte.
 
 | Niveau | Périmètre | Estimation | Certitude |
 |---|---|---|---|
-| **TAM** | Ménages francophones (BE + FR + CH + LU) avec ≥ 1 enfant de 2 à 7 ans | ≈ **3,8 M ménages** | 65 % |
-| **SAM** | Parmi eux, ceux qui cherchent activement un outil de routine/récompense | ≈ **600 000** | 50 % |
-| **SOM à 3 ans** | Part atteignable sans budget publicitaire significatif | ≈ **10 000 familles inscrites** | 45 % |
+| **TAM** | Ménages francophones (BE + FR + CH + LU) avec ≥ 1 enfant de 2 à 7 ans | ≈ **3,8 M** | 65 % |
+| **SAM** | Ceux qui cherchent activement un outil de routine/récompense | ≈ **600 000** | 50 % |
+| **Cible réaliste** | Ce qu'une heure par semaine permet de servir correctement | ≈ **2 000 familles actives** | 50 % |
 
-Méthode : la Belgique comptait au 1ᵉʳ janvier 2025 environ **36,7 % de ménages
-avec enfants** (18,5 % couples mariés, 8,2 % cohabitants, 10 % familles
-monoparentales — [Statbel](https://statbel.fgov.be/en/news/belgium-had-36-one-person-households-01-january-2025)),
-soit ≈ 1,8 M ménages ; la tranche 2-7 ans en représente environ **30 %**, soit
-**≈ 540 000 ménages belges**. La France, à population six fois supérieure et
-structure familiale comparable, en compte **≈ 3,2 M**. Suisse romande et
-Luxembourg ajoutent ≈ 150 000.
+Méthode : au 1ᵉʳ janvier 2025, la Belgique comptait ≈ **36,7 % de ménages avec
+enfants** ([Statbel](https://statbel.fgov.be/en/news/belgium-had-36-one-person-households-01-january-2025)),
+soit ≈ 1,8 M ; la tranche 2-7 ans en représente ≈ 30 %, soit **≈ 540 000
+ménages belges**. La France en compte ≈ 3,2 M, la Suisse romande et le
+Luxembourg ≈ 150 000.
 
 ### 2.2 Concurrence
 
 | Concurrent | Positionnement | Prix observé | Faiblesse exploitable |
 |---|---|---|---|
-| **Cozi** | Calendrier familial partagé (US) | Gratuit + ~30 $/an | Organisation des parents, rien pour l'enfant de 3 ans |
-| **OurHome** | Tâches + points, gamifié | Gratuit | Interface datée, pensée pour les 8-14 ans, anglophone |
-| **FamilyApp** | Organisation familiale FR | jusqu'à ~15 €/mois | Cher, orienté scolaire (devoirs, notes) |
-| **Famille.click** | Tâches gamifiées FR | Gratuit | Peu de doctrine éducative, portée limitée |
-| **NeatKid** | Corvées enfants 5-8 ans, récompense = argent de poche | Gratuit + achats | Récompense monétaire, logique transactionnelle |
+| **Cozi** | Calendrier familial partagé (US) | Gratuit + ~30 $/an | Pour les parents, rien pour l'enfant de 3 ans |
+| **OurHome** | Tâches + points, gamifié | Gratuit | Interface datée, pensée 8-14 ans, anglophone |
+| **FamilyApp** | Organisation familiale FR | jusqu'à ~15 €/mois | Cher, orienté scolaire |
+| **Famille.click** | Tâches gamifiées FR | Gratuit | Peu de doctrine éducative |
+| **NeatKid** | Corvées 5-8 ans, récompense = argent de poche | Gratuit + achats | Logique transactionnelle |
 | **Nipto** | Partage du ménage entre adultes | Gratuit + premium | Ne s'adresse pas aux enfants |
-| Tableaux de gommettes papier | Le vrai concurrent | ~0 € | Gratuit, tangible, mais s'essouffle en trois semaines |
+| Tableau de gommettes papier | **Le vrai concurrent** | ~0 € | Gratuit et tangible, mais s'essouffle en trois semaines |
 
 Sources : [Panda Productif](https://pandaproductif.fr/9-applications-pour-faciliter-quotidien-familles/),
 [Maman Vogue](https://mamanvogue.fr/maternite/etre-maman/organisateur-de-tache-familial/),
 [MyTribeFamily](https://mytribefamily.com/blog/meilleures-applications-gestion-famille-2026),
 [Famille.click](https://www.famille.click/), [FamilyApp](https://family-app.fr/),
-[NeatKid (App Store)](https://apps.apple.com/us/app/neatkid-t%C3%A2che-m%C3%A9nag%C3%A8re-enfant/id6480269902?l=fr-FR),
-[Nipto (App Store)](https://apps.apple.com/fr/app/nipto-partage-du-m%C3%A9nage/id1504877473).
-**Certitude sur les prix relevés : 45 %** (tarifs changeants, à revérifier avant
-toute décision de prix).
+[NeatKid](https://apps.apple.com/us/app/neatkid-t%C3%A2che-m%C3%A9nag%C3%A8re-enfant/id6480269902?l=fr-FR),
+[Nipto](https://apps.apple.com/fr/app/nipto-partage-du-m%C3%A9nage/id1504877473).
+**Certitude sur les prix : 45 %.**
 
-**Le vrai concurrent n'est pas une app : c'est le tableau de gommettes sur le
-frigo** — et l'abandon au bout de trois semaines. Notre argument n'est donc pas
-« mieux que l'app X » mais « ça tient dans la durée, parce que ça ne punit
-jamais et que ça prend deux minutes ».
+**Le fait d'être gratuit et non marchand n'est pas un handicap face à ces
+concurrents : c'est un argument.** Aucun d'eux ne peut promettre « gratuit,
+sans publicité, sans revente de données, et sans intérêt commercial à vous
+retenir ».
 
-### 2.3 Ce qui nous distingue réellement
+### 2.3 Ce qui distingue réellement FamiTeam
 
-1. **Réparer plutôt que punir.** Aucun concurrent identifié n'en fait un
-   principe explicite. C'est un angle éditorial et presse à lui seul.
-2. **La tranche 2-7 ans**, avec affichage imagé pour les non-lecteurs
-   (quantités en emojis sous un seuil d'âge). La concurrence commence à 6-8 ans.
-3. **Double boucle de motivation** : avatar (individuel) *et* écosystème
-   vivant (collectif, planète) — une dimension éducative absente ailleurs.
-4. **Web, pas magasin d'applications.** Aucune commission de 15-30 %, mise à
-   jour instantanée, pas de validation Apple. Contrepartie : la découverte ne
-   profite pas du référencement des stores — c'est notre principale faiblesse
-   d'acquisition, et la raison d'être des chantiers Contenu et Prescripteurs.
-5. **Confiance** : hébergement européen, aucune publicité, aucune revente,
-   export et suppression en deux clics, quatre langues.
+1. **Réparer plutôt que punir** — aucun concurrent n'en fait un principe.
+2. **La tranche 2-7 ans**, avec affichage imagé pour les non-lecteurs.
+3. **Double boucle** avatar (individuel) et écosystème (collectif).
+4. **Web, pas magasin d'applications** : mise à jour instantanée, aucune
+   commission. Contrepartie : la découverte ne profite pas des stores — d'où
+   les chantiers Prescripteurs.
+5. **Désintéressement démontrable** : projet personnel, gratuit, sans modèle
+   payant prévu. C'est un angle presse à lui seul.
 
 ### 2.4 Risques
 
 | Risque | Gravité | Parade |
 |---|---|---|
-| Acquisition atone hors magasins d'applications | Élevée | Prescripteurs (écoles, crèches, pros) + contenu + parrainage |
-| Lassitude après 3-4 semaines | Élevée | Cartes surprises, avatar, écosystème, compliment du jour ; mesurer J+30 |
-| Un géant copie le principe | Moyenne | Vitesse et niche ; l'avantage est éditorial, pas technique |
-| Données d'enfants : incident ou méfiance | Élevée | Minimisation déjà en place, RLS, registre des traitements (chantier Conformité) |
-| Solo-fondateur : disponibilité | Élevée | Chantiers séquentiels, jamais deux fronts à la fois |
-| Gratuité perçue comme « non sérieux » | Faible | Formule payante lisible + promesse gratuite à vie aux early adopters |
+| Cadre déontologique mal évalué | **Élevée** | Chantier *Cadre* en tout premier ; rien ne bouge avant la réponse |
+| Le temps manque, le projet s'éteint | **Élevée** | Automatiser le récurrent ; séance d'une heure ; plan de sortie écrit |
+| Support qui déborde avec le nombre de familles | Élevée | FAQ, réponses types, plafond assumé, liste d'attente |
+| Lassitude des familles après 3-4 semaines | Moyenne | Cartes surprises, avatar, écosystème ; mesurer J+30 |
+| Données d'enfants : incident ou méfiance | Élevée | Minimisation, RLS, registre des traitements |
+| Acquisition atone hors magasins | Moyenne | Prescripteurs + parrainage (canaux à faible coût horaire) |
 
 ---
 
-## 3. Business plan
+## 3. Modèle : non marchand, soutenable
 
-### 3.1 Modèle économique
+### 3.1 Ce qui rentre
 
-**Freemium sobre**, avec trois sources possibles, dans cet ordre :
+Rien, par défaut. Éventuellement des **dons** destinés à couvrir les frais,
+sous la forme que la Chambre validera. Aucun abonnement, aucune facturation,
+aucune commission.
 
-1. **Abonnement famille** — hypothèse : gratuit complet jusqu'à 2 enfants ;
-   **3,49 €/mois ou 29 €/an** pour enfants illimités, statistiques avancées,
-   semaine papier, thèmes d'avatar. *Prix à valider auprès de 20 familles
-   avant toute mise en œuvre (chantier Modèle & prix).*
-2. **B2B2C** — employeurs, mutuelles, écoles : licence annuelle par famille
-   couverte, facturation unique, aucune donnée transmise au payeur.
-3. **Partenariats récompenses** — commissions d'affiliation sur les sorties
-   familiales, sans aucune publicité dans l'écran enfant.
+### 3.2 Ce qui sort
 
-**Les dons existants restent** : ils financent déjà l'hébergement et
-n'engagent personne.
-
-### 3.2 Structure de coûts (annuelle, hors temps fondateur)
-
-| Poste | Aujourd'hui | À 10 000 familles |
+| Poste | Aujourd'hui | À 2 000 familles |
 |---|---|---|
 | Supabase | 0 € (offre gratuite) | ≈ 300 € |
-| Vercel | 0 € | ≈ 240 € |
-| Domaine + e-mail SMTP | ≈ 60 € | ≈ 150 € |
-| Comptable / juridique | 0 € | ≈ 800 € |
-| **Total** | **≈ 60 €** | **≈ 1 500 €** |
+| Vercel | 0 € | ≈ 0 à 240 € |
+| Domaine + SMTP | ≈ 60 € | ≈ 150 € |
+| **Total annuel** | **≈ 60 €** | **≈ 450 à 700 €** |
 
-**Certitude : 70 %.** Conséquence décisive : **le seuil de rentabilité se situe
-autour de 50 abonnés annuels.** Ce n'est pas un projet qui a besoin de lever
-des fonds ; c'est un projet qui a besoin de familles.
+**Certitude : 70 %.** L'ordre de grandeur est celui d'un abonnement de
+téléphonie : le projet est finançable sur fonds propres sans difficulté, et
+quelques dons suffiraient à l'équilibrer.
 
-### 3.3 Prévisionnel à trois ans (scénario médian)
+### 3.3 Le vrai plafond n'est pas l'argent, c'est le support
 
-| | An 1 (2026-27) | An 2 (2027-28) | An 3 (2028-29) |
+C'est le calcul structurant de ce plan. En supposant que **1 % des familles
+actives écrivent chaque mois** et que chaque réponse prenne **5 minutes** :
+
+| Familles actives | Messages/mois | Temps de support | Part de l'heure hebdomadaire |
 |---|---|---|---|
-| Familles inscrites (cumul) | 1 000 | 6 000 | 20 000 |
-| Familles actives 7 j | 400 | 2 400 | 8 000 |
-| Taux d'abonnement (des actives) | — (gratuit) | 6 % | 8 % |
-| Abonnés payants | 0 | 145 | 640 |
-| Revenu abonnements | 0 € | ≈ 4 200 € | ≈ 18 600 € |
-| B2B2C | 0 € | ≈ 1 000 € | ≈ 8 000 € |
-| Dons + affiliation | ≈ 300 € | ≈ 800 € | ≈ 2 500 € |
-| **Recettes** | **≈ 300 €** | **≈ 6 000 €** | **≈ 29 100 €** |
-| Charges | ≈ 100 € | ≈ 600 € | ≈ 1 500 € |
-| **Résultat** | **≈ 200 €** | **≈ 5 400 €** | **≈ 27 600 €** |
+| 300 | 3 | ≈ 15 min/mois | 6 % |
+| 1 000 | 10 | ≈ 50 min/mois | 20 % |
+| **2 000** | **20** | **≈ 1 h 40/mois** | **40 %** |
+| 5 000 | 50 | ≈ 4 h/mois | 100 % — plus rien pour le reste |
 
-**Certitude : 35 %** — c'est un scénario, pas une prévision. Les deux
-hypothèses les plus fragiles sont le taux d'abonnement (6-8 %) et la croissance
-du nombre d'inscrits.
+**Certitude : 50 %** (le taux de sollicitation est une hypothèse). Conclusion :
+**le plafond soutenable se situe autour de 2 000 familles actives**, et il se
+recule uniquement par la FAQ et les réponses types — pas par l'effort. Au-delà,
+mieux vaut une liste d'attente qu'un service dégradé.
 
-Repères de marché pour la conversion : les applications en freemium
-convertissent médianement **2,1 % à J+35**, contre 10,7 % en paywall dur ; un
-essai gratuit converti en abonnement se situe entre **38 et 54 %**
-([RevenueCat, State of Subscription Apps 2026](https://www.revenuecat.com/state-of-subscription-apps),
-[Adapty](https://adapty.io/blog/app-store-conversion-rate/)). **Certitude : 90 %
-sur les benchmarks, 55 % sur leur transposabilité à une app web familiale.**
-Notre hypothèse de 6-8 % se justifie par un ciblage sur les familles *actives*
-(et non sur tous les inscrits), mais elle reste optimiste : un scénario bas à
-3 % donnerait ≈ 7 000 € en An 3, ce qui couvre encore largement les charges.
+### 3.4 Trajectoire visée (familles, pas euros)
 
-### 3.4 Indicateurs de pilotage
+| | An 1 | An 2 | An 3 |
+|---|---|---|---|
+| Familles inscrites (cumul) | 400 | 1 200 | 3 000 |
+| Familles actives 7 j | 150 | 500 | 1 500 |
+| Heures investies | 52 | 52 | 52 |
+| Frais annuels | ≈ 100 € | ≈ 250 € | ≈ 500 € |
 
-- **Étoile du Nord : familles actives sur 7 jours.**
-- Activation J+1 (au moins une mission validée) — cible **60 %**.
-- Rétention J+30 — cible **35 %**.
-- Coefficient viral k (filleuls ÷ familles actives) — cible **> 0,4**.
-- Conversion payante des familles actives — cible **6-8 %**.
-- Coût d'acquisition < **un tiers** de la valeur vie client.
+**Certitude : 30 %.** L'indicateur de réussite n'est pas la croissance : c'est
+le rapport **familles servies ÷ heures investies**, et le fait que le projet
+tourne encore au bout de trois ans.
 
 ---
 
 ## 4. Les chantiers
 
-Le plan d'exécution est découpé en **chantiers indépendants**, réalisables les
-uns après les autres. Chacun a un but, un indicateur et des étapes cochables.
-Le détail exact vit dans `js/croissance.js` et s'affiche dans **Admin →
-Croissance**, où l'avancement est enregistré (`app_config`, clé `croissance`).
+19 chantiers, répartis en cinq phases, avec un **périmètre explicite** :
+*cœur* (à faire), *plus tard* (si le temps le permet), *hors périmètre*
+(exclu par les contraintes, conservé pour mémoire). Détail exact et suivi dans
+**Admin → Croissance**.
 
-| Phase | Chantiers |
-|---|---|
-| **0 — Fondations** | Socle de mesure · Page publique & preuve · Activation & rétention |
-| **1 — Traction organique** | Liste d'attente & vagues · Parrainage · Communautés · Contenu & SEO · Presse & podcasts |
-| **2 — Prescripteurs** | Écoles · Crèches & extrascolaire · Professionnels de l'enfance · Employeurs & CE |
-| **3 — Monétisation** | Modèle & prix · Paiement & facturation · Partenariats récompenses |
-| **4 — Échelle** | Marchés NL/DE · Acquisition payante · Financements & aides · Conformité |
+| Phase | Chantiers | Périmètre |
+|---|---|---|
+| **0 — Le cadre** | ⚖️ Cadre déontologique · 📏 Socle de mesure · 🤖 Automatiser le récurrent · 🪧 Page publique & preuve · 🚀 Activation | cœur |
+| **1 — Traction organique** | 🎁 Parrainage · 📨 Liste d'attente · 💬 Communautés · 📰 Presse & podcasts | cœur |
+| | ✍️ Contenu & référencement | plus tard |
+| **2 — Prescripteurs** | 🏫 Écoles · 🧸 Crèches · 🩺 Professionnels de l'enfance | cœur |
+| **3 — Tenir dans la durée** | 🕊️ Modèle non marchand · 🛡️ Conformité · 🧘 Soutenabilité du fondateur | cœur |
+| **4 — Pour mémoire** | 🔐 Abonnement · 🏢 Employeurs & mutuelles · 📣 Publicité · 🎟️ Affiliation | hors périmètre |
+| | 🌍 Marchés NL/DE | plus tard |
 
-**Ordre recommandé.** Ne pas commencer par l'acquisition. La séquence qui
-protège le temps du fondateur est : *mesurer* (phase 0) → *faire venir sans
-payer* (phase 1) → *faire parler les prescripteurs* (phase 2) → *encaisser*
-(phase 3) → *changer d'échelle* (phase 4). Un chantier de phase N+1 lancé
-avant que la phase N ne donne ses chiffres coûte deux fois plus cher.
+**Ordre imposé.** Le chantier *Cadre déontologique* passe avant tout le reste :
+il peut invalider des pans entiers du plan, et il ne coûte que deux heures.
+Ensuite : mesurer, automatiser, puis faire venir des familles.
+
+**Le meilleur rendement horaire** est du côté des **prescripteurs** (une
+directrice d'école parle à vingt-cinq familles pour trente minutes de travail)
+et du **parrainage** (qui tourne tout seul une fois branché). Le contenu et le
+référencement, très rentables sur le papier, sont trop lents pour une heure
+par semaine : ils attendent.
 
 **Règle d'arrêt.** Tout canal testé trois fois sans résultat est abandonné et
-noté comme tel dans l'onglet Croissance. C'est ce qui distingue un plan d'une
-liste de vœux.
+noté comme tel dans l'onglet Croissance.
+
+### Le rituel hebdomadaire
+
+Une heure, même jour, même heure, en quatre semaines type :
+
+| Semaine | Contenu |
+|---|---|
+| 1 | **Les chiffres** — 10 min de relevé, 50 min sur la prochaine étape |
+| 2 | **Un contact** — un seul e-mail de prescripteur, personnalisé, envoyé |
+| 3 | **Le produit** — une correction issue des retours des familles |
+| 4 | **Les familles** — répondre, relancer une vague, remercier un parrain |
 
 ---
 
 ## 5. Les e-mails
 
-Dix-huit modèles prêts à l'emploi sont fournis dans `js/croissance.js` et
-consultables (copie en un clic, ouverture du client de messagerie pré-rempli)
-dans **Admin → Croissance → Modèles d'e-mails** :
+Dix-huit modèles prêts à l'emploi dans `js/croissance.js`, consultables et
+copiables dans **Admin → Croissance → Modèles d'e-mails**, chacun rattaché à
+l'étape qui le déclenche :
 
 | Moment | Modèles |
 |---|---|
+| Cadre | **question à la Chambre** (le tout premier envoi du plan) |
 | Cycle de vie famille | bienvenue J+0 · relance d'activation J+3 · réveil à 30 j · demande de parrainage · demande de témoignage |
 | Liste d'attente | invitation de vague · relance J+7 |
 | Notoriété | micro-influence · pitch presse · proposition podcast |
-| Prescripteurs | école · crèche · professionnel de santé · mutuelle · employeur |
-| Monétisation | partenaire récompense · annonce du premium |
-| Financement | demande de rendez-vous (aide publique) |
+| Prescripteurs | école · crèche · professionnel de l'enfance |
+| Continuité | **proposition de reprise du projet** |
+| Pour mémoire (hors périmètre) | mutuelle · employeur · partenaire récompense |
 
-Ils sont rédigés en français (l'administrateur écrit depuis la Belgique
-francophone). Une version néerlandaise sera nécessaire au chantier *Marchés
-NL/DE*. Les mentions entre `{accolades}` sont à personnaliser avant envoi :
-**un e-mail non personnalisé se voit et ne reçoit pas de réponse.**
+Tous ont été réécrits pour être cohérents avec le cadre : ils annoncent que
+l'app est gratuite, développée sur temps libre, et qu'aucune vente n'est en
+jeu. Les mentions entre `{accolades}` sont à personnaliser — **un e-mail
+générique ne reçoit pas de réponse.**
 
 ---
 
-## 6. Décisions à prendre (par ordre d'urgence)
+## 6. Décisions à prendre, par ordre
 
-1. **Ouvrir publiquement ou rester sur invitation ?** Critère proposé :
-   activation J+1 > 55 % sur deux vagues consécutives.
-2. **Le périmètre gratuit.** « Gratuit jusqu'à 2 enfants » est une hypothèse ;
-   « gratuit, premium = confort » en est une autre, plus fidèle à l'esprit du
-   projet et probablement moins rentable. À trancher avant tout paiement.
-3. **Le statut juridique** (indépendant complémentaire, société, ASBL) :
-   dépend du niveau de recettes visé — à voir avec un comptable dès les
-   premiers encaissements.
-4. **Le temps disponible par semaine.** C'est la vraie contrainte du plan.
-   À deux heures par semaine, la phase 1 prend un an ; à huit heures, un
-   trimestre.
+1. **Poser la question à la Chambre** (2 h, modèle fourni). Tout en dépend.
+2. **Fixer le créneau hebdomadaire** dans l'agenda. Un projet sans créneau
+   meurt, quel que soit le plan.
+3. **Assumer un plafond** de familles et le dire publiquement le moment venu :
+   une liste d'attente est plus honnête qu'un support qui ne répond plus.
+4. **Écrire le plan de sortie tant que tout va bien** : céder le projet,
+   ouvrir le code, ou fermer proprement en rendant leurs données aux familles.
+   Le modèle d'e-mail `m_reprise` est là pour ça. Ce n'est pas du pessimisme :
+   c'est ce qui protège les familles qui auront fait confiance.

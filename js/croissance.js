@@ -1,273 +1,325 @@
 /* =====================================================================
- * FamiTeam — Développement commercial : chantiers & modèles d'e-mails
+ * FamiTeam — Développement : contraintes, chantiers & modèles d'e-mails
  * ---------------------------------------------------------------------
- * Source unique du plan de croissance. Le contenu est volontairement en
- * français : il s'adresse à l'administrateur (back-office), pas aux
- * familles. Rien ici n'est visible des utilisateurs.
+ * Source unique du plan. Le contenu est volontairement en français : il
+ * s'adresse à l'administrateur (back-office), pas aux familles.
  *
- * L'avancement (étapes cochées, notes) n'est PAS stocké dans ce fichier :
- * il vit dans app_config → clé "croissance" (JSON), écrite via la RPC
- * set_app_config réservée aux admins. Ce fichier ne décrit que le plan.
+ * DEUX CONTRAINTES STRUCTURANTES (voir CROISSANCE_CONTRAINTES) :
+ *   1. le projet ne peut pas devenir une activité professionnelle ;
+ *   2. une heure par semaine, pas davantage.
+ * Elles ne sont pas des commentaires : elles déterminent le périmètre de
+ * chaque chantier (« coeur », « plus_tard », « hors ») et la durée estimée
+ * de chaque étape, qui sert à composer la séance hebdomadaire de 60 min.
+ *
+ * L'avancement (étapes cochées, notes) n'est PAS stocké ici : il vit dans
+ * app_config → clé "croissance" (JSON), écrite via la RPC set_app_config
+ * réservée aux admins.
  *
  * Voir PLAN-COMMERCIAL.md pour l'analyse de marché et le business plan.
  * ===================================================================== */
 
-/* ---------- Phases : regroupent les chantiers dans le temps ---------- */
+/* ---------- Les deux contraintes, et ce qu'elles impliquent ---------- */
+const CROISSANCE_CONTRAINTES = [
+  {
+    id: "pro", emoji: "⚖️", titre: "Ce ne peut pas devenir une activité professionnelle",
+    detail: "La profession de notaire est incompatible avec l'exercice d'une activité commerciale. FamiTeam reste donc un projet personnel, non marchand par défaut.",
+    consequences: [
+      "Pas d'exploitation commerciale en nom propre : gratuit + dons, ou structure sans but lucratif.",
+      "Les canaux qui supposent de vendre (employeurs, mutuelles, publicité payante, affiliation) sortent du périmètre.",
+      "Ne jamais promouvoir l'app en s'appuyant sur le titre notarial : les deux mondes restent séparés.",
+      "Le cadre exact se vérifie auprès de la Chambre : c'est la toute première étape du plan."
+    ]
+  },
+  {
+    id: "temps", emoji: "⏱️", titre: "Une heure par semaine",
+    detail: "52 heures par an. C'est la ressource la plus rare du projet : chaque étape du plan porte une durée estimée, et la séance hebdomadaire se compose à partir de ce budget.",
+    consequences: [
+      "Tout ce qui est récurrent doit être automatisé une fois, jamais refait à la main.",
+      "Un plafond de familles est assumé : le support ne se délègue pas et il croît avec les usagers.",
+      "Une seule action par semaine. Deux fronts en parallèle, c'est zéro front terminé.",
+      "Les canaux à cycle long (vente B2B, publicité) coûtent plus d'heures qu'ils n'en rapportent."
+    ]
+  }
+];
+
+/* ---------- Le rituel : quatre semaines type, une heure chacune ---------- */
+const CROISSANCE_RITUEL = [
+  { id: "s1", titre: "Semaine 1 — Les chiffres", detail: "10 min : relever l'étoile du Nord et deux indicateurs. 50 min : la prochaine étape du chantier en cours." },
+  { id: "s2", titre: "Semaine 2 — Un contact", detail: "Un seul e-mail de prescripteur (école, crèche, professionnel), personnalisé, envoyé. Puis on referme." },
+  { id: "s3", titre: "Semaine 3 — Le produit", detail: "Une correction ou une amélioration issue des retours des familles. Rien d'autre." },
+  { id: "s4", titre: "Semaine 4 — Les familles", detail: "Répondre aux retours, relancer une vague d'invitations, remercier un parrain." }
+];
+
+/* ---------- Phases ---------- */
 const CROISSANCE_PHASES = [
-  { id: "p0", titre: "Phase 0 — Fondations", sous: "Mesurer, convertir, être crédible. Avant toute acquisition." },
-  { id: "p1", titre: "Phase 1 — Traction organique", sous: "0 → 300 familles actives, sans budget publicitaire." },
-  { id: "p2", titre: "Phase 2 — Prescripteurs (B2B2C)", sous: "Écoles, crèches, professionnels, mutuelles : ils parlent pour nous." },
-  { id: "p3", titre: "Phase 3 — Monétisation", sous: "Premium, paiement, partenariats récompenses." },
-  { id: "p4", titre: "Phase 4 — Échelle", sous: "Autres langues, acquisition payante, financements." }
+  { id: "p0", titre: "Phase 0 — Le cadre", sous: "Vérifier ce qu'on a le droit de faire, mesurer, automatiser. Avant tout le reste." },
+  { id: "p1", titre: "Phase 1 — Traction organique", sous: "Faire venir des familles sans budget et sans y passer ses soirées." },
+  { id: "p2", titre: "Phase 2 — Prescripteurs", sous: "Écoles, crèches, professionnels : ils parlent à notre place. Meilleur rapport heure/famille." },
+  { id: "p3", titre: "Phase 3 — Tenir dans la durée", sous: "Rester gratuit, rester en règle, rester soutenable à une heure par semaine." },
+  { id: "p4", titre: "Phase 4 — Hors périmètre (pour mémoire)", sous: "Incompatible avec les contraintes actuelles. Conservé au cas où le cadre changerait." }
 ];
 
 /* ---------- Chantiers ----------
- * Chaque chantier : un but, un indicateur, des étapes ordonnées.
- * `mail` sur une étape = identifiant d'un modèle de CROISSANCE_MAILS. */
+ * perimetre : "coeur" (à faire), "plus_tard" (si le temps le permet),
+ *             "hors" (exclu par les contraintes, gardé pour mémoire).
+ * min sur une étape : durée estimée en minutes (budget de la séance).
+ * mail sur une étape : identifiant d'un modèle de CROISSANCE_MAILS. */
 const CROISSANCE_CHANTIERS = [
-  /* ===== Phase 0 — Fondations ===== */
+  /* ===== Phase 0 — Le cadre ===== */
   {
-    id: "c_mesure", phase: "p0", emoji: "📏", titre: "Socle de mesure",
-    but: "Savoir, chaque lundi en 2 minutes, si l'app grandit et où elle fuit.",
-    kpi: "Familles actives 7 j (étoile du Nord) · activation J+1 · rétention J+30",
+    id: "c_cadre", phase: "p0", emoji: "⚖️", titre: "Cadre déontologique & juridique", perimetre: "coeur",
+    but: "Savoir précisément ce qui est permis avant d'investir une heure de plus.",
+    kpi: "Un cadre écrit, validé, qui ne se rediscute plus",
     etapes: [
-      { id: "c_mesure_1", titre: "Définir l'étoile du Nord et l'écrire ici", detail: "Familles actives sur 7 jours. Tout le reste est secondaire." },
-      { id: "c_mesure_2", titre: "Vérifier le ping d'usage et les séries admin", detail: "usage_events + admin_series_usage alimentent bien les graphiques Stats." },
-      { id: "c_mesure_3", titre: "Mesurer l'activation J+1", detail: "Part des familles inscrites qui ont validé au moins une mission le lendemain. Cible : 60 %." },
-      { id: "c_mesure_4", titre: "Tracer l'origine des inscriptions", detail: "Ajouter un champ source (parrainage / presse / école / bouche-à-oreille) à la liste d'attente." },
-      { id: "c_mesure_5", titre: "Rituel du lundi", detail: "10 min : relever les 3 chiffres, noter une décision dans le chantier concerné." }
+      { id: "c_cadre_1", titre: "Écrire la question en cinq lignes", min: 20, detail: "Application gratuite, pas de recettes, dons éventuels, développée sur temps libre : est-ce compatible ? Sous quelle forme ?" },
+      { id: "c_cadre_2", titre: "Interroger la Chambre", min: 30, detail: "Poser la question par écrit et garder la réponse. C'est ce document qui gouverne tout le reste du plan." },
+      { id: "c_cadre_3", titre: "Trancher la forme", min: 45, detail: "Projet personnel non marchand (défaut), ASBL, ou cession de l'exploitation à un tiers. Choisir la plus simple qui tienne." },
+      { id: "c_cadre_4", titre: "Séparer les deux mondes", min: 20, detail: "Ni le titre ni l'étude n'apparaissent dans la communication ; adresse et contact distincts." },
+      { id: "c_cadre_5", titre: "Mettre les pages légales en accord", min: 25, detail: "Mentions légales et politique de confidentialité doivent refléter la forme retenue." }
     ]
   },
   {
-    id: "c_preuve", phase: "p0", emoji: "🪧", titre: "Page publique & preuve",
-    but: "Un parent qui arrive comprend en 10 secondes et a envie d'essayer.",
-    kpi: "Visiteurs → inscription : 8 % · temps sur page > 40 s",
+    id: "c_mesure", phase: "p0", emoji: "📏", titre: "Socle de mesure", perimetre: "coeur",
+    but: "Savoir en dix minutes par mois si l'app grandit et où elle fuit.",
+    kpi: "Familles actives 7 j (étoile du Nord) · activation J+1",
     etapes: [
-      { id: "c_preuve_1", titre: "Promesse en une phrase", detail: "« Une ambiance positive à la maison, 2 minutes par jour. » À tester sur 5 parents non initiés." },
-      { id: "c_preuve_2", titre: "Trois captures d'écran parlantes", detail: "L'écran enfant, l'avatar qui grandit, l'écran parent du soir." },
-      { id: "c_preuve_3", titre: "Récolter 5 témoignages de familles bêta", detail: "Prénom + ville + une phrase concrète. Accord écrit par e-mail.", mail: "m_temoignage" },
-      { id: "c_preuve_4", titre: "Section « pourquoi réparer plutôt que punir »", detail: "C'est le différenciateur : l'expliquer avec des mots simples, pas de jargon." },
-      { id: "c_preuve_5", titre: "Bases SEO", detail: "Titre, description, Open Graph, sitemap, données structurées SoftwareApplication." }
+      { id: "c_mesure_1", titre: "Définir l'étoile du Nord", min: 10, detail: "Familles actives sur 7 jours. Tout le reste est secondaire.", fait: true },
+      { id: "c_mesure_2", titre: "Vérifier les séries de l'onglet Stats", min: 15, detail: "usage_events et les graphiques d'activité doivent être cohérents." },
+      { id: "c_mesure_3", titre: "Mesurer l'activation J+1", min: 30, detail: "Part des familles inscrites ayant validé une mission le lendemain. Cible : 60 %." },
+      { id: "c_mesure_4", titre: "Tracer l'origine des inscriptions", min: 40, detail: "Champ source sur la liste d'attente : parrainage, école, presse, bouche-à-oreille." },
+      { id: "c_mesure_5", titre: "Relevé mensuel, pas hebdomadaire", min: 10, detail: "À une heure par semaine, un relevé par mois suffit. Noter une décision, pas un tableau." }
     ]
   },
   {
-    id: "c_activation", phase: "p0", emoji: "🚀", titre: "Activation & rétention",
-    but: "Que la 1ʳᵉ soirée se passe bien : c'est là que tout se gagne ou se perd.",
+    id: "c_auto", phase: "p0", emoji: "🤖", titre: "Automatiser tout le récurrent", perimetre: "coeur",
+    but: "Chaque geste répétitif automatisé une fois libère des heures pour toujours.",
+    kpi: "Zéro envoi manuel récurrent · support < 15 min/semaine",
+    etapes: [
+      { id: "c_auto_1", titre: "E-mail de bienvenue automatique", min: 45, detail: "Déclenché à la création de la famille, à partir du modèle prévu.", mail: "m_bienvenue" },
+      { id: "c_auto_2", titre: "Relance d'activation J+3 automatique", min: 45, detail: "Uniquement si aucune mission n'a été validée.", mail: "m_activation" },
+      { id: "c_auto_3", titre: "Rapport mensuel envoyé à l'admin", min: 40, detail: "Les cinq chiffres par e-mail le 1ᵉʳ du mois : plus besoin d'ouvrir l'app pour savoir." },
+      { id: "c_auto_4", titre: "FAQ publique pour absorber le support", min: 60, detail: "Dix questions récurrentes répondues une fois. C'est du temps rendu, chaque semaine." },
+      { id: "c_auto_5", titre: "Réponses types aux retours", min: 20, detail: "Trois réponses préécrites (merci / c'est noté / voici comment faire) collées en dix secondes." }
+    ]
+  },
+  {
+    id: "c_preuve", phase: "p0", emoji: "🪧", titre: "Page publique & preuve", perimetre: "coeur",
+    but: "Un parent qui arrive comprend en dix secondes et a envie d'essayer.",
+    kpi: "Visiteurs → inscription : 8 %",
+    etapes: [
+      { id: "c_preuve_1", titre: "Promesse en une phrase", min: 20, detail: "« Une ambiance positive à la maison, deux minutes par jour. » À tester sur cinq parents non initiés." },
+      { id: "c_preuve_2", titre: "Trois captures d'écran parlantes", min: 30, detail: "L'écran enfant, l'avatar qui grandit, l'écran parent du soir." },
+      { id: "c_preuve_3", titre: "Recueillir trois témoignages", min: 25, detail: "Prénom, ville, une phrase concrète, accord écrit.", mail: "m_temoignage" },
+      { id: "c_preuve_4", titre: "Expliquer « réparer plutôt que punir »", min: 35, detail: "C'est le différenciateur : des mots simples, aucun jargon." },
+      { id: "c_preuve_5", titre: "Bases du référencement", min: 30, detail: "Titre, description, Open Graph, sitemap. Une fois pour toutes." }
+    ]
+  },
+  {
+    id: "c_activation", phase: "p0", emoji: "🚀", titre: "Activation & rétention", perimetre: "coeur",
+    but: "Que la première soirée se passe bien : tout se gagne ou se perd là.",
     kpi: "Activation J+1 : 60 % · rétention J+30 : 35 %",
     etapes: [
-      { id: "c_activation_1", titre: "Carte « Premiers pas » dans l'espace parents", detail: "Fait : trois gestes, état réel, disparaît une fois faite.", fait: true },
-      { id: "c_activation_2", titre: "E-mail de bienvenue J+0", detail: "Envoyé à la création de la famille, avec les 3 gestes.", mail: "m_bienvenue" },
-      { id: "c_activation_3", titre: "Relance d'activation J+3 si aucune mission validée", detail: "Un seul e-mail, ton bienveillant, un lien direct.", mail: "m_activation" },
-      { id: "c_activation_4", titre: "Réveil des familles inactives depuis 30 jours", detail: "Une fois par trimestre, jamais plus.", mail: "m_reactivation" },
-      { id: "c_activation_5", titre: "Mesurer l'effet de chaque envoi", detail: "Comparer l'activation des familles relancées et des autres." }
+      { id: "c_activation_1", titre: "Carte « Premiers pas » dans l'espace parents", min: 0, detail: "Fait : trois gestes, état réel, disparaît une fois faite.", fait: true },
+      { id: "c_activation_2", titre: "Lire les cinq derniers retours", min: 15, detail: "Les familles disent où ça coince mieux que n'importe quelle statistique." },
+      { id: "c_activation_3", titre: "Corriger le premier point de friction", min: 60, detail: "Un seul, celui qui revient le plus. Puis on remesure." },
+      { id: "c_activation_4", titre: "Réveil trimestriel des familles endormies", min: 20, detail: "Un envoi par trimestre, jamais plus.", mail: "m_reactivation" },
+      { id: "c_activation_5", titre: "Vérifier l'effet, sinon annuler", min: 15, detail: "Si la correction n'a rien changé, la retirer plutôt que d'empiler." }
     ]
   },
 
   /* ===== Phase 1 — Traction organique ===== */
   {
-    id: "c_waitlist", phase: "p1", emoji: "📨", titre: "Liste d'attente & vagues d'invitations",
-    but: "Transformer la rareté (sur invitation) en atout : des vagues, du soin, des retours.",
+    id: "c_parrainage", phase: "p1", emoji: "🎁", titre: "Boucle de parrainage", perimetre: "coeur",
+    but: "Le seul canal qui grandit sans consommer d'heures : chaque famille heureuse en amène une.",
+    kpi: "Coefficient viral k > 0,4",
+    etapes: [
+      { id: "c_parrainage_1", titre: "Parrainage en place (3 familles/semaine)", min: 0, detail: "Fait : pastille 🎁, table referrals, quota hebdomadaire.", fait: true },
+      { id: "c_parrainage_2", titre: "Demander au bon moment", min: 45, detail: "Après une carte surprise débloquée : le parent est content, c'est là qu'on demande." },
+      { id: "c_parrainage_3", titre: "E-mail de demande de parrainage", min: 20, detail: "Aux familles actives depuis trois semaines.", mail: "m_parrainage" },
+      { id: "c_parrainage_4", titre: "Remercier le parrain", min: 15, detail: "Un mot personnel quand un filleul rejoint : c'est ce qui déclenche le deuxième parrainage." },
+      { id: "c_parrainage_5", titre: "Mesurer k une fois par mois", min: 10, detail: "Filleuls inscrits ÷ familles actives. Si k reste sous 0,2, le produit n'est pas encore assez aimé." }
+    ]
+  },
+  {
+    id: "c_waitlist", phase: "p1", emoji: "📨", titre: "Liste d'attente & vagues", perimetre: "coeur",
+    but: "Transformer la rareté en atout, et garder le support sous contrôle.",
     kpi: "Liste d'attente → inscription : 40 % par vague",
     etapes: [
-      { id: "c_waitlist_1", titre: "Cadencer les vagues", detail: "Une vague toutes les 2 semaines, 20 à 50 familles, pour rester capable de répondre." },
-      { id: "c_waitlist_2", titre: "E-mail d'invitation de vague", detail: "Personnalisé, avec le lien d'invitation et ce qu'on attend en retour.", mail: "m_waitlist_invit" },
-      { id: "c_waitlist_3", titre: "Relance à J+7 des non-inscrits", detail: "Une seule relance, puis on laisse tranquille.", mail: "m_waitlist_relance" },
-      { id: "c_waitlist_4", titre: "Appeler 5 familles par vague", detail: "15 minutes au téléphone valent 100 réponses de questionnaire." },
-      { id: "c_waitlist_5", titre: "Décider de l'ouverture publique", detail: "Quand activation J+1 > 55 % et zéro bogue bloquant sur 2 vagues." }
+      { id: "c_waitlist_1", titre: "Cadencer les vagues sur le temps disponible", min: 15, detail: "Une vague par mois, 20 familles : c'est ce qu'une heure par semaine permet d'accompagner." },
+      { id: "c_waitlist_2", titre: "E-mail d'invitation de vague", min: 20, detail: "Personnalisé, avec le lien et ce qu'on attend en retour.", mail: "m_waitlist_invit" },
+      { id: "c_waitlist_3", titre: "Relance unique à J+7", min: 15, detail: "Une seule relance, puis on laisse tranquille.", mail: "m_waitlist_relance" },
+      { id: "c_waitlist_4", titre: "Appeler deux familles par vague", min: 40, detail: "Quinze minutes au téléphone valent cent réponses de questionnaire." },
+      { id: "c_waitlist_5", titre: "Décider de l'ouverture publique", min: 20, detail: "Quand activation J+1 > 55 % ET support sous 15 min/semaine. Pas avant." }
     ]
   },
   {
-    id: "c_parrainage", phase: "p1", emoji: "🎁", titre: "Boucle de parrainage",
-    but: "Chaque famille heureuse en amène une. C'est le seul canal gratuit qui compose.",
-    kpi: "Coefficient viral k > 0,4 · 30 % des familles actives parrainent",
+    id: "c_communaute", phase: "p1", emoji: "💬", titre: "Communautés de parents", perimetre: "coeur",
+    but: "Être présent là où les parents demandent déjà de l'aide, sans faire de publicité.",
+    kpi: "10 inscriptions/mois issues des communautés",
     etapes: [
-      { id: "c_parrainage_1", titre: "Parrainage en place (3 familles/semaine)", detail: "Fait : pastille 🎁, table referrals, quota hebdomadaire.", fait: true },
-      { id: "c_parrainage_2", titre: "Demander au bon moment", detail: "Après une carte surprise débloquée : le parent est content, c'est là qu'on demande." },
-      { id: "c_parrainage_3", titre: "E-mail de demande de parrainage", detail: "Aux familles actives depuis 3 semaines.", mail: "m_parrainage" },
-      { id: "c_parrainage_4", titre: "Remercier le parrain", detail: "Notification quand un filleul rejoint (déjà en place) + un mot personnel." },
-      { id: "c_parrainage_5", titre: "Mesurer k", detail: "Filleuls inscrits ÷ familles actives, par mois." }
+      { id: "c_communaute_1", titre: "Choisir trois groupes, pas quinze", min: 30, detail: "Trois groupes suivis valent mieux que quinze survolés." },
+      { id: "c_communaute_2", titre: "Aider deux fois sans rien vendre", min: 40, detail: "La crédibilité d'abord, sinon c'est du spam." },
+      { id: "c_communaute_3", titre: "Publier l'histoire, pas le produit", min: 45, detail: "« J'ai construit ça pour mes enfants » convertit mieux qu'une liste de fonctions." },
+      { id: "c_communaute_4", titre: "Trois comptes de micro-influence", min: 45, detail: "2 000 à 20 000 abonnés, accès gratuit à vie contre un test honnête.", mail: "m_influence" },
+      { id: "c_communaute_5", titre: "Abandonner ce qui ne prend pas", min: 10, detail: "Trois essais sans résultat : on note et on arrête." }
     ]
   },
   {
-    id: "c_communaute", phase: "p1", emoji: "💬", titre: "Communautés de parents",
-    but: "Être présent là où les parents demandent déjà de l'aide, sans faire de la publicité.",
-    kpi: "20 inscriptions/mois issues des communautés",
+    id: "c_presse", phase: "p1", emoji: "📰", titre: "Presse & podcasts", perimetre: "coeur",
+    but: "Un article = des années de bouche-à-oreille en une journée, pour deux heures de travail.",
+    kpi: "1 parution",
     etapes: [
-      { id: "c_communaute_1", titre: "Lister 15 groupes/forums", detail: "Groupes Facebook de parents BE/FR, subreddits, forums d'écoles, groupes WhatsApp de classe." },
-      { id: "c_communaute_2", titre: "Lire et aider pendant 2 semaines sans rien vendre", detail: "La crédibilité d'abord, sinon c'est du spam." },
-      { id: "c_communaute_3", titre: "Publier l'histoire, pas le produit", detail: "« J'ai construit ça pour mes enfants » convertit mieux qu'une liste de fonctions." },
-      { id: "c_communaute_4", titre: "Micro-influence parentalité (5 comptes)", detail: "Comptes de 2 000 à 20 000 abonnés, accès gratuit à vie contre un test honnête.", mail: "m_influence" },
-      { id: "c_communaute_5", titre: "Noter ce qui marche", detail: "Un canal qui n'amène rien en 3 essais est abandonné." }
+      { id: "c_presse_1", titre: "Dossier de presse d'une page", min: 50, detail: "Histoire, chiffres, ce qui est différent, contact, visuels. Écrit une fois, resservi partout." },
+      { id: "c_presse_2", titre: "Choisir cinq journalistes, pas vingt", min: 30, detail: "BE : RTBF, Le Soir « Famille », La Libre, Femmes d'Aujourd'hui, Flair." },
+      { id: "c_presse_3", titre: "Un pitch personnalisé par média", min: 45, detail: "Jamais d'envoi groupé : une accroche par média, sinon zéro réponse.", mail: "m_presse" },
+      { id: "c_presse_4", titre: "Deux podcasts parentalité", min: 30, detail: "Proposition d'épisode sur « réparer plutôt que punir ».", mail: "m_podcast" },
+      { id: "c_presse_5", titre: "Prévoir la vague avant la parution", min: 20, detail: "Vérifier les quotas Supabase et le stock d'invitations : une parution non préparée est une parution gâchée." }
     ]
   },
   {
-    id: "c_contenu", phase: "p1", emoji: "✍️", titre: "Contenu & référencement",
-    but: "Répondre aux questions que les parents tapent la nuit sur leur téléphone.",
-    kpi: "12 articles publiés · 500 visites organiques/mois à 6 mois",
+    id: "c_contenu", phase: "p1", emoji: "✍️", titre: "Contenu & référencement", perimetre: "plus_tard",
+    but: "Répondre aux questions que les parents tapent la nuit. Rentable, mais lent : une heure par semaine n'y suffit pas tant que le reste n'est pas fait.",
+    kpi: "3 articles piliers · 200 visites organiques/mois",
     etapes: [
-      { id: "c_contenu_1", titre: "Choisir 12 sujets piliers", detail: "« routine du soir 3 ans », « punir ou réparer », « tableau de récompenses : bonne idée ? », « crise du coucher »." },
-      { id: "c_contenu_2", titre: "Écrire 1 article par semaine", detail: "1 200 mots, utile sans l'app, avec un appel à l'action discret." },
-      { id: "c_contenu_3", titre: "Traduire les 4 meilleurs en NL", detail: "La Flandre est à 30 minutes et personne n'y va." },
-      { id: "c_contenu_4", titre: "Newsletter mensuelle", detail: "Un conseil concret + une nouveauté. Aux familles ET à la liste d'attente." },
-      { id: "c_contenu_5", titre: "Mesurer par article", detail: "Garder les formats qui amènent des inscriptions, arrêter les autres." }
-    ]
-  },
-  {
-    id: "c_presse", phase: "p1", emoji: "📰", titre: "Presse & podcasts",
-    but: "Un article dans un média familial = 2 à 5 ans de bouche-à-oreille en une journée.",
-    kpi: "3 parutions · 1 passage podcast",
-    etapes: [
-      { id: "c_presse_1", titre: "Dossier de presse (1 page + captures)", detail: "Histoire, chiffres, ce qui est différent, contact, visuels en haute définition." },
-      { id: "c_presse_2", titre: "Liste de 20 journalistes/rubriques famille", detail: "BE : RTBF, Le Soir « Famille », La Libre, Femmes d'Aujourd'hui, Flair. FR : Parents, Magicmaman, Doctissimo Famille." },
-      { id: "c_presse_3", titre: "Pitch presse personnalisé", detail: "Jamais d'envoi groupé : une accroche par média.", mail: "m_presse" },
-      { id: "c_presse_4", titre: "Podcasts parentalité", detail: "5 émissions francophones, proposition d'épisode sur « réparer plutôt que punir ».", mail: "m_podcast" },
-      { id: "c_presse_5", titre: "Prévoir la charge", detail: "Vérifier les quotas Supabase et le nombre d'invitations avant toute parution." }
+      { id: "c_contenu_1", titre: "Choisir trois sujets seulement", min: 25, detail: "« routine du soir 3 ans », « punir ou réparer », « tableau de récompenses : bonne idée ? »." },
+      { id: "c_contenu_2", titre: "Écrire le premier article", min: 60, detail: "1 200 mots, utile même sans l'app, appel à l'action discret." },
+      { id: "c_contenu_3", titre: "Écrire le deuxième", min: 60, detail: "Un par mois maximum. Le rythme tenu vaut mieux que le rythme ambitieux." },
+      { id: "c_contenu_4", titre: "Écrire le troisième", min: 60, detail: "Puis s'arrêter et mesurer avant d'en écrire d'autres." },
+      { id: "c_contenu_5", titre: "Mesurer et décider", min: 15, detail: "Si les trois articles n'amènent rien en trois mois, le canal n'est pas pour nous." }
     ]
   },
 
   /* ===== Phase 2 — Prescripteurs ===== */
   {
-    id: "c_ecoles", phase: "p2", emoji: "🏫", titre: "Écoles maternelles & primaires",
-    but: "Une institutrice convaincue parle à 25 familles d'un coup.",
-    kpi: "3 écoles pilotes · 60 familles issues des écoles",
+    id: "c_ecoles", phase: "p2", emoji: "🏫", titre: "Écoles maternelles & primaires", perimetre: "coeur",
+    but: "Une institutrice convaincue parle à vingt-cinq familles d'un coup. Le meilleur rendement horaire du plan.",
+    kpi: "2 écoles · 40 familles issues des écoles",
     etapes: [
-      { id: "c_ecoles_1", titre: "Choisir 10 écoles de proximité", detail: "Commencer par celles de ses propres enfants : la confiance existe déjà." },
-      { id: "c_ecoles_2", titre: "Préparer un dépliant A5 imprimable", detail: "À glisser dans le cartable : QR code, promesse, gratuité, RGPD." },
-      { id: "c_ecoles_3", titre: "Contacter les directions", detail: "Proposer une présentation de 15 minutes en réunion d'équipe.", mail: "m_ecole" },
-      { id: "c_ecoles_4", titre: "Faire 3 pilotes d'un trimestre", detail: "Accompagnement direct, bilan écrit à la fin, témoignage de l'enseignant." },
-      { id: "c_ecoles_5", titre: "Décider d'une offre école", detail: "Gratuit pour les familles ? Licence classe payante ? À trancher avec les chiffres des pilotes." }
+      { id: "c_ecoles_1", titre: "Commencer par l'école de ses enfants", min: 15, detail: "La confiance existe déjà : c'est le contact le moins coûteux et le plus probable." },
+      { id: "c_ecoles_2", titre: "Dépliant A5 imprimable", min: 50, detail: "À glisser dans le cartable : QR code, promesse, gratuité, RGPD. Fait une fois, resservi partout." },
+      { id: "c_ecoles_3", titre: "Contacter deux directions", min: 30, detail: "Proposer quinze minutes en réunion d'équipe.", mail: "m_ecole" },
+      { id: "c_ecoles_4", titre: "Un pilote d'un trimestre", min: 60, detail: "Une seule école à la fois. Bilan écrit à la fin." },
+      { id: "c_ecoles_5", titre: "Décider de recommencer ou non", min: 15, detail: "Si le pilote n'amène pas dix familles, chercher pourquoi avant d'en lancer un deuxième." }
     ]
   },
   {
-    id: "c_creches", phase: "p2", emoji: "🧸", titre: "Crèches & accueil extrascolaire",
-    but: "Toucher les parents d'enfants de 2-3 ans, exactement le bas de notre tranche d'âge.",
-    kpi: "5 structures partenaires",
+    id: "c_creches", phase: "p2", emoji: "🧸", titre: "Crèches & accueil extrascolaire", perimetre: "coeur",
+    but: "Toucher les parents d'enfants de 2-3 ans, le bas de notre tranche d'âge.",
+    kpi: "2 structures partenaires",
     etapes: [
-      { id: "c_creches_1", titre: "Repérer les réseaux", detail: "BE : ONE (Fédération Wallonie-Bruxelles), Kind en Gezin en Flandre. FR : PMI, réseaux de crèches privées." },
-      { id: "c_creches_2", titre: "Contacter 15 structures", detail: "Milieux d'accueil, écoles de devoirs, plaines de vacances.", mail: "m_creche" },
-      { id: "c_creches_3", titre: "Proposer un atelier parents", detail: "45 minutes sur la parentalité positive, l'app en démonstration à la fin." },
-      { id: "c_creches_4", titre: "Affiche + QR code en salle d'attente", detail: "Support physique, coût quasi nul, effet durable." },
-      { id: "c_creches_5", titre: "Mesurer par structure", detail: "Un QR code par lieu pour savoir ce qui fonctionne." }
+      { id: "c_creches_1", titre: "Repérer cinq structures proches", min: 20, detail: "Milieux d'accueil, écoles de devoirs, plaines de vacances." },
+      { id: "c_creches_2", titre: "Contacter cinq structures", min: 35, detail: "Un e-mail chacune, personnalisé.", mail: "m_creche" },
+      { id: "c_creches_3", titre: "Affiche + QR code en salle d'attente", min: 40, detail: "Support physique, coût nul, effet durable, aucun entretien." },
+      { id: "c_creches_4", titre: "Un atelier parents, si demandé", min: 60, detail: "45 minutes sur la parentalité positive. À ne faire que si la structure le propose." },
+      { id: "c_creches_5", titre: "Un QR code par lieu", min: 20, detail: "Pour savoir lequel fonctionne sans avoir à demander." }
     ]
   },
   {
-    id: "c_pros", phase: "p2", emoji: "🩺", titre: "Professionnels de l'enfance",
+    id: "c_pros", phase: "p2", emoji: "🩺", titre: "Professionnels de l'enfance", perimetre: "coeur",
     but: "Pédiatres, psychologues, logopèdes : leur recommandation vaut dix publicités.",
-    kpi: "10 professionnels prescripteurs",
+    kpi: "5 professionnels prescripteurs",
     etapes: [
-      { id: "c_pros_1", titre: "Écrire une note d'une page fondée sur la recherche", detail: "Renforcement positif, réparation, budget d'attention par âge. Sources citées." },
-      { id: "c_pros_2", titre: "Contacter 20 praticiens", detail: "Priorité aux psychologues et logopèdes qui suivent des 2-7 ans.", mail: "m_pro_sante" },
-      { id: "c_pros_3", titre: "Fournir 20 dépliants par cabinet", detail: "Salle d'attente : le parent a le temps de lire." },
-      { id: "c_pros_4", titre: "Recueillir 2 avis de professionnels", detail: "Citation nominative sur la page publique, avec accord écrit." },
-      { id: "c_pros_5", titre: "Mutuelles & assurances", detail: "BE : Partenamut, Solidaris, MC. Avantage membre « parentalité ».", mail: "m_mutuelle" }
-    ]
-  },
-  {
-    id: "c_employeurs", phase: "p2", emoji: "🏢", titre: "Employeurs & comités d'entreprise",
-    but: "Un canal B2B2C où l'employeur paie et où les familles reçoivent.",
-    kpi: "2 employeurs pilotes · 100 familles",
-    etapes: [
-      { id: "c_employeurs_1", titre: "Construire une offre « avantage salarié »", detail: "Prix par salarié et par an, facturation unique, aucune donnée transmise à l'employeur." },
-      { id: "c_employeurs_2", titre: "Contacter 10 RH / CE", detail: "PME locales et grandes structures avec politique parentale.", mail: "m_employeur" },
-      { id: "c_employeurs_3", titre: "Prévoir une page de convention simple", detail: "Une page, pas quinze : le frein est juridique, pas commercial." },
-      { id: "c_employeurs_4", titre: "Pilote de 3 mois", detail: "Suivi d'usage anonymisé, bilan chiffré à l'employeur." },
-      { id: "c_employeurs_5", titre: "Décider de poursuivre", detail: "Le cycle de vente B2B est long : abandonner si aucun signal en 3 mois." }
+      { id: "c_pros_1", titre: "Note d'une page fondée sur la recherche", min: 60, detail: "Renforcement positif, réparation, budget d'attention par âge, sources citées." },
+      { id: "c_pros_2", titre: "Contacter cinq praticiens", min: 35, detail: "Priorité aux psychologues et logopèdes qui suivent des 2-7 ans.", mail: "m_pro_sante" },
+      { id: "c_pros_3", titre: "Déposer des dépliants", min: 30, detail: "Salle d'attente : le parent a le temps de lire." },
+      { id: "c_pros_4", titre: "Obtenir un avis professionnel citable", min: 25, detail: "Une citation nominative sur la page publique, avec accord écrit." },
+      { id: "c_pros_5", titre: "Entretenir deux relations, pas dix", min: 15, detail: "Un message par trimestre à ceux qui recommandent vraiment." }
     ]
   },
 
-  /* ===== Phase 3 — Monétisation ===== */
+  /* ===== Phase 3 — Tenir dans la durée ===== */
   {
-    id: "c_modele", phase: "p3", emoji: "💶", titre: "Modèle & prix",
-    but: "Gagner de l'argent sans jamais trahir la promesse faite aux premières familles.",
-    kpi: "Conversion payante 6-8 % des familles actives · seuil de rentabilité atteint",
+    id: "c_modele", phase: "p3", emoji: "🕊️", titre: "Modèle : non marchand par défaut", perimetre: "coeur",
+    but: "Couvrir les frais sans jamais transformer le projet en commerce.",
+    kpi: "Frais couverts par les dons · zéro recette commerciale",
     etapes: [
-      { id: "c_modele_1", titre: "Graver la promesse des early adopters", detail: "Gratuit à vie pour les familles inscrites avant l'ouverture du premium. À écrire noir sur blanc." },
-      { id: "c_modele_2", titre: "Choisir le périmètre gratuit / premium", detail: "Hypothèse : gratuit complet pour 2 enfants ; premium = enfants illimités, statistiques, semaine papier, thèmes d'avatar." },
-      { id: "c_modele_3", titre: "Fixer le prix de départ", detail: "Hypothèse : 3,49 €/mois ou 29 €/an. À tester sur deux vagues avant de figer." },
-      { id: "c_modele_4", titre: "Interroger 20 familles sur le prix", detail: "« À partir de quel prix serait-ce trop cher ? » puis « trop bon marché pour être sérieux ? »." },
-      { id: "c_modele_5", titre: "Annoncer le premium proprement", detail: "Aux familles existantes d'abord, sans surprise ni compte à rebours.", mail: "m_premium" }
+      { id: "c_modele_1", titre: "Chiffrer le coût réel annuel", min: 20, detail: "Hébergement, domaine, envoi d'e-mails. Aujourd'hui quelques dizaines d'euros." },
+      { id: "c_modele_2", titre: "Écrire la promesse de gratuité", min: 20, detail: "« Gratuit, sans publicité, sans revente de données. » L'écrire publiquement engage et rassure." },
+      { id: "c_modele_3", titre: "Dons : cadre et transparence", min: 45, detail: "Sous la forme retenue au chantier Cadre. Publier ce que financent les dons." },
+      { id: "c_modele_4", titre: "Décider du plafond de familles", min: 25, detail: "Au-delà, le support déborde l'heure hebdomadaire. Mieux vaut une liste d'attente qu'un service dégradé." },
+      { id: "c_modele_5", titre: "Prévoir la sortie", min: 30, detail: "Si le projet dépasse le temps disponible : céder, ouvrir le code, ou fermer proprement en exportant les données des familles. À écrire tant que tout va bien." }
     ]
   },
   {
-    id: "c_paiement", phase: "p3", emoji: "🔐", titre: "Paiement & facturation",
-    but: "Encaisser sans y passer ses soirées, et rester en règle.",
-    kpi: "Paiement en 3 clics · 0 litige · TVA déclarée",
+    id: "c_conformite", phase: "p3", emoji: "🛡️", titre: "Conformité (données d'enfants)", perimetre: "coeur",
+    but: "Grandir sans créer de risque juridique. Non négociable, y compris pour un projet gratuit.",
+    kpi: "Registre à jour · zéro incident",
     etapes: [
-      { id: "c_paiement_1", titre: "Brancher Stripe (le champ plan existe déjà)", detail: "La base prévoit families.plan et plan_status : pas de refonte à prévoir." },
-      { id: "c_paiement_2", titre: "Essai de 14 jours sans carte", detail: "Cohérent avec la promesse de confiance ; conversion essai → payant attendue : 40 %." },
-      { id: "c_paiement_3", titre: "TVA et guichet unique (OSS)", detail: "Vente à des particuliers dans l'UE : TVA du pays du client. À valider avec le comptable." },
-      { id: "c_paiement_4", titre: "Factures automatiques et conditions de vente", detail: "Page CGV, droit de rétractation, résiliation en un clic." },
-      { id: "c_paiement_5", titre: "Suivi des recettes dans l'admin", detail: "Abonnés, revenu mensuel récurrent, résiliations, en une carte." }
+      { id: "c_conformite_1", titre: "Registre des traitements", min: 45, detail: "Obligatoire dès qu'on traite des données d'enfants, même minimales." },
+      { id: "c_conformite_2", titre: "Documenter les sous-traitants", min: 25, detail: "Supabase (UE), Vercel, SMTP : à citer dans la politique de confidentialité." },
+      { id: "c_conformite_3", titre: "Minimiser les données", min: 20, detail: "Prénom et date de naissance suffisent. Toute nouvelle donnée doit se justifier." },
+      { id: "c_conformite_4", titre: "Tester export et suppression", min: 20, detail: "Les deux existent : les essayer une fois par an, pour de vrai." },
+      { id: "c_conformite_5", titre: "Accessibilité, une passe", min: 40, detail: "Contrastes, taille des cibles tactiles, lecteur d'écran sur les parcours clés." }
     ]
   },
   {
-    id: "c_recompenses", phase: "p3", emoji: "🎟️", titre: "Partenariats récompenses",
-    but: "Faire des cartes surprises de vraies sorties, et en tirer un revenu d'affiliation.",
-    kpi: "5 partenaires · 1 000 €/an de commissions",
+    id: "c_soutenabilite", phase: "p3", emoji: "🧘", titre: "Soutenabilité du fondateur", perimetre: "coeur",
+    but: "Que le projet survive à une semaine chargée, à des vacances, à une lassitude.",
+    kpi: "Aucune semaine à plus d'une heure · le projet tourne sans intervention",
     etapes: [
-      { id: "c_recompenses_1", titre: "Choisir des partenaires qui ont du sens", detail: "Zoos, parcs, cinémas, librairies jeunesse, piscines. Jamais de malbouffe ni de jouets à pile." },
-      { id: "c_recompenses_2", titre: "Proposer le partenariat", detail: "Carte surprise sponsorisée : visibilité contre réduction famille.", mail: "m_partenaire" },
-      { id: "c_recompenses_3", titre: "Cadre éthique écrit", detail: "Aucune publicité dans l'écran enfant. Le parent choisit, l'enfant ne voit pas de marque." },
-      { id: "c_recompenses_4", titre: "Tester sur une région", detail: "Bruxelles + Brabant wallon d'abord, mesurer l'usage réel des bons." },
-      { id: "c_recompenses_5", titre: "Décider d'étendre ou d'arrêter", detail: "Si moins de 5 % des familles utilisent un bon, ce n'est pas un canal." }
+      { id: "c_soutenabilite_1", titre: "Poser le créneau dans l'agenda", min: 10, detail: "Une heure fixe, même jour, même heure. Un projet sans créneau meurt." },
+      { id: "c_soutenabilite_2", titre: "Une action par semaine, pas trois", min: 5, detail: "La séance se compose depuis « Ma semaine » : ce qui n'entre pas dans l'heure attend." },
+      { id: "c_soutenabilite_3", titre: "Mode vacances", min: 30, detail: "Vérifier que trois semaines sans intervention ne cassent rien (e-mails, quotas, sauvegardes)." },
+      { id: "c_soutenabilite_4", titre: "Consigner les décisions", min: 10, detail: "Deux lignes dans les notes du chantier : dans six mois, on ne s'en souviendra pas." },
+      { id: "c_soutenabilite_5", titre: "Bilan semestriel : continuer ou arrêter", min: 30, detail: "Question honnête, deux fois par an. Arrêter proprement est une option respectable." }
     ]
   },
 
-  /* ===== Phase 4 — Échelle ===== */
+  /* ===== Phase 4 — Hors périmètre (pour mémoire) ===== */
   {
-    id: "c_langues", phase: "p4", emoji: "🌍", titre: "Marchés néerlandophone & germanophone",
-    but: "L'app est déjà traduite en 4 langues : c'est un actif dormant.",
+    id: "c_paiement", phase: "p4", emoji: "🔐", titre: "Abonnement payant & facturation", perimetre: "hors",
+    but: "Exclu : vendre un abonnement serait une activité commerciale. Conservé si le cadre change (ASBL, cession).",
+    kpi: "—",
+    etapes: [
+      { id: "c_paiement_1", titre: "Le champ plan existe déjà en base", min: 0, detail: "families.plan et plan_status : techniquement, rien à refaire.", fait: true },
+      { id: "c_paiement_2", titre: "Brancher Stripe", min: 60, detail: "À n'ouvrir que si la forme juridique le permet." },
+      { id: "c_paiement_3", titre: "TVA et guichet unique (OSS)", min: 60, detail: "Vente aux particuliers dans l'UE : TVA du pays du client." },
+      { id: "c_paiement_4", titre: "CGV, factures, résiliation", min: 60, detail: "Obligations de vente à distance." }
+    ]
+  },
+  {
+    id: "c_employeurs", phase: "p4", emoji: "🏢", titre: "Employeurs, mutuelles & CE", perimetre: "hors",
+    but: "Exclu : vente B2B, cycle long, incompatible avec le cadre et avec une heure par semaine.",
+    kpi: "—",
+    etapes: [
+      { id: "c_employeurs_1", titre: "Offre « avantage salarié »", min: 60, detail: "Modèle prêt à ressortir si le cadre change.", mail: "m_employeur" },
+      { id: "c_employeurs_2", titre: "Mutuelles : avantage membre", min: 60, detail: "Partenamut, Solidaris, MC.", mail: "m_mutuelle" },
+      { id: "c_employeurs_3", titre: "Convention d'une page", min: 45, detail: "Le frein est juridique, pas commercial." }
+    ]
+  },
+  {
+    id: "c_paye", phase: "p4", emoji: "📣", titre: "Acquisition payante", perimetre: "hors",
+    but: "Exclu : dépenser en publicité pour un service gratuit n'a pas de retour, et suppose un budget.",
+    kpi: "—",
+    etapes: [
+      { id: "c_paye_1", titre: "Prérequis jamais atteints ici", min: 0, detail: "Il faudrait une valeur vie client, donc des recettes.", fait: true },
+      { id: "c_paye_2", titre: "Test Meta 300 €", min: 60, detail: "Pour mémoire." },
+      { id: "c_paye_3", titre: "Test Search 300 €", min: 60, detail: "Pour mémoire." }
+    ]
+  },
+  {
+    id: "c_recompenses", phase: "p4", emoji: "🎟️", titre: "Partenariats récompenses (affiliation)", perimetre: "hors",
+    but: "Exclu : les commissions d'affiliation sont des recettes commerciales, et la gestion des partenaires est chronophage.",
+    kpi: "—",
+    etapes: [
+      { id: "c_recompenses_1", titre: "Partenaires possibles", min: 30, detail: "Zoos, cinémas, librairies jeunesse. Pour mémoire.", mail: "m_partenaire" },
+      { id: "c_recompenses_2", titre: "Variante sans argent", min: 45, detail: "Un lieu peut offrir un avantage famille sans qu'aucune commission ne circule : cette variante-là resterait possible." },
+      { id: "c_recompenses_3", titre: "Cadre éthique", min: 20, detail: "Aucune publicité dans l'écran enfant, quelle que soit la forme." }
+    ]
+  },
+  {
+    id: "c_langues", phase: "p4", emoji: "🌍", titre: "Marchés néerlandophone & germanophone", perimetre: "plus_tard",
+    but: "L'app est déjà traduite : l'actif dort. Mais ouvrir un marché demande du temps qu'on n'a pas encore.",
     kpi: "20 % des familles hors francophonie",
     etapes: [
-      { id: "c_langues_1", titre: "Vérifier la qualité NL et DE", detail: "Relecture par un locuteur natif : une traduction approximative tue la confiance." },
-      { id: "c_langues_2", titre: "Page publique en NL", detail: "Flandre : marché voisin, concurrence faible sur la parentalité positive." },
-      { id: "c_langues_3", titre: "Répliquer la boucle communautaire en NL", detail: "Groupes de parents flamands, Kind en Gezin, écoles néerlandophones de Bruxelles." },
-      { id: "c_langues_4", titre: "Tester la Suisse et le Luxembourg", detail: "Pouvoir d'achat élevé, francophones, très peu de concurrence locale." },
-      { id: "c_langues_5", titre: "Décider du 3ᵉ marché", detail: "Sur données réelles d'inscription, pas sur intuition." }
-    ]
-  },
-  {
-    id: "c_paye", phase: "p4", emoji: "📣", titre: "Acquisition payante",
-    but: "N'allumer la publicité que quand la boucle organique est prouvée.",
-    kpi: "Coût d'acquisition < un tiers de la valeur vie client",
-    etapes: [
-      { id: "c_paye_1", titre: "Attendre les prérequis", detail: "Rétention J+30 > 35 % ET conversion payante mesurée. Sinon, c'est acheter un seau percé." },
-      { id: "c_paye_2", titre: "Calculer la valeur vie client", detail: "Prix × durée d'abonnement moyenne × marge. Fixe le plafond du coût d'acquisition." },
-      { id: "c_paye_3", titre: "Tester 300 € sur Meta", detail: "Deux audiences (parents 25-45 BE/FR), trois accroches, un seul objectif : l'inscription." },
-      { id: "c_paye_4", titre: "Tester 300 € en Search", detail: "Requêtes d'intention : « routine enfant », « tableau de récompenses »." },
-      { id: "c_paye_5", titre: "Couper ou monter", detail: "Aucune montée en budget sans coût d'acquisition sous le plafond pendant 2 semaines." }
-    ]
-  },
-  {
-    id: "c_finance", phase: "p4", emoji: "🏦", titre: "Financements & aides",
-    but: "Financer le temps de développement sans céder le contrôle.",
-    kpi: "1 aide obtenue",
-    etapes: [
-      { id: "c_finance_1", titre: "Recenser les aides belges", detail: "Bruxelles : hub.brussels, Innoviris. Wallonie : chèques-entreprises, Digital Wallonia. Flandre : VLAIO." },
-      { id: "c_finance_2", titre: "Vérifier l'éligibilité avant d'écrire", detail: "La plupart des dossiers échouent sur un critère administratif, pas sur l'idée." },
-      { id: "c_finance_3", titre: "Demander un rendez-vous d'information", detail: "Un conseiller relit le dossier gratuitement : c'est le meilleur retour sur temps investi.", mail: "m_subvention" },
-      { id: "c_finance_4", titre: "Préparer le dossier chiffré", detail: "Réutiliser PLAN-COMMERCIAL.md : marché, modèle, prévisionnel à 3 ans." },
-      { id: "c_finance_5", titre: "Décider du statut juridique", detail: "Indépendant complémentaire, société, ASBL : dépend des recettes et de l'ambition. Avec le comptable." }
-    ]
-  },
-  {
-    id: "c_conformite", phase: "p4", emoji: "🛡️", titre: "Conformité à l'échelle",
-    but: "Grandir sans créer de risque juridique sur des données d'enfants.",
-    kpi: "0 incident · registre à jour",
-    etapes: [
-      { id: "c_conformite_1", titre: "Registre des traitements", detail: "Obligatoire dès qu'on traite des données d'enfants, même minimales." },
-      { id: "c_conformite_2", titre: "Sous-traitants et lieu d'hébergement", detail: "Supabase (UE), Vercel, SMTP : à documenter dans la politique de confidentialité." },
-      { id: "c_conformite_3", titre: "Minimisation des données", detail: "Prénom et date de naissance suffisent. Toute nouvelle donnée doit se justifier." },
-      { id: "c_conformite_4", titre: "Droits des personnes", detail: "Export et suppression existent déjà : les documenter et tester une fois par an." },
-      { id: "c_conformite_5", titre: "Accessibilité", detail: "Contrastes, taille des cibles tactiles, lecteur d'écran sur les parcours clés." }
+      { id: "c_langues_1", titre: "Relecture NL par un natif", min: 45, detail: "Une traduction approximative tue la confiance." },
+      { id: "c_langues_2", titre: "Page publique en NL", min: 60, detail: "Flandre : voisine, concurrence faible." },
+      { id: "c_langues_3", titre: "Un prescripteur néerlandophone", min: 45, detail: "Une école de Bruxelles suffit pour tester." }
     ]
   }
 ];
 
-/* ---------- Modèles d'e-mails ----------
- * `dest` : à qui. `quand` : à quel moment de quel chantier.
- * Les {accolades} sont à remplacer avant envoi ; l'admin peut copier le
- * texte ou ouvrir son client de messagerie pré-rempli. */
+/* ---------- Modèles d'e-mails ---------- */
 const CROISSANCE_MAILS = [
   {
     id: "m_bienvenue", titre: "Bienvenue (J+0)", dest: "Parent qui vient de créer sa famille",
@@ -285,14 +337,14 @@ Comptez deux minutes par jour, pas plus. Rien n'est à installer, tout se synchr
 
 Un principe, si vous n'en retenez qu'un : ici, on ne retire jamais de points. Quand quelque chose se passe mal, on répare — et c'est le geste de réparation qui est récompensé.
 
-Une question, une idée, un bogue ? Répondez simplement à cet e-mail, je lis tout.
+FamiTeam est gratuit, sans publicité, et le restera. C'est un projet personnel, mené sur mon temps libre : je réponds donc parfois avec quelques jours de décalage, mais je lis tout.
 
 Cédric
 FamiTeam — {lien}`
   },
   {
     id: "m_activation", titre: "Relance d'activation (J+3)", dest: "Famille inscrite sans aucune mission validée",
-    quand: "Chantier Activation, automatique à J+3",
+    quand: "Automatique à J+3, chantier Automatiser",
     sujet: "Un coup de main pour votre première soirée FamiTeam ?",
     corps: `Bonjour {prenom},
 
@@ -300,13 +352,13 @@ J'ai vu que votre famille était créée, mais que la première mission n'avait 
 
 Ce soir, avant le coucher, ouvrez FamiTeam avec votre enfant et cochez UNE seule chose qu'il a faite dans la journée. Une seule. Vous verrez son visage quand l'avatar bougera.
 
-Si quelque chose vous a bloqué — un écran pas clair, une question de confiance, un doute sur l'âge de vos enfants — dites-le moi en répondant à cet e-mail. Cela m'aide à améliorer l'app pour tout le monde.
+Si quelque chose vous a bloqué — un écran pas clair, un doute sur l'âge de vos enfants — dites-le moi en répondant à cet e-mail. Cela m'aide à améliorer l'app pour tout le monde.
 
 Cédric
 FamiTeam — {lien}`
   },
   {
-    id: "m_reactivation", titre: "Réveil d'une famille inactive", dest: "Famille sans activité depuis 30 jours",
+    id: "m_reactivation", titre: "Réveil d'une famille endormie", dest: "Famille sans activité depuis 30 jours",
     quand: "Chantier Activation, une fois par trimestre au maximum",
     sujet: "On vous a gardé votre place 🌱",
     corps: `Bonjour {prenom},
@@ -322,7 +374,7 @@ FamiTeam — {lien}`
   },
   {
     id: "m_waitlist_invit", titre: "Invitation d'une vague (liste d'attente)", dest: "Personne inscrite sur la liste d'attente",
-    quand: "Chantier Liste d'attente, à chaque vague",
+    quand: "Chantier Liste d'attente, une vague par mois",
     sujet: "Votre place dans FamiTeam est ouverte 🎁",
     corps: `Bonjour,
 
@@ -332,7 +384,7 @@ Vous vous étiez inscrit·e sur la liste d'attente de FamiTeam. Votre place est 
 
 FamiTeam aide les enfants de 2 à 7 ans à adopter des comportements positifs, dans l'esprit de la parentalité bienveillante : on encourage, on répare, on ne punit pas. C'est gratuit, sans publicité, et vos données restent en Europe.
 
-Une seule chose en échange : si quelque chose vous gêne pendant la première semaine, écrivez-le moi. J'ouvre les accès par petites vagues précisément pour pouvoir répondre à chacun.
+J'ouvre les accès par petites vagues parce que je développe l'app sur mon temps libre et que je tiens à pouvoir répondre à chacun. Si quelque chose vous gêne pendant la première semaine, écrivez-le moi.
 
 Cédric
 FamiTeam`
@@ -345,13 +397,13 @@ FamiTeam`
 
 Votre lien d'inscription est toujours actif : {lien_invitation}
 
-Si ce n'est pas le bon moment, ignorez simplement cet e-mail — je ne relancerai pas une deuxième fois. Et si quelque chose vous a fait hésiter (le prix, les données, l'âge de vos enfants), répondez-moi en une ligne : c'est précieux.
+Si ce n'est pas le bon moment, ignorez simplement cet e-mail — je ne relancerai pas une deuxième fois. Et si quelque chose vous a fait hésiter (les données, l'âge de vos enfants, le temps que ça demande), répondez-moi en une ligne : c'est précieux.
 
 Cédric
 FamiTeam`
   },
   {
-    id: "m_parrainage", titre: "Demande de parrainage", dest: "Famille active depuis 3 semaines",
+    id: "m_parrainage", titre: "Demande de parrainage", dest: "Famille active depuis trois semaines",
     quand: "Chantier Parrainage, après un moment positif",
     sujet: "Une famille amie à qui offrir FamiTeam ?",
     corps: `Bonjour {prenom},
@@ -360,7 +412,7 @@ Cela fait trois semaines que votre famille utilise FamiTeam, et {enfant} a déj�
 
 Si vous connaissez une famille avec des enfants de 2 à 7 ans qui galère sur les routines du soir, vous pouvez lui offrir un accès : la pastille 🎁 en haut à gauche de l'app crée un lien de parrainage. Trois familles par semaine, gratuitement.
 
-C'est aujourd'hui la seule façon de nous faire connaître : pas de publicité, pas de budget marketing. Juste des parents qui en parlent à d'autres parents.
+C'est la seule façon dont FamiTeam se fait connaître : pas de publicité, pas de budget, juste des parents qui en parlent à d'autres parents.
 
 Cédric
 FamiTeam — {lien}`
@@ -389,13 +441,13 @@ FamiTeam`
     sujet: "Test honnête de FamiTeam — parentalité positive, 2-7 ans",
     corps: `Bonjour {prenom},
 
-Je suis {qui}, papa et développeur en Belgique. J'ai créé FamiTeam pour mes propres enfants : une app où l'on encourage les comportements positifs des 2-7 ans sans jamais punir — quand quelque chose se passe mal, l'enfant répare, et c'est la réparation qui est récompensée.
+Je suis {qui}, papa en Belgique. J'ai créé FamiTeam pour mes propres enfants, sur mon temps libre : une app où l'on encourage les comportements positifs des 2-7 ans sans jamais punir — quand quelque chose se passe mal, l'enfant répare, et c'est la réparation qui est récompensée.
 
-Je suis votre compte parce que {raison_precise}.
+Je vous écris parce que {raison_precise}.
 
-Ma proposition est simple et sans contrepartie financière : je vous ouvre un accès complet gratuit à vie, vous testez en famille pendant deux semaines, et vous en parlez seulement si cela vous a réellement servi. Un avis négatif public me va très bien : cela m'indique quoi corriger.
+Ma proposition est simple et sans argent : l'app est gratuite pour tout le monde, je ne vends rien. Vous testez en famille pendant deux semaines, et vous en parlez seulement si cela vous a réellement servi. Un avis négatif public me va très bien : cela m'indique quoi corriger.
 
-Intéressé·e ? Je vous envoie le lien d'accès.
+Intéressé·e ? Je vous envoie le lien.
 
 {qui}
 FamiTeam — {lien}`
@@ -403,18 +455,18 @@ FamiTeam — {lien}`
   {
     id: "m_presse", titre: "Pitch presse", dest: "Journaliste rubrique famille / éducation",
     quand: "Chantier Presse, jamais en envoi groupé",
-    sujet: "Réparer plutôt que punir : une app belge pour les 2-7 ans",
+    sujet: "Réparer plutôt que punir : une app belge gratuite pour les 2-7 ans",
     corps: `Bonjour {prenom},
 
 J'ai lu votre article « {article} » et c'est pour cela que je vous écris plutôt qu'à la rédaction en général.
 
-Je suis {qui}, développeur et papa en Belgique. J'ai construit FamiTeam, une application familiale gratuite pour les enfants de 2 à 7 ans, avec un parti pris qui va à l'encontre des tableaux de récompenses classiques : aucun point n'est jamais retiré. Quand un incident survient (une dispute, un objet cassé), l'enfant choisit un geste de réparation — et c'est ce geste qui est récompensé.
+Je suis {qui}, papa en Belgique. J'ai construit FamiTeam sur mon temps libre : une application familiale gratuite pour les enfants de 2 à 7 ans, avec un parti pris qui va à l'encontre des tableaux de récompenses classiques : aucun point n'est jamais retiré. Quand un incident survient (une dispute, un objet cassé), l'enfant choisit un geste de réparation — et c'est ce geste qui est récompensé.
 
 Deux angles qui peuvent vous intéresser :
 — La punition mesurée contre la réparation : ce que dit la recherche en parentalité positive, et à quoi cela ressemble dans une app utilisée deux minutes par jour.
-— Un logiciel familial fait en Belgique, sans publicité, sans revente de données, hébergé en Europe, à contre-courant du modèle américain.
+— Un logiciel familial fait en Belgique, gratuit, sans publicité, sans revente de données, hébergé en Europe, à contre-courant du modèle américain.
 
-Chiffres actuels : {familles} familles, {langues} langues, gratuit. Je peux vous ouvrir un accès complet, vous fournir des captures en haute définition et mettre des familles utilisatrices en contact avec vous.
+Chiffres actuels : {familles} familles, {langues} langues, gratuit et sans modèle payant prévu. Je peux vous ouvrir un accès complet, fournir des captures en haute définition et mettre des familles utilisatrices en contact avec vous.
 
 {qui}
 {telephone} — {lien}`
@@ -429,7 +481,7 @@ J'écoute {podcast} et l'épisode sur {episode} m'a marqué.
 
 Je vous propose un sujet d'épisode, pas une promotion : « pourquoi retirer des points à un enfant lui apprend surtout à cacher ses erreurs — et ce qu'on peut faire à la place ». Je peux parler concrètement de la réparation, du budget d'attention selon l'âge (quelques minutes par jour suffisent), et de ce que j'ai vu échouer en construisant une app pour mes propres enfants.
 
-Je suis développeur, papa de {nb_enfants} enfants, et je ne vends rien : FamiTeam est gratuite. Je suis disponible en visioconférence ou à {ville}.
+Je suis papa de {nb_enfants} enfants et je ne vends rien : FamiTeam est gratuite et le restera. Je suis disponible en visioconférence ou à {ville}.
 
 {qui}
 FamiTeam — {lien}`
@@ -440,14 +492,14 @@ FamiTeam — {lien}`
     sujet: "Outil gratuit de parentalité positive pour les familles de votre école",
     corps: `Madame, Monsieur,
 
-Je suis {qui}, parent {lien_ecole} et développeur. J'ai créé FamiTeam, une application familiale gratuite qui aide les enfants de 2 à 7 ans à adopter des comportements positifs à la maison : entraide, autonomie, respect du vivant.
+Je suis {qui}, parent {lien_ecole}. J'ai créé sur mon temps libre FamiTeam, une application familiale gratuite qui aide les enfants de 2 à 7 ans à adopter des comportements positifs à la maison : entraide, autonomie, respect du vivant.
 
 Le principe tient en une phrase : on ne retire jamais de points ; quand quelque chose se passe mal, l'enfant répare et c'est la réparation qui est valorisée.
 
-Ce que je propose, sans aucune contrepartie financière :
-— une présentation de 15 minutes à votre équipe, au moment qui vous convient ;
+Ce que je propose, sans aucune contrepartie financière — l'app est gratuite et je ne vends rien :
+— une présentation de quinze minutes à votre équipe, au moment qui vous convient ;
 — un dépliant A5 à remettre aux parents qui le souhaitent, avec un QR code ;
-— un accès complet gratuit pour les familles de l'école.
+— un accès complet pour les familles de l'école.
 
 Points d'attention que vous vous posez sûrement : aucune publicité, aucune revente de données, hébergement en Europe, aucune donnée d'enfant demandée au-delà du prénom et de l'année de naissance, et l'école n'a accès à rien.
 
@@ -459,16 +511,14 @@ Je reste à votre disposition pour un appel de dix minutes.
   {
     id: "m_creche", titre: "Prise de contact crèche / extrascolaire", dest: "Responsable de milieu d'accueil",
     quand: "Chantier Crèches",
-    sujet: "Atelier parents gratuit : encourager sans punir (2-7 ans)",
+    sujet: "Outil gratuit pour les parents : encourager sans punir (2-7 ans)",
     corps: `Bonjour,
 
-Je suis {qui}, papa et développeur. Je propose aux milieux d'accueil un atelier gratuit de 45 minutes pour les parents : « encourager sans punir — que faire quand ça dérape ».
+Je suis {qui}, papa. J'ai développé sur mon temps libre FamiTeam, une application familiale gratuite pour les enfants de 2 à 7 ans, fondée sur le renforcement positif : on encourage, on répare, on ne punit pas.
 
-L'atelier est indépendant de tout produit : on y parle de renforcement positif, de réparation, et du peu de temps qu'il faut réellement y consacrer chaque jour. En fin de séance, je montre FamiTeam, l'application gratuite que j'ai développée pour mes propres enfants, pour celles et ceux que cela intéresse.
+Je vous propose simplement de la faire connaître aux parents de votre structure : une affiche avec un QR code en salle d'attente, ou un dépliant. Aucune contrepartie, aucune publicité, aucune revente de données — l'app est gratuite et le restera.
 
-Aucune publicité, aucune revente de données, hébergement en Europe.
-
-Seriez-vous intéressé·e pour une date à {ville} ? Je m'adapte à vos horaires, y compris en soirée.
+Si un atelier parents de 45 minutes vous intéresse (« encourager sans punir : que faire quand ça dérape »), je peux aussi le proposer, en soirée de préférence.
 
 {qui}
 {telephone} — {lien}`
@@ -479,25 +529,25 @@ Seriez-vous intéressé·e pour une date à {ville} ? Je m'adapte à vos horaire
     sujet: "Support gratuit pour les familles que vous accompagnez (2-7 ans)",
     corps: `Bonjour Docteur / Madame / Monsieur,
 
-Je suis {qui}, développeur et papa. J'ai construit FamiTeam, un outil familial gratuit pour les 2-7 ans, fondé sur le renforcement positif : les comportements souhaités sont valorisés, aucun point n'est jamais retiré, et les incidents se règlent par un geste de réparation.
+Je suis {qui}, papa, et j'ai construit sur mon temps libre FamiTeam, un outil familial gratuit pour les 2-7 ans, fondé sur le renforcement positif : les comportements souhaités sont valorisés, aucun point n'est jamais retiré, et les incidents se règlent par un geste de réparation.
 
 Je vous joins une note d'une page sur les principes retenus et leurs sources. Je serais heureux d'avoir votre regard critique : si quelque chose vous paraît discutable sur le plan du développement de l'enfant, je veux le savoir et le corriger.
 
-Si l'outil vous semble utile, je peux vous fournir des dépliants pour votre salle d'attente et un accès complet gratuit pour les familles que vous suivez.
+Si l'outil vous semble utile, je peux vous fournir des dépliants pour votre salle d'attente. L'app est gratuite, sans publicité, et je ne vends rien.
 
 Avec mes respectueuses salutations,
 {qui}
 {telephone} — {lien}`
   },
   {
-    id: "m_mutuelle", titre: "Mutuelle / assurance", dest: "Responsable avantages membres",
-    quand: "Chantier Professionnels",
+    id: "m_mutuelle", titre: "Mutuelle / assurance (hors périmètre)", dest: "Responsable avantages membres",
+    quand: "Conservé si le cadre juridique change",
     sujet: "Avantage membre « parentalité positive » — proposition de partenariat",
     corps: `Bonjour {prenom},
 
-Je suis {qui}, fondateur de FamiTeam, une application familiale belge pour les enfants de 2 à 7 ans, centrée sur la parentalité positive : encourager, réparer, ne pas punir.
+Je suis {qui}, à l'origine de FamiTeam, une application familiale belge pour les enfants de 2 à 7 ans, centrée sur la parentalité positive : encourager, réparer, ne pas punir.
 
-Votre catalogue d'avantages membres comporte déjà {avantage_existant}. Je propose de le compléter par un avantage numérique à coût maîtrisé pour vous et à valeur immédiate pour vos affiliés : accès premium offert aux familles membres, avec un code dédié qui nous permet de mesurer l'usage réel.
+Votre catalogue d'avantages membres comporte déjà {avantage_existant}. Je propose de le compléter par un avantage numérique à coût maîtrisé pour vous et à valeur immédiate pour vos affiliés, avec un code dédié permettant de mesurer l'usage réel.
 
 Nos garanties : hébergement européen, aucune publicité, aucune revente de données, aucune donnée de santé, et aucune donnée nominative transmise à votre organisation.
 
@@ -507,16 +557,14 @@ Puis-je vous présenter cela en vingt minutes, en visioconférence ?
 {telephone} — {lien}`
   },
   {
-    id: "m_employeur", titre: "Employeur / comité d'entreprise", dest: "Responsable RH ou délégation du personnel",
-    quand: "Chantier Employeurs",
+    id: "m_employeur", titre: "Employeur / comité d'entreprise (hors périmètre)", dest: "Responsable RH ou délégation du personnel",
+    quand: "Conservé si le cadre juridique change",
     sujet: "Un avantage concret pour vos collaborateurs parents",
     corps: `Bonjour {prenom},
 
 Les fins de journée sont le moment le plus difficile pour les parents de jeunes enfants, et cela se voit au travail le lendemain.
 
-FamiTeam est une application familiale belge pour les enfants de 2 à 7 ans : deux minutes par soir, en famille, pour valoriser les comportements positifs sans punir. Je propose aux employeurs un accès premium pour leurs collaborateurs parents, facturé une fois par an, au prix de {prix} par collaborateur.
-
-Ce que vous n'aurez pas à gérer : aucune donnée personnelle ne vous est transmise, aucune installation, aucun compte à administrer — un simple code d'activation.
+FamiTeam est une application familiale belge pour les enfants de 2 à 7 ans : deux minutes par soir, en famille, pour valoriser les comportements positifs sans punir. Je propose aux employeurs un accès pour leurs collaborateurs parents, sans aucune donnée personnelle transmise à l'entreprise, sans installation et sans compte à administrer — un simple code d'activation.
 
 Un pilote de trois mois sur un service volontaire vous permettrait de juger sur pièces. Puis-je vous en parler vingt minutes ?
 
@@ -524,63 +572,94 @@ Un pilote de trois mois sur un service volontaire vous permettrait de juger sur 
 {telephone} — {lien}`
   },
   {
-    id: "m_partenaire", titre: "Partenaire récompense (sortie famille)", dest: "Zoo, cinéma, parc, librairie jeunesse, piscine",
-    quand: "Chantier Partenariats récompenses",
+    id: "m_partenaire", titre: "Partenaire récompense (hors périmètre)", dest: "Zoo, cinéma, parc, librairie jeunesse, piscine",
+    quand: "Conservé pour la variante sans flux financier",
     sujet: "Votre sortie comme récompense familiale dans FamiTeam",
     corps: `Bonjour,
 
-FamiTeam est une application familiale belge où les enfants de 2 à 7 ans gagnent, par leurs efforts du quotidien, des « cartes surprises » : des sorties en famille que les parents débloquent avec eux.
+FamiTeam est une application familiale belge gratuite où les enfants de 2 à 7 ans gagnent, par leurs efforts du quotidien, des « cartes surprises » : des sorties en famille que les parents débloquent avec eux.
 
-Je cherche des lieux comme {lieu} pour devenir ces récompenses. Le principe est simple : votre sortie apparaît comme objectif d'équipe pour les familles de la région ; en échange, vous proposez un avantage famille (réduction, entrée offerte pour un enfant, atelier).
+Je cherche des lieux comme {lieu} pour devenir ces récompenses. Le principe : votre sortie apparaît comme objectif d'équipe pour les familles de la région ; en échange, vous proposez un avantage famille (réduction, entrée offerte pour un enfant, atelier). Aucun flux financier entre nous, aucune commission.
 
-Deux garanties auxquelles je ne dérogerai pas : aucune publicité n'apparaît dans l'écran des enfants — c'est le parent qui choisit les récompenses — et aucune donnée n'est transmise à qui que ce soit.
+Deux garanties : aucune publicité n'apparaît dans l'écran des enfants — c'est le parent qui choisit les récompenses — et aucune donnée n'est transmise à qui que ce soit.
 
-Cela vous amène des familles motivées, à un coût nul jusqu'à la visite. Puis-je vous appeler cette semaine ?
+Puis-je vous appeler cette semaine ?
 
 {qui}
 {telephone} — {lien}`
   },
   {
-    id: "m_premium", titre: "Annonce du premium", dest: "Toutes les familles inscrites avant l'ouverture du premium",
-    quand: "Chantier Modèle & prix, avant toute mise en place du paiement",
-    sujet: "FamiTeam reste gratuit pour vous — voici pourquoi je vous écris quand même",
-    corps: `Bonjour {prenom},
+    id: "m_chambre", titre: "Question à la Chambre (déontologie)", dest: "Chambre des notaires",
+    quand: "Chantier Cadre, tout premier envoi du plan",
+    sujet: "Demande d'avis — développement d'une application familiale gratuite sur temps libre",
+    corps: `Madame, Monsieur,
 
-FamiTeam va proposer une formule payante à partir du {date}. Un point important avant tout le reste : cela ne vous concerne pas. Votre famille fait partie des premières, celles qui ont essuyé les bogues et envoyé des idées. Votre accès reste **complet et gratuit, à vie**. Aucune carte à enregistrer, aucune date limite, rien à faire.
+Je développe sur mon temps libre, depuis {date_debut}, une application familiale gratuite destinée aux enfants de 2 à 7 ans (parentalité positive). Elle est aujourd'hui utilisée par {familles} familles.
 
-Pourquoi une formule payante alors ? Pour payer l'hébergement et les envois d'e-mails, et pour que l'app puisse continuer sans publicité et sans revente de données. Les nouvelles familles auront un usage gratuit complet jusqu'à deux enfants, et une formule à {prix} pour les familles nombreuses et les statistiques avancées.
+Le projet n'a aucune finalité lucrative : l'accès est gratuit, il n'y a ni publicité, ni revente de données, ni abonnement. Les frais techniques, de l'ordre de {couts} par an, sont supportés personnellement ; la seule recette envisagée serait un bouton de don destiné à les couvrir.
 
-Ce qui ne changera jamais : pas de publicité, pas de revente de données, et vos données exportables ou supprimables en deux clics.
+Je souhaite m'assurer de la compatibilité de cette activité avec mes obligations professionnelles, et notamment :
+1. la simple mise à disposition gratuite d'une application développée à titre personnel appelle-t-elle une réserve ?
+2. l'ouverture d'un bouton de don destiné à couvrir les seuls frais techniques modifie-t-elle l'analyse ?
+3. si le projet devait un jour dépasser ce cadre, quelle forme (ASBL, cession à un tiers, participation passive) recommanderiez-vous d'examiner ?
+4. quelles précautions attendez-vous quant à la séparation entre ce projet et ma fonction (absence de mention du titre, de l'étude, coordonnées distinctes) ?
 
-Merci d'avoir été là au début. Si une chose vous paraît injuste dans ce qui précède, répondez-moi : je préfère l'entendre maintenant.
+Je m'engage naturellement à me conformer à votre position et à suspendre toute évolution du projet dans l'attente de votre réponse.
 
-Cédric
-FamiTeam — {lien}`
+Je vous prie d'agréer, Madame, Monsieur, l'expression de ma considération distinguée.
+
+{qui}`
   },
   {
-    id: "m_subvention", titre: "Demande de rendez-vous (aide publique)", dest: "Conseiller hub.brussels, Digital Wallonia, VLAIO…",
-    quand: "Chantier Financements",
-    sujet: "Demande de rendez-vous d'information — projet numérique familial",
-    corps: `Bonjour,
+    id: "m_reprise", titre: "Proposition de reprise du projet", dest: "Personne ou structure susceptible de reprendre l'exploitation",
+    quand: "Chantier Modèle, étape « prévoir la sortie »",
+    sujet: "Reprendre FamiTeam ?",
+    corps: `Bonjour {prenom},
 
-Je développe FamiTeam, une application web familiale destinée aux enfants de 2 à 7 ans, fondée sur la parentalité positive. Le produit fonctionne, il est utilisé par {familles} familles, il est traduit en quatre langues et hébergé en Europe. Je suis actuellement seul sur le projet, en {statut}.
+FamiTeam est une application familiale gratuite pour les enfants de 2 à 7 ans, que j'ai développée sur mon temps libre. Elle fonctionne, elle est utilisée par {familles} familles, elle est traduite en quatre langues et hébergée en Europe.
 
-Je souhaite un rendez-vous d'information pour identifier l'aide la plus adaptée à cette étape (montée en charge technique, mise en conformité, ouverture au marché néerlandophone) et vérifier mon éligibilité avant de constituer un dossier.
+Je ne peux pas — et ne souhaite pas — en faire une activité professionnelle. Plutôt que de la laisser s'éteindre faute de temps, je préfère chercher qui pourrait la reprendre et lui donner la suite qu'elle mérite.
 
-Je peux vous transmettre à l'avance une note de deux pages : marché, modèle économique, prévisionnel à trois ans, et emploi précis du financement demandé.
+Ce qui serait transmis : le code, la base, le nom de domaine, la documentation, et mon accompagnement pendant la transition. Ce à quoi je tiens : la gratuité pour les familles déjà inscrites, l'absence de publicité, et le respect des données des enfants.
 
-Quelles sont vos disponibilités dans les deux prochaines semaines ?
+Si le sujet vous parle, en parlerions-nous ?
 
 {qui}
 {telephone} — {lien}`
   }
 ];
 
-// Chantiers d'une phase donnée (utilitaire d'affichage).
+/* ---------- Utilitaires (rendu & tests) ---------- */
+// Chantiers d'une phase donnée.
 function chantiersDePhase(phaseId) {
   return CROISSANCE_CHANTIERS.filter(c => c.phase === phaseId);
 }
 // Modèle d'e-mail par identifiant.
 function mailCroissance(id) {
   return CROISSANCE_MAILS.find(m => m.id === id) || null;
+}
+// Durée estimée d'un chantier, en minutes.
+function dureeChantier(ch) {
+  return ch.etapes.reduce((s, e) => s + (e.min || 0), 0);
+}
+/* Compose la séance de la semaine : les prochaines étapes du périmètre
+ * « cœur », dans l'ordre du plan, tant qu'elles tiennent dans le budget.
+ * `estFaite(etape)` est fourni par l'appelant (l'avancement vit ailleurs). */
+function seanceDeLaSemaine(estFaite, budgetMin) {
+  const budget = budgetMin || 60;
+  const choix = [];
+  let total = 0;
+  for (const ph of CROISSANCE_PHASES) {
+    for (const ch of chantiersDePhase(ph.id)) {
+      if (ch.perimetre !== "coeur") continue;
+      for (const e of ch.etapes) {
+        if (estFaite(e)) continue;
+        const d = e.min || 15;
+        if (total + d > budget) return choix.length ? choix : [{ chantier: ch, etape: e }];
+        choix.push({ chantier: ch, etape: e });
+        total += d;
+      }
+    }
+  }
+  return choix;
 }
