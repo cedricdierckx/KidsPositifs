@@ -140,7 +140,10 @@ body{
 .parrain-modale{position:relative; max-width:340px}
 .modale-fermer{position:absolute; top:8px; right:10px; border:none; background:transparent;
   font-size:18px; cursor:pointer; color:var(--doux)}
-.selecteur{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px}
+/* `overflow-x:auto` rend aussi le débordement vertical « auto » : sans marge
+   intérieure en haut, la bordure de la pastille active (décalée de -2px) est
+   rognée. D'où le padding haut/bas. */
+.selecteur{display:flex; gap:8px; overflow-x:auto; padding:5px 0 6px}
 .pastille{
   flex:0 0 auto; border:3px solid transparent; background:#f0f3f8;
   border-radius:16px; padding:6px 10px; display:flex; flex-direction:column;
