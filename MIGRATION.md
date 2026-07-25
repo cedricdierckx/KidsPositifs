@@ -116,18 +116,26 @@ diagnostiquer d'abord.
 ## 4. Déployer les Edge Functions
 
 Les fonctions vivent dans `supabase/functions/` (`send-mail`,
-`delete-account`).
+`delete-account`, `stripe-webhook`).
 
 ```bash
 supabase functions deploy send-mail
 supabase functions deploy delete-account
+# stripe-webhook reçoit des appels de Stripe (pas de jeton Supabase) :
+# la vérification JWT doit être désactivée pour CETTE fonction précise.
+supabase functions deploy stripe-webhook --no-verify-jwt
 ```
 
 Reconfigurer les **secrets** (SMTP notamment) sur le nouveau projet :
 
 ```bash
 supabase secrets set SMTP_HOST=… SMTP_USER=… SMTP_PASS=… SMTP_FROM=…
+supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_…
 ```
+
+Puis, dans le nouveau compte Stripe (ou le même si inchangé) → **Developers →
+Webhooks → Add endpoint**, renseigner l'URL de `stripe-webhook` et sélectionner
+les événements `checkout.session.completed` et `invoice.paid`.
 
 Installer les **modèles d'e-mail** (`supabase/email-templates/`) dans
 **Authentication → Email Templates** (confirmation, lien magique, réinitialisation).
@@ -187,6 +195,7 @@ Une fois la recette **entièrement validée** :
 | `feedback` | bugs & suggestions | faible |
 | `app_config` | réglages globaux (liens Stripe, blagues…) | faible |
 | `usage_events` | activité (ouvertures) agrégée | faible |
+| `donations` | dons reçus (Stripe), alimentée par le webhook | moyenne |
 | `auth.users` | comptes (géré par Supabase) | **haute** |
 
 Toute migration doit préserver en priorité `family_state`,

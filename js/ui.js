@@ -1199,9 +1199,9 @@ function blocAdminStats() {
   const corps = el("div", "admin-stats-corps");
   b.onclick = async () => {
     b.disabled = true; b.textContent = t("common.chargement");
-    const [s, insc, act, recentes, usage, usageSerie] = await Promise.all([
+    const [s, insc, act, recentes, usage, usageSerie, dons, donsRecents] = await Promise.all([
       adminStats(), adminSerieInscriptions(), adminSerieActivite(), adminFamillesRecentes(8),
-      adminUsageStats(), adminSerieUsage()
+      adminUsageStats(), adminSerieUsage(), adminDonationsStats(), adminListerDons(6)
     ]);
     b.disabled = false; b.textContent = t("stats.recharger");
     corps.innerHTML = "";
@@ -1253,6 +1253,33 @@ function blocAdminStats() {
     const gu2 = el("div", "stat-graph-box"); gu2.innerHTML = miniGraphBarres(usageBarres, "#e88b2f");
     corps.appendChild(gu2);
     corps.appendChild(el("p", "note", t("stats.usage_note")));
+
+    // --- Dons (mesure réelle, via le webhook Stripe) ---
+    corps.appendChild(el("h3", "stat-titre", "💛 " + t("stats.dons_titre")));
+    if (dons) {
+      const gd = el("div", "stat-grille");
+      gd.innerHTML = [
+        carteStat("💛", montantLisible(dons.total_cents), t("stats.dons_total")),
+        carteStat("🗓️", montantLisible(dons.total_30j_cents), t("stats.dons_30j")),
+        carteStat("🔁", montantLisible(dons.recurrent_30j_cents), t("stats.dons_recurrent")),
+        carteStat("🙋", dons.donateurs_uniques, t("stats.dons_uniques"),
+          t("stats.dons_nb", { n: dons.nb_dons })),
+      ].join("");
+      corps.appendChild(gd);
+    }
+    if (!donsRecents.length) {
+      corps.appendChild(el("p", "note", t("stats.dons_aucun")));
+    } else {
+      const listeDons = el("div", "admin-liste");
+      donsRecents.forEach(d => {
+        const date = d.created_at ? new Date(d.created_at).toLocaleDateString(langue) : "—";
+        const ligne = el("div", "admin-item");
+        ligne.innerHTML = `<div class="adm-info"><strong>${montantLisible(d.amount_cents, d.currency)}</strong>
+          <small>${echapper(d.email || "?")} · ${d.kind === "subscription" ? t("stats.dons_recurrent_court") : t("stats.dons_ponctuel")} · ${echapper(date)}</small></div>`;
+        listeDons.appendChild(ligne);
+      });
+      corps.appendChild(listeDons);
+    }
 
     // --- Derniers arrivants ---
     corps.appendChild(el("h3", "stat-titre", "🆕 " + t("stats.recentes")));
@@ -1369,6 +1396,13 @@ function blocAdminRetours() {
   sec.appendChild(b); sec.appendChild(corps);
   if (adminRetoursCache) rendreListe();   // déjà chargé cette session
   return sec;
+}
+
+// Met en forme un montant stocké en centimes (ex. 1500 -> "15,00 €").
+function montantLisible(cents, devise) {
+  const n = (Number(cents) || 0) / 100;
+  const symb = (String(devise || "eur").toLowerCase() === "eur") ? "€" : String(devise || "").toUpperCase();
+  return n.toLocaleString(langue, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " " + symb;
 }
 
 // Met en forme une taille en octets (Ko / Mo / Go).

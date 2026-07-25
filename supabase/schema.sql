@@ -509,9 +509,90 @@ begin
     'feedback',              (select coalesce(json_agg(fb), '[]'::json) from feedback fb),
     'referrals',             (select coalesce(json_agg(r), '[]'::json) from referrals r),
     'waitlist',              (select coalesce(json_agg(w), '[]'::json) from waitlist w),
-    'usage_events',          (select coalesce(json_agg(ue), '[]'::json) from usage_events ue)
+    'usage_events',          (select coalesce(json_agg(ue), '[]'::json) from usage_events ue),
+    'donations',             (select coalesce(json_agg(d), '[]'::json) from donations d)
   ) into resultat;
   return resultat;
+end; $$;
+
+-- =====================================================================
+-- DONS (suivi des paiements Stripe) — écriture réservée à l'edge function
+-- ---------------------------------------------------------------------
+-- Alimentée UNIQUEMENT par la fonction stripe-webhook (clé service_role,
+-- qui contourne RLS par conception). Aucune policy d'écriture n'est créée
+-- ici : ni les familles ni même les admins ne peuvent insérer depuis le
+-- client — seul le webhook, authentifié par la signature Stripe, le peut.
+-- Les liens de don étant des Payment Links génériques (non génératifs par
+-- famille), le rattachement à une famille se fait par e-mail, à titre
+-- indicatif : `family_id` reste NULL si aucune correspondance n'est trouvée.
+-- =====================================================================
+create table if not exists public.donations (
+  id bigint generated always as identity primary key,
+  stripe_event_id text not null unique,     -- idempotence : un événement = une ligne
+  stripe_event_type text not null,
+  family_id uuid references public.families(id) on delete set null,
+  email text,
+  amount_cents integer not null default 0,
+  currency text not null default 'eur',
+  kind text not null default 'one_time',    -- 'one_time' | 'subscription'
+  stripe_customer_id text,
+  stripe_subscription_id text,
+  created_at timestamptz default now()
+);
+create index if not exists idx_donations_created on public.donations(created_at desc);
+alter table public.donations enable row level security;
+drop policy if exists "admins read donations" on public.donations;
+create policy "admins read donations" on public.donations for select using (is_admin());
+
+-- Rattachement (best-effort) d'un e-mail de donateur à une famille existante.
+-- Réservée au rôle service_role (donc uniquement à l'edge function du
+-- webhook Stripe, authentifiée par sa clé service_role) : ni les admins ni
+-- les familles ne peuvent l'appeler depuis le client, pour ne jamais
+-- exposer un lien e-mail → famille à un utilisateur ordinaire.
+create or replace function public.internal_family_id_by_email(p_email text)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare fid uuid;
+begin
+  -- coalesce() est indispensable : sans rôle défini, auth.role() renvoie NULL,
+  -- et "NULL <> 'service_role'" vaut NULL (donc ni vrai ni faux) en SQL, ce
+  -- qui laisserait passer l'appel au lieu de le refuser.
+  if coalesce(auth.role(), '') <> 'service_role' then raise exception 'Accès refusé'; end if;
+  select m.family_id into fid
+    from family_members m join auth.users u on u.id = m.user_id
+    where lower(u.email) = lower(trim(coalesce(p_email, '')))
+    order by m.created_at asc
+    limit 1;
+  return fid;
+end; $$;
+
+-- RPC admin : agrégats des dons (lecture seule).
+create or replace function public.admin_donations_stats()
+returns json language plpgsql security definer set search_path = public as $$
+declare resultat json;
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  select json_build_object(
+    'total_cents',            (select coalesce(sum(amount_cents), 0) from donations),
+    'total_30j_cents',        (select coalesce(sum(amount_cents), 0) from donations where created_at >= now() - interval '30 days'),
+    'nb_dons',                (select count(*) from donations),
+    'donateurs_uniques',      (select count(distinct email) from donations where email is not null),
+    'recurrent_30j_cents',    (select coalesce(sum(amount_cents), 0) from donations
+                                 where kind = 'subscription' and created_at >= now() - interval '30 days')
+  ) into resultat;
+  return resultat;
+end; $$;
+
+-- RPC admin : derniers dons (détail).
+create or replace function public.admin_list_donations(p_limit integer default 20)
+returns table(created_at timestamptz, email text, amount_cents integer, currency text, kind text)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  return query
+    select d.created_at, d.email::text, d.amount_cents, d.currency::text, d.kind::text
+    from donations d
+    order by d.created_at desc
+    limit greatest(1, least(coalesce(p_limit, 20), 200));
 end; $$;
 
 -- ---------- RPC admin : stockage (taille de la base et par table) ----------
@@ -729,6 +810,10 @@ grant execute on function public.admin_usage_stats()            to authenticated
 grant execute on function public.admin_series_usage()           to authenticated;
 grant execute on function public.admin_db_stats()               to authenticated;
 grant execute on function public.admin_export_all()             to authenticated;
+grant execute on function public.admin_donations_stats()        to authenticated;
+grant execute on function public.admin_list_donations(integer)  to authenticated;
+grant execute on function public.internal_family_id_by_email(text) to service_role;
+revoke execute on function public.internal_family_id_by_email(text) from public, anon, authenticated;
 grant execute on function public.submit_feedback(text, text, jsonb, uuid) to authenticated;
 grant execute on function public.admin_list_feedback()          to authenticated;
 grant execute on function public.admin_set_feedback_status(bigint, text) to authenticated;

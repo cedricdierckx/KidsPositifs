@@ -513,6 +513,18 @@ async function adminDbStats() {
   if (error) { toast("Erreur stockage : " + error.message, "info"); return null; }
   return data || null;
 }
+
+// ---------- Dons (admin, lecture seule — alimenté par le webhook Stripe) ----------
+async function adminDonationsStats() {
+  const { data, error } = await sb.rpc("admin_donations_stats");
+  if (error) { toast("Erreur dons : " + error.message, "info"); return null; }
+  return data || null;
+}
+async function adminListerDons(limite) {
+  const { data, error } = await sb.rpc("admin_list_donations", { p_limit: limite || 20 });
+  if (error) { toast("Erreur dons : " + error.message, "info"); return []; }
+  return data || [];
+}
 async function adminExportAll() {
   const { data, error } = await sb.rpc("admin_export_all");
   if (error) { toast("Erreur export : " + error.message, "info"); return null; }
