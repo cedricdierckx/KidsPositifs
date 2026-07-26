@@ -318,22 +318,32 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .tr-bloc.autre .tr-quand,.tr-bloc.off .tr-quand{color:var(--doux)}
 
 /* Mini-roue tournante (tous âges) : tourne et atterrit avec un petit rebond
-   sur l'enfant de garde, repère fixe (triangle) en haut. */
+   sur l'enfant de garde, repère fixe (triangle) en haut. Les émoji (hors du
+   groupe qui tourne, cf. js/ui.js) apparaissent une fois la roue posée. */
 .roue-svg{display:block; overflow:visible}
 .roue-groupe{
   transform-origin:50% 50%;
-  transform:rotate(var(--roue-angle, 0deg));
-  animation:roue-tourne 1.7s cubic-bezier(.17,.67,.16,1) both;
+  /* Pas de `transform` statique ici : SEULE l'animation pilote la rotation
+     (0% -> 100% couvrent tout l'intervalle), pour ne jamais risquer un
+     premier rendu déjà figé sur la position finale (roue qui semble ne pas
+     bouger). Le repli sans animation (ci-dessous) fixe le transform lui-même. */
+  animation:roue-tourne 2.1s cubic-bezier(.15,.7,.13,1) both;
 }
 @keyframes roue-tourne{
   0%   {transform:rotate(0deg)}
-  68%  {transform:rotate(calc(var(--roue-angle, 0deg) + 720deg + 16deg))}
-  84%  {transform:rotate(calc(var(--roue-angle, 0deg) + 720deg - 7deg))}
-  100% {transform:rotate(calc(var(--roue-angle, 0deg) + 720deg))}
+  70%  {transform:rotate(calc(var(--roue-angle, 0deg) + 1080deg + 18deg))}
+  85%  {transform:rotate(calc(var(--roue-angle, 0deg) + 1080deg - 8deg))}
+  100% {transform:rotate(calc(var(--roue-angle, 0deg) + 1080deg))}
+}
+.roue-emojis{animation:roue-emojis-in 2.1s ease both}
+@keyframes roue-emojis-in{
+  0%,60%{opacity:0}
+  100%{opacity:1}
 }
 .roue-pointeur{fill:#e2566d; stroke:#fff; stroke-width:1.5; filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
 @media (prefers-reduced-motion:reduce){
-  .roue-groupe{animation:none}
+  .roue-groupe{animation:none; transform:rotate(var(--roue-angle, 0deg))}
+  .roue-emojis{animation:none; opacity:1}
 }
 /* Repère « c'est ton tour » sur la tuile de mission */
 .mission.tour{border-color:#ffd79a;background:linear-gradient(180deg,#fffdf7,#fff6e6)}

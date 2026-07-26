@@ -2873,14 +2873,21 @@ function roueTournante(ids, idGarde, taille) {
       secteurs += `<path d="M${cx},${cy} L${x0.toFixed(1)},${y0.toFixed(1)} A${rayon},${rayon} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)} Z" fill="${e.couleur || "#ccc"}" stroke="#fff" stroke-width="2"/>`;
     });
   }
+  // Les émoji sont VOLONTAIREMENT en dehors du groupe qui tourne : sinon ils
+  // pivotent avec le disque et se retrouvent de travers (voire tête en bas)
+  // selon l'angle d'arrivée. On calcule directement leur position D'ARRIVÉE
+  // (angle du secteur + rotation cible) pour qu'ils restent toujours
+  // droits, alignés sur leur secteur une fois la roue posée.
   const emojis = enfants.map((e, i) => {
-    const [ex, ey] = _pointRoue(cx, cy, rayon * 0.62, (i + 0.5) * step);
+    const angleFinal = (i + 0.5) * step + angleCible;
+    const [ex, ey] = _pointRoue(cx, cy, rayon * 0.62, angleFinal);
     return `<text x="${ex.toFixed(1)}" y="${ey.toFixed(1)}" font-size="20" text-anchor="middle" dominant-baseline="central">${e.emoji || "🙂"}</text>`;
   }).join("");
 
   return `<svg class="roue-svg" width="${taille}" height="${taille}" viewBox="0 0 120 120" aria-hidden="true">
     <circle cx="${cx}" cy="${cy}" r="${rayon + 3}" fill="none" stroke="#e3edf5" stroke-width="3"/>
-    <g class="roue-groupe" style="--roue-angle:${angleCible}deg">${secteurs}${emojis}</g>
+    <g class="roue-groupe" style="--roue-angle:${angleCible}deg">${secteurs}</g>
+    <g class="roue-emojis">${emojis}</g>
     <polygon class="roue-pointeur" points="60,19 49,1 71,1"/>
   </svg>`;
 }
