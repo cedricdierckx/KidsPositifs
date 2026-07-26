@@ -2848,10 +2848,11 @@ function _pointRoue(cx, cy, rayon, angleDeg) {
   return [cx + rayon * Math.cos(rad), cy + rayon * Math.sin(rad)];
 }
 // Mini-roue tournante (SVG) : un secteur coloré par enfant de la tournante
-// (même couleur/emoji que sa pastille du sélecteur), un repère fixe en haut,
-// et le disque qui tourne pour amener l'enfant de garde sous ce repère.
-// Purement décorative (l'info est déjà donnée par le texte à côté) : cachée
-// aux lecteurs d'écran. Réservée aux petits (estJeune) — voir l'appelant.
+// (même couleur/emoji que sa pastille du sélecteur), un repère fixe en haut
+// (triangle rouge pointant VERS le disque), et le disque qui tourne pour
+// amener l'enfant de garde sous ce repère. Purement décorative (l'info est
+// déjà donnée par le texte à côté) : cachée aux lecteurs d'écran. Affichée
+// pour tous les âges (voir l'appelant).
 function roueTournante(ids, idGarde, taille) {
   taille = taille || 84;
   const cx = 60, cy = 60, rayon = 52;
@@ -2880,7 +2881,7 @@ function roueTournante(ids, idGarde, taille) {
   return `<svg class="roue-svg" width="${taille}" height="${taille}" viewBox="0 0 120 120" aria-hidden="true">
     <circle cx="${cx}" cy="${cy}" r="${rayon + 3}" fill="none" stroke="#e3edf5" stroke-width="3"/>
     <g class="roue-groupe" style="--roue-angle:${angleCible}deg">${secteurs}${emojis}</g>
-    <polygon class="roue-pointeur" points="60,2 51,17 69,17"/>
+    <polygon class="roue-pointeur" points="60,19 49,1 71,1"/>
   </svg>`;
 }
 
@@ -2889,7 +2890,6 @@ function blocTournanteEnfant(enf) {
   const rots = (etat.rotations || []).filter(r => (r.enfants || []).includes(enf.id));
   if (!rots.length) return null;
 
-  const jeune = estJeune(enf);   // affichage imagé (roue) pour les non-lecteurs
   const sec = el("section", "carte tournante-carte");
   let html = "";
   rots.forEach(r => {
@@ -2904,7 +2904,7 @@ function blocTournanteEnfant(enf) {
     const off = jourOffRotation(r, jour);
     const suivant = apercuRotation(r, jour, 2)[1];
     const prenomDe = (id) => { const e = etat.enfants[id]; return e ? echapper(e.prenom) : "—"; };
-    const roue = (!off && jeune) ? roueTournante(r.enfants, garde) : "";
+    const roue = !off ? roueTournante(r.enfants, garde) : "";
 
     if (off) {
       html += `<div class="tr-bloc off"><div class="tr-roue-wrap"></div><div class="tr-texte">
