@@ -803,6 +803,7 @@ function blocAdminBlagues() {
     const item = el("div", "blg-item");
     item.innerHTML = `<div class="blg-txt"><div class="blg-q">${echapper(b.q)}</div><div class="blg-r">${echapper(b.r)}</div></div>`;
     const del = el("button", "mini-btn danger", "🗑️");
+    del.setAttribute("aria-label", t("a11y.supprimer"));
     del.onclick = async () => {
       if (!confirm(t("admin.blg_confirm_suppr"))) return;
       if (await adminSupprimerBlague(lang, i)) { toast(t("admin.maj_ok"), "info"); rendre(); }
@@ -991,6 +992,7 @@ function blocAdminFamilles() {
         await adminBasculerListe("comptes_bloques", email, !estBloq); toast(t("admin.maj_ok"), "info"); b.onclick();
       };
       const bDel = el("button", "mini-btn danger", "🗑️");
+      bDel.setAttribute("aria-label", t("a11y.supprimer"));
       bDel.title = t("admin.supprimer");
       bDel.onclick = async () => {
         if (!confirm(t("admin.confirm_suppr_compte", { nom: f.name }))) return;
@@ -1033,6 +1035,7 @@ function blocAdminFamilles() {
         });
       };
       const sup = el("button", "mini-btn non", "🗑️");
+      sup.setAttribute("aria-label", t("a11y.supprimer"));
       sup.title = t("admin.suppr_attente");
       sup.onclick = async () => {
         if (!confirm(t("admin.confirm_suppr_attente", { email: w.email }))) return;
@@ -1369,12 +1372,14 @@ function consigneClaudeCode(liste) {
     const date = (f.created_at || "").slice(0, 10);
     return `${i + 1}. [${type}] (${date}) ${String(f.message || "").trim().replace(/\s+/g, " ")}`;
   }).join("\n");
-  return `Voici les retours reçus des familles utilisatrices de FamiTeam depuis la dernière revue.
+  return `Voici les retours reçus des familles utilisatrices de FamiTeam et pas encore traités.
 
 CONTEXTE DU PROJET
 - Application web familiale (2-7 ans), parentalité positive : on encourage, on répare, on ne punit jamais.
 - Projet personnel non marchand : gratuit, sans publicité, sans revente de données, hébergement européen.
+  Les frais sont couverts par des dons ; ce n'est pas une activité professionnelle.
 - Une heure de développement par semaine : chaque ajout doit se justifier par son rapport valeur/temps.
+- L'éditeur reste discret : il n'apparaît pas dans l'app, et tout ce qui peut tourner seul doit tourner seul.
 - Quatre langues (fr, en, nl, de) : toute chaîne visible doit être traduite dans les quatre.
 - Tests : \`node test/run.js\` doit rester au vert.
 - Minimisation des données : aucune nouvelle donnée personnelle sans nécessité démontrée.
@@ -1387,8 +1392,12 @@ CE QUE J'ATTENDS
    « à faire maintenant » (utile à toutes les familles et réalisable en moins d'une heure),
    « plus tard » (bonne idée mais coûteuse ou peu demandée),
    « non » (contraire au cap du projet, à la minimisation des données, ou au principe « on ne punit pas »).
-2. Attends ma validation du tri avant d'écrire la moindre ligne de code.
-3. Ensuite seulement, implémente UNE amélioration de la première pile : code, traductions dans les
+2. Dis-moi aussi ce que ces retours suggèrent pour le DÉVELOPPEMENT COMMERCIAL : ce qui reviendrait
+   assez souvent pour mériter une phrase sur la page publique, un obstacle qui coûte des familles à
+   l'inscription, un canal d'où viennent visiblement les familles satisfaites, ou un chantier du plan
+   à réordonner. Propose au maximum trois actions, chacune tenant dans une heure.
+3. Attends ma validation du tri avant d'écrire la moindre ligne de code.
+4. Ensuite seulement, implémente UNE amélioration de la première pile : code, traductions dans les
    quatre langues, test si la logique s'y prête, vérification, puis commit sur la branche dev.
 
 Ne modifie rien tant que je n'ai pas validé le tri.`;
@@ -1424,28 +1433,45 @@ function blocAdminRetours() {
     corps.appendChild(box);
   };
 
-  b.onclick = async () => {
+  const charger = async () => {
     b.disabled = true; b.textContent = t("common.chargement");
     adminRetoursCache = await adminListerFeedback();
     majCompteNonLus();
     b.disabled = false; b.textContent = t("retours.recharger");
     rendreListe();
+    majRestant();
   };
+  b.onclick = charger;
   sec.appendChild(b);
 
   // Chantier récurrent « Revue des idées » : on met les retours en forme de
   // consigne prête à coller dans Claude Code, avec le contexte du projet et
   // les garde-fous. Le tri reste humain ; la mise en forme, non.
+  // On reprend TOUT ce qui n'est pas « traité » : un retour lu mais laissé de
+  // côté doit revenir à la revue suivante, sinon il se perd.
+  const aTraiter = () => (adminRetoursCache || []).filter(f => (f.status || "nouveau") !== "traite");
   const bConsigne = el("button", "btn-secondaire", "🤖 " + t("retours.consigne"));
   bConsigne.onclick = () => {
-    const liste = (adminRetoursCache || []).filter(f => (f.status || "nouveau") === "nouveau");
+    const liste = aTraiter();
     if (!liste.length) { toast(t("retours.consigne_vide"), "info"); return; }
     copierTexte(consigneClaudeCode(liste));
   };
   sec.appendChild(bConsigne);
   sec.appendChild(el("p", "reglage-aide", t("retours.consigne_aide")));
+
+  // Compteur explicite : tant qu'il n'est pas à zéro, il reste des retours à
+  // passer en revue. Rien ne disparaît de cette liste.
+  const restant = el("p", "retours-restant");
+  const majRestant = () => {
+    if (!adminRetoursCache) { restant.textContent = ""; return; }
+    const n = aTraiter().length;
+    restant.textContent = n ? t("retours.restant", { n }) : t("retours.restant_zero");
+    restant.className = "retours-restant" + (n ? " actif" : "");
+  };
+  sec.appendChild(restant);
   sec.appendChild(corps);
-  if (adminRetoursCache) rendreListe();   // déjà chargé cette session
+  if (adminRetoursCache) { rendreListe(); majRestant(); }   // déjà chargé cette session
+  else charger();                                          // premier affichage : on charge seul
   return sec;
 }
 
@@ -2435,10 +2461,10 @@ function blocSemainePapier() {
   // Choix de la semaine (◀ / libellé / ▶) — on peut aussi préparer les
   // semaines suivantes (impression à l'avance).
   const nav = el("div", "verif-nav");
-  const prev = el("button", "verif-fleche", "◀");
+  const prev = el("button", "verif-fleche", "◀"); prev.setAttribute("aria-label", t("a11y.precedent"));
   prev.onclick = () => { semainePapierDebut = decalerSemaine(semainePapierDebut, -7); rendre(); };
   const lbl = el("span", "verif-jour", libelleSemaine(jours[0], jours[6]));
-  const next = el("button", "verif-fleche", "▶");
+  const next = el("button", "verif-fleche", "▶"); next.setAttribute("aria-label", t("a11y.suivant"));
   next.onclick = () => { semainePapierDebut = decalerSemaine(semainePapierDebut, 7); rendre(); };
   nav.appendChild(prev); nav.appendChild(lbl); nav.appendChild(next);
   sec.appendChild(nav);
@@ -2531,11 +2557,11 @@ function blocEncoderSemaine() {
   // Navigation entre semaines (◀ / libellé / ▶) : permet de remplir la feuille
   // d'une semaine précédente (ou de préparer une semaine à venir).
   const navS = el("div", "verif-nav enc-nav-semaine");
-  const prevS = el("button", "verif-fleche", "◀");
+  const prevS = el("button", "verif-fleche", "◀"); prevS.setAttribute("aria-label", t("a11y.precedent"));
   prevS.onclick = () => { semainePapierDebut = decalerSemaine(semainePapierDebut || debutSemaine(aujourdHui()), -7); rendre(); };
   const estSemaineCourante = (semainePapierDebut || debutSemaine(aujourdHui())) >= debutSemaine(aujourdHui());
   const lblS = el("span", "verif-jour", libelleSemaine(jours[0], jours[6]) + (estSemaineCourante ? " · " + t("papier.semaine_actuelle") : ""));
-  const nextS = el("button", "verif-fleche", "▶");
+  const nextS = el("button", "verif-fleche", "▶"); nextS.setAttribute("aria-label", t("a11y.suivant"));
   nextS.onclick = () => { semainePapierDebut = decalerSemaine(semainePapierDebut || debutSemaine(aujourdHui()), 7); rendre(); };
   navS.appendChild(prevS); navS.appendChild(lblS); navS.appendChild(nextS);
   sec.appendChild(navS);
@@ -2723,10 +2749,10 @@ function blocVerifJours(enf) {
   const sec = el("section", "carte revision-banniere");
   sec.innerHTML = `<div class="rev-titre">✏️ ${t("retro.modif_jour")}</div>`;
   const nav = el("div", "verif-nav");
-  const prev = el("button", "verif-fleche", "◀");
+  const prev = el("button", "verif-fleche", "◀"); prev.setAttribute("aria-label", t("a11y.precedent"));
   prev.onclick = () => decalerJourRetro(-1);
   const lbl = el("span", "verif-jour rev-jour", libelleJour(retroJour) + (estAuj ? " · " + t("retro.aujourdhui") : ""));
-  const next = el("button", "verif-fleche", "▶");
+  const next = el("button", "verif-fleche", "▶"); next.setAttribute("aria-label", t("a11y.suivant"));
   next.disabled = estAuj;
   next.onclick = () => decalerJourRetro(1);
   nav.appendChild(prev); nav.appendChild(lbl); nav.appendChild(next);
@@ -3874,6 +3900,7 @@ function carteTournante(r, jour) {
   carte.innerHTML = html;
 
   const sup = el("button", "mini-btn danger", "🗑️");
+  sup.setAttribute("aria-label", t("a11y.supprimer"));
   sup.onclick = () => { if (confirm(t("rot.confirm_suppr"))) supprimerRotation(r.id); };
   carte.appendChild(sup);
   return carte;
@@ -4104,6 +4131,7 @@ function blocMissionsDuJour(enf) {
       let editeur = null;
       if (estModeExpert()) {
         const edit = el("button", "mini-btn", "✏️");
+        edit.setAttribute("aria-label", t("a11y.modifier"));
         edit.title = t("mdj.modifier");
         editeur = blocEditionMission(m, cat);
         edit.onclick = (e) => {
@@ -4114,6 +4142,8 @@ function blocMissionsDuJour(enf) {
       }
       if (m.perso) {
         const sup = el("button", "mini-btn danger", "🗑️");
+        sup.setAttribute("aria-label", t("a11y.supprimer"));
+  sup.setAttribute("aria-label", t("a11y.supprimer"));
         sup.title = t("mdj.suppr_perso");
         sup.onclick = (e) => { e.preventDefault(); if (confirm(t("mdj.confirm_suppr", { nom: m.titre }))) supprimerMissionPerso(m.id); };
         ligne.appendChild(sup);
@@ -4341,8 +4371,10 @@ function blocCorrections(enf) {
     const cat = CATEGORIES[m.cat];
     ligne.innerHTML = `<span class="h-info">${m.emoji} ${titreMission(m)} <small>${cat.monnaieEmoji}${pointsMission(enf, m)}</small></span>
       <span class="h-compte">${n}</span>`;
-    const moins = el("button", "mini-btn", "−"); moins.onclick = () => modifierHistorique(enf, jour, m, -1);
-    const plus = el("button", "mini-btn", "+"); plus.onclick = () => modifierHistorique(enf, jour, m, +1);
+    const moins = el("button", "mini-btn", "−"); moins.setAttribute("aria-label", t("a11y.retirer_un"));
+    moins.onclick = () => modifierHistorique(enf, jour, m, -1);
+    const plus = el("button", "mini-btn", "+"); plus.setAttribute("aria-label", t("a11y.ajouter_un"));
+    plus.onclick = () => modifierHistorique(enf, jour, m, +1);
     ligne.appendChild(moins); ligne.appendChild(plus);
     sec.appendChild(ligne);
   });
@@ -4646,8 +4678,10 @@ function blocAttente(total) {
       ligne.innerHTML = `<span class="att-info"><strong>${echapper(enf.prenom)}</strong> — ${a.emoji || ""} ${trData("mission", a.missionId, a.titre)}
         <small>(${a.jour}) +${a.points} ${cat ? cat.monnaieEmoji : ""}</small></span>`;
       const ok = el("button", "mini-btn ok", "✅");
+      ok.setAttribute("aria-label", t("a11y.valider"));
       ok.onclick = () => confirmerAttente(enf, idx);
       const non = el("button", "mini-btn non", "✖️");
+      non.setAttribute("aria-label", t("a11y.refuser"));
       non.onclick = () => refuserAttente(enf, idx);
       ligne.appendChild(ok); ligne.appendChild(non);
       att.appendChild(ligne);
@@ -4791,8 +4825,9 @@ function sectionsFamille(c) {
 
 // ----- Compte, données, récupération, suppression -----
 function sectionsCompte(c) {
-  // Module bug/suggestion : early adopters uniquement.
-  if (typeof estEarlyAdopter !== "function" || estEarlyAdopter()) c.appendChild(blocFeedback());
+  // Module bug/suggestion : ouvert à toutes les familles. Un retour qu'on ne
+  // peut pas donner est un retour perdu.
+  c.appendChild(blocFeedback());
   if (typeof modeDemo !== "undefined" && modeDemo) { c.appendChild(bandeauDemo()); return; }
 
   const cpt = el("section", "carte");
@@ -4895,9 +4930,9 @@ function vueReglages(c) {
   // par l'onglet actif surligné juste au-dessus — on évite le doublon).
   const idxOnglet = onglets.findIndex(([id]) => id === ongletParent);
   const indic = el("div", "parent-indic");
-  const prevB = el("button", "parent-indic-fleche", "◀");
+  const prevB = el("button", "parent-indic-fleche", "◀"); prevB.setAttribute("aria-label", t("a11y.precedent"));
   prevB.onclick = () => glisserVers(-1, () => changerOngletParentRelatif(-1));
-  const nextB = el("button", "parent-indic-fleche", "▶");
+  const nextB = el("button", "parent-indic-fleche", "▶"); nextB.setAttribute("aria-label", t("a11y.suivant"));
   nextB.onclick = () => glisserVers(1, () => changerOngletParentRelatif(1));
   const centre = el("div", "parent-indic-centre");
   centre.innerHTML = `<span class="parent-indic-dots">${onglets.map((_, k) =>
@@ -5100,6 +5135,49 @@ function emailSupport() {
   const cfg = (typeof configApp !== "undefined") ? configApp : {};
   return cfg.support_email || "hello@fami.team";
 }
+/* Retours des familles : aucun ne doit se perdre.
+ * La base est le seul registre (elle alimente le module Retours de l'admin).
+ * Si l'enregistrement échoue — hors ligne, serveur injoignable — le retour est
+ * mis en file locale et repart tout seul à la prochaine ouverture de l'app.
+ * Aucun e-mail n'est envoyé : tout est consulté depuis l'onglet Admin. */
+const FB_FILE_KEY = "kp_retours_en_attente";
+
+function fileRetours() {
+  try { return JSON.parse(localStorage.getItem(FB_FILE_KEY) || "[]") || []; }
+  catch (e) { return []; }
+}
+function fileRetoursEcrire(liste) {
+  try { localStorage.setItem(FB_FILE_KEY, JSON.stringify(liste.slice(-50))); }
+  catch (e) { /* stockage plein : on ne peut pas faire mieux */ }
+}
+// Enregistre un retour. Retourne true s'il est arrivé en base, false s'il a été
+// mis en file locale — dans les deux cas, il n'est jamais perdu.
+async function enregistrerRetour(retour) {
+  if (typeof sb === "undefined" || !sb) return false;
+  try {
+    const { error } = await sb.rpc("submit_feedback", {
+      p_type: retour.type, p_message: retour.message,
+      p_context: retour.context, p_family: retour.famille || null
+    });
+    return !error;
+  } catch (e) { return false; }
+}
+// Rejoue la file locale : appelée à chaque ouverture de l'app.
+async function viderFileRetours() {
+  const demo = (typeof modeDemo !== "undefined" && modeDemo);
+  if (demo || typeof sb === "undefined" || !sb) return 0;
+  const file = fileRetours();
+  if (!file.length) return 0;
+  const restants = [];
+  let partis = 0;
+  for (const r of file) {
+    if (await enregistrerRetour(r)) partis++;
+    else restants.push(r);          // toujours injoignable : on garde pour plus tard
+  }
+  fileRetoursEcrire(restants);
+  return partis;
+}
+
 function blocFeedback() {
   const sec = el("section", "carte feedback-carte");
   sec.innerHTML = `<h2>${t("fb.titre")}</h2><p class="note">${t("fb.sous")}</p>`;
@@ -5112,41 +5190,23 @@ function blocFeedback() {
   b.onclick = async () => {
     const msg = ta.value.trim();
     if (!msg) { toast(t("fb.vide"), "info"); return; }
-    const u = (typeof utilisateurCourant === "function") ? utilisateurCourant() : null;
-    const type = selType.value === "bug" ? "Bug" : "Suggestion";
-    const ctxObj = {
-      famille: familleActive ? familleActive.name : null,
-      langue, version: ETAT_VERSION, ua: navigator.userAgent || ""
+    const retour = {
+      type: selType.value === "bug" ? "bug" : "suggestion",
+      message: msg,
+      famille: (typeof familleId !== "undefined") ? familleId : null,
+      context: {
+        famille: familleActive ? familleActive.name : null,
+        langue, version: ETAT_VERSION, ua: navigator.userAgent || ""
+      }
     };
     const demo = (typeof modeDemo !== "undefined" && modeDemo);
-    let envoye = false;
     b.disabled = true; b.textContent = t("common.creation");
-    if (typeof sb !== "undefined" && sb && !demo) {
-      // 1) Envoi automatique par e-mail (fonction commune send-mail, via SMTP OVH).
-      const sujet = `${APP_NOM} — ${type}`;
-      const corps = `${msg}\n\n--- Contexte ---\n${JSON.stringify(ctxObj, null, 2)}\nDe : ${u && u.email ? u.email : "—"}`;
-      const res = await envoyerMailFn({ to: emailSupport(), subject: sujet, text: corps, replyTo: u ? u.email : undefined });
-      if (res.ok) envoye = true;
-      // 2) Stockage en base (best-effort).
-      try {
-        sb.rpc("submit_feedback", { p_type: selType.value, p_message: msg, p_context: ctxObj,
-          p_family: (typeof familleId !== "undefined" ? familleId : null) });
-      } catch (e) { /* ignore */ }
-    }
+    const ok = demo ? true : await enregistrerRetour(retour);
+    // Échec : on met en file locale plutôt que de perdre le message.
+    if (!ok) fileRetoursEcrire(fileRetours().concat([retour]));
     b.disabled = false; b.textContent = t("fb.envoyer");
-    if (envoye) {
-      ta.value = "";
-      toast(t("fb.merci"), "succes");
-    } else {
-      // Repli : on ouvre le client mail de l'utilisateur.
-      const contexte = `App: ${APP_NOM}\nType: ${type}\nEmail: ${u && u.email ? u.email : "—"}\n` +
-        `Famille: ${familleActive ? familleActive.name : "—"}\nLangue: ${langue}\n` +
-        `Version: ${ETAT_VERSION}\nDate: ${new Date().toISOString()}\nNavigateur: ${navigator.userAgent || "—"}`;
-      const sujet = encodeURIComponent(`${APP_NOM} — ${type}`);
-      const corps = encodeURIComponent(`${msg}\n\n--- Contexte technique ---\n${contexte}`);
-      location.href = `mailto:${emailSupport()}?subject=${sujet}&body=${corps}`;
-      toast(t("fb.merci"), "succes");
-    }
+    ta.value = "";
+    toast(t(ok ? "fb.merci" : "fb.plus_tard"), "succes");
   };
   sec.appendChild(selType); sec.appendChild(ta); sec.appendChild(b);
   return sec;

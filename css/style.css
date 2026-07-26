@@ -2,7 +2,9 @@
  * FamiTeam — Styles (interface tactile, lisible par de jeunes enfants)
  * ===================================================================== */
 :root{
-  --bg:#f3f7fb; --carte:#ffffff; --texte:#2b3445; --doux:#6b7689;
+  /* --doux : gris de texte secondaire. Assombri pour atteindre 4.5:1 (WCAG AA)
+     sur le fond de page --bg, et non seulement sur le blanc des cartes. */
+  --bg:#f3f7fb; --carte:#ffffff; --texte:#2b3445; --doux:#626c7e;
   --famille:#f6a623; --planete:#39c0a0; --ombre:0 6px 18px rgba(40,60,90,.10);
   --rayon:20px;
 }
@@ -1044,7 +1046,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .stat-emoji{font-size:22px}
 .stat-valeur{font-size:26px; font-weight:900; color:var(--famille); line-height:1.1; margin-top:2px}
 .stat-label{font-size:12px; font-weight:800; color:var(--doux); margin-top:2px}
-.stat-precision{font-size:11px; color:#8aa0b0; margin-top:3px}
+.stat-precision{font-size:11px; color:#677884; margin-top:3px}  /* 4.57:1 sur blanc */
 .stat-titre{margin:16px 0 6px; font-size:15px}
 .stat-graph-box{background:#fbfdff; border:2px solid #e3edf5; border-radius:14px; padding:10px}
 .mini-graph{display:block; width:100%; height:140px}
@@ -1462,3 +1464,5 @@ main{max-width:680px; margin:0 auto; padding:14px}
   font-size:15px; font-weight:700; padding:8px; border:2px solid #e3edf5; border-radius:10px}
 .vag-zone{margin-top:6px}
 .vag-zone .croiss-file{margin-top:12px}
+.retours-restant{font-size:12.5px; color:var(--doux); margin:8px 0 0; line-height:1.4}
+.retours-restant.actif{color:#b26a00; font-weight:700}

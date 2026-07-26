@@ -756,6 +756,20 @@ begin
                from feedback f order by f.created_at desc;
 end; $$;
 
+-- Portabilité (art. 20) : le parent récupère les retours qu'il a écrits, sans
+-- avoir à les demander. Ne renvoie QUE ses propres messages.
+create or replace function public.mes_retours()
+returns table(created_at timestamptz, type text, message text, status text)
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'Authentification requise'; end if;
+  return query
+    select f.created_at, f.type::text, f.message, f.status::text
+    from feedback f
+    where f.user_id = auth.uid()
+    order by f.created_at;
+end; $$;
+
 -- RPC admin : changer le statut d'un retour (lu / traité / nouveau).
 create or replace function public.admin_set_feedback_status(p_id bigint, p_status text)
 returns void language plpgsql security definer set search_path = public as $$
@@ -789,12 +803,36 @@ end; $$;
 -- ---------- Suppression d'un compte famille (propriétaire uniquement) ----------
 -- Supprime définitivement la famille et, par cascade (on delete cascade),
 -- ses membres, son état de jeu, l'historique, les invitations et parrainages.
+-- Droit à l'effacement : supprimer la famille doit aussi effacer les données
+-- personnelles restées ailleurs. Les retours sont ANONYMISÉS plutôt que
+-- supprimés : le message reste exploitable pour améliorer l'app (aucun retour
+-- ne se perd), mais plus rien ne le rattache à une personne.
 create or replace function public.delete_family(p_family uuid)
 returns void language plpgsql security definer set search_path = public as $$
+declare v_owner uuid;
 begin
-  if not exists (select 1 from families where id = p_family and owner_id = auth.uid()) then
+  select owner_id into v_owner from families where id = p_family;
+  if v_owner is null or v_owner <> auth.uid() then
     raise exception 'Accès refusé : seul le propriétaire peut supprimer la famille';
   end if;
+
+  -- 1) Retours : on coupe le lien avec la personne, on garde le message.
+  update feedback
+     set email = null, user_id = null, family_id = null,
+         context = null                      -- contexte technique : navigateur, etc.
+   where family_id = p_family or user_id = v_owner;
+
+  -- 2) Liste d'attente : l'adresse n'a plus de raison d'y figurer.
+  delete from waitlist
+   where email = (select lower(u.email) from auth.users u where u.id = v_owner);
+
+  -- 3) Journal des envois automatiques : les clés portent l'e-mail ou l'id famille.
+  delete from mails_auto
+   where cle = p_family::text
+      or cle = (select lower(u.email) from auth.users u where u.id = v_owner);
+
+  -- 4) La famille et tout ce qui en dépend (membres, état, historique,
+  --    invitations, parrainages, événements d'usage) : suppression en cascade.
   delete from families where id = p_family;
 end; $$;
 
@@ -979,6 +1017,7 @@ grant execute on function public.internal_family_id_by_email(text) to service_ro
 revoke execute on function public.internal_family_id_by_email(text) from public, anon, authenticated;
 grant execute on function public.submit_feedback(text, text, jsonb, uuid) to authenticated;
 grant execute on function public.admin_list_feedback()          to authenticated;
+grant execute on function public.mes_retours()                  to authenticated;
 grant execute on function public.admin_set_feedback_status(bigint, text) to authenticated;
 grant execute on function public.delete_family(uuid)            to authenticated;
 

@@ -1334,6 +1334,108 @@ test("vagues : libellés de l'onglet traduits dans les 4 langues", () => {
   });
 });
 
+/* ---------- Conformité & retours : aucune perte, aucune donnée superflue ---------- */
+test("minimisation : l'emoji d'enfant n'est plus conservé dans l'état", () => {
+  const { api } = construireContexte();
+  const e = api.etatVierge();
+  Object.values(e.enfants).forEach(enf => assert.strictEqual("emoji" in enf, false,
+    "un enfant tout neuf ne doit plus porter d'emoji"));
+  // Un ancien état qui en contenait un doit le perdre à la normalisation.
+  const ancien = JSON.parse(JSON.stringify(e));
+  const id = Object.keys(ancien.enfants)[0];
+  ancien.enfants[id].emoji = "🧒";
+  const n = api.normaliser(ancien);
+  assert.strictEqual("emoji" in n.enfants[id], false,
+    "normaliser doit supprimer l'emoji hérité, pas le conserver");
+});
+
+test("minimisation : seuls le mois et l'année de naissance sont stockés", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js", "ui.js"), "utf8");
+  // Le champ est de type « month » et on ne recompose jamais un jour réel.
+  assert.ok(/iDate\.type = "month"/.test(ui), "la date de naissance doit être un champ mois");
+  assert.ok(/majEnfant\(enf\.id, "naissance", v \? v \+ "-01"/.test(ui),
+    "le jour stocké doit toujours être 01, jamais une vraie date");
+});
+
+test("retours : un message non envoyé est mis en file locale, jamais perdu", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js", "ui.js"), "utf8");
+  assert.ok(/if \(!ok\) fileRetoursEcrire\(fileRetours\(\)\.concat\(\[retour\]\)\)/.test(ui),
+    "un échec d'enregistrement doit alimenter la file locale");
+  const auth = fs.readFileSync(path.join(__dirname, "..", "js", "auth.js"), "utf8");
+  assert.ok(/viderFileRetours\(\)/.test(auth),
+    "la file locale doit être rejouée à l'ouverture de l'app");
+  // Le module doit être ouvert à toutes les familles : un retour qu'on ne peut
+  // pas donner est un retour perdu.
+  assert.strictEqual(/estEarlyAdopter\(\)\) c\.appendChild\(blocFeedback\(\)\)/.test(ui), false,
+    "le module de retours ne doit plus être réservé aux early adopters");
+});
+
+test("retours : la revue reprend tout ce qui n'est pas marqué « traité »", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js", "ui.js"), "utf8");
+  assert.ok(/\(f\.status \|\| "nouveau"\) !== "traite"/.test(ui),
+    "un retour seulement « lu » doit revenir à la revue suivante");
+  assert.strictEqual(/liste = \(adminRetoursCache \|\| \[\]\)\.filter\(f => \(f\.status \|\| "nouveau"\) === "nouveau"\)/.test(ui), false,
+    "la consigne ne doit plus se limiter aux retours « nouveaux »");
+});
+
+test("portabilité : l'export contient le compte, la famille et les retours", () => {
+  const fs = require("fs"), path = require("path");
+  const app = fs.readFileSync(path.join(__dirname, "..", "js", "app.js"), "utf8");
+  ["compte", "famille", "retours", "etat"].forEach(k =>
+    assert.ok(new RegExp("\\b" + k + "\\b").test(app.slice(app.indexOf("async function exporter"))),
+      "l'export doit contenir « " + k + " »"));
+  assert.ok(/sb\.rpc\("mes_retours"\)/.test(app), "l'export doit joindre les retours du parent");
+});
+
+test("portabilité : une sauvegarde ancienne comme récente reste restaurable", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  const etatSeul = JSON.parse(JSON.stringify(api.etat));
+  // Ancien format : l'état à la racine du fichier.
+  assert.strictEqual(api.restaurerSauvegarde(JSON.stringify(etatSeul)), true,
+    "les fichiers exportés avant la mise en conformité doivent rester lisibles");
+  // Nouveau format : l'état sous la clé « etat », à côté du compte et des retours.
+  const complet = { exporte_le: "2026-07-26T00:00:00Z", compte: { email: "x@y.be" },
+                    famille: { nom: "Test" }, retours: [], etat: etatSeul };
+  assert.strictEqual(api.restaurerSauvegarde(JSON.stringify(complet)), true,
+    "le nouvel export complet doit être restaurable");
+  // Un fichier sans aucun enfant reste refusé.
+  assert.strictEqual(api.restaurerSauvegarde(JSON.stringify({ etat: { enfants: {} } })), false);
+});
+
+test("conformité : le registre des traitements couvre l'essentiel", () => {
+  const fs = require("fs"), path = require("path");
+  const f = path.join(__dirname, "..", "REGISTRE-TRAITEMENTS.md");
+  assert.ok(fs.existsSync(f), "REGISTRE-TRAITEMENTS.md doit exister");
+  const r = fs.readFileSync(f, "utf8");
+  ["Responsable du traitement", "Base légale", "Sous-traitants", "Conservation",
+   "Supabase", "Vercel", "OVH", "72 heures"].forEach(k =>
+    assert.ok(r.includes(k), "le registre doit mentionner « " + k + " »"));
+});
+
+test("accessibilité : les boutons-icônes portent un nom accessible", () => {
+  const { api } = construireContexte();
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js", "ui.js"), "utf8");
+  // Aucun bouton fait d'un seul symbole ne doit rester sans aria-label.
+  const motif = /el\("button", "[^"]*", "([^a-zA-Z0-9"]{1,4})"\);(?!\s*\w+\.setAttribute\("aria-label")/g;
+  const orphelins = [];
+  let m;
+  while ((m = motif.exec(ui))) orphelins.push(m[1]);
+  assert.strictEqual(orphelins.length, 0,
+    "boutons-icônes sans nom accessible : " + orphelins.join(" "));
+  // Et les libellés existent dans les quatre langues.
+  const cles = ["a11y.supprimer", "a11y.modifier", "a11y.precedent", "a11y.suivant",
+                "a11y.ajouter_un", "a11y.retirer_un", "a11y.valider"];
+  Object.keys(api.LANGUES).forEach(lg => cles.forEach(k =>
+    assert.ok(typeof api.I18N[lg][k] === "string" && api.I18N[lg][k].length,
+      "manque " + lg + " → " + k)));
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

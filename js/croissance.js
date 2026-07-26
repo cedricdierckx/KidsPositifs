@@ -32,12 +32,13 @@ const CROISSANCE_CONTRAINTES = [
   },
   {
     id: "anonymat", emoji: "🕶️", titre: "Discrétion, et une app qui tourne seule",
-    detail: "Le fondateur reste en retrait : pas de nom mis en avant, et surtout aucune organisation qui appellerait des sollicitations. Rien n'annonce jamais un refus de communiquer — on fait simplement en sorte que le besoin d'écrire ne naisse pas.",
+    detail: "Le fondateur reste en retrait dans l'app et dans sa communication publique : pas de nom mis en avant, aucune organisation qui appellerait des sollicitations. En revanche, écrire à quelqu'un en son nom personnel — un blogueur, une directrice d'école — ne pose aucun problème : c'est un contact choisi, pas une exposition. Rien n'annonce jamais un refus de communiquer ; on fait simplement en sorte que le besoin d'écrire ne naisse pas.",
     consequences: [
       "Le produit répond avant qu'on ne demande : FAQ complète, export et suppression en libre-service, messages d'erreur explicites.",
       "Les e-mails aux familles sont signés « FamiTeam » et ne sollicitent pas de réponse — sans jamais dire qu'on n'en donnera pas.",
-      "La boîte à idées existe, elle est accueillante, et elle n'engage à rien : les idées sont revues par lots, pas au fil de l'eau.",
-      "Les canaux qui exposent une personne (presse, podcasts, communautés) passent en second plan : restent le parrainage et le bouche-à-oreille.",
+      "La boîte à idées est ouverte à toutes les familles, elle est accueillante et n'engage à rien : les idées sont revues par lots, pas au fil de l'eau. Aucune ne se perd.",
+      "Les contacts sortants choisis (blogueurs, écoles, crèches) sont possibles en nom personnel ; ce qui reste écarté, c'est l'exposition subie : interviews, portraits, vidéos.",
+      "Tout ce qui peut tourner seul tourne seul : vagues d'invitations, relances, parrainage, remerciements, rapport mensuel.",
       "L'identité de l'éditeur reste obligatoire sur les pages légales tant qu'il est responsable de traitement — seule une structure (ASBL) déplacerait cette mention."
     ]
   },
@@ -83,8 +84,8 @@ const CROISSANCE_CHANTIERS = [
     kpi: "Un cadre écrit, validé, qui ne se rediscute plus",
     etapes: [
       { id: "c_cadre_1", titre: "Écrire la question en cinq lignes", min: 20, detail: "Application gratuite, pas de recettes, dons éventuels, développée sur temps libre : est-ce compatible ? Sous quelle forme ?" , fait: true },
-      { id: "c_cadre_2", titre: "Interroger la Chambre", min: 30, detail: "Poser la question par écrit et garder la réponse. C'est ce document qui gouverne tout le reste du plan." },
-      { id: "c_cadre_3", titre: "Trancher la forme", min: 45, detail: "Projet personnel non marchand (défaut), ASBL, ou cession de l'exploitation à un tiers. Choisir la plus simple qui tienne." },
+      { id: "c_cadre_2", titre: "Interroger la Chambre", min: 30, detail: "Tranché : un projet gratuit dont les frais sont couverts par des dons, développé sur temps libre, ne constitue pas une activité professionnelle. Le cadre ne se rediscute plus.", fait: true },
+      { id: "c_cadre_3", titre: "Trancher la forme", min: 45, detail: "Tranché : projet personnel non marchand, financé par des dons, sans structure à créer. C'est la forme la plus simple qui tienne — une ASBL ne se justifierait que si les dons devaient être gérés collectivement.", fait: true },
       { id: "c_cadre_4", titre: "Séparer les deux mondes", min: 20, detail: "Ni le titre ni l'étude n'apparaissent dans la communication ; adresse et contact distincts." , fait: true },
       { id: "c_cadre_5", titre: "Mettre les pages légales en accord", min: 25, detail: "Mentions légales et politique de confidentialité doivent refléter la forme retenue." , fait: true }
     ]
@@ -164,15 +165,15 @@ const CROISSANCE_CHANTIERS = [
     ]
   },
   {
-    id: "c_communaute", phase: "p1", emoji: "💬", titre: "Communautés de parents", perimetre: "plus_tard",
-    but: "Être présent là où les parents demandent déjà de l'aide, sans faire de publicité. ⚠️ Publier « j'ai construit ça pour mes enfants » suppose de se montrer. À ne garder que sous l'identité du projet, sans nom ni visage.",
-    kpi: "10 inscriptions/mois issues des communautés",
+    id: "c_communaute", phase: "p1", emoji: "💬", titre: "Contacts choisis (blogs & comptes parentalité)", perimetre: "coeur",
+    but: "Écrire soi-même, en son nom, à quelques voix que les parents lisent déjà. Un contact choisi n'expose pas : ce n'est ni une interview ni un portrait, et l'app reste signée « FamiTeam ».",
+    kpi: "10 inscriptions/mois issues de ces contacts",
     etapes: [
-      { id: "c_communaute_1", titre: "Choisir trois groupes, pas quinze", min: 30, detail: "Trois groupes suivis valent mieux que quinze survolés." },
-      { id: "c_communaute_2", titre: "Aider deux fois sans rien vendre", min: 40, detail: "La crédibilité d'abord, sinon c'est du spam." },
-      { id: "c_communaute_3", titre: "Publier l'histoire, pas le produit", min: 45, detail: "« J'ai construit ça pour mes enfants » convertit mieux qu'une liste de fonctions." },
-      { id: "c_communaute_4", titre: "Trois comptes de micro-influence", min: 45, detail: "2 000 à 20 000 abonnés, accès gratuit à vie contre un test honnête.", mail: "m_influence" },
-      { id: "c_communaute_5", titre: "Abandonner ce qui ne prend pas", min: 10, detail: "Trois essais sans résultat : on note et on arrête." }
+      { id: "c_communaute_1", titre: "Dresser la liste des cinq destinataires", min: 20, detail: "Blogs et comptes francophones de parentalité positive lus par des parents de 2-7 ans — Papa Positive, Les Supers Parents, Cool Parents Make Happy Kids, Apprendre à éduquer, Maman Louve… Prendre l'adresse de contact sur leur site : cinq suffisent, quinze diluent." },
+      { id: "c_communaute_2", titre: "Envoyer les cinq e-mails", min: 25, detail: "Le modèle est écrit : ne restent que le prénom et une phrase propre à chacun (ce qu'on a aimé chez lui). Un envoi groupé n'obtient jamais de réponse.", mail: "m_influence" },
+      { id: "c_communaute_3", titre: "Relancer une seule fois, à quinze jours", min: 15, detail: "Une relance courte, puis on laisse tranquille. Le silence est une réponse.", mail: "m_influence_relance" },
+      { id: "c_communaute_4", titre: "Repérer d'où viennent les familles", min: 5, detail: "Chaque destinataire reçoit un lien marqué (?src=). L'origine des inscriptions s'affiche dans les chiffres du moment : on voit qui a réellement amené des familles." },
+      { id: "c_communaute_5", titre: "Abandonner ce qui ne prend pas", min: 10, detail: "Trois essais sans résultat : on note et on arrête. La règle vaut pour ce canal comme pour les autres." }
     ]
   },
   {
@@ -254,14 +255,14 @@ const CROISSANCE_CHANTIERS = [
   {
     id: "c_idees", phase: "p3", emoji: "💡", titre: "Revue des idées reçues", perimetre: "coeur",
     recurrent: "mois",
-    but: "Transformer les idées des familles en améliorations, une fois par mois, sans jamais s'engager auprès de qui que ce soit.",
-    kpi: "Une revue par mois · une amélioration livrée · zéro idée perdue",
+    but: "Transformer les retours des familles en améliorations — de l'app comme du plan de développement — une fois par mois, sans jamais s'engager auprès de qui que ce soit.",
+    kpi: "Une revue par mois · une amélioration livrée · zéro retour perdu",
     etapes: [
-      { id: "c_idees_1", titre: "Ouvrir les retours non lus", min: 10, detail: "Admin → Retours. Lecture rapide : on cherche ce qui revient, pas le détail de chaque message." },
-      { id: "c_idees_2", titre: "Trier en trois piles", min: 10, detail: "À faire maintenant (rapide et utile à tous) · plus tard (bonne idée, coûteuse) · non (hors cap ou contraire aux principes)." },
-      { id: "c_idees_3", titre: "Copier la consigne pour Claude Code", min: 5, detail: "Le bouton « Consigne pour Claude Code » met en forme les idées retenues, avec le contexte du projet. Il ne reste qu'à coller." },
+      { id: "c_idees_1", titre: "Ouvrir l'onglet Retours", min: 5, detail: "Admin → Retours : la liste se charge toute seule et rassemble tous les retours reçus, sans exception. Le compteur indique ce qui reste à passer en revue." },
+      { id: "c_idees_2", titre: "Copier la consigne pour Claude Code", min: 5, detail: "Le bouton « Consigne pour Claude Code » reprend TOUT ce qui n'est pas encore marqué « traité » — y compris ce qui a seulement été lu le mois dernier — avec le contexte du projet. Il ne reste qu'à coller." },
+      { id: "c_idees_3", titre: "Lire le tri et les propositions", min: 15, detail: "Claude Code rend trois piles argumentées (maintenant / plus tard / non) et jusqu'à trois propositions pour le développement commercial. Rien n'est codé avant validation." },
       { id: "c_idees_4", titre: "Faire implémenter et vérifier", min: 30, detail: "Une amélioration à la fois, testée, poussée sur dev. Le reste attend le mois prochain." },
-      { id: "c_idees_5", titre: "Marquer les retours comme traités", min: 5, detail: "Statut « traité » dans l'onglet Retours : la pile reste courte, et rien n'est relu deux fois." }
+      { id: "c_idees_5", titre: "Marquer les retours comme traités", min: 5, detail: "Statut « traité » dans l'onglet Retours. Seul ce statut sort un retour de la revue : tant qu'il n'est pas mis, le retour revient le mois suivant." }
     ]
   },
   {
@@ -269,11 +270,11 @@ const CROISSANCE_CHANTIERS = [
     but: "Grandir sans créer de risque juridique. Non négociable, y compris pour un projet gratuit.",
     kpi: "Registre à jour · zéro incident",
     etapes: [
-      { id: "c_conformite_1", titre: "Registre des traitements", min: 45, detail: "Obligatoire dès qu'on traite des données d'enfants, même minimales." },
-      { id: "c_conformite_2", titre: "Documenter les sous-traitants", min: 25, detail: "Supabase (UE), Vercel, SMTP : à citer dans la politique de confidentialité." },
-      { id: "c_conformite_3", titre: "Minimiser les données", min: 20, detail: "Prénom et date de naissance suffisent. Toute nouvelle donnée doit se justifier." },
-      { id: "c_conformite_4", titre: "Tester export et suppression", min: 20, detail: "Les deux existent : les essayer une fois par an, pour de vrai." },
-      { id: "c_conformite_5", titre: "Accessibilité, une passe", min: 40, detail: "Contrastes, taille des cibles tactiles, lecteur d'écran sur les parcours clés." }
+      { id: "c_conformite_1", titre: "Registre des traitements", min: 45, detail: "Fait : REGISTRE-TRAITEMENTS.md à la racine du dépôt. Cinq traitements décrits (comptes, profils d'enfants, retours, liste d'attente, mesure), bases légales, durées, sécurité, procédure de violation. Document interne, produit sur demande de l'autorité.", fait: true },
+      { id: "c_conformite_2", titre: "Documenter les sous-traitants", min: 25, detail: "Fait : section « Sous-traitants » dans la politique de confidentialité (Supabase — UE eu-west-1, Vercel, OVH pour le SMTP), avec le rôle de chacun et les transferts hors UE encadrés.", fait: true },
+      { id: "c_conformite_3", titre: "Minimiser les données", min: 20, detail: "Fait : surnom recommandé, mois de naissance seulement (le jour n'est jamais demandé), et l'emoji d'enfant — devenu sans usage depuis les avatars — est supprimé de l'état au lieu d'être conservé « au cas où ».", fait: true },
+      { id: "c_conformite_4", titre: "Tester export et suppression", min: 20, detail: "Fait, et deux trous corrigés : l'export contient désormais le compte, la famille et les retours écrits (art. 15 et 20), et la suppression du compte anonymise les retours au lieu d'y laisser l'adresse e-mail. Vérifié sur la base réelle.", fait: true },
+      { id: "c_conformite_5", titre: "Accessibilité, une passe", min: 40, detail: "Fait : contraste du gris de texte porté à 4,5:1 sur le fond de page (WCAG AA), précision des chiffres corrigée, et nom accessible ajouté aux boutons-icônes (corbeille, crayon, flèches, +/−) dans les quatre langues.", fait: true }
     ]
   },
   {
@@ -455,8 +456,8 @@ Merci beaucoup,
 FamiTeam`
   },
   {
-    id: "m_influence", titre: "Micro-influence parentalité", dest: "Compte Instagram/TikTok parentalité (2 000 à 20 000 abonnés)",
-    quand: "Chantier Communautés",
+    id: "m_influence", titre: "Blog / compte parentalité", dest: "Blog ou compte francophone de parentalité positive",
+    quand: "Chantier Contacts choisis, en nom personnel, jamais en envoi groupé",
     sujet: "Test honnête de FamiTeam — parentalité positive, 2-7 ans",
     corps: `Bonjour {prenom},
 
@@ -467,6 +468,21 @@ Je vous écris parce que {raison_precise}.
 Ma proposition est simple et sans argent : l'app est gratuite pour tout le monde, je ne vends rien. Vous testez en famille pendant deux semaines, et vous en parlez seulement si cela vous a réellement servi. Un avis négatif public me va très bien : cela m'indique quoi corriger.
 
 Intéressé·e ? Je vous envoie le lien.
+
+{qui}
+FamiTeam — {lien}`
+  },
+  {
+    id: "m_influence_relance", titre: "Relance d'un contact choisi (J+15)", dest: "Blog ou compte contacté quinze jours plus tôt",
+    quand: "Chantier Contacts choisis, une seule fois",
+    sujet: "Re : test honnête de FamiTeam",
+    corps: `Bonjour {prenom},
+
+Je me permets un mot de rappel, au cas où mon message serait passé au mauvais moment.
+
+La proposition tient toujours : accès gratuit, aucun engagement, et vous n'en parlez que si cela vous a réellement servi.
+
+Si le sujet n'est pas pour vous, n'y pensez plus : je ne relancerai pas davantage.
 
 {qui}
 FamiTeam — {lien}`

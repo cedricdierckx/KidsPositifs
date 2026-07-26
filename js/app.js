@@ -419,17 +419,11 @@ function avatarParDefaut(e) {
     chapeau: "rien", accessoire: "rien", compagnon: "rien", fond: "ciel"
   };
 }
-// Emoji par défaut (sélecteur) selon l'âge et le sexe.
-function emojiDefaut(e) {
-  if (ageDepuis(e.naissance) <= 2) return "👶";
-  return e.sexe === "fille" ? "👧" : "👦";
-}
-// Réaligne coiffure et emoji sur le sexe, sans écraser un choix personnalisé.
+// Réaligne la coiffure sur le sexe, sans écraser un choix personnalisé.
+// (L'emoji d'enfant a disparu : l'avatar le remplace partout — voir normaliser.)
 function appliquerSexe(enf) {
   const coiffuresDefaut = ["couettes", "court"];
   if (enf.avatar && coiffuresDefaut.includes(enf.avatar.coiffure)) enf.avatar.coiffure = coiffureDefaut(enf);
-  const emojisDefaut = ["🧒", "👦", "👧", "🧑", "👶"];
-  if (emojisDefaut.includes(enf.emoji)) enf.emoji = emojiDefaut(enf);
 }
 
 // Normalise / complète un état (migrations).
@@ -448,6 +442,10 @@ function normaliser(e) {
     if (typeof enf.naissance === "number") enf.naissance = enf.naissance + "-01-01";
     if (!enf.naissance) enf.naissance = "2020-01-01";
     if (!enf.sexe) enf.sexe = "garcon";
+    // Minimisation : l'emoji d'enfant n'est plus affiché nulle part depuis que
+    // l'avatar le remplace. On cesse de le conserver plutôt que de le garder
+    // « au cas où » — une donnée sans usage est une donnée à supprimer.
+    if (enf.emoji !== undefined) delete enf.emoji;
     // migration avatar : ancien format (emoji superposés) -> nouvel avatar SVG
     if (!enf.avatar || enf.avatar.base !== undefined || enf.avatar.peau === undefined) {
       enf.avatar = avatarParDefaut(enf);
@@ -1754,7 +1752,7 @@ function effacerBadges(enf) {
 // Crée un objet enfant vierge (mêmes champs que dans etatVierge).
 function enfantVierge(modele) {
   const base = modele || { id: "", prenom: "Nouvel enfant", naissance: "2020-01-01",
-                           sexe: "garcon", emoji: "🧒", couleur: "#5b8def" };
+                           sexe: "garcon", couleur: "#5b8def" };
   return {
     ...base,
     coeurs: 0, coeursTotal: 0, gouttes: 0, gouttesTotal: 0, donsTotal: 0, avatarTotal: 0,
@@ -1770,7 +1768,7 @@ function ajouterEnfant() {
   const couleurs = ["#5b8def", "#39c0a0", "#f6a623", "#e26d9b", "#9b6ef3", "#e2566d"];
   const n = Object.keys(etat.enfants).length;
   const enf = enfantVierge({ id, prenom: "Nouvel enfant", naissance: "2020-01-01",
-                             sexe: "garcon", emoji: "🧒", couleur: couleurs[n % couleurs.length] });
+                             sexe: "garcon", couleur: couleurs[n % couleurs.length] });
   appliquerSexe(enf);
   // Sélection initiale = missions conseillées pour son âge (respecte le budget
   // de tâches/jour par âge). Le parent peut ensuite ajuster librement.
@@ -1810,7 +1808,7 @@ function ajusterNombreEnfantsCreation(n) {
     const id = "e" + Date.now().toString(36) + ids.length + Math.floor(Math.random() * 1000);
     const couleurs = ["#5b8def", "#39c0a0", "#f6a623", "#e26d9b", "#9b6ef3", "#e2566d"];
     const enf = enfantVierge({ id, prenom: "Enfant " + (ids.length + 1),
-      naissance: "2020-01-01", sexe: "garcon", emoji: "🧒", couleur: couleurs[ids.length % couleurs.length] });
+      naissance: "2020-01-01", sexe: "garcon", couleur: couleurs[ids.length % couleurs.length] });
     enf.planJour = { [aujourdHui()]: idsDefaut(enf) };   // budget par âge respecté dès la création
     etat.enfants[id] = enf;
     ids = Object.keys(etat.enfants);
@@ -1834,8 +1832,33 @@ function reinitialiser() {
     rendre();
   }
 }
-function exporter() {
-  const blob = new Blob([JSON.stringify(etat, null, 2)], { type: "application/json" });
+/* Export complet (droit d'accès et de portabilité, art. 15 et 20).
+ * On ne se contente pas de l'état familial : on joint aussi le compte, la
+ * famille et les retours écrits par le parent, pour que l'export soit
+ * réellement exhaustif et exerçable sans écrire à personne. */
+async function exporter() {
+  const paquet = {
+    exporte_le: new Date().toISOString(),
+    application: typeof APP_NOM !== "undefined" ? APP_NOM : "FamiTeam",
+    compte: null, famille: null, retours: null,
+    etat
+  };
+  try {
+    const u = (typeof utilisateurCourant === "function") ? utilisateurCourant() : null;
+    if (u) paquet.compte = { email: u.email || null, cree_le: u.created_at || null };
+    if (typeof familleActive !== "undefined" && familleActive) {
+      paquet.famille = { nom: familleActive.name || null, role: familleActive.role || null,
+                         plan: familleActive.plan || null };
+    }
+    // Retours écrits par ce parent (RPC dédiée : il ne voit que les siens).
+    const demo = (typeof modeDemo !== "undefined" && modeDemo);
+    if (!demo && typeof sb !== "undefined" && sb) {
+      const { data, error } = await sb.rpc("mes_retours");
+      if (!error) paquet.retours = data || [];
+    }
+  } catch (e) { /* l'état familial part quoi qu'il arrive */ }
+
+  const blob = new Blob([JSON.stringify(paquet, null, 2)], { type: "application/json" });
   const a = el("a");
   a.href = URL.createObjectURL(blob);
   a.download = "famiteam-sauvegarde.json";
@@ -1870,6 +1893,9 @@ function listerSauvegardesLocales() {
 function restaurerSauvegarde(brutJson) {
   let data;
   try { data = JSON.parse(brutJson); } catch { toast("Sauvegarde illisible.", "info"); return false; }
+  // Deux formats acceptés : l'état seul (anciens fichiers) et l'export complet
+  // (compte, famille, retours, état) produit depuis la mise en conformité.
+  if (data && !data.enfants && data.etat && data.etat.enfants) data = data.etat;
   if (!data || !data.enfants || !Object.keys(data.enfants).length) {
     toast("Cette sauvegarde ne contient aucun enfant.", "info"); return false;
   }

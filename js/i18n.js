@@ -1753,35 +1753,39 @@ Object.assign(I18N.de, {
 /* ---- Module signalement bug / suggestion (early adopters) ---- */
 Object.assign(I18N.fr, {
   "fb.titre": "🐞 Signaler un bug / 💡 Suggestion",
-  "fb.sous": "Réservé aux premiers utilisateurs. Merci de nous aider à améliorer FamiTeam !",
+  "fb.sous": "Une idée, un souci ? Écrivez-le ici : tout est lu et alimente les mises à jour.",
   "fb.type_bug": "🐞 Bug", "fb.type_suggestion": "💡 Suggestion",
   "fb.message_ph": "Décris le bug ou ta suggestion…",
-  "fb.envoyer": "✉️ Envoyer par e-mail",
-  "fb.vide": "Écris d'abord ton message.", "fb.merci": "Merci ! Ton e-mail va s'ouvrir."
+  "fb.envoyer": "Envoyer",
+  "fb.vide": "Écris d'abord ton message.", "fb.merci": "Merci ! Votre message est bien arrivé.",
+  "fb.plus_tard": "Merci ! Votre message est enregistré et partira dès le retour de la connexion."
 });
 Object.assign(I18N.en, {
   "fb.titre": "🐞 Report a bug / 💡 Suggestion",
-  "fb.sous": "Available to early adopters. Thanks for helping us improve FamiTeam!",
+  "fb.sous": "An idea, a problem? Write it here: everything is read and feeds the updates.",
   "fb.type_bug": "🐞 Bug", "fb.type_suggestion": "💡 Suggestion",
   "fb.message_ph": "Describe the bug or your suggestion…",
-  "fb.envoyer": "✉️ Send by email",
-  "fb.vide": "Write your message first.", "fb.merci": "Thanks! Your email app will open."
+  "fb.envoyer": "Send",
+  "fb.vide": "Write your message first.", "fb.merci": "Thanks! Your message arrived safely.",
+  "fb.plus_tard": "Thanks! Your message is saved and will be sent as soon as you are back online."
 });
 Object.assign(I18N.nl, {
   "fb.titre": "🐞 Bug melden / 💡 Suggestie",
-  "fb.sous": "Voor early adopters. Bedankt dat je FamiTeam helpt verbeteren!",
+  "fb.sous": "Een idee of een probleem? Schrijf het hier: alles wordt gelezen en voedt de updates.",
   "fb.type_bug": "🐞 Bug", "fb.type_suggestion": "💡 Suggestie",
   "fb.message_ph": "Beschrijf de bug of je suggestie…",
-  "fb.envoyer": "✉️ Verstuur per e-mail",
-  "fb.vide": "Schrijf eerst je bericht.", "fb.merci": "Bedankt! Je e-mailapp gaat open."
+  "fb.envoyer": "Versturen",
+  "fb.vide": "Schrijf eerst je bericht.", "fb.merci": "Bedankt! Je bericht is goed aangekomen.",
+  "fb.plus_tard": "Bedankt! Je bericht is bewaard en vertrekt zodra je weer online bent."
 });
 Object.assign(I18N.de, {
   "fb.titre": "🐞 Fehler melden / 💡 Vorschlag",
-  "fb.sous": "Für Early Adopters. Danke, dass du FamiTeam verbessern hilfst!",
+  "fb.sous": "Eine Idee oder ein Problem? Schreib es hier: alles wird gelesen und fließt in die Updates ein.",
   "fb.type_bug": "🐞 Fehler", "fb.type_suggestion": "💡 Vorschlag",
   "fb.message_ph": "Beschreibe den Fehler oder deinen Vorschlag…",
-  "fb.envoyer": "✉️ Per E-Mail senden",
-  "fb.vide": "Schreibe zuerst deine Nachricht.", "fb.merci": "Danke! Deine E-Mail-App öffnet sich."
+  "fb.envoyer": "Senden",
+  "fb.vide": "Schreibe zuerst deine Nachricht.", "fb.merci": "Danke! Deine Nachricht ist gut angekommen.",
+  "fb.plus_tard": "Danke! Deine Nachricht ist gespeichert und geht raus, sobald du wieder online bist."
 });
 
 /* ---- Cartes surprises : idées supplémentaires (traductions) ---- */
@@ -3339,4 +3343,52 @@ Object.assign(I18N.de, {
   "vag.confirm": "Die Einladung an {n} Kandidat(en) senden?",
   "vag.relances": "Erinnerung an Tag 7: {n} Kandidat(en)",
   "vag.relancer": "Nur einmal erinnern ({n})",
+});
+
+/* ---- Retours : compteur de ce qui reste à passer en revue ---- */
+Object.assign(I18N.fr, {
+  "retours.restant": "{n} retour(s) encore à passer en revue.",
+  "retours.restant_zero": "Tous les retours ont été traités.",
+});
+Object.assign(I18N.en, {
+  "retours.restant": "{n} item(s) still to review.",
+  "retours.restant_zero": "All feedback has been handled.",
+});
+Object.assign(I18N.nl, {
+  "retours.restant": "Nog {n} bericht(en) te bekijken.",
+  "retours.restant_zero": "Alle feedback is behandeld.",
+});
+Object.assign(I18N.de, {
+  "retours.restant": "Noch {n} Meldung(en) zu prüfen.",
+  "retours.restant_zero": "Alle Rückmeldungen sind bearbeitet.",
+});
+
+/* ---- Accessibilité : noms accessibles des boutons-icônes ---- */
+Object.assign(I18N.fr, {
+  "a11y.supprimer": "Supprimer", "a11y.modifier": "Modifier",
+  "a11y.precedent": "Précédent", "a11y.suivant": "Suivant",
+  "a11y.ajouter_un": "Ajouter un point", "a11y.retirer_un": "Retirer un point",
+  "a11y.valider": "Valider",
+  "a11y.refuser": "Refuser",
+});
+Object.assign(I18N.en, {
+  "a11y.supprimer": "Delete", "a11y.modifier": "Edit",
+  "a11y.precedent": "Previous", "a11y.suivant": "Next",
+  "a11y.ajouter_un": "Add a point", "a11y.retirer_un": "Remove a point",
+  "a11y.valider": "Confirm",
+  "a11y.refuser": "Decline",
+});
+Object.assign(I18N.nl, {
+  "a11y.supprimer": "Verwijderen", "a11y.modifier": "Bewerken",
+  "a11y.precedent": "Vorige", "a11y.suivant": "Volgende",
+  "a11y.ajouter_un": "Een punt toevoegen", "a11y.retirer_un": "Een punt verwijderen",
+  "a11y.valider": "Bevestigen",
+  "a11y.refuser": "Weigeren",
+});
+Object.assign(I18N.de, {
+  "a11y.supprimer": "Löschen", "a11y.modifier": "Bearbeiten",
+  "a11y.precedent": "Zurück", "a11y.suivant": "Weiter",
+  "a11y.ajouter_un": "Einen Punkt hinzufügen", "a11y.retirer_un": "Einen Punkt entfernen",
+  "a11y.valider": "Bestätigen",
+  "a11y.refuser": "Ablehnen",
 });

@@ -13,14 +13,16 @@
 const APP_NOM = "FamiTeam";
 
 /* ---- Les enfants (modifiables dans les Réglages) -------------------
- * naissance : date complète au format AAAA-MM-JJ
- * sexe      : "fille" ou "garcon"
+ * prenom    : un surnom suffit — c'est ce que l'app suggère aux parents
+ * naissance : mois et année (le jour est toujours 01, jamais demandé) ;
+ *             sert uniquement à adapter les missions et l'affichage à l'âge
+ * sexe      : "fille" ou "garcon" — ne détermine que la coiffure par défaut
  * ------------------------------------------------------------------- */
 const ENFANTS_DEFAUT = [
-  { id: "e2018", prenom: "Aîné(e)",   naissance: "2018-01-01", sexe: "garcon", emoji: "🧒", couleur: "#5b8def" },
-  { id: "e2019", prenom: "Second(e)", naissance: "2019-01-01", sexe: "fille",  emoji: "👦", couleur: "#39c0a0" },
-  { id: "e2021", prenom: "Troisième", naissance: "2021-01-01", sexe: "garcon", emoji: "🧑", couleur: "#f6a623" },
-  { id: "e2023", prenom: "Petit(e)",  naissance: "2023-01-01", sexe: "fille",  emoji: "👶", couleur: "#e26d9b" }
+  { id: "e2018", prenom: "Aîné(e)",   naissance: "2018-01-01", sexe: "garcon", couleur: "#5b8def" },
+  { id: "e2019", prenom: "Second(e)", naissance: "2019-01-01", sexe: "fille",  couleur: "#39c0a0" },
+  { id: "e2021", prenom: "Troisième", naissance: "2021-01-01", sexe: "garcon", couleur: "#f6a623" },
+  { id: "e2023", prenom: "Petit(e)",  naissance: "2023-01-01", sexe: "fille",  couleur: "#e26d9b" }
 ];
 
 /* ---- Catégories ---------------------------------------------------- */

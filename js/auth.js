@@ -223,6 +223,9 @@ async function apresConnexion() {
   await chargerFamilles();
   if (mesFamilles.length === 0) return ecranFamilles({ premiere: true });
 
+  // Retours restés en file locale (envoyés hors ligne) : on les rejoue.
+  if (typeof viderFileRetours === "function") viderFileRetours();
+
   const dernier = localStorage.getItem(FAMILLE_KEY);
   let f = mesFamilles.find(x => x.id === dernier);
   if (!f && mesFamilles.length === 1) f = mesFamilles[0];
