@@ -21,11 +21,28 @@ let estAdmin = false;          // l'utilisateur est-il administrateur de l'app ?
 const FAMILLE_KEY = "kp_famille_active";
 const INVITE_KEY = "kp_pending_invite";
 const PARRAIN_KEY = "kp_pending_parrain";   // parrainage : créer SA propre famille
+const VAGUE_KEY = "kp_pending_vague";      // jeton de vague (liste d'attente)
 
 // Interrupteur global des inscriptions :
 //   false = sur invitation/parrainage uniquement (+ liste d'attente)
 //   true  = inscriptions ouvertes à tous
+// Valeur de repli : les inscriptions sont ouvertes tant que l'administrateur
+// n'a pas choisi le mode « par vagues » (app_config → inscriptions).
 const INSCRIPTIONS_OUVERTES = true;
+
+// Mode d'inscription effectif, décidé depuis l'admin sans redéploiement.
+// « vagues » : seuls les invités, parrainés et candidats d'une vague entrent.
+function inscriptionsOuvertes() {
+  const mode = configApp && String(configApp.inscriptions || "").trim();
+  if (mode === "vagues") return false;
+  if (mode === "ouvertes") return true;
+  return INSCRIPTIONS_OUVERTES;
+}
+// Taille d'une vague : ce qu'une heure par semaine permet d'accompagner.
+function tailleVague() {
+  const n = parseInt((configApp && configApp.vague_taille) || "", 10);
+  return (isNaN(n) || n < 1) ? 20 : Math.min(n, 200);
+}
 
 // Invitations/parrainages : plus aucune limite de nombre (true = illimité).
 const INVITATIONS_ILLIMITEES = true;
@@ -39,7 +56,7 @@ async function demarrer() {
   }
   sb = supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
   Store.init(sb);                          // couche de données isolée (Phase D)
-  chargerConfigApp();                      // réglages globaux (ex. lien de don Stripe)
+  configAppPrete();                        // réglages globaux (mode d'inscription, lien de don…)
 
   memoriserSource();                       // d'où vient ce visiteur (avant tout nettoyage d'URL)
 
@@ -50,6 +67,11 @@ async function demarrer() {
   // Lien de parrainage (?parrain=...) : l'ami créera SA propre famille.
   const par = params.get("parrain");
   if (par) { localStorage.setItem(PARRAIN_KEY, par); nettoyerUrl(); }
+  // Jeton de vague (?vague=...) : le candidat de la liste d'attente crée sa
+  // famille. On vérifie le jeton en base avant de le retenir, pour qu'une
+  // valeur inventée n'ouvre pas les inscriptions.
+  const vag = params.get("vague");
+  if (vag) { nettoyerUrl(); if (await jetonVagueValide(vag)) localStorage.setItem(VAGUE_KEY, vag); }
 
   const { data } = await sb.auth.getSession();
   session = data.session;
@@ -64,7 +86,9 @@ async function demarrer() {
   // un nouveau mot de passe avant d'entrer dans l'app.
   if (location.hash.includes("type=recovery")) return ecranNouveauMdp();
 
-  if (!utilisateur) return ecranAuth();
+  // Le mode d'inscription (ouvertes / par vagues) décide de ce qu'affiche
+  // l'écran d'accueil : on attend la configuration avant de le peindre.
+  if (!utilisateur) { await configAppPrete(); return ecranAuth(); }
   await apresConnexion();
 }
 
@@ -75,6 +99,7 @@ function utilisateurCourant() { return utilisateur; }
 
 // ---------- Configuration globale de l'app (table app_config) ----------
 let configApp = {};
+let configAppPromesse = null;
 async function chargerConfigApp() {
   if (!sb) return;
   try {
@@ -82,6 +107,12 @@ async function chargerConfigApp() {
     configApp = {};
     (data || []).forEach(r => { configApp[r.key] = r.value; });
   } catch { configApp = {}; }
+}
+// Même chargement, mutualisé : l'écran d'accueil doit connaître le mode
+// d'inscription avant de s'afficher, sans relancer une deuxième requête.
+function configAppPrete() {
+  if (!configAppPromesse) configAppPromesse = chargerConfigApp();
+  return configAppPromesse;
 }
 // Lien de don : priorité au lien Stripe configuré par l'admin, sinon config.js.
 function urlDon() {
@@ -472,7 +503,10 @@ async function declencherEnvoisAuto() {
     const auj = new Date().toISOString().slice(0, 10);
     if (localStorage.getItem(cle) === auj) return;
     localStorage.setItem(cle, auj);
-    const n = await envoyerRelancesActivation() + await envoyerPropositionsParrainage();
+    const n = await envoyerRelancesActivation()
+            + await envoyerPropositionsParrainage()
+            + await envoyerVagueDuMois()
+            + await envoyerRelancesVague();
     await envoyerRapportMensuel();
     if (n > 0 && typeof toast === "function") toast(t("croiss.mails_partis", { n }), "succes");
   } catch (e) { /* best-effort : jamais bloquant */ }
@@ -499,6 +533,8 @@ async function creerFamille(nom, nbEnfants) {
     try { await sb.rpc("claim_referral", { p_token: par, p_family: data }); } catch {}
     localStorage.removeItem(PARRAIN_KEY);
   }
+  // Jeton de vague consommé : la famille existe, il n'a plus d'utilité.
+  if (data) localStorage.removeItem(VAGUE_KEY);
 }
 
 /* ---------- Parrainage (inviter un ami à créer sa propre famille) ---------- */
@@ -536,10 +572,12 @@ async function verifierParrainages() {
 
 function changerFamille() { ecranFamilles({}); }
 
-// Inscriptions autorisées si ouvertes globalement, ou via un jeton en attente.
+// Inscriptions autorisées si ouvertes globalement, ou via un jeton en attente
+// (invitation, parrainage, ou jeton de vague de la liste d'attente).
 function inscriptionAutorisee() {
-  return INSCRIPTIONS_OUVERTES ||
-         !!(localStorage.getItem(INVITE_KEY) || localStorage.getItem(PARRAIN_KEY));
+  return inscriptionsOuvertes() ||
+         !!(localStorage.getItem(INVITE_KEY) || localStorage.getItem(PARRAIN_KEY) ||
+            localStorage.getItem(VAGUE_KEY));
 }
 // Rejoindre la liste d'attente (candidats sans invitation).
 async function rejoindreListeAttente(email) {
@@ -576,6 +614,80 @@ async function adminRetirerAttente(email) {
   const { error } = await sb.rpc("admin_remove_waitlist", { p_email: email });
   if (error) toast("Erreur : " + error.message, "info");
   return !error;
+}
+
+/* ---------- Vagues d'invitation (chantier « Liste d'attente ») ---------- */
+// Lien personnel d'un candidat : autorise la création de SA famille.
+function lienVague(token) {
+  return (location.origin || "https://famiteam.com") + "/?vague=" + token;
+}
+// Le jeton existe-t-il, et la vague a-t-elle bien été envoyée ? La fonction
+// ne renvoie qu'un booléen : elle ne divulgue jamais l'e-mail du candidat.
+async function jetonVagueValide(token) {
+  if (!/^[0-9a-f-]{36}$/i.test(String(token || ""))) return false;
+  try {
+    const { data, error } = await sb.rpc("waitlist_invitation_valide", { p_token: token });
+    return !error && !!data;
+  } catch (e) { return false; }
+}
+// Les prochains candidats à inviter (les plus anciens d'abord).
+async function adminVagueSuivante(taille) {
+  if (!estAdmin) return [];
+  const { data, error } = await sb.rpc("admin_vague_suivante", { p_taille: taille || tailleVague() });
+  if (error) return [];
+  return data || [];
+}
+// Candidats invités il y a au moins sept jours et toujours sans compte.
+async function adminVaguesARelancer() {
+  if (!estAdmin) return [];
+  const { data, error } = await sb.rpc("admin_vagues_a_relancer");
+  if (error) return [];
+  return data || [];
+}
+// Conversion des vagues : invités, inscrits, taux.
+async function adminVaguesStats() {
+  if (!estAdmin) return null;
+  const { data, error } = await sb.rpc("admin_vagues_stats");
+  if (error) return null;
+  return data || null;
+}
+// Une vague par mois au maximum : le verrou est en base (mails_auto), donc il
+// tient même si l'app est ouverte depuis plusieurs appareils.
+async function envoyerVagueDuMois() {
+  if (!estAdmin || !mailsAutoArmes()) return 0;
+  const periode = new Date().toISOString().slice(0, 7);
+  if (await mailAutoDeja("vague_mois", periode)) return 0;
+  const candidats = await adminVagueSuivante();
+  if (!candidats.length) return 0;              // rien à inviter : on ne verrouille pas le mois
+  await mailAutoMarquer("vague_mois", periode);
+  return envoyerVague(candidats);
+}
+// Envoie une vague d'invitations. Un candidat n'est jamais invité deux fois :
+// mails_auto le garantit, et invited_at l'enregistre côté liste d'attente.
+async function envoyerVague(liste) {
+  const candidats = liste || await adminVagueSuivante();
+  let n = 0;
+  for (const cand of candidats) {
+    if (!cand.email) continue;
+    const ok = await envoyerMailAuto("vague", cand.email, cand.email, "m_waitlist_invit",
+      { lien_invitation: lienVague(cand.token) });
+    if (!ok) continue;
+    try { await sb.rpc("admin_vague_marquer", { p_email: cand.email }); } catch (e) { /* best-effort */ }
+    n++;
+  }
+  return n;
+}
+// Relance unique à J+7. Pas de deuxième relance : on laisse tranquille.
+async function envoyerRelancesVague(liste) {
+  const candidats = liste || await adminVaguesARelancer();
+  let n = 0;
+  for (const cand of candidats) {
+    if (!cand.email) continue;
+    const ok = await envoyerMailAuto("vague_relance", cand.email, cand.email, "m_waitlist_relance",
+      { lien_invitation: lienVague(cand.token) });
+    if (ok) n++;
+  }
+  return n;
 }
 
 async function creerInvitation() {

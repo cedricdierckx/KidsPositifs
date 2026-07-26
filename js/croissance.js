@@ -58,7 +58,7 @@ const CROISSANCE_RITUEL = [
   { id: "s1", titre: "Semaine 1 — Les chiffres", detail: "10 min : relever l'étoile du Nord et deux indicateurs. 50 min : la prochaine étape du chantier en cours." },
   { id: "s2", titre: "Semaine 2 — Un contact", detail: "Un seul e-mail de prescripteur (école, crèche, professionnel), personnalisé, envoyé. Puis on referme." },
   { id: "s3", titre: "Semaine 3 — Le produit", detail: "Une correction ou une amélioration issue des retours des familles. Rien d'autre." },
-  { id: "s4", titre: "Semaine 4 — Les idées", detail: "Revue des idées reçues : trier, copier la consigne pour Claude Code, faire implémenter une amélioration. Puis relancer une vague d'invitations." }
+  { id: "s4", titre: "Semaine 4 — Les idées", detail: "Revue des idées reçues : trier, copier la consigne pour Claude Code, faire implémenter une amélioration. Les vagues d'invitations, les relances et les remerciements partent seuls : rien à faire de ce côté." }
 ];
 
 /* ---------- Phases ---------- */
@@ -156,11 +156,11 @@ const CROISSANCE_CHANTIERS = [
     but: "Transformer la rareté en atout, et garder le support sous contrôle.",
     kpi: "Liste d'attente → inscription : 40 % par vague",
     etapes: [
-      { id: "c_waitlist_1", titre: "Cadencer les vagues sur le temps disponible", min: 15, detail: "Une vague par mois, 20 familles : c'est ce qu'une heure par semaine permet d'accompagner." },
-      { id: "c_waitlist_2", titre: "E-mail d'invitation de vague", min: 20, detail: "Personnalisé, avec le lien et ce qu'on attend en retour.", mail: "m_waitlist_invit" },
-      { id: "c_waitlist_3", titre: "Relance unique à J+7", min: 15, detail: "Une seule relance, puis on laisse tranquille.", mail: "m_waitlist_relance" },
-      { id: "c_waitlist_4", titre: "Appeler deux familles par vague", min: 40, detail: "Quinze minutes au téléphone valent cent réponses de questionnaire." },
-      { id: "c_waitlist_5", titre: "Décider de l'ouverture publique", min: 20, detail: "Quand activation J+1 > 55 % ET support sous 15 min/semaine. Pas avant." }
+      { id: "c_waitlist_1", titre: "Cadencer les vagues sur le temps disponible", min: 15, detail: "Fait : dans Croissance » Vagues d'invitation, un interrupteur bascule les inscriptions « ouvertes à tous » ou « par vagues », et un champ fixe la taille (20 familles par défaut). Réglable sans redéploiement.", fait: true },
+      { id: "c_waitlist_2", titre: "E-mail d'invitation de vague", min: 20, detail: "Fait : chaque candidat reçoit un lien personnel qui l'autorise à créer sa famille même quand les inscriptions sont fermées. Une vague par mois au maximum, verrou en base : impossible d'inviter deux fois la même personne.", mail: "m_waitlist_invit", fait: true },
+      { id: "c_waitlist_3", titre: "Relance unique à J+7", min: 15, detail: "Fait : sept jours après l'invitation, si aucun compte n'a été créé, une relance part une seule fois. Jamais de deuxième — la table mails_auto le garantit.", mail: "m_waitlist_relance", fait: true },
+      { id: "c_waitlist_4", titre: "Écouter les familles de la vague", min: 10, detail: "Fait : les retours arrivent tout seuls par le module de suggestions et sont dépouillés dans le chantier récurrent 💡 Revue des idées reçues. Pas d'appel téléphonique : le projet reste discret et le temps va au produit.", fait: true },
+      { id: "c_waitlist_5", titre: "Décider de l'ouverture publique", min: 5, detail: "À décider soi-même. Les deux chiffres sont affichés : conversion des vagues (viser 40 %) et activation J+1 (viser 55 %). Au-dessus des deux, basculer l'interrupteur sur « ouvertes ». Pas avant." }
     ]
   },
   {
@@ -397,7 +397,7 @@ FamiTeam — {lien}`
   },
   {
     id: "m_waitlist_invit", titre: "Invitation d'une vague (liste d'attente)", dest: "Personne inscrite sur la liste d'attente",
-    quand: "Chantier Liste d'attente, une vague par mois",
+    quand: "Automatique : une vague par mois, aux plus anciens candidats jamais invités",
     sujet: "Votre place dans FamiTeam est ouverte 🎁",
     corps: `Bonjour,
 
@@ -413,7 +413,7 @@ FamiTeam`
   },
   {
     id: "m_waitlist_relance", titre: "Relance de vague (J+7)", dest: "Invité·e qui n'a pas créé sa famille",
-    quand: "Chantier Liste d'attente, une seule fois",
+    quand: "Automatique : sept jours après l'invitation, une seule fois",
     sujet: "Votre lien FamiTeam est encore valable",
     corps: `Bonjour,
 

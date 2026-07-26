@@ -309,6 +309,81 @@ begin
   delete from waitlist where email = lower(trim(p_email));
 end; $$;
 
+-- ---------- Vagues d'invitation ----------
+-- Chaque candidat reçoit un jeton personnel. Le jeton n'autorise la création
+-- d'une famille qu'une fois la vague envoyée (invited_at renseigné).
+alter table public.waitlist add column if not exists token uuid default gen_random_uuid();
+alter table public.waitlist add column if not exists invited_at timestamptz;
+update public.waitlist set token = gen_random_uuid() where token is null;
+create index if not exists waitlist_token_idx on public.waitlist(token);
+
+-- Vérification publique d'un jeton de vague : ne renvoie qu'un booléen,
+-- jamais l'e-mail. Vrai seulement si la vague a bien été envoyée.
+create or replace function public.waitlist_invitation_valide(p_token uuid)
+returns boolean language sql security definer set search_path = public as $$
+  select exists (select 1 from waitlist w where w.token = p_token and w.invited_at is not null);
+$$;
+
+-- Prochaine vague : les plus anciens candidats jamais invités.
+create or replace function public.admin_vague_suivante(p_taille integer default 20)
+returns table(email text, token uuid, created_at timestamptz, source text)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  return query
+    select w.email::text, w.token, w.created_at, w.source::text
+    from waitlist w
+    where w.invited_at is null
+    order by w.created_at
+    limit greatest(1, least(coalesce(p_taille, 20), 200));
+end; $$;
+
+-- Marque un candidat comme invité (appelé après l'envoi réussi de l'e-mail).
+create or replace function public.admin_vague_marquer(p_email text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  update waitlist set invited_at = now()
+   where email = lower(trim(p_email)) and invited_at is null;
+end; $$;
+
+-- Relance unique à J+7 : invité il y a au moins sept jours, toujours sans
+-- compte, et jamais relancé. Une seule relance, la table mails_auto le garantit.
+create or replace function public.admin_vagues_a_relancer()
+returns table(email text, token uuid, jours integer)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  return query
+    select w.email::text, w.token, extract(day from now() - w.invited_at)::int
+    from waitlist w
+    where w.invited_at is not null
+      and w.invited_at <= now() - interval '7 days'
+      and not exists (select 1 from auth.users u where lower(u.email) = w.email)
+      and not exists (select 1 from mails_auto m where m.type = 'vague_relance' and m.cle = w.email)
+    order by w.invited_at;
+end; $$;
+
+-- Conversion des vagues : invités, inscrits, taux. Sert au critère d'ouverture
+-- publique (chantier « Liste d'attente »).
+create or replace function public.admin_vagues_stats()
+returns json language plpgsql security definer set search_path = public as $$
+declare invites_n integer; convertis_n integer; attente_n integer;
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  select count(*) into invites_n from waitlist where invited_at is not null;
+  select count(*) into convertis_n from waitlist w
+    where w.invited_at is not null
+      and exists (select 1 from auth.users u where lower(u.email) = w.email);
+  select count(*) into attente_n from waitlist where invited_at is null;
+  return json_build_object(
+    'invites', invites_n,
+    'convertis', convertis_n,
+    'en_attente', attente_n,
+    'taux', case when invites_n > 0 then round(convertis_n * 100.0 / invites_n)::int else null end
+  );
+end; $$;
+
 -- ---------- RPC admin : lister toutes les familles ----------
 create or replace function public.admin_list_families()
 returns table(id uuid, name text, plan text, plan_status text,
@@ -879,6 +954,11 @@ grant execute on function public.mail_auto_marquer(text, text)  to authenticated
 grant execute on function public.mail_auto_deja(text, text)     to authenticated;
 grant execute on function public.admin_mails_en_attente()       to authenticated;
 grant execute on function public.admin_parrainages_a_proposer() to authenticated;
+grant execute on function public.waitlist_invitation_valide(uuid) to anon, authenticated;
+grant execute on function public.admin_vague_suivante(integer)  to authenticated;
+grant execute on function public.admin_vague_marquer(text)      to authenticated;
+grant execute on function public.admin_vagues_a_relancer()      to authenticated;
+grant execute on function public.admin_vagues_stats()           to authenticated;
 grant execute on function public.admin_remove_waitlist(text)    to authenticated;
 grant execute on function public.is_admin()                     to authenticated;
 grant execute on function public.admin_list_families()          to authenticated;

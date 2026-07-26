@@ -1224,6 +1224,116 @@ test("acheterOption débloque, dépense puis équipe avec assez de cœurs", () =
   assert.strictEqual(enf.avatar.chapeau, "couronne");
 });
 
+/* ---------- Liste d'attente : vagues d'invitation ---------- */
+// Extrait une fonction nommée d'un fichier source et l'évalue avec un contexte
+// donné. Permet de tester la logique pure de js/auth.js, que le harnais ne
+// charge pas (auth.js dépend du réseau et du DOM).
+function fonctionDeSource(fichier, nom, contexte) {
+  const fs = require("fs"), path = require("path"), vm = require("vm");
+  const src = fs.readFileSync(path.join(__dirname, "..", fichier), "utf8");
+  const debut = src.indexOf("function " + nom + "(");
+  assert.notStrictEqual(debut, -1, "fonction introuvable : " + nom);
+  // On avance jusqu'à l'accolade fermante correspondante.
+  let i = src.indexOf("{", debut), profondeur = 0, fin = -1;
+  for (let j = i; j < src.length; j++) {
+    if (src[j] === "{") profondeur++;
+    else if (src[j] === "}") { profondeur--; if (!profondeur) { fin = j + 1; break; } }
+  }
+  assert.notStrictEqual(fin, -1, "corps non délimité : " + nom);
+  const ctx = vm.createContext(Object.assign({}, contexte));
+  vm.runInContext(src.slice(debut, fin) + "\n;__f = " + nom + ";", ctx);
+  return ctx.__f;
+}
+
+test("vagues : le mode d'inscription se pilote depuis la configuration", () => {
+  const faire = (cfg) => fonctionDeSource("js/auth.js", "inscriptionsOuvertes",
+    { configApp: cfg, INSCRIPTIONS_OUVERTES: true })();
+  assert.strictEqual(faire({ inscriptions: "vagues" }), false, "« vagues » ferme les inscriptions");
+  assert.strictEqual(faire({ inscriptions: "ouvertes" }), true, "« ouvertes » les rouvre");
+  // Repli : sans réglage, rien ne change pour les familles existantes.
+  assert.strictEqual(faire({}), true, "sans réglage, on garde la valeur de repli");
+  assert.strictEqual(faire({ inscriptions: "  vagues  " }), false, "les espaces ne doivent pas tromper");
+});
+
+test("vagues : la taille d'une vague est bornée et retombe sur 20", () => {
+  const taille = (cfg) => fonctionDeSource("js/auth.js", "tailleVague", { configApp: cfg })();
+  assert.strictEqual(taille({}), 20, "défaut : 20 familles par mois");
+  assert.strictEqual(taille({ vague_taille: "5" }), 5);
+  assert.strictEqual(taille({ vague_taille: "0" }), 20, "0 n'a pas de sens : on reprend 20");
+  assert.strictEqual(taille({ vague_taille: "-3" }), 20);
+  assert.strictEqual(taille({ vague_taille: "abc" }), 20);
+  assert.strictEqual(taille({ vague_taille: "9999" }), 200, "plafond : 200");
+});
+
+test("vagues : les modèles d'e-mail n'attendent que le lien fourni par le code", () => {
+  const { api } = construireContexte();
+  const fs = require("fs"), path = require("path");
+  const auth = fs.readFileSync(path.join(__dirname, "..", "js", "auth.js"), "utf8");
+  ["m_waitlist_invit", "m_waitlist_relance"].forEach(id => {
+    const m = api.mailCroissance(id);
+    assert.ok(m, "modèle absent : " + id);
+    const mentions = Array.from(new Set(
+      ((m.corps + " " + m.sujet).match(/\{(\w+)\}/g) || []).map(x => x.slice(1, -1))));
+    // Chaque mention doit être alimentée : sinon l'e-mail partirait avec un trou.
+    mentions.forEach(k => assert.strictEqual(k, "lien_invitation",
+      `${id} attend {${k}}, que le code ne fournit pas`));
+    assert.ok(mentions.includes("lien_invitation"), id + " doit porter le lien personnel");
+  });
+  // Le code passe bien cette valeur pour les deux envois.
+  assert.strictEqual((auth.match(/lien_invitation: lienVague\(cand\.token\)/g) || []).length, 2,
+    "les deux envois de vague doivent fournir le lien personnel");
+});
+
+test("vagues : un jeton de vague suffit à autoriser la création d'une famille", () => {
+  const autorisee = (stock, ouvertes) => fonctionDeSource("js/auth.js", "inscriptionAutorisee", {
+    inscriptionsOuvertes: () => ouvertes,
+    INVITE_KEY: "i", PARRAIN_KEY: "p", VAGUE_KEY: "v",
+    localStorage: { getItem: (k) => (k in stock ? stock[k] : null) }
+  })();
+  assert.strictEqual(autorisee({}, false), false, "inscriptions fermées, aucun jeton : refus");
+  assert.strictEqual(autorisee({ v: "abc" }, false), true, "jeton de vague : accepté");
+  assert.strictEqual(autorisee({ i: "abc" }, false), true, "invitation : toujours acceptée");
+  assert.strictEqual(autorisee({ p: "abc" }, false), true, "parrainage : toujours accepté");
+  assert.strictEqual(autorisee({}, true), true, "inscriptions ouvertes : tout le monde entre");
+});
+
+test("vagues : le chantier « Liste d'attente » est fait, sauf la décision d'ouvrir", () => {
+  const { api } = construireContexte();
+  const ch = api.CROISSANCE_CHANTIERS.find(x => x.id === "c_waitlist");
+  assert.ok(ch, "chantier c_waitlist introuvable");
+  const restantes = ch.etapes.filter(e => !e.fait);
+  assert.strictEqual(restantes.length, 1, "une seule étape doit rester");
+  assert.strictEqual(restantes[0].id, "c_waitlist_5",
+    "la seule étape restante est la décision d'ouverture publique, qui revient au fondateur");
+  // Plus aucune étape ne demande d'appeler les familles : le projet reste discret.
+  ch.etapes.forEach(e => assert.strictEqual(/^appeler/i.test(e.titre.trim()), false,
+    "une étape demande encore d'appeler : " + e.id));
+  const ecoute = ch.etapes.find(e => e.id === "c_waitlist_4");
+  assert.ok(/pas d'appel/i.test(ecoute.detail),
+    "l'étape d'écoute doit dire explicitement qu'il n'y a pas d'appel à passer");
+});
+
+test("vagues : libellés de l'onglet traduits dans les 4 langues", () => {
+  const { api } = construireContexte();
+  const cles = ["vag.titre", "vag.sous", "vag.switch", "vag.mode_ouvert", "vag.mode_vagues",
+                "vag.taille", "vag.taille_aide", "vag.kpi_invites", "vag.kpi_taux",
+                "vag.kpi_taux_p", "vag.kpi_attente", "vag.critere_ok", "vag.critere_non",
+                "vag.rien_a_inviter", "vag.prochaine", "vag.jours", "vag.envoyer",
+                "vag.confirm", "vag.relances", "vag.relancer"];
+  const manquantes = [];
+  Object.keys(api.LANGUES).forEach(lg => cles.forEach(k => {
+    const v = api.I18N[lg][k];
+    if (typeof v !== "string" || !v.length) manquantes.push(lg + " → " + k);
+  }));
+  assert.strictEqual(manquantes.length, 0, manquantes.slice(0, 8).join(", "));
+  // Les textes à variable doivent conserver leur mention dans chaque langue.
+  Object.keys(api.LANGUES).forEach(lg => {
+    assert.ok(api.I18N[lg]["vag.taille_aide"].includes("{n}"), lg + " : {n} perdu");
+    assert.ok(api.I18N[lg]["vag.critere_ok"].includes("{taux}"), lg + " : {taux} perdu");
+    assert.ok(api.I18N[lg]["vag.envoyer"].includes("{n}"), lg + " : {n} perdu");
+  });
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

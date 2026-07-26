@@ -294,7 +294,11 @@ Une heure, même jour, même heure, en quatre semaines type :
 | 1 | **Les chiffres** — 10 min de relevé, 50 min sur la prochaine étape |
 | 2 | **Un contact** — un seul e-mail de prescripteur, personnalisé, envoyé |
 | 3 | **Le produit** — une correction issue des retours des familles |
-| 4 | **Les familles** — répondre, relancer une vague, remercier un parrain |
+| 4 | **Les idées** — trier les retours, en faire implémenter un par Claude Code |
+
+Les vagues d'invitations, la relance à J+7, la proposition de parrainage et le
+remerciement au parrain **partent seuls** : aucune de ces quatre semaines n'a
+à s'en occuper.
 
 ---
 
@@ -308,7 +312,7 @@ l'étape qui le déclenche :
 |---|---|
 | Cadre | **question à la Chambre** (le tout premier envoi du plan) |
 | Cycle de vie famille | bienvenue J+0 · relance d'activation J+3 · réveil à 30 j · demande de parrainage · demande de témoignage |
-| Liste d'attente | invitation de vague · relance J+7 |
+| Liste d'attente | invitation de vague *(automatique, une par mois)* · relance J+7 *(automatique, une seule)* |
 | Notoriété | micro-influence · pitch presse · proposition podcast |
 | Prescripteurs | école · crèche · professionnel de l'enfance |
 | Continuité | **proposition de reprise du projet** |

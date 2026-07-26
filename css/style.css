@@ -1454,3 +1454,11 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .hero-principe-faq a{color:#3a7bd5; font-weight:700; text-decoration:none}
 .bon-moment{border-top:6px solid var(--famille,#f6a623); background:linear-gradient(180deg,#fffdf6,#fff6e6)}
 .bm-carte{font-size:17px; margin:4px 0 6px; color:#5a3a0a}
+
+/* Vagues d'invitation (admin » Croissance) */
+.reglage-ligne{display:flex; align-items:center; justify-content:space-between;
+  gap:12px; margin:10px 0 2px; font-size:14px; font-weight:700; color:var(--doux)}
+.champ-nombre{width:84px; flex:none; text-align:center; font-family:inherit;
+  font-size:15px; font-weight:700; padding:8px; border:2px solid #e3edf5; border-radius:10px}
+.vag-zone{margin-top:6px}
+.vag-zone .croiss-file{margin-top:12px}

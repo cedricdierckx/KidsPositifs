@@ -1714,6 +1714,119 @@ function blocEnvoisAuto() {
   return sec;
 }
 
+/* Vagues d'invitation (chantier « Liste d'attente ») : le mode d'inscription,
+ * la taille d'une vague, la prochaine vague à envoyer et la conversion.
+ * Tout part aussi tout seul si les envois automatiques sont armés — ce bloc
+ * sert à voir ce qui va partir, et à déclencher la vague à la main si besoin. */
+function blocVagues() {
+  const sec = el("section", "carte croiss-vagues");
+  const armes = (typeof mailsAutoArmes === "function") ? mailsAutoArmes() : false;
+  const ouvertes = (typeof inscriptionsOuvertes === "function") ? inscriptionsOuvertes() : true;
+  const taille = (typeof tailleVague === "function") ? tailleVague() : 20;
+  sec.innerHTML = `<h2>${t("vag.titre")}</h2><p class="note">${t("vag.sous")}</p>`;
+
+  // Mode d'inscription : ouvertes à tous, ou par vagues (liste d'attente).
+  const l = el("label", "switch-ligne");
+  const i = el("input"); i.type = "checkbox"; i.checked = !ouvertes;
+  i.onchange = async () => {
+    i.disabled = true;
+    await adminDefinirConfig("inscriptions", i.checked ? "vagues" : "ouvertes");
+    i.disabled = false;
+    majSansSaut(() => rendre());
+  };
+  l.appendChild(i);
+  l.appendChild(el("span", null, t("vag.switch")));
+  sec.appendChild(l);
+  sec.appendChild(el("p", "reglage-aide", t(ouvertes ? "vag.mode_ouvert" : "vag.mode_vagues")));
+
+  // Taille d'une vague : ce que le temps disponible permet d'accompagner.
+  const lt = el("label", "reglage-ligne");
+  lt.appendChild(el("span", null, t("vag.taille")));
+  const it = el("input", "champ-nombre"); it.type = "number"; it.min = "1"; it.max = "200";
+  it.value = String(taille);
+  it.onchange = async () => {
+    const n = Math.max(1, Math.min(200, parseInt(it.value, 10) || 20));
+    it.value = String(n);
+    it.disabled = true;
+    await adminDefinirConfig("vague_taille", String(n));
+    it.disabled = false;
+    majSansSaut(() => rendre());
+  };
+  lt.appendChild(it);
+  sec.appendChild(lt);
+  sec.appendChild(el("p", "reglage-aide", t("vag.taille_aide", { n: taille })));
+
+  // Conversion, prochaine vague, relances : chargés ensemble.
+  const zone = el("div", "vag-zone");
+  zone.innerHTML = `<p class="note">${t("common.chargement")}</p>`;
+  sec.appendChild(zone);
+  (async () => {
+    const [st, suivante, relances] = await Promise.all([
+      (typeof adminVaguesStats === "function") ? adminVaguesStats() : null,
+      (typeof adminVagueSuivante === "function") ? adminVagueSuivante() : [],
+      (typeof adminVaguesARelancer === "function") ? adminVaguesARelancer() : []
+    ]);
+    zone.innerHTML = "";
+
+    if (st) {
+      const chiffres = el("div", "stat-grille");
+      chiffres.innerHTML =
+        carteStat("📤", st.invites != null ? st.invites : "—", t("vag.kpi_invites")) +
+        carteStat("✅", st.taux != null ? st.taux + " %" : "—", t("vag.kpi_taux"),
+                  st.convertis != null ? t("vag.kpi_taux_p", { n: st.convertis }) : "") +
+        carteStat("📋", st.en_attente != null ? st.en_attente : "—", t("vag.kpi_attente"));
+      zone.appendChild(chiffres);
+      // Critère d'ouverture publique : 40 % de conversion par vague.
+      if (st.invites >= 10 && st.taux != null) {
+        zone.appendChild(el("p", "reglage-aide",
+          t(st.taux >= 40 ? "vag.critere_ok" : "vag.critere_non", { taux: st.taux })));
+      }
+    }
+
+    // Prochaine vague : on montre QUI serait invité avant d'envoyer.
+    const bloc = el("div", "croiss-file");
+    if (!suivante.length) {
+      bloc.innerHTML = `<p class="note">${t("vag.rien_a_inviter")}</p>`;
+    } else {
+      bloc.innerHTML = `<p class="croiss-file-t">${t("vag.prochaine", { n: suivante.length })}</p>` +
+        suivante.map(cd => `<div class="croiss-file-l"><span>${echapper(cd.email || "—")}</span>
+          <span class="note">${cd.source ? echapper(cd.source) + " · " : ""}${echapper(jourLisible(String(cd.created_at || "").slice(0, 10)) || "—")}</span></div>`).join("");
+      const b = el("button", "btn-secondaire", t("vag.envoyer", { n: suivante.length }));
+      b.disabled = !armes;
+      b.onclick = async () => {
+        if (!confirm(t("vag.confirm", { n: suivante.length }))) return;
+        b.disabled = true; b.textContent = t("common.creation");
+        const n = await envoyerVague(suivante);
+        toast(t("croiss.mails_partis", { n }), "succes");
+        majSansSaut(() => rendre());
+      };
+      bloc.appendChild(b);
+      if (!armes) bloc.appendChild(el("p", "reglage-aide", t("croiss.file_bloque")));
+    }
+    zone.appendChild(bloc);
+
+    // Relances J+7 : une seule, jamais deux.
+    if (relances.length) {
+      const br = el("div", "croiss-file");
+      br.innerHTML = `<p class="croiss-file-t">${t("vag.relances", { n: relances.length })}</p>` +
+        relances.map(cd => `<div class="croiss-file-l"><span>${echapper(cd.email || "—")}</span>
+          <span class="note">${t("vag.jours", { n: cd.jours })}</span></div>`).join("");
+      const b2 = el("button", "btn-secondaire", t("vag.relancer", { n: relances.length }));
+      b2.disabled = !armes;
+      b2.onclick = async () => {
+        b2.disabled = true; b2.textContent = t("common.creation");
+        const n = await envoyerRelancesVague(relances);
+        toast(t("croiss.mails_partis", { n }), "succes");
+        majSansSaut(() => rendre());
+      };
+      br.appendChild(b2);
+      if (!armes) br.appendChild(el("p", "reglage-aide", t("croiss.file_bloque")));
+      zone.appendChild(br);
+    }
+  })();
+  return sec;
+}
+
 function blocAdminCroissance(c) {
   const etat0 = croissanceEtat();
 
@@ -1837,6 +1950,9 @@ function blocAdminCroissance(c) {
 
   /* ----- Envois automatiques : interrupteur, file d'attente, réponses types ----- */
   c.appendChild(blocEnvoisAuto());
+
+  /* ----- Vagues d'invitation : mode d'inscription, cadence, conversion ----- */
+  c.appendChild(blocVagues());
 
   /* ----- Les chantiers, phase par phase ----- */
   CROISSANCE_PHASES.forEach(ph => {
