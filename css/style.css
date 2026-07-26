@@ -1425,3 +1425,13 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .croiss-source-l{display:flex; justify-content:space-between; gap:10px; font-size:13px;
   padding:6px 0; border-bottom:1px solid #eef3f8}
 .croiss-source-l:last-child{border-bottom:none}
+.tr-bloc.autre.demain{background:#eaf2ff;border:2px solid #cfe0ff}
+.tr-bloc.autre.demain .tr-quand{color:#3a7bd5;font-weight:800}
+.croiss-envois{border-top:6px solid #5b8def}
+.croiss-file{margin-top:8px}
+.croiss-file-t{font-weight:800;font-size:13.5px;margin:6px 0 4px;color:#27384a}
+.croiss-file-l{display:flex;justify-content:space-between;gap:10px;font-size:13px;
+  padding:6px 0;border-bottom:1px solid #eef3f8}
+.croiss-file-l:last-of-type{border-bottom:none}
+.croiss-reponse{margin-bottom:10px}
+.croiss-reponse-t{font-weight:800;font-size:13.5px;margin:0 0 4px;color:#27384a}

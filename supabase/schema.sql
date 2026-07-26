@@ -781,6 +781,60 @@ begin
     order by 2 desc, 3 desc;
 end; $$;
 
+-- =====================================================================
+-- ENVOIS AUTOMATIQUES : journal d'idempotence + file d'attente
+-- ---------------------------------------------------------------------
+-- Un e-mail parti ne se rattrape pas : le journal garantit qu'un même
+-- envoi ne part JAMAIS deux fois, quel que soit le rejeu du déclencheur.
+--   type : 'bienvenue' | 'activation' | 'rapport'
+--   cle  : identifiant de famille, ou 'AAAA-MM' pour le rapport mensuel
+-- L'envoi lui-même passe par la session de l'utilisateur connecté (la
+-- fonction send-mail exige une authentification) et n'a lieu que si
+-- app_config.mails_auto vaut « on ».
+-- =====================================================================
+create table if not exists public.mails_auto (
+  type      text not null,
+  cle       text not null,
+  envoye_le timestamptz not null default now(),
+  primary key (type, cle)
+);
+alter table public.mails_auto enable row level security;
+drop policy if exists "admins lisent les envois" on public.mails_auto;
+create policy "admins lisent les envois" on public.mails_auto for select using (is_admin());
+
+create or replace function public.mail_auto_marquer(p_type text, p_cle text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if coalesce(trim(p_type), '') = '' or coalesce(trim(p_cle), '') = '' then return; end if;
+  insert into mails_auto(type, cle) values (trim(p_type), trim(p_cle))
+    on conflict (type, cle) do nothing;
+end; $$;
+
+create or replace function public.mail_auto_deja(p_type text, p_cle text)
+returns boolean language sql security definer set search_path = public as $$
+  select exists (select 1 from mails_auto where type = p_type and cle = p_cle);
+$$;
+
+-- Familles à relancer : créées il y a 3 à 14 jours, aucun état jamais
+-- enregistré (donc aucune mission validée), aucune relance déjà envoyée.
+create or replace function public.admin_mails_en_attente()
+returns table(famille_id uuid, famille text, email text, jours integer)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  return query
+    select f.id, f.name::text,
+           (select u.email::text from auth.users u where u.id = f.owner_id),
+           extract(day from now() - f.created_at)::int
+    from families f
+    where f.created_at <= now() - interval '3 days'
+      and f.created_at >= now() - interval '14 days'
+      and not exists (select 1 from family_state_history h where h.family_id = f.id)
+      and not exists (select 1 from usage_events u where u.family_id = f.id)
+      and not exists (select 1 from mails_auto m where m.type = 'activation' and m.cle = f.id::text)
+    order by f.created_at;
+end; $$;
+
 -- ---------- Droits d'exécution ----------
 grant execute on function public.create_family(text, text)            to authenticated;
 grant execute on function public.set_app_config(text, text)     to authenticated;
@@ -796,6 +850,9 @@ grant execute on function public.join_waitlist(text, text)            to anon, a
 grant execute on function public.admin_list_waitlist()          to authenticated;
 grant execute on function public.admin_activation()             to authenticated;
 grant execute on function public.admin_sources()                to authenticated;
+grant execute on function public.mail_auto_marquer(text, text)  to authenticated;
+grant execute on function public.mail_auto_deja(text, text)     to authenticated;
+grant execute on function public.admin_mails_en_attente()       to authenticated;
 grant execute on function public.admin_remove_waitlist(text)    to authenticated;
 grant execute on function public.is_admin()                     to authenticated;
 grant execute on function public.admin_list_families()          to authenticated;

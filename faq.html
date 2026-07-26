@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6a623">
+  <title>Questions fréquentes — FamiTeam</title>
+  <meta name="description" content="Les réponses aux questions que les parents posent le plus souvent sur FamiTeam : gratuité, données, âge des enfants, tournantes, réparation plutôt que punition.">
+  <link rel="stylesheet" href="css/style.css?v=97">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌟</text></svg>">
+  <style>
+    body{padding:24px 16px 60px}
+    .page-legale{max-width:640px; margin:0 auto}
+    .page-legale .carte{text-align:left; margin-bottom:16px}
+    .page-legale h1{font-size:26px}
+    .page-legale h2{font-size:17px; margin-top:1.4em}
+    .page-legale p, .page-legale li{color:var(--doux); line-height:1.6; font-size:15px}
+    .page-legale strong{color:#27384a}
+    .page-legale .retour{display:inline-block; margin-bottom:16px; color:#3a7bd5; text-decoration:none; font-weight:700}
+    .faq-intro{background:#f7fbff; border:2px solid #e3edf5; border-radius:14px; padding:12px}
+  </style>
+</head>
+<body>
+  <div class="page-legale">
+    <a class="retour" href="index.html">← Retour à FamiTeam</a>
+    <section class="carte">
+      <div class="code-logo">🌟</div>
+      <h1>Questions fréquentes</h1>
+      <p class="faq-intro">Vous ne trouvez pas votre réponse ? Écrivez à
+        <a href="mailto:hello@fami.team">hello@fami.team</a>. FamiTeam est un projet personnel mené
+        sur du temps libre : la réponse peut prendre quelques jours, mais elle arrive.</p>
+
+      <h2>Est-ce vraiment gratuit ?</h2>
+      <p>Oui. FamiTeam est un <strong>projet personnel sans but lucratif</strong> : pas d'abonnement,
+        pas de publicité, pas de revente de données. Les frais techniques sont supportés par l'éditeur.
+        Il n'y a pas de version payante prévue.</p>
+
+      <h2>À quel âge cela convient-il ?</h2>
+      <p>De <strong>2 à 7 ans</strong>. En dessous de l'âge de lecture, les quantités s'affichent en
+        images (💛💛💛) plutôt qu'en chiffres, et les missions proposées s'adaptent automatiquement à
+        l'âge de chaque enfant. Le seuil d'affichage imagé est réglable dans l'espace parents.</p>
+
+      <h2>Faut-il installer quelque chose ?</h2>
+      <p>Non. FamiTeam fonctionne directement dans le navigateur, sur téléphone, tablette ou ordinateur.
+        Vous pouvez l'ajouter à votre écran d'accueil pour y accéder comme une application.
+        Tout se synchronise entre vos appareils, et l'app continue de fonctionner hors connexion.</p>
+
+      <h2>Combien de temps cela demande-t-il par jour ?</h2>
+      <p><strong>Deux minutes</strong>, en fin de journée, avec votre enfant. Si cela vous prend plus,
+        c'est que trop de missions sont sélectionnées : deux ou trois par jour suffisent, et l'app vous
+        indique le nombre conseillé pour l'âge de chaque enfant.</p>
+
+      <h2>Pourquoi ne retire-t-on jamais de points ?</h2>
+      <p>Parce que retirer des points apprend surtout à <strong>cacher</strong> l'erreur. Dans FamiTeam,
+        quand quelque chose se passe mal, l'enfant choisit un <strong>geste de réparation</strong>
+        (ranger, s'excuser, aider la personne) — et c'est ce geste qui est récompensé. Vous trouverez
+        ce cadre dans l'espace parents, sous « Oups, ça arrive… ».</p>
+
+      <h2>Mon enfant coche des missions qu'il n'a pas faites</h2>
+      <p>Activez la <strong>validation parentale</strong> (Réglages → Le programme) : chaque mission
+        cochée par l'enfant attend votre ✅ avant d'être comptée. C'est conçu pour les plus jeunes,
+        et cela transforme le moment en rituel partagé plutôt qu'en contrôle.</p>
+
+      <h2>Comment fonctionnent les tournantes ?</h2>
+      <p>Une tournante fait faire une tâche <strong>à tour de rôle</strong>. Chaque enfant voit sur son
+        écran si c'est son tour, <strong>jusqu'à quand</strong>, et quand son tour reviendra ; celui qui
+        n'est pas de garde voit le prénom de celui qui l'est. Côté parents, l'écran affiche la phrase
+        complète et le calendrier des prochains tours. Rien d'autre à régler : la tâche n'apparaît que
+        le jour du tour.</p>
+
+      <h2>Puis-je inviter l'autre parent ?</h2>
+      <p>Oui, depuis l'espace parents → Réglages → Ma famille. Le lien d'invitation donne accès à la
+        même famille, avec synchronisation en temps réel entre tous les appareils.</p>
+
+      <h2>Et les grands-parents, la garde alternée ?</h2>
+      <p>Un compte peut appartenir à <strong>plusieurs familles</strong>, et une famille peut avoir
+        plusieurs parents. Chacun voit et valide les mêmes missions, où qu'il soit.</p>
+
+      <h2>Où sont stockées les données de mes enfants ?</h2>
+      <p>Sur des serveurs <strong>en Europe</strong> (Supabase, base PostgreSQL). Nous demandons le
+        strict minimum : prénom et date de naissance, rien d'autre — aucune photo, aucune adresse,
+        aucun contact d'enfant. Chaque famille n'est accessible qu'à ses propres membres.
+        Voir la <a href="confidentialite.html">politique de confidentialité</a>.</p>
+
+      <h2>Comment récupérer ou supprimer mes données ?</h2>
+      <p>Réglages → Mon compte : <strong>Exporter</strong> télécharge tout au format JSON,
+        <strong>Supprimer le compte</strong> efface définitivement la famille et son historique.
+        Les deux se font en deux clics, sans passer par nous.</p>
+
+      <h2>J'ai perdu des données / je me suis trompé</h2>
+      <p>L'app garde des <strong>instantanés automatiques</strong> de l'état de la famille. Réglages →
+        Mon compte → « 🛟 Récupération de données » permet de revenir à une sauvegarde antérieure.
+        Pour une erreur du jour même, le <strong>journal des actions</strong> (espace parents) permet
+        d'annuler une validation en un clic.</p>
+
+      <h2>Puis-je encoder une semaine passée ?</h2>
+      <p>Oui. L'espace parents propose une <strong>semaine papier</strong> à imprimer (à cocher à la
+        main sur le frigo) puis un écran pour encoder toute la semaine en une fois. Il existe aussi un
+        mode révision pour corriger un jour précis.</p>
+
+      <h2>Comment obtenir un accès ? Puis-je en offrir un ?</h2>
+      <p>Les inscriptions se font sur invitation ou par parrainage. Chaque famille peut
+        <strong>parrainer trois familles amies par semaine</strong> via la pastille 🎁 en haut à gauche.
+        Sans invitation, laissez votre adresse sur la liste d'attente : les accès s'ouvrent par vagues.</p>
+
+      <h2>J'ai trouvé un bogue / j'ai une idée</h2>
+      <p>Réglages → Mon compte → « Un bogue, une idée ? », ou directement
+        <a href="mailto:hello@fami.team">hello@fami.team</a>. Les retours des familles sont la
+        principale source d'amélioration de l'app — ils sont lus, tous.</p>
+    </section>
+  </div>
+</body>
+</html>

@@ -95,11 +95,11 @@ const CROISSANCE_CHANTIERS = [
     but: "Chaque geste répétitif automatisé une fois libère des heures pour toujours.",
     kpi: "Zéro envoi manuel récurrent · support < 15 min/semaine",
     etapes: [
-      { id: "c_auto_1", titre: "E-mail de bienvenue automatique", min: 45, detail: "Déclenché à la création de la famille, à partir du modèle prévu.", mail: "m_bienvenue" },
-      { id: "c_auto_2", titre: "Relance d'activation J+3 automatique", min: 45, detail: "Uniquement si aucune mission n'a été validée.", mail: "m_activation" },
-      { id: "c_auto_3", titre: "Rapport mensuel envoyé à l'admin", min: 40, detail: "Les cinq chiffres par e-mail le 1ᵉʳ du mois : plus besoin d'ouvrir l'app pour savoir." },
-      { id: "c_auto_4", titre: "FAQ publique pour absorber le support", min: 60, detail: "Dix questions récurrentes répondues une fois. C'est du temps rendu, chaque semaine." },
-      { id: "c_auto_5", titre: "Réponses types aux retours", min: 20, detail: "Trois réponses préécrites (merci / c'est noté / voici comment faire) collées en dix secondes." }
+      { id: "c_auto_1", titre: "E-mail de bienvenue automatique", min: 45, detail: "Fait : envoyé à la création de la famille, dès que l'interrupteur « envois automatiques » est armé (onglet Croissance).", mail: "m_bienvenue" , fait: true },
+      { id: "c_auto_2", titre: "Relance d'activation J+3 automatique", min: 45, detail: "Fait : les familles sans aucune activité après 3 jours sont listées dans l'onglet et relancées une seule fois. À armer.", mail: "m_activation" , fait: true },
+      { id: "c_auto_3", titre: "Rapport mensuel envoyé à l'admin", min: 40, detail: "Fait : envoyé à l'adresse de support le premier jour du mois où tu ouvres l'app. À armer." , fait: true },
+      { id: "c_auto_4", titre: "FAQ publique pour absorber le support", min: 60, detail: "Fait : faq.html, quinze questions, liée depuis l'écran de connexion, les réglages et les pages légales." , fait: true },
+      { id: "c_auto_5", titre: "Réponses types aux retours", min: 20, detail: "Fait : cinq réponses prêtes à copier dans l'onglet Croissance." , fait: true }
     ]
   },
   {

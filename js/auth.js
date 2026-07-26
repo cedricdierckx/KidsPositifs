@@ -244,6 +244,7 @@ async function ouvrirFamille(f) {
   document.addEventListener("visibilitychange", auRetour);
   verifierParrainages();                  // féliciter le parrain si un filleul a rejoint
   pingUsage();                            // mesure d'activité (best-effort, 1×/jour)
+  declencherEnvoisAuto();                 // relances + rapport (admin, 1×/jour, si armé)
 }
 function auRetour() { if (!document.hidden) { tirerEtat(); if (typeof majDodo === "function") majDodo(); } }
 
@@ -356,6 +357,112 @@ function sourceInscription() {
   try { return localStorage.getItem(SOURCE_KEY) || null; } catch (e) { return null; }
 }
 
+/* ---------- Envois automatiques (chantier « Automatiser le récurrent ») ----------
+ * Deux règles non négociables :
+ *   1. rien ne part tant que l'administrateur n'a pas armé l'interrupteur
+ *      (app_config → mails_auto) : par défaut, aucun envoi ;
+ *   2. un envoi réussi est journalisé en base (table mails_auto), donc un
+ *      même e-mail ne peut jamais partir deux fois, même si le déclencheur
+ *      est rejoué.
+ * L'envoi passe par la session de l'utilisateur connecté : la fonction
+ * send-mail exige une authentification. Le déclencheur est donc l'ouverture
+ * de l'app (une fois par jour au maximum), pas un cron. */
+function mailsAutoArmes() {
+  return !!(configApp && String(configApp.mails_auto || "").trim() === "on");
+}
+// Corps d'un modèle de js/croissance.js, mentions {…} remplacées.
+function modeleMailCroissance(id, valeurs) {
+  const m = (typeof mailCroissance === "function") ? mailCroissance(id) : null;
+  if (!m) return null;
+  const remplir = (txt) => String(txt).replace(/\{(\w+)\}/g, (_, k) =>
+    (valeurs && valeurs[k] != null) ? valeurs[k] : "");
+  return { sujet: remplir(m.sujet), corps: remplir(m.corps) };
+}
+async function mailAutoDeja(type, cle) {
+  try {
+    const { data } = await sb.rpc("mail_auto_deja", { p_type: type, p_cle: String(cle) });
+    return !!data;
+  } catch (e) { return true; }        // en cas de doute : on n'envoie pas
+}
+async function mailAutoMarquer(type, cle) {
+  try { await sb.rpc("mail_auto_marquer", { p_type: type, p_cle: String(cle) }); } catch (e) { /* best-effort */ }
+}
+// Envoi unitaire, journalisé. Retourne true si l'e-mail est bien parti.
+async function envoyerMailAuto(type, cle, dest, modele, valeurs) {
+  if (!mailsAutoArmes() || !dest) return false;
+  if (typeof modeDemo !== "undefined" && modeDemo) return false;
+  if (await mailAutoDeja(type, cle)) return false;
+  const m = modeleMailCroissance(modele, valeurs);
+  if (!m) return false;
+  const res = await envoyerMailFn({ to: dest, subject: m.sujet, text: m.corps, replyTo: emailSupport() });
+  if (res && res.ok) { await mailAutoMarquer(type, cle); return true; }
+  return false;
+}
+
+// E-mail de bienvenue : envoyé au parent qui vient de créer sa famille.
+async function envoyerBienvenue(familleId) {
+  const u = utilisateurCourant();
+  if (!u || !u.email) return false;
+  const prenom = (u.email.split("@")[0] || "").replace(/[._-]+/g, " ");
+  return envoyerMailAuto("bienvenue", familleId, u.email, "m_bienvenue",
+    { prenom, lien: location.origin || "https://famiteam.com" });
+}
+
+// Relances d'activation en attente (administrateur uniquement).
+async function adminMailsEnAttente() {
+  if (!estAdmin) return [];
+  const { data, error } = await sb.rpc("admin_mails_en_attente");
+  if (error) return [];
+  return data || [];
+}
+// Envoie les relances en attente. Retourne le nombre d'e-mails partis.
+async function envoyerRelancesActivation(liste) {
+  const familles = liste || await adminMailsEnAttente();
+  let n = 0;
+  for (const f of familles) {
+    if (!f.email) continue;
+    const prenom = (f.email.split("@")[0] || "").replace(/[._-]+/g, " ");
+    const ok = await envoyerMailAuto("activation", f.famille_id, f.email, "m_activation",
+      { prenom, lien: location.origin || "https://famiteam.com" });
+    if (ok) n++;
+  }
+  return n;
+}
+// Rapport mensuel : les chiffres clés, à l'adresse de support, une fois par mois.
+async function envoyerRapportMensuel() {
+  if (!estAdmin || !mailsAutoArmes()) return false;
+  const periode = new Date().toISOString().slice(0, 7);
+  if (await mailAutoDeja("rapport", periode)) return false;
+  const [s, u, a] = await Promise.all([adminStats(), adminUsageStats(), adminActivation()]);
+  if (!s && !u) return false;
+  const v = (o, k) => (o && o[k] != null) ? o[k] : "—";
+  const corps = `FamiTeam — rapport du mois ${periode}\n\n` +
+    `Familles actives 7 j (étoile du Nord) : ${v(u, "actifs_7j")}\n` +
+    `Familles inscrites : ${v(s, "familles_total")} (dont ${v(s, "familles_30j")} sur 30 jours)\n` +
+    `Activation J+1 : ${a && a.taux != null ? a.taux + " %" : "—"}\n` +
+    `Parrainages acceptés : ${v(s, "referrals_acceptes")}\n` +
+    `Liste d'attente : ${v(s, "waitlist_total")}\n` +
+    `Retours non lus : ${v(s, "feedback_non_lus")}\n\n` +
+    `Une décision à noter ce mois-ci ? ${location.origin || "https://famiteam.com"}/croissance\n`;
+  const res = await envoyerMailFn({ to: emailSupport(), subject: `FamiTeam — rapport ${periode}`, text: corps });
+  if (res && res.ok) { await mailAutoMarquer("rapport", periode); return true; }
+  return false;
+}
+// Déclencheur : à l'ouverture de l'app par l'administrateur, une fois par jour.
+async function declencherEnvoisAuto() {
+  try {
+    if (!estAdmin || !mailsAutoArmes()) return;
+    if (typeof modeDemo !== "undefined" && modeDemo) return;
+    const cle = "kp_envois_auto";
+    const auj = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem(cle) === auj) return;
+    localStorage.setItem(cle, auj);
+    const n = await envoyerRelancesActivation();
+    await envoyerRapportMensuel();
+    if (n > 0 && typeof toast === "function") toast(t("croiss.mails_partis", { n }), "succes");
+  } catch (e) { /* best-effort : jamais bloquant */ }
+}
+
 /* ---------- Familles & invitations ---------- */
 async function creerFamille(nom, nbEnfants) {
   const { data, error } = await sb.rpc("create_family", { p_name: nom, p_source: sourceInscription() });
@@ -368,6 +475,9 @@ async function creerFamille(nom, nbEnfants) {
     ajusterNombreEnfantsCreation(nbEnfants);
     vueAccueilAine(); rendre();
   }
+  // E-mail de bienvenue (silencieux, et seulement si l'admin a armé les envois).
+  if (data) envoyerBienvenue(data);
+
   // Si l'utilisateur a été parrainé, on relie sa nouvelle famille au parrain.
   const par = localStorage.getItem(PARRAIN_KEY);
   if (par && data) {
@@ -621,6 +731,7 @@ function ecranAuth() {
           <hr style="border:none;border-top:1px solid #e3edf5;margin:14px 0">
           <button id="b-demo" class="btn-secondaire">${t("auth.demo")}</button>
           <p class="note" style="margin-top:14px">
+            <a href="faq.html">Questions fréquentes</a> ·
             <a href="mentions-legales.html">Mentions légales</a> ·
             <a href="confidentialite.html">Politique de confidentialité</a>
           </p>

@@ -2998,3 +2998,83 @@ Object.assign(I18N.de, {
   "rot.badge": "Du bist dran",
   "rot.priorite_aide": "Für die Kinder im Wechsel erscheint die Aufgabe nur an ihrem Tag — sonst ist nichts einzustellen. Kinder außerhalb des Wechsels behalten sie wie gewohnt.",
 });
+
+/* ---- Tournantes : le tour qui commence demain ---- */
+Object.assign(I18N.fr, {
+  "rot.ton_tour_demain": "Demain, ce sera ton tour !",
+});
+Object.assign(I18N.en, {
+  "rot.ton_tour_demain": "Tomorrow it's your turn!",
+});
+Object.assign(I18N.nl, {
+  "rot.ton_tour_demain": "Morgen ben jij aan de beurt!",
+});
+Object.assign(I18N.de, {
+  "rot.ton_tour_demain": "Morgen bist du dran!",
+});
+
+/* ---- Envois automatiques & réponses types (admin) ---- */
+Object.assign(I18N.fr, {
+  "croiss.envois_titre": "🤖 Envois automatiques",
+  "croiss.envois_sous": "Bienvenue, relance d'activation et rapport mensuel. Un e-mail parti ne se rattrape pas : rien ne part tant que l'interrupteur est coupé, et un même envoi ne peut jamais partir deux fois.",
+  "croiss.envois_switch": "Armer les envois automatiques",
+  "croiss.envois_on": "Armés : la bienvenue part à la création d'une famille ; les relances et le rapport partent à ta première ouverture de l'app chaque jour.",
+  "croiss.envois_off": "Coupés : aucun e-mail automatique n'est envoyé. Tu peux quand même voir ci-dessous qui serait relancé.",
+  "croiss.file_titre": "{n} famille(s) à relancer",
+  "croiss.file_vide": "Personne à relancer : toutes les familles inscrites ont démarré. 🎉",
+  "croiss.file_jours": "inscrite depuis {n} j",
+  "croiss.file_envoyer": "Envoyer les {n} relances maintenant",
+  "croiss.file_confirm": "Envoyer {n} e-mail(s) de relance ? Cette action est irréversible.",
+  "croiss.file_bloque": "Arme d'abord les envois ci-dessus pour pouvoir envoyer.",
+  "croiss.mails_partis": "{n} e-mail(s) envoyé(s).",
+  "croiss.reponses_titre": "Réponses types au support",
+  "croiss.reponses_sous": "À copier-coller puis adapter en une ligne. Le support doit coûter des secondes, pas des minutes.",
+});
+Object.assign(I18N.en, {
+  "croiss.envois_titre": "🤖 Automatic emails",
+  "croiss.envois_sous": "Welcome, activation reminder and monthly report. A sent email cannot be recalled: nothing goes out while the switch is off, and the same email can never be sent twice.",
+  "croiss.envois_switch": "Arm automatic emails",
+  "croiss.envois_on": "Armed: the welcome goes out when a family is created; reminders and the report go out the first time you open the app each day.",
+  "croiss.envois_off": "Off: no automatic email is sent. You can still see below who would be reminded.",
+  "croiss.file_titre": "{n} family/families to remind",
+  "croiss.file_vide": "Nobody to remind: every registered family has started. 🎉",
+  "croiss.file_jours": "registered {n} d ago",
+  "croiss.file_envoyer": "Send the {n} reminders now",
+  "croiss.file_confirm": "Send {n} reminder email(s)? This cannot be undone.",
+  "croiss.file_bloque": "Arm the emails above first to be able to send.",
+  "croiss.mails_partis": "{n} email(s) sent.",
+  "croiss.reponses_titre": "Canned support replies",
+  "croiss.reponses_sous": "Copy, paste, adapt in one line. Support should cost seconds, not minutes.",
+});
+Object.assign(I18N.nl, {
+  "croiss.envois_titre": "🤖 Automatische e-mails",
+  "croiss.envois_sous": "Welkom, activeringsherinnering en maandrapport. Een verzonden e-mail haal je niet terug: er vertrekt niets zolang de schakelaar uit staat, en dezelfde e-mail kan nooit twee keer vertrekken.",
+  "croiss.envois_switch": "Automatische e-mails inschakelen",
+  "croiss.envois_on": "Ingeschakeld: het welkom vertrekt bij het aanmaken van een gezin; herinneringen en rapport vertrekken bij je eerste opening van de app per dag.",
+  "croiss.envois_off": "Uit: er wordt geen enkele automatische e-mail verzonden. Je ziet hieronder wel wie herinnerd zou worden.",
+  "croiss.file_titre": "{n} gezin(nen) te herinneren",
+  "croiss.file_vide": "Niemand te herinneren: alle ingeschreven gezinnen zijn gestart. 🎉",
+  "croiss.file_jours": "{n} d ingeschreven",
+  "croiss.file_envoyer": "De {n} herinneringen nu versturen",
+  "croiss.file_confirm": "{n} herinneringsmail(s) versturen? Dit kan niet ongedaan gemaakt worden.",
+  "croiss.file_bloque": "Schakel eerst de e-mails hierboven in om te kunnen versturen.",
+  "croiss.mails_partis": "{n} e-mail(s) verzonden.",
+  "croiss.reponses_titre": "Standaardantwoorden voor support",
+  "croiss.reponses_sous": "Kopiëren, plakken, in één regel aanpassen. Support mag seconden kosten, geen minuten.",
+});
+Object.assign(I18N.de, {
+  "croiss.envois_titre": "🤖 Automatische E-Mails",
+  "croiss.envois_sous": "Willkommen, Aktivierungserinnerung und Monatsbericht. Eine gesendete E-Mail lässt sich nicht zurückholen: Solange der Schalter aus ist, geht nichts raus, und dieselbe E-Mail kann nie zweimal rausgehen.",
+  "croiss.envois_switch": "Automatische E-Mails scharfschalten",
+  "croiss.envois_on": "Scharf: Die Willkommensmail geht beim Anlegen einer Familie raus; Erinnerungen und Bericht beim ersten Öffnen der App pro Tag.",
+  "croiss.envois_off": "Aus: Es wird keine automatische E-Mail versendet. Wer erinnert würde, siehst du trotzdem unten.",
+  "croiss.file_titre": "{n} Familie(n) zu erinnern",
+  "croiss.file_vide": "Niemand zu erinnern: Alle registrierten Familien sind gestartet. 🎉",
+  "croiss.file_jours": "seit {n} T registriert",
+  "croiss.file_envoyer": "Die {n} Erinnerungen jetzt senden",
+  "croiss.file_confirm": "{n} Erinnerungs-E-Mail(s) senden? Das lässt sich nicht rückgängig machen.",
+  "croiss.file_bloque": "Schalte oben zuerst die E-Mails scharf, um senden zu können.",
+  "croiss.mails_partis": "{n} E-Mail(s) gesendet.",
+  "croiss.reponses_titre": "Standardantworten für den Support",
+  "croiss.reponses_sous": "Kopieren, einfügen, in einer Zeile anpassen. Support soll Sekunden kosten, nicht Minuten.",
+});

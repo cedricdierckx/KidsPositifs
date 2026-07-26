@@ -1572,6 +1572,80 @@ function copierTexte(txt) {
   } catch (e) { toast(t("croiss.copie_ko"), "info"); }
 }
 
+/* Envois automatiques : un interrupteur, la file d'attente visible avant
+ * envoi, et les réponses types du support. Rien ne part tant que
+ * l'interrupteur est coupé — c'est le réglage par défaut. */
+const REPONSES_TYPES = [
+  { id: "merci", titre: "Merci pour le retour",
+    texte: `Bonjour,\n\nMerci beaucoup pour ce retour — c'est exactement ce qui fait avancer l'app.\nC'est noté ; je reviens vers vous si j'ai besoin d'une précision.\n\nBonne journée,\nCédric — FamiTeam` },
+  { id: "bogue", titre: "Bogue signalé",
+    texte: `Bonjour,\n\nMerci de l'avoir signalé. Je reproduis le problème et je le corrige dès que possible ;\nvous n'avez rien à faire de votre côté, la correction arrive toute seule (rien à installer).\n\nSi cela vous bloque au quotidien d'ici là, dites-le moi : je verrai s'il existe un contournement.\n\nCédric — FamiTeam` },
+  { id: "idee", titre: "Idée reçue, mais pas pour tout de suite",
+    texte: `Bonjour,\n\nMerci pour l'idée. Je la note dans la liste.\n\nJe développe FamiTeam sur mon temps libre, quelques heures par mois : je ne peux donc pas tout faire,\net je préfère être honnête sur les délais plutôt que de promettre. Si plusieurs familles demandent\nla même chose, elle remonte naturellement.\n\nCédric — FamiTeam` },
+  { id: "donnees", titre: "Question sur les données",
+    texte: `Bonjour,\n\nVos données sont hébergées en Europe, ne sont jamais revendues et ne servent à aucune publicité.\nNous demandons le strict minimum : prénom et date de naissance de l'enfant, rien d'autre.\n\nVous pouvez tout exporter ou tout supprimer en deux clics : Réglages → Mon compte.\nLe détail est ici : https://famiteam.com/confidentialite.html\n\nCédric — FamiTeam` },
+  { id: "faq", titre: "Renvoi vers la FAQ",
+    texte: `Bonjour,\n\nLa réponse se trouve ici : https://famiteam.com/faq.html\n\nSi ce n'est pas assez clair, dites-le moi : cela veut dire que la page est à réécrire.\n\nCédric — FamiTeam` }
+];
+
+function blocEnvoisAuto() {
+  const sec = el("section", "carte croiss-envois");
+  const armes = (typeof mailsAutoArmes === "function") ? mailsAutoArmes() : false;
+  sec.innerHTML = `<h2>${t("croiss.envois_titre")}</h2>
+    <p class="note">${t("croiss.envois_sous")}</p>`;
+
+  const l = el("label", "switch-ligne");
+  const i = el("input"); i.type = "checkbox"; i.checked = armes;
+  i.onchange = async () => {
+    i.disabled = true;
+    await adminDefinirConfig("mails_auto", i.checked ? "on" : "");
+    i.disabled = false;
+    majSansSaut(() => rendre());
+  };
+  l.appendChild(i);
+  l.appendChild(el("span", null, t("croiss.envois_switch")));
+  sec.appendChild(l);
+  sec.appendChild(el("p", "reglage-aide", t(armes ? "croiss.envois_on" : "croiss.envois_off")));
+
+  // File d'attente : on montre QUI serait relancé avant d'envoyer quoi que ce soit.
+  const file = el("div", "croiss-file");
+  file.innerHTML = `<p class="note">${t("common.chargement")}</p>`;
+  sec.appendChild(file);
+  (async () => {
+    const liste = (typeof adminMailsEnAttente === "function") ? await adminMailsEnAttente() : [];
+    if (!liste.length) { file.innerHTML = `<p class="note">${t("croiss.file_vide")}</p>`; return; }
+    file.innerHTML = `<p class="croiss-file-t">${t("croiss.file_titre", { n: liste.length })}</p>` +
+      liste.map(f => `<div class="croiss-file-l"><span>${echapper(f.famille || "—")}</span>
+        <span class="note">${echapper(f.email || "—")} · ${t("croiss.file_jours", { n: f.jours })}</span></div>`).join("");
+    const b = el("button", "btn-secondaire", t("croiss.file_envoyer", { n: liste.length }));
+    b.disabled = !armes;
+    b.onclick = async () => {
+      if (!confirm(t("croiss.file_confirm", { n: liste.length }))) return;
+      b.disabled = true; b.textContent = t("common.creation");
+      const n = await envoyerRelancesActivation(liste);
+      toast(t("croiss.mails_partis", { n }), "succes");
+      majSansSaut(() => rendre());
+    };
+    file.appendChild(b);
+    if (!armes) file.appendChild(el("p", "reglage-aide", t("croiss.file_bloque")));
+  })();
+
+  // Réponses types : le support en dix secondes plutôt qu'en dix minutes.
+  const { details, corps } = blocPliable("💬 " + t("croiss.reponses_titre"), false, "croiss-reponses");
+  corps.appendChild(el("p", "note", t("croiss.reponses_sous")));
+  REPONSES_TYPES.forEach(r => {
+    const bloc = el("div", "croiss-reponse");
+    bloc.innerHTML = `<p class="croiss-reponse-t">${echapper(r.titre)}</p>
+      <pre class="croiss-corps">${echapper(r.texte)}</pre>`;
+    const b = el("button", "mini-btn", "📋 " + t("croiss.copier"));
+    b.onclick = () => copierTexte(r.texte);
+    bloc.appendChild(b);
+    corps.appendChild(bloc);
+  });
+  sec.appendChild(details);
+  return sec;
+}
+
 function blocAdminCroissance(c) {
   const etat0 = croissanceEtat();
 
@@ -1688,6 +1762,9 @@ function blocAdminCroissance(c) {
       kpi.appendChild(tbl);
     }
   })();
+
+  /* ----- Envois automatiques : interrupteur, file d'attente, réponses types ----- */
+  c.appendChild(blocEnvoisAuto());
 
   /* ----- Les chantiers, phase par phase ----- */
   CROISSANCE_PHASES.forEach(ph => {
@@ -2842,35 +2919,20 @@ function blocTournanteEnfant(enf) {
         <div class="tr-taches">${taches}</div>
         <div class="tr-quand">${t("rot.jusqu_a", { jour: jourLisible(p.fin) })}${ensuite}</div></div></div>`;
     } else {
+      // « Ton tour revient lundi 27 » ET « et demain c'est toi » disaient la
+      // même chose deux fois : quand le tour commence demain, on ne dit que ça.
       const mien = prochainTourRotation(r, enf.id, jour);
-      const quand = mien ? t("rot.ton_tour", { jour: jourLisible(mien.debut) }) : "";
-      html += `<div class="tr-bloc autre"><div class="tr-roue-wrap">${roue}</div><div class="tr-texte">
+      const demainMonTour = !!mien && mien.debut === demain(jour);
+      const quand = !mien ? ""
+        : (demainMonTour ? `🌙 ${t("rot.ton_tour_demain")}`
+                         : t("rot.ton_tour", { jour: jourLisible(mien.debut) }));
+      html += `<div class="tr-bloc autre${demainMonTour ? " demain" : ""}"><div class="tr-roue-wrap">${roue}</div><div class="tr-texte">
         <div class="tr-titre">🔁 ${t("rot.autre_titre", { prenom: prenomDe(garde) })}</div>
         <div class="tr-taches">${taches}</div>
         <div class="tr-quand">${quand}</div></div></div>`;
     }
   });
   if (!html) return null;
-
-  // Petit rappel de la veille : « demain, c'est ton tour pour [telle(s) tâche(s)] ! »
-  // On NOMME la ou les tâches concernées (sinon le rappel, affiché juste sous la
-  // carte du tour du jour, se lit comme s'il la contredisait quand ce n'est pas
-  // la même tournante qui bascule).
-  const dem = demain(jour);
-  const tachesDemain = [];
-  rots.forEach(r => {
-    if (jourOffRotation(r, dem)) return;
-    if (enfantDeGardeRotation(r, dem) !== enf.id) return;
-    if (enfantDeGardeRotation(r, jour) === enf.id) return;   // déjà son tour aujourd'hui : rien de nouveau
-    (r.missions || []).forEach(id => {
-      const m = trouverMission(id);
-      if (m && !tachesDemain.some(x => x.id === id)) tachesDemain.push(m);
-    });
-  });
-  if (tachesDemain.length) {
-    const nomsTaches = tachesDemain.map(m => `${m.emoji} ${titreMission(m)}`).join(", ");
-    html += `<div class="tr-demain">🌙 ${t("rot.demain_titre")} ${nomsTaches}</div>`;
-  }
 
   sec.innerHTML = html;
   return sec;
@@ -4445,7 +4507,8 @@ function sectionsCompte(c) {
   bDeco.onclick = deconnexion;
   cpt.appendChild(bDeco);
   const liensLegaux = el("p", "note");
-  liensLegaux.innerHTML = `<a href="mentions-legales.html">Mentions légales</a> ·
+  liensLegaux.innerHTML = `<a href="faq.html">Questions fréquentes</a> ·
+    <a href="mentions-legales.html">Mentions légales</a> ·
     <a href="confidentialite.html">Politique de confidentialité</a>`;
   cpt.appendChild(liensLegaux);
   c.appendChild(cpt);
