@@ -98,7 +98,7 @@ const CROISSANCE_CHANTIERS = [
       { id: "c_mesure_2", titre: "Vérifier les séries de l'onglet Stats", min: 15, detail: "usage_events et les graphiques d'activité doivent être cohérents." , fait: true },
       { id: "c_mesure_3", titre: "Mesurer l'activation J+1", min: 30, detail: "Part des familles inscrites ayant validé une mission le lendemain. Cible : 60 %." , fait: true },
       { id: "c_mesure_4", titre: "Tracer l'origine des inscriptions", min: 40, detail: "Champ source sur la liste d'attente : parrainage, école, presse, bouche-à-oreille." , fait: true },
-      { id: "c_mesure_5", titre: "Relevé mensuel, pas hebdomadaire", min: 10, detail: "À une heure par semaine, un relevé par mois suffit. Noter une décision, pas un tableau." }
+      { id: "c_mesure_5", titre: "Relevé mensuel, pas hebdomadaire", min: 10, detail: "Fait : le rapport mensuel automatique envoie les cinq chiffres ; il ne reste qu'à noter une décision." , fait: true }
     ]
   },
   {
@@ -118,11 +118,11 @@ const CROISSANCE_CHANTIERS = [
     but: "Un parent qui arrive comprend en dix secondes et a envie d'essayer.",
     kpi: "Visiteurs → inscription : 8 %",
     etapes: [
-      { id: "c_preuve_1", titre: "Promesse en une phrase", min: 20, detail: "« Une ambiance positive à la maison, deux minutes par jour. » À tester sur cinq parents non initiés." },
-      { id: "c_preuve_2", titre: "Trois captures d'écran parlantes", min: 30, detail: "L'écran enfant, l'avatar qui grandit, l'écran parent du soir." },
+      { id: "c_preuve_1", titre: "Promesse en une phrase", min: 20, detail: "Fait : « Deux minutes par jour, en famille : FamiTeam valorise les comportements positifs des 2-7 ans, sans jamais retirer de points. » Sur la page publique et dans les balises sociales." , fait: true },
+      { id: "c_preuve_2", titre: "Trois captures d'écran parlantes", min: 30, detail: "Fait : trois captures réelles (missions de l'enfant, avatar, écran du parent), générées depuis l'état de démonstration, sur la page publique." , fait: true },
       { id: "c_preuve_3", titre: "Recueillir trois témoignages", min: 25, detail: "Prénom, ville, une phrase concrète, accord écrit.", mail: "m_temoignage" },
-      { id: "c_preuve_4", titre: "Expliquer « réparer plutôt que punir »", min: 35, detail: "C'est le différenciateur : des mots simples, aucun jargon." },
-      { id: "c_preuve_5", titre: "Bases du référencement", min: 30, detail: "Titre, description, Open Graph, sitemap. Une fois pour toutes." }
+      { id: "c_preuve_4", titre: "Expliquer « réparer plutôt que punir »", min: 35, detail: "Fait : bloc « Réparer plutôt que punir » sur la page publique, en mots simples, avec un lien vers la FAQ." , fait: true },
+      { id: "c_preuve_5", titre: "Bases du référencement", min: 30, detail: "Fait : description, Open Graph complet, image de partage, canonical, données structurées SoftwareApplication, sitemap.xml et robots.txt." , fait: true }
     ]
   },
   {

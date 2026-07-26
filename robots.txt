@@ -1,0 +1,8 @@
+# FamiTeam — tout le contenu public est indexable ; les raccourcis
+# d'administration et les pages techniques ne le sont pas.
+User-agent: *
+Allow: /
+Disallow: /croissance
+Disallow: /croissance.html
+
+Sitemap: https://famiteam.com/sitemap.xml

@@ -502,6 +502,33 @@ test("tournantes : le rappel « demain » distingue la tournante qui arrive de c
   assert.strictEqual(compteDansLeRappel(debarrasser), true, "elle lui arrive, doit apparaître");
 });
 
+/* ---------- Page publique : preuves et intégrité des ressources ---------- */
+test("page publique : les captures d'écran référencées existent bien", () => {
+  const fs = require("fs"), path = require("path");
+  const racine = path.join(__dirname, "..");
+  const auth = fs.readFileSync(path.join(racine, "js", "auth.js"), "utf8");
+  const refs = Array.from(new Set((auth.match(/images\/[a-z0-9-]+\.png/g) || [])));
+  assert.ok(refs.length >= 3, "la page publique doit montrer au moins trois captures");
+  refs.forEach(r => assert.ok(fs.existsSync(path.join(racine, r)), "capture manquante : " + r));
+});
+
+test("page publique : promesse et principe traduits dans les 4 langues", () => {
+  const { api } = construireContexte();
+  const cles = ["auth.hero_sous", "auth.shot1", "auth.shot2", "auth.shot3",
+                "auth.shot1_alt", "auth.shot2_alt", "auth.shot3_alt",
+                "auth.principe_titre", "auth.principe_1", "auth.principe_2", "auth.principe_faq"];
+  const manquantes = [];
+  Object.keys(api.LANGUES).forEach(lg => cles.forEach(k => {
+    const v = api.I18N[lg][k];
+    if (typeof v !== "string" || !v.length) manquantes.push(lg + " → " + k);
+  }));
+  assert.strictEqual(manquantes.length, 0, manquantes.slice(0, 8).join(", "));
+  // Les textes alternatifs décrivent l'image : ils ne doivent pas être vides ni identiques au titre.
+  Object.keys(api.LANGUES).forEach(lg => {
+    [1, 2, 3].forEach(i => assert.notStrictEqual(api.I18N[lg]["auth.shot" + i], api.I18N[lg]["auth.shot" + i + "_alt"]));
+  });
+});
+
 /* ---------- Plan de développement commercial (onglet Admin « Croissance ») ---------- */
 test("croissance : chantiers bien formés, identifiants uniques, phases connues", () => {
   const { api } = construireContexte();

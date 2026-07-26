@@ -3148,3 +3148,57 @@ Object.assign(I18N.de, {
   "retours.consigne_vide": "Keine ungelesenen Rückmeldungen zum Aufbereiten.",
   "croiss.recurrent": "jeden Monat",
 });
+
+/* ---- Page publique : promesse, captures réelles, principe ---- */
+Object.assign(I18N.fr, {
+  "auth.hero_sous": "Deux minutes par jour, en famille : {app} valorise les comportements positifs des enfants de 2 à 7 ans, sans jamais retirer de points.",
+  "auth.shot1": "L'enfant coche ce qu'il a fait et gagne des Cœurs 💛",
+  "auth.shot1_alt": "Écran de l'enfant : la liste des missions du jour, chacune avec les cœurs qu'elle rapporte.",
+  "auth.shot2": "Ses efforts font grandir son avatar 🎨",
+  "auth.shot2_alt": "Écran avatar : le personnage de l'enfant et les éléments qu'il peut débloquer avec ses cœurs.",
+  "auth.shot3": "Le parent choisit et valide, en deux minutes ⚙️",
+  "auth.shot3_alt": "Espace parents : les premiers pas et le choix des missions proposées pour la journée.",
+  "auth.principe_titre": "🌈 Réparer plutôt que punir",
+  "auth.principe_1": "Ici, <strong>aucun point n'est jamais retiré</strong>. Quand quelque chose se passe mal — une dispute, un objet cassé, un mot qui blesse — l'enfant choisit un <strong>geste de réparation</strong> : ranger, s'excuser, aider la personne concernée. Et c'est ce geste-là qui est récompensé.",
+  "auth.principe_2": "Pourquoi ? Parce que retirer des points apprend surtout à cacher l'erreur. Réparer apprend à reconnaître son geste, à prendre soin de l'autre, et à repartir du bon pied.",
+  "auth.principe_faq": "Voir toutes les questions fréquentes →",
+});
+Object.assign(I18N.en, {
+  "auth.hero_sous": "Two minutes a day, together: {app} rewards positive behaviour in children aged 2 to 7 — and never takes points away.",
+  "auth.shot1": "The child ticks what they did and earns Hearts 💛",
+  "auth.shot1_alt": "Child screen: the day's missions, each with the hearts it earns.",
+  "auth.shot2": "Their efforts grow their avatar 🎨",
+  "auth.shot2_alt": "Avatar screen: the child's character and the items they can unlock with their hearts.",
+  "auth.shot3": "The parent picks and approves, in two minutes ⚙️",
+  "auth.shot3_alt": "Parents' area: the first steps and the choice of missions offered for the day.",
+  "auth.principe_titre": "🌈 Repair rather than punish",
+  "auth.principe_1": "Here, <strong>points are never taken away</strong>. When something goes wrong — an argument, something broken, a hurtful word — the child chooses a <strong>repair gesture</strong>: tidy up, apologise, help the person concerned. And it is that gesture which is rewarded.",
+  "auth.principe_2": "Why? Because taking points away mostly teaches children to hide the mistake. Repairing teaches them to own the act, care for the other person, and start afresh.",
+  "auth.principe_faq": "See all frequently asked questions →",
+});
+Object.assign(I18N.nl, {
+  "auth.hero_sous": "Twee minuten per dag, samen: {app} waardeert positief gedrag bij kinderen van 2 tot 7 jaar — en neemt nooit punten af.",
+  "auth.shot1": "Het kind vinkt af wat het deed en verdient Hartjes 💛",
+  "auth.shot1_alt": "Kinderscherm: de opdrachten van de dag, elk met de hartjes die ze opbrengen.",
+  "auth.shot2": "Zijn inspanningen laten zijn avatar groeien 🎨",
+  "auth.shot2_alt": "Avatarscherm: het figuurtje van het kind en wat het met zijn hartjes kan vrijspelen.",
+  "auth.shot3": "De ouder kiest en keurt goed, in twee minuten ⚙️",
+  "auth.shot3_alt": "Ouderomgeving: de eerste stappen en de keuze van de opdrachten voor de dag.",
+  "auth.principe_titre": "🌈 Herstellen in plaats van straffen",
+  "auth.principe_1": "Hier gaan er <strong>nooit punten af</strong>. Als er iets misgaat — ruzie, iets kapot, een kwetsend woord — kiest het kind een <strong>herstelgebaar</strong>: opruimen, excuses aanbieden, de betrokken persoon helpen. En net dat gebaar wordt belond.",
+  "auth.principe_2": "Waarom? Omdat punten afnemen vooral leert om de fout te verbergen. Herstellen leert het kind zijn daad te erkennen, voor de ander te zorgen en met een propere lei verder te gaan.",
+  "auth.principe_faq": "Alle veelgestelde vragen bekijken →",
+});
+Object.assign(I18N.de, {
+  "auth.hero_sous": "Zwei Minuten am Tag, gemeinsam: {app} bestärkt positives Verhalten bei Kindern von 2 bis 7 Jahren — und zieht nie Punkte ab.",
+  "auth.shot1": "Das Kind hakt ab, was es geschafft hat, und verdient Herzen 💛",
+  "auth.shot1_alt": "Kinder-Bildschirm: die Aufgaben des Tages, jede mit den Herzen, die sie bringt.",
+  "auth.shot2": "Seine Anstrengungen lassen den Avatar wachsen 🎨",
+  "auth.shot2_alt": "Avatar-Bildschirm: die Figur des Kindes und was es mit seinen Herzen freischalten kann.",
+  "auth.shot3": "Die Eltern wählen und bestätigen, in zwei Minuten ⚙️",
+  "auth.shot3_alt": "Elternbereich: die ersten Schritte und die Auswahl der Aufgaben für den Tag.",
+  "auth.principe_titre": "🌈 Wiedergutmachen statt bestrafen",
+  "auth.principe_1": "Hier werden <strong>nie Punkte abgezogen</strong>. Wenn etwas schiefgeht — Streit, etwas kaputt, ein verletzendes Wort — wählt das Kind eine <strong>Geste der Wiedergutmachung</strong>: aufräumen, sich entschuldigen, der betroffenen Person helfen. Und genau diese Geste wird belohnt.",
+  "auth.principe_2": "Warum? Weil Punkteabzug vor allem lehrt, den Fehler zu verbergen. Wiedergutmachen lehrt, zur eigenen Tat zu stehen, sich um den anderen zu kümmern und neu zu beginnen.",
+  "auth.principe_faq": "Alle häufigen Fragen ansehen →",
+});

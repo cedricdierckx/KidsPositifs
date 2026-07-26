@@ -1437,3 +1437,18 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .croiss-reponse-t{font-weight:800;font-size:13.5px;margin:0 0 4px;color:#27384a}
 .champ-aide{display:block;font-size:11.5px;color:var(--doux);line-height:1.4;margin-top:3px;font-weight:600}
 .croiss-perim.recurrent{background:#eaf2ff; color:#3a63a8}
+
+/* ---- Page publique : captures réelles + principe ---- */
+.hero-apercus{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px;
+  margin:22px 0 6px}
+.hero-apercus figure{margin:0; text-align:center}
+.hero-apercus img{width:100%; max-width:260px; height:auto; border-radius:16px;
+  border:2px solid #e3edf5; box-shadow:0 8px 24px rgba(30,50,80,.12); background:#fff}
+.hero-apercus figcaption{font-size:13px; font-weight:700; color:#54616f; margin-top:8px; line-height:1.4}
+.hero-principe{background:#fff; border:2px solid #e9dcff; border-left:6px solid #a78bfa;
+  border-radius:16px; padding:16px 18px; margin:18px 0 6px; text-align:left}
+.hero-principe h2{margin:0 0 8px; font-size:20px; color:#27384a}
+.hero-principe p{color:#54616f; line-height:1.6; font-size:15px; margin:0 0 8px}
+.hero-principe strong{color:#27384a}
+.hero-principe-faq{margin:4px 0 0}
+.hero-principe-faq a{color:#3a7bd5; font-weight:700; text-decoration:none}

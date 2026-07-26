@@ -712,6 +712,35 @@ function ecranAuth() {
             <li>${t("auth.etape3")}</li>
           </ol>
         </div>
+
+        <!-- Trois captures réelles de l'app : ce que voit l'enfant, ce qu'il
+             fait grandir, et ce que fait le parent le soir. Générées depuis
+             l'état de démonstration : aucune donnée de famille réelle. -->
+        <div class="hero-apercus">
+          <figure>
+            <img src="images/apercu-enfant.png" width="500" height="500" loading="lazy"
+                 alt="${t("auth.shot1_alt")}">
+            <figcaption>${t("auth.shot1")}</figcaption>
+          </figure>
+          <figure>
+            <img src="images/apercu-avatar.png" width="500" height="560" loading="lazy"
+                 alt="${t("auth.shot2_alt")}">
+            <figcaption>${t("auth.shot2")}</figcaption>
+          </figure>
+          <figure>
+            <img src="images/apercu-parents.png" width="500" height="680" loading="lazy"
+                 alt="${t("auth.shot3_alt")}">
+            <figcaption>${t("auth.shot3")}</figcaption>
+          </figure>
+        </div>
+
+        <!-- Le différenciateur, expliqué sans jargon. -->
+        <div class="hero-principe">
+          <h2>${t("auth.principe_titre")}</h2>
+          <p>${t("auth.principe_1")}</p>
+          <p>${t("auth.principe_2")}</p>
+          <p class="hero-principe-faq"><a href="faq.html">${t("auth.principe_faq")}</a></p>
+        </div>
       </section>
       <section class="landing-form">
         <div class="carte code-carte">
