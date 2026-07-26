@@ -3202,3 +3202,51 @@ Object.assign(I18N.de, {
   "auth.principe_2": "Warum? Weil Punkteabzug vor allem lehrt, den Fehler zu verbergen. Wiedergutmachen lehrt, zur eigenen Tat zu stehen, sich um den anderen zu kümmern und neu zu beginnen.",
   "auth.principe_faq": "Alle häufigen Fragen ansehen →",
 });
+
+/* ---- Parrainage : coefficient viral ---- */
+Object.assign(I18N.fr, {
+  "croiss.kpi_k": "Coefficient viral k",
+  "croiss.kpi_k_p": "cible > 0,4",
+  "croiss.kpi_parrainages_p": "dont {n} sur 30 j",
+});
+Object.assign(I18N.en, {
+  "croiss.kpi_k": "Viral coefficient k",
+  "croiss.kpi_k_p": "target > 0.4",
+  "croiss.kpi_parrainages_p": "of which {n} in 30 d",
+});
+Object.assign(I18N.nl, {
+  "croiss.kpi_k": "Virale coëfficiënt k",
+  "croiss.kpi_k_p": "doel > 0,4",
+  "croiss.kpi_parrainages_p": "waarvan {n} op 30 d",
+});
+Object.assign(I18N.de, {
+  "croiss.kpi_k": "Viraler Koeffizient k",
+  "croiss.kpi_k_p": "Ziel > 0,4",
+  "croiss.kpi_parrainages_p": "davon {n} in 30 T",
+});
+
+/* ---- Parrainage : demander au bon moment ---- */
+Object.assign(I18N.fr, {
+  "bm.titre": "🎉 Beau moment en famille !",
+  "bm.texte": "Vous venez de débloquer cette activité ensemble. Si l'envie vous prend, vous pouvez offrir {app} à une famille amie — c'est la seule façon dont l'app se fait connaître.",
+  "bm.bouton": "Offrir à une famille amie",
+  "bm.masquer": "Ne plus me le proposer",
+});
+Object.assign(I18N.en, {
+  "bm.titre": "🎉 A lovely family moment!",
+  "bm.texte": "You just unlocked this activity together. If you feel like it, you can offer {app} to a family you know — it is the only way the app gets known.",
+  "bm.bouton": "Offer it to a family you know",
+  "bm.masquer": "Don't suggest this again",
+});
+Object.assign(I18N.nl, {
+  "bm.titre": "🎉 Mooi gezinsmoment!",
+  "bm.texte": "Jullie hebben deze activiteit samen vrijgespeeld. Als je wil, kan je {app} aan een bevriend gezin geven — zo raakt de app bekend.",
+  "bm.bouton": "Aan een bevriend gezin geven",
+  "bm.masquer": "Niet meer voorstellen",
+});
+Object.assign(I18N.de, {
+  "bm.titre": "🎉 Ein schöner Familienmoment!",
+  "bm.texte": "Ihr habt diese Aktivität gemeinsam freigespielt. Wenn du magst, kannst du {app} einer befreundeten Familie schenken — nur so wird die App bekannt.",
+  "bm.bouton": "Einer befreundeten Familie schenken",
+  "bm.masquer": "Nicht mehr vorschlagen",
+});

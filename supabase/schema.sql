@@ -352,7 +352,8 @@ end; $$;
 -- ---------- RPC admin : agrégats globaux (une seule ligne JSON) ----------
 -- Chiffres clés : familles (total / nouvelles 7-30 j), membres, enfants,
 -- familles actives (1/7/30 j via family_state.updated_at), répartition des
--- plans, parrainages acceptés, liste d'attente, retours utilisateurs.
+-- plans, parrainages (acceptés au total, acceptés et créés sur 30 j — de quoi
+-- calculer le coefficient viral k), liste d'attente, retours utilisateurs.
 create or replace function public.admin_stats()
 returns json language plpgsql security definer set search_path = public as $$
 declare resultat json;
@@ -372,6 +373,8 @@ begin
     'plan_free',            (select count(*) from families where plan = 'free'),
     'plan_premium',         (select count(*) from families where plan = 'premium'),
     'referrals_acceptes',   (select count(*) from referrals where accepted_at is not null),
+    'referrals_30j',        (select count(*) from referrals where accepted_at >= now() - interval '30 days'),
+    'referrals_crees_30j',  (select count(*) from referrals where created_at >= now() - interval '30 days'),
     'waitlist_total',       (select count(*) from waitlist),
     'feedback_total',       (select count(*) from feedback),
     'feedback_bugs',        (select count(*) from feedback where type = 'bug'),
@@ -835,6 +838,28 @@ begin
     order by f.created_at;
 end; $$;
 
+-- Familles à qui proposer le parrainage : installées depuis au moins trois
+-- semaines, encore actives (état modifié dans les 14 jours), qui n'ont créé
+-- aucun lien de parrainage, et à qui la proposition n'a jamais été envoyée.
+-- Ne lit aucune donnée d'enfant.
+create or replace function public.admin_parrainages_a_proposer()
+returns table(famille_id uuid, famille text, email text, jours integer)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  return query
+    select f.id, f.name::text,
+           (select u.email::text from auth.users u where u.id = f.owner_id),
+           extract(day from now() - f.created_at)::int
+    from families f
+    where f.created_at <= now() - interval '21 days'
+      and exists (select 1 from family_state s where s.family_id = f.id
+                    and s.updated_at >= now() - interval '14 days')
+      and not exists (select 1 from referrals r where r.family_id = f.id)
+      and not exists (select 1 from mails_auto m where m.type = 'parrainage' and m.cle = f.id::text)
+    order by f.created_at;
+end; $$;
+
 -- ---------- Droits d'exécution ----------
 grant execute on function public.create_family(text, text)            to authenticated;
 grant execute on function public.set_app_config(text, text)     to authenticated;
@@ -853,6 +878,7 @@ grant execute on function public.admin_sources()                to authenticated
 grant execute on function public.mail_auto_marquer(text, text)  to authenticated;
 grant execute on function public.mail_auto_deja(text, text)     to authenticated;
 grant execute on function public.admin_mails_en_attente()       to authenticated;
+grant execute on function public.admin_parrainages_a_proposer() to authenticated;
 grant execute on function public.admin_remove_waitlist(text)    to authenticated;
 grant execute on function public.is_admin()                     to authenticated;
 grant execute on function public.admin_list_families()          to authenticated;

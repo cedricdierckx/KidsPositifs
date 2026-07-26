@@ -145,10 +145,10 @@ const CROISSANCE_CHANTIERS = [
     kpi: "Coefficient viral k > 0,4",
     etapes: [
       { id: "c_parrainage_1", titre: "Parrainage en place (3 familles/semaine)", min: 0, detail: "Fait : pastille 🎁, table referrals, quota hebdomadaire.", fait: true },
-      { id: "c_parrainage_2", titre: "Demander au bon moment", min: 45, detail: "Après une carte surprise débloquée : le parent est content, c'est là qu'on demande." },
-      { id: "c_parrainage_3", titre: "E-mail de demande de parrainage", min: 20, detail: "Aux familles actives depuis trois semaines.", mail: "m_parrainage" },
-      { id: "c_parrainage_4", titre: "Remercier le parrain", min: 15, detail: "Un mot personnel quand un filleul rejoint : c'est ce qui déclenche le deuxième parrainage." },
-      { id: "c_parrainage_5", titre: "Mesurer k une fois par mois", min: 10, detail: "Filleuls inscrits ÷ familles actives. Si k reste sous 0,2, le produit n'est pas encore assez aimé." }
+      { id: "c_parrainage_2", titre: "Demander au bon moment", min: 45, detail: "Fait : une carte « beau moment en famille » apparaît dans l'écran parents pendant les sept jours qui suivent une carte surprise débloquée — le moment où le parent est content. Proposée une seule fois, avec « Ne plus me le proposer ».", fait: true },
+      { id: "c_parrainage_3", titre: "E-mail de demande de parrainage", min: 20, detail: "Fait : proposé une seule fois aux familles installées depuis trois semaines, actives, et qui n'ont encore créé aucun lien. Part avec les autres envois automatiques, quand ils sont armés.", mail: "m_parrainage", fait: true },
+      { id: "c_parrainage_4", titre: "Remercier le parrain", min: 15, detail: "Fait : dès qu'un filleul crée sa famille, le parrain voit un « Merci & bravo ! » avec confettis à sa prochaine ouverture. Automatique, sans e-mail à écrire : c'est ce qui déclenche le deuxième parrainage.", fait: true },
+      { id: "c_parrainage_5", titre: "Mesurer k une fois par mois", min: 10, detail: "Fait : le coefficient viral est calculé et affiché dans les chiffres du moment (filleuls sur 30 j ÷ familles actives 7 j). Sous 0,2, le produit n'est pas encore assez aimé.", fait: true }
     ]
   },
   {
@@ -429,7 +429,7 @@ FamiTeam`
     sujet: "Une famille amie à qui offrir FamiTeam ?",
     corps: `Bonjour {prenom},
 
-Cela fait trois semaines que votre famille utilise FamiTeam, et {enfant} a déjà gagné {coeurs} cœurs. Merci — vous faites partie des premières familles, celles qui façonnent l'app.
+Cela fait quelques semaines que votre famille utilise FamiTeam. Merci — vous faites partie des premières familles, celles qui façonnent l'app.
 
 Si vous connaissez une famille avec des enfants de 2 à 7 ans qui galère sur les routines du soir, vous pouvez lui offrir un accès : la pastille 🎁 en haut à gauche de l'app crée un lien de parrainage. Trois familles par semaine, gratuitement.
 

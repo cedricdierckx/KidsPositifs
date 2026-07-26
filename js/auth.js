@@ -415,6 +415,21 @@ async function adminMailsEnAttente() {
   if (error) return [];
   return data || [];
 }
+// Propose le parrainage aux familles installées depuis trois semaines.
+// Une seule fois par famille, jamais de relance.
+async function envoyerPropositionsParrainage(liste) {
+  const familles = liste || await adminParrainagesAProposer();
+  let n = 0;
+  for (const f of familles) {
+    if (!f.email) continue;
+    const prenom = (f.email.split("@")[0] || "").replace(/[._-]+/g, " ");
+    const ok = await envoyerMailAuto("parrainage", f.famille_id, f.email, "m_parrainage",
+      { prenom, lien: location.origin || "https://famiteam.com" });
+    if (ok) n++;
+  }
+  return n;
+}
+
 // Envoie les relances en attente. Retourne le nombre d'e-mails partis.
 async function envoyerRelancesActivation(liste) {
   const familles = liste || await adminMailsEnAttente();
@@ -457,7 +472,7 @@ async function declencherEnvoisAuto() {
     const auj = new Date().toISOString().slice(0, 10);
     if (localStorage.getItem(cle) === auj) return;
     localStorage.setItem(cle, auj);
-    const n = await envoyerRelancesActivation();
+    const n = await envoyerRelancesActivation() + await envoyerPropositionsParrainage();
     await envoyerRapportMensuel();
     if (n > 0 && typeof toast === "function") toast(t("croiss.mails_partis", { n }), "succes");
   } catch (e) { /* best-effort : jamais bloquant */ }
@@ -536,6 +551,13 @@ async function adminActivation() {
   const { data, error } = await sb.rpc("admin_activation");
   if (error) { toast("Erreur admin : " + error.message, "info"); return null; }
   return data || null;
+}
+// RPC admin : familles à qui proposer de parrainer (chantier Parrainage).
+async function adminParrainagesAProposer() {
+  if (!estAdmin) return [];
+  const { data, error } = await sb.rpc("admin_parrainages_a_proposer");
+  if (error) return [];
+  return data || [];
 }
 // RPC admin : origine des inscriptions (90 jours).
 async function adminSources() {

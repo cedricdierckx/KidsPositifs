@@ -1644,6 +1644,18 @@ const REPONSES_TYPES = [
     texte: `Bonjour,\n\nLa réponse se trouve ici : https://famiteam.com/faq.html\n\nSi la page ne répond pas à votre question, elle sera complétée lors d'une prochaine mise à jour.\n\nFamiTeam` }
 ];
 
+/* Coefficient viral k : filleuls arrivés sur 30 jours ÷ familles actives sur
+ * 7 jours. Au-dessus de 0,4, la boucle porte la croissance toute seule ;
+ * sous 0,2, le produit n'est pas encore assez aimé pour qu'on en parle. */
+function coefficientViral(stats, usage) {
+  const filleuls = (stats && typeof stats.referrals_30j === "number") ? stats.referrals_30j : null;
+  const actives = (usage && typeof usage.actifs_7j === "number" && usage.actifs_7j > 0)
+    ? usage.actifs_7j
+    : ((stats && typeof stats.actives_7j === "number" && stats.actives_7j > 0) ? stats.actives_7j : 0);
+  if (filleuls === null || !actives) return "—";
+  return (Math.round((filleuls / actives) * 100) / 100).toString().replace(".", ",");
+}
+
 function blocEnvoisAuto() {
   const sec = el("section", "carte croiss-envois");
   const armes = (typeof mailsAutoArmes === "function") ? mailsAutoArmes() : false;
@@ -1807,7 +1819,9 @@ function blocAdminCroissance(c) {
                 (a && a.eligibles != null) ? t("croiss.kpi_activation_p", { n: a.eligibles }) : "") +
       carteStat("👪", v(s, "familles_total"), t("croiss.kpi_familles")) +
       carteStat("🌱", v(s, "familles_30j"), t("croiss.kpi_nouvelles")) +
-      carteStat("🎁", v(s, "referrals_acceptes"), t("croiss.kpi_parrainages")) +
+      carteStat("🎁", v(s, "referrals_acceptes"), t("croiss.kpi_parrainages"),
+                (s && s.referrals_30j != null) ? t("croiss.kpi_parrainages_p", { n: s.referrals_30j }) : "") +
+      carteStat("🔁", coefficientViral(s, u), t("croiss.kpi_k"), t("croiss.kpi_k_p")) +
       carteStat("📋", v(s, "waitlist_total"), t("croiss.kpi_attente")) +
       carteStat("📈", v(u, "ouvertures_30j"), t("croiss.kpi_ouvertures"));
 
@@ -3376,6 +3390,39 @@ function blocDon() {
   return sec;
 }
 
+/* ---------- Parrainage : demander au bon moment ----------
+ * On ne demande jamais « dans le vide ». Juste après qu'une carte surprise a
+ * été débloquée, le parent vient de vivre un bon moment en famille : c'est le
+ * seul instant où proposer d'en parler à une autre famille est un plaisir et
+ * non une corvée. Affiché sept jours au maximum, refermable définitivement,
+ * jamais insistant. */
+function blocBonMoment() {
+  if (typeof modeDemo !== "undefined" && modeDemo) return null;
+  if (etat.reglages && etat.reglages.parrainProposeVu) return null;      // refermé par le parent
+  const cartes = cartesSurprises().filter(c => c.debloquee && c.debloqueeLe);
+  if (!cartes.length) return null;
+  // La plus récemment débloquée, et seulement si c'est frais (7 jours).
+  const derniere = cartes.sort((a, b) => (a.debloqueeLe < b.debloqueeLe ? 1 : -1))[0];
+  const jours = Math.floor((new Date(aujourdHui() + "T00:00:00") - new Date(derniere.debloqueeLe + "T00:00:00")) / 86400000);
+  if (!(jours >= 0 && jours <= 7)) return null;
+
+  const sec = el("section", "carte bon-moment");
+  sec.innerHTML = `<h2>${t("bm.titre")}</h2>
+    <p class="bm-carte">${derniere.emoji} <strong>${echapper(trData("carte", derniere.id, derniere.titre))}</strong></p>
+    <p class="note">${t("bm.texte", { app: APP_NOM })}</p>`;
+  const b = el("button", "gros-bouton famille", "🎁 " + t("bm.bouton"));
+  b.onclick = () => modaleParrainage();
+  sec.appendChild(b);
+  const bNon = el("button", "lien-oubli", t("bm.masquer"));
+  bNon.onclick = () => {
+    if (!etat.reglages) etat.reglages = {};
+    etat.reglages.parrainProposeVu = true;
+    sauver(); rendre();
+  };
+  sec.appendChild(bNon);
+  return sec;
+}
+
 // Défis réparation (alternative bienveillante à la punition).
 // Ce bloc est affiché dans l'espace parents : le mode d'emploi ci-dessous
 // s'adresse donc au parent, qui coche le geste AVEC l'enfant.
@@ -4751,6 +4798,8 @@ function vueReglages(c) {
     const pp = blocPremiersPas();
     if (pp) c.appendChild(pp);
     if (totalAttente) c.appendChild(blocAttente(totalAttente));
+    const bm = blocBonMoment();
+    if (bm) c.appendChild(bm);
     c.appendChild(blocMissionsDuJour(enfantActif()));
     c.appendChild(blocEval(enfantActif(), "parent"));
     c.appendChild(blocReparation());
@@ -4771,6 +4820,10 @@ function vueReglages(c) {
 
     // ----- Soutien (don facultatif) : admins + familles de plus d'une semaine -----
     if (typeof donDisponible !== "function" || donDisponible()) c.appendChild(blocDon());
+
+    // ----- Le bon moment pour parler de l'app (après une carte débloquée) -----
+    const bmExp = blocBonMoment();
+    if (bmExp) c.appendChild(bmExp);
 
     // ----- Validations en attente (affichées seulement s'il y en a) -----
     if (totalAttente) c.appendChild(blocAttente(totalAttente));

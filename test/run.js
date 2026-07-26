@@ -502,6 +502,35 @@ test("tournantes : le rappel « demain » distingue la tournante qui arrive de c
   assert.strictEqual(compteDansLeRappel(debarrasser), true, "elle lui arrive, doit apparaître");
 });
 
+/* ---------- Parrainage : coefficient viral & bon moment ---------- */
+test("parrainage : la carte débloquée porte bien sa date, base du « bon moment »", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  const enf = api.etat.enfants[Object.keys(api.etat.enfants)[0]];
+  const carte = api.cartesSurprises()[0];
+  assert.strictEqual(carte.debloquee, false);
+  assert.strictEqual(carte.debloqueeLe, null);
+  // On finance la carte jusqu'au bout : elle se débloque et se date.
+  enf.coeurs = carte.cout + 5;
+  api.donnerCarte(carte.id, carte.cout);
+  const apres = api.trouverCarteSurprise(carte.id);
+  assert.strictEqual(apres.debloquee, true);
+  assert.strictEqual(apres.debloqueeLe, api.aujourdHui(), "la date de déblocage est celle du jour");
+});
+
+test("parrainage : la proposition ne se répète pas si le parent la referme", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  // Le drapeau vit dans les réglages, donc il est synchronisé entre appareils
+  // et survit à un rechargement : la proposition ne revient jamais.
+  assert.strictEqual(!!api.etat.reglages.parrainProposeVu, false);
+  api.etat.reglages.parrainProposeVu = true;
+  const n = api.normaliser(JSON.parse(JSON.stringify(api.etat)));
+  assert.strictEqual(n.reglages.parrainProposeVu, true, "normaliser ne doit pas perdre ce choix");
+});
+
 /* ---------- Page publique : preuves et intégrité des ressources ---------- */
 test("page publique : les captures d'écran référencées existent bien", () => {
   const fs = require("fs"), path = require("path");

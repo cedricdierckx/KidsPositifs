@@ -1452,3 +1452,5 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .hero-principe strong{color:#27384a}
 .hero-principe-faq{margin:4px 0 0}
 .hero-principe-faq a{color:#3a7bd5; font-weight:700; text-decoration:none}
+.bon-moment{border-top:6px solid var(--famille,#f6a623); background:linear-gradient(180deg,#fffdf6,#fff6e6)}
+.bm-carte{font-size:17px; margin:4px 0 6px; color:#5a3a0a}
