@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6a623">
   <title>Politique de confidentialité — FamiTeam</title>
-  <link rel="stylesheet" href="css/style.css?v=97">
+  <link rel="stylesheet" href="css/style.css?v=98">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌟</text></svg>">
   <style>
     body{padding:24px 16px 60px}
@@ -40,8 +40,10 @@
       <ul>
         <li>Compte parent : adresse e-mail et mot de passe (géré par Supabase Auth).</li>
         <li>Famille : nom de la famille, plan (gratuit/premium).</li>
-        <li>Profils des enfants créés par les parents : prénom, date de naissance, sexe (pour l'avatar),
-          apparence de l'avatar et couleur choisie. Aucune donnée de contact d'enfant n'est demandée.</li>
+        <li>Profils des enfants créés par les parents : <strong>un prénom ou un surnom au choix du
+          parent</strong> (un surnom suffit et est recommandé), <strong>le mois et l'année de naissance</strong>
+          (le jour n'est pas demandé), le sexe (pour l'avatar), l'apparence de l'avatar et la couleur choisie.
+          Aucun nom de famille, aucune photo, aucune adresse, aucune donnée de contact d'enfant.</li>
         <li>Activité quotidienne : missions/comportements positifs cochés, points et « compliments »
           gagnés, historique de l'état familial (sauvegardes automatiques).</li>
         <li>Éventuellement : messages envoyés via le formulaire de signalement (bug/suggestion), avec
@@ -51,7 +53,9 @@
       <h2>Finalités du traitement</h2>
       <p>Ces données sont utilisées uniquement pour faire fonctionner l'application : authentifier les
         parents, synchroniser l'état familial entre les appareils, afficher les avatars et progrès des
-        enfants, et répondre aux demandes de support.</p>
+        enfants. Aucune prospection, aucun profilage publicitaire, aucune revente ni aucun partage
+        commercial. Il n'existe pas de service d'assistance : l'application est conçue pour fonctionner
+        sans intervention humaine.</p>
 
       <h2>Base légale</h2>
       <p>Le traitement repose sur l'exécution du contrat (fourniture du service demandé par le parent) et,
@@ -70,11 +74,18 @@
         famille, toutes les données associées (membres, état, historique, invitations) sont supprimées
         définitivement.</p>
 
-      <h2>Vos droits</h2>
+      <h2>Vos droits, exerçables sans nous écrire</h2>
       <p>Conformément au RGPD, vous disposez d'un droit d'accès, de rectification, de suppression et de
-        portabilité de vos données et de celles de vos enfants. L'application propose déjà un export de vos
-        données et la suppression définitive du compte famille depuis l'espace « Mon compte ». Pour toute
-        autre demande, contactez hello@fami.team.</p>
+        portabilité de vos données et de celles de vos enfants. <strong>L'application vous permet de les
+        exercer vous-même, immédiatement</strong>, sans demande ni délai : Réglages → Mon compte →
+        « Exporter » (copie complète au format JSON) et « Supprimer le compte » (effacement définitif de la
+        famille, de son état et de son historique). Vous pouvez également corriger à tout moment le
+        prénom/surnom et la date de naissance des profils.</p>
+      <p>Si vous souhaitez néanmoins exercer un droit par écrit, l'adresse est hello@fami.team. C'est le
+        seul canal de contact, et il est réservé à ces demandes : il n'y a ni service d'assistance, ni
+        engagement de réponse au-delà de ce que la loi impose pour l'exercice de vos droits. Vous disposez
+        aussi du droit d'introduire une réclamation auprès de l'Autorité de protection des données
+        (autoriteprotectiondonnees.be).</p>
 
       <h2>Stockage local</h2>
       <p>L'application utilise le stockage local du navigateur (localStorage) pour garder votre session,
@@ -82,8 +93,15 @@
         et de permettre une utilisation temporaire sans connexion. Aucun cookie de suivi publicitaire n'est
         utilisé.</p>
 
+      <h2>Minimisation : ce que nous avons choisi de NE PAS collecter</h2>
+      <p>Pas de nom de famille, pas d'adresse postale, pas de numéro de téléphone, pas de photo, pas de
+        géolocalisation, pas de contact d'enfant, pas de jour de naissance, pas de traceur publicitaire,
+        pas d'outil d'analyse tiers. La mesure d'audience se limite à un compteur d'ouvertures par famille
+        et par jour, sans identifiant individuel. Le prénom de l'enfant peut être remplacé par un surnom :
+        c'est l'usage recommandé.</p>
+
       <h2>Contact</h2>
-      <p>Pour toute question relative à vos données personnelles, contactez hello@fami.team.</p>
+      <p>Pour toute question relative à vos données personnelles : hello@fami.team.</p>
     </section>
   </div>
 </body>

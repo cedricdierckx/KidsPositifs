@@ -3078,3 +3078,47 @@ Object.assign(I18N.de, {
   "croiss.reponses_titre": "Standardantworten für den Support",
   "croiss.reponses_sous": "Kopieren, einfügen, in einer Zeile anpassen. Support soll Sekunden kosten, nicht Minuten.",
 });
+
+/* ---- Retours : boîte à idées à sens unique (aucune promesse de réponse) ---- */
+Object.assign(I18N.fr, {
+  "fb.titre": "💡 Une idée, un souci ?",
+  "fb.sous": "Boîte à idées à sens unique : les messages sont lus quand le temps le permet et alimentent les mises à jour. Pas de réponse individuelle — l'app est développée sur du temps libre, sans équipe.",
+});
+Object.assign(I18N.en, {
+  "fb.titre": "💡 An idea, a problem?",
+  "fb.sous": "One-way idea box: messages are read when time allows and feed into updates. No individual reply — the app is built in spare time, without a team.",
+});
+Object.assign(I18N.nl, {
+  "fb.titre": "💡 Een idee, een probleem?",
+  "fb.sous": "Eenrichtings-ideeënbus: berichten worden gelezen wanneer het kan en voeden de updates. Geen persoonlijk antwoord — de app wordt in vrije tijd gemaakt, zonder team.",
+});
+Object.assign(I18N.de, {
+  "fb.titre": "💡 Eine Idee, ein Problem?",
+  "fb.sous": "Einweg-Ideenbox: Nachrichten werden gelesen, wenn es die Zeit erlaubt, und fließen in Updates ein. Keine persönliche Antwort — die App entsteht in der Freizeit, ohne Team.",
+});
+
+/* ---- Minimisation : surnom accepté, naissance au mois ---- */
+Object.assign(I18N.fr, {
+  "profil.prenom": "Prénom ou surnom",
+  "profil.naissance": "Naissance (mois et année)",
+  "profil.prenom_aide": "Un surnom suffit (« Loulou », « P'tit chef ») : moins de données réelles enregistrées, même expérience pour l'enfant.",
+  "profil.naissance_aide": "Le mois suffit : il sert uniquement à adapter les missions et l'affichage à l'âge.",
+});
+Object.assign(I18N.en, {
+  "profil.prenom": "First name or nickname",
+  "profil.naissance": "Birth (month and year)",
+  "profil.prenom_aide": "A nickname is enough: less real data stored, same experience for the child.",
+  "profil.naissance_aide": "The month is enough: it only serves to adapt missions and display to the age.",
+});
+Object.assign(I18N.nl, {
+  "profil.prenom": "Voornaam of bijnaam",
+  "profil.naissance": "Geboorte (maand en jaar)",
+  "profil.prenom_aide": "Een bijnaam volstaat: minder echte gegevens bewaard, dezelfde ervaring voor het kind.",
+  "profil.naissance_aide": "De maand volstaat: die dient enkel om opdrachten en weergave aan de leeftijd aan te passen.",
+});
+Object.assign(I18N.de, {
+  "profil.prenom": "Vorname oder Spitzname",
+  "profil.naissance": "Geburt (Monat und Jahr)",
+  "profil.prenom_aide": "Ein Spitzname genügt: weniger echte Daten gespeichert, gleiches Erlebnis für das Kind.",
+  "profil.naissance_aide": "Der Monat genügt: Er dient nur dazu, Aufgaben und Anzeige dem Alter anzupassen.",
+});

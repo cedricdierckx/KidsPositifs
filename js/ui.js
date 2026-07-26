@@ -1577,15 +1577,15 @@ function copierTexte(txt) {
  * l'interrupteur est coupé — c'est le réglage par défaut. */
 const REPONSES_TYPES = [
   { id: "merci", titre: "Merci pour le retour",
-    texte: `Bonjour,\n\nMerci beaucoup pour ce retour — c'est exactement ce qui fait avancer l'app.\nC'est noté ; je reviens vers vous si j'ai besoin d'une précision.\n\nBonne journée,\nCédric — FamiTeam` },
+    texte: `Bonjour,\n\nMerci beaucoup pour ce retour — c'est exactement ce qui fait avancer l'app.\nC'est noté. FamiTeam étant développé sur du temps libre et sans équipe, il n'y a pas de suivi individuel : les retours sont lus quand c'est possible et alimentent les mises à jour.\n\nBonne journée,\nFamiTeam` },
   { id: "bogue", titre: "Bogue signalé",
-    texte: `Bonjour,\n\nMerci de l'avoir signalé. Je reproduis le problème et je le corrige dès que possible ;\nvous n'avez rien à faire de votre côté, la correction arrive toute seule (rien à installer).\n\nSi cela vous bloque au quotidien d'ici là, dites-le moi : je verrai s'il existe un contournement.\n\nCédric — FamiTeam` },
+    texte: `Bonjour,\n\nMerci de l'avoir signalé. Je reproduis le problème et je le corrige dès que possible ;\nvous n'avez rien à faire de votre côté, la correction arrive toute seule (rien à installer).\n\nLa correction arrivera dans une prochaine mise à jour, sans notification particulière.\n\nFamiTeam` },
   { id: "idee", titre: "Idée reçue, mais pas pour tout de suite",
-    texte: `Bonjour,\n\nMerci pour l'idée. Je la note dans la liste.\n\nJe développe FamiTeam sur mon temps libre, quelques heures par mois : je ne peux donc pas tout faire,\net je préfère être honnête sur les délais plutôt que de promettre. Si plusieurs familles demandent\nla même chose, elle remonte naturellement.\n\nCédric — FamiTeam` },
+    texte: `Bonjour,\n\nMerci pour l'idée. Je la note dans la liste.\n\nFamiTeam est développé sur du temps libre, quelques heures par mois : tout ne peut pas être fait,\net aucun délai n'est promis. Si plusieurs familles demandent la même chose, l'idée remonte naturellement.\n\nFamiTeam` },
   { id: "donnees", titre: "Question sur les données",
-    texte: `Bonjour,\n\nVos données sont hébergées en Europe, ne sont jamais revendues et ne servent à aucune publicité.\nNous demandons le strict minimum : prénom et date de naissance de l'enfant, rien d'autre.\n\nVous pouvez tout exporter ou tout supprimer en deux clics : Réglages → Mon compte.\nLe détail est ici : https://famiteam.com/confidentialite.html\n\nCédric — FamiTeam` },
+    texte: `Bonjour,\n\nVos données sont hébergées en Europe, ne sont jamais revendues et ne servent à aucune publicité.\nNous demandons le strict minimum : prénom et date de naissance de l'enfant, rien d'autre.\n\nVous pouvez tout exporter ou tout supprimer en deux clics : Réglages → Mon compte.\nLe détail est ici : https://famiteam.com/confidentialite.html\n\nFamiTeam` },
   { id: "faq", titre: "Renvoi vers la FAQ",
-    texte: `Bonjour,\n\nLa réponse se trouve ici : https://famiteam.com/faq.html\n\nSi ce n'est pas assez clair, dites-le moi : cela veut dire que la page est à réécrire.\n\nCédric — FamiTeam` }
+    texte: `Bonjour,\n\nLa réponse se trouve ici : https://famiteam.com/faq.html\n\nSi la page ne répond pas à votre question, elle sera complétée lors d'une prochaine mise à jour.\n\nFamiTeam` }
 ];
 
 function blocEnvoisAuto() {
@@ -4705,17 +4705,28 @@ function vueReglages(c) {
     }
     sec.appendChild(enTete);
 
+    // Minimisation : un surnom suffit, et le mois de naissance suffit à adapter
+    // l'âge. Moins de données réelles sur un enfant = moins de risque, pour un
+    // service identique.
     const lPrenom = el("label", "champ", t("profil.prenom"));
     const iPrenom = el("input");
     iPrenom.value = enf.prenom;
     iPrenom.oninput = () => { majEnfant(enf.id, "prenom", iPrenom.value); rendreSelecteur(); };
     lPrenom.appendChild(iPrenom);
+    lPrenom.appendChild(el("small", "champ-aide", t("profil.prenom_aide")));
 
     const lDate = el("label", "champ", t("profil.naissance"));
     const iDate = el("input");
-    iDate.type = "date"; iDate.value = enf.naissance; iDate.max = aujourdHui(); iDate.min = "2008-01-01";
-    iDate.onchange = () => { majEnfant(enf.id, "naissance", iDate.value || enf.naissance); rendreSelecteur(); rendre(); };
+    iDate.type = "month";                       // mois + année : le jour n'apporte rien
+    iDate.value = (enf.naissance || "").slice(0, 7);
+    iDate.max = aujourdHui().slice(0, 7); iDate.min = "2008-01";
+    iDate.onchange = () => {
+      const v = (iDate.value || "").slice(0, 7);
+      majEnfant(enf.id, "naissance", v ? v + "-01" : enf.naissance);
+      rendreSelecteur(); rendre();
+    };
     lDate.appendChild(iDate);
+    lDate.appendChild(el("small", "champ-aide", t("profil.naissance_aide")));
 
     const lSexe = el("label", "champ", t("profil.sexe"));
     const iSexe = el("div", "segmente");

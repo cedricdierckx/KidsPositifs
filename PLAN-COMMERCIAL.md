@@ -17,9 +17,9 @@ travail, pas des prévisions.
 
 ---
 
-## 0. Les deux contraintes — elles gouvernent tout le reste
+## 0. Les trois contraintes — elles gouvernent tout le reste
 
-Ce plan n'est pas un plan de start-up. Il est écrit sous deux contraintes
+Ce plan n'est pas un plan de start-up. Il est écrit sous trois contraintes
 fermes, énoncées par le fondateur, et **toute recommandation qui les
 contredirait est écartée d'office**.
 
@@ -48,7 +48,37 @@ insuffisant pour engager quoi que ce soit : **la première étape du plan est
 d'interroger la Chambre par écrit** (modèle d'e-mail `m_chambre` fourni). Tant
 que la réponse n'est pas là, rien de ce qui touche à l'argent ne bouge.
 
-### 0.2 « Une heure par semaine »
+### 0.2 « Le plus anonyme possible, sans obligation de répondre »
+
+Le fondateur ne souhaite **ni être identifié, ni être contacté, ni s'engager à
+répondre**. L'application doit fonctionner seule.
+
+Ce qui est **acquis** :
+
+- aucun service d'assistance ; la FAQ publique est l'aide de référence et la
+  boîte à idées est **à sens unique**, sans réponse individuelle ;
+- les e-mails aux familles sont signés **« FamiTeam »**, jamais d'un nom, et
+  n'invitent plus à répondre ;
+- **export et suppression en libre-service** : les droits RGPD s'exercent sans
+  écrire à personne, ce qui réduit à presque rien le volume de demandes.
+
+Ce qui **résiste**, et qu'il faut assumer :
+
+- tant que le fondateur est **responsable de traitement**, son identité et une
+  adresse doivent figurer dans les mentions légales et la politique de
+  confidentialité (RGPD art. 13). **Seule une structure — une ASBL — déplacerait
+  cette mention** vers la personne morale. Certitude : 90 %.
+- une **adresse de contact reste obligatoire** pour l'exercice des droits. Elle
+  peut rester une adresse de rôle (`hello@fami.team`), consultée quand il le
+  souhaite, sans engagement de délai au-delà du légal.
+- les canaux de croissance qui **exposent une personne** (presse, podcasts,
+  ateliers en école, publications dans des communautés) deviennent
+  incompatibles avec l'anonymat : ils passent en périmètre « plus tard ».
+  Il reste le **parrainage**, le **bouche-à-oreille** et les **supports écrits**
+  (dépliant, affiche, QR code) qui portent le nom du projet, pas celui d'une
+  personne. C'est un vrai coût : la croissance sera plus lente.
+
+### 0.3 « Une heure par semaine »
 
 **52 heures par an.** C'est la ressource la plus rare du projet, plus rare que
 l'argent. Conséquences :

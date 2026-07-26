@@ -31,6 +31,17 @@ const CROISSANCE_CONTRAINTES = [
     ]
   },
   {
+    id: "anonymat", emoji: "🕶️", titre: "Anonymat, et aucune obligation de répondre",
+    detail: "Le fondateur ne veut pas être identifié, pas être contacté, et ne s'engage à aucune réponse. L'app doit tourner seule.",
+    consequences: [
+      "Aucun service d'assistance : la FAQ est l'aide de référence, la boîte à idées est à sens unique.",
+      "Les e-mails aux familles sont signés « FamiTeam », jamais d'un nom, et n'invitent pas à répondre.",
+      "Export et suppression sont en libre-service : les droits RGPD s'exercent sans écrire à personne.",
+      "Les canaux qui exposent une personne (presse, podcasts, écoles en direct, communautés) passent en second plan : il reste le parrainage et le bouche-à-oreille.",
+      "L'identité de l'éditeur reste obligatoire sur les pages légales tant qu'il est responsable de traitement — seule une structure (ASBL) déplacerait cette mention."
+    ]
+  },
+  {
     id: "temps", emoji: "⏱️", titre: "Une heure par semaine",
     detail: "52 heures par an. C'est la ressource la plus rare du projet : chaque étape du plan porte une durée estimée, et la séance hebdomadaire se compose à partir de ce budget.",
     consequences: [
@@ -153,8 +164,8 @@ const CROISSANCE_CHANTIERS = [
     ]
   },
   {
-    id: "c_communaute", phase: "p1", emoji: "💬", titre: "Communautés de parents", perimetre: "coeur",
-    but: "Être présent là où les parents demandent déjà de l'aide, sans faire de publicité.",
+    id: "c_communaute", phase: "p1", emoji: "💬", titre: "Communautés de parents", perimetre: "plus_tard",
+    but: "Être présent là où les parents demandent déjà de l'aide, sans faire de publicité. ⚠️ Publier « j'ai construit ça pour mes enfants » suppose de se montrer. À ne garder que sous l'identité du projet, sans nom ni visage.",
     kpi: "10 inscriptions/mois issues des communautés",
     etapes: [
       { id: "c_communaute_1", titre: "Choisir trois groupes, pas quinze", min: 30, detail: "Trois groupes suivis valent mieux que quinze survolés." },
@@ -165,8 +176,8 @@ const CROISSANCE_CHANTIERS = [
     ]
   },
   {
-    id: "c_presse", phase: "p1", emoji: "📰", titre: "Presse & podcasts", perimetre: "coeur",
-    but: "Un article = des années de bouche-à-oreille en une journée, pour deux heures de travail.",
+    id: "c_presse", phase: "p1", emoji: "📰", titre: "Presse & podcasts", perimetre: "plus_tard",
+    but: "Un article = des années de bouche-à-oreille en une journée, pour deux heures de travail. ⚠️ Expose nommément le fondateur (interviews, citations) : incompatible avec l'anonymat souhaité. Conservé si un porte-parole ou une structure prend le relais.",
     kpi: "1 parution",
     etapes: [
       { id: "c_presse_1", titre: "Dossier de presse d'une page", min: 50, detail: "Histoire, chiffres, ce qui est différent, contact, visuels. Écrit une fois, resservi partout." },
@@ -337,9 +348,10 @@ Comptez deux minutes par jour, pas plus. Rien n'est à installer, tout se synchr
 
 Un principe, si vous n'en retenez qu'un : ici, on ne retire jamais de points. Quand quelque chose se passe mal, on répare — et c'est le geste de réparation qui est récompensé.
 
-FamiTeam est gratuit, sans publicité, et le restera. C'est un projet personnel, mené sur mon temps libre : je réponds donc parfois avec quelques jours de décalage, mais je lis tout.
+FamiTeam est gratuit, sans publicité, et le restera. C'est un projet personnel, mené sur du temps libre et sans équipe : il n'y a donc pas de service d'assistance. Les réponses aux questions courantes sont rassemblées ici : {lien}/faq.html
 
-Cédric
+L'équipe est réduite à une personne, et l'app est faite pour tourner sans elle : tout se règle depuis l'espace parents, y compris l'export et la suppression de vos données.
+
 FamiTeam — {lien}`
   },
   {
@@ -352,9 +364,8 @@ J'ai vu que votre famille était créée, mais que la première mission n'avait 
 
 Ce soir, avant le coucher, ouvrez FamiTeam avec votre enfant et cochez UNE seule chose qu'il a faite dans la journée. Une seule. Vous verrez son visage quand l'avatar bougera.
 
-Si quelque chose vous a bloqué — un écran pas clair, un doute sur l'âge de vos enfants — dites-le moi en répondant à cet e-mail. Cela m'aide à améliorer l'app pour tout le monde.
+Si quelque chose vous a bloqué, la page des questions fréquentes couvre l'essentiel : {lien}/faq.html
 
-Cédric
 FamiTeam — {lien}`
   },
   {
@@ -367,9 +378,8 @@ Vos données sont intactes : les cœurs, l'avatar et l'écosystème de {enfant} 
 
 Depuis votre dernière visite : {nouveautes}.
 
-Si FamiTeam ne vous convient pas, dites-le moi franchement en une ligne — je préfère une critique utile à un compte endormi. Et si vous voulez tout effacer, cela se fait en deux clics dans Réglages → Mon compte.
+Si FamiTeam ne vous convient pas, rien à faire : le compte peut rester en sommeil sans conséquence. Et si vous préférez tout effacer, cela se fait en deux clics dans Réglages → Mon compte, sans passer par nous.
 
-Cédric
 FamiTeam — {lien}`
   },
   {
@@ -384,9 +394,8 @@ Vous vous étiez inscrit·e sur la liste d'attente de FamiTeam. Votre place est 
 
 FamiTeam aide les enfants de 2 à 7 ans à adopter des comportements positifs, dans l'esprit de la parentalité bienveillante : on encourage, on répare, on ne punit pas. C'est gratuit, sans publicité, et vos données restent en Europe.
 
-J'ouvre les accès par petites vagues parce que je développe l'app sur mon temps libre et que je tiens à pouvoir répondre à chacun. Si quelque chose vous gêne pendant la première semaine, écrivez-le moi.
+Les accès s'ouvrent par petites vagues : l'app est développée sur du temps libre, sans équipe et sans service d'assistance. Tout est prévu pour fonctionner seul, et les questions fréquentes sont rassemblées sur famiteam.com/faq.html
 
-Cédric
 FamiTeam`
   },
   {
@@ -397,9 +406,8 @@ FamiTeam`
 
 Votre lien d'inscription est toujours actif : {lien_invitation}
 
-Si ce n'est pas le bon moment, ignorez simplement cet e-mail — je ne relancerai pas une deuxième fois. Et si quelque chose vous a fait hésiter (les données, l'âge de vos enfants, le temps que ça demande), répondez-moi en une ligne : c'est précieux.
+Si ce n'est pas le bon moment, ignorez simplement cet e-mail : il n'y aura pas de deuxième relance.
 
-Cédric
 FamiTeam`
   },
   {
@@ -414,7 +422,6 @@ Si vous connaissez une famille avec des enfants de 2 à 7 ans qui galère sur le
 
 C'est la seule façon dont FamiTeam se fait connaître : pas de publicité, pas de budget, juste des parents qui en parlent à d'autres parents.
 
-Cédric
 FamiTeam — {lien}`
   },
   {
@@ -432,7 +439,6 @@ Accepteriez-vous de répondre en deux ou trois phrases à ceci :
 Je publierais uniquement votre prénom et votre ville (par exemple « Sophie, Namur »), jamais le prénom de vos enfants ni de photo. Vous relisez avant publication, et vous pouvez demander le retrait à tout moment.
 
 Merci beaucoup,
-Cédric
 FamiTeam`
   },
   {
