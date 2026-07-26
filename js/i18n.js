@@ -2997,16 +2997,16 @@ Object.assign(I18N.de, {
 
 /* ---- Tournantes : le tour qui commence demain ---- */
 Object.assign(I18N.fr, {
-  "rot.ton_tour_demain": "Demain, ce sera ton tour !",
+  "rot.ton_tour_demain": "Demain, ce sera ton tour !", "rot.section_famille": "Chez tes frères et sœurs",
 });
 Object.assign(I18N.en, {
-  "rot.ton_tour_demain": "Tomorrow it's your turn!",
+  "rot.ton_tour_demain": "Tomorrow it's your turn!", "rot.section_famille": "For your brothers and sisters",
 });
 Object.assign(I18N.nl, {
-  "rot.ton_tour_demain": "Morgen ben jij aan de beurt!",
+  "rot.ton_tour_demain": "Morgen ben jij aan de beurt!", "rot.section_famille": "Bij je broers en zussen",
 });
 Object.assign(I18N.de, {
-  "rot.ton_tour_demain": "Morgen bist du dran!",
+  "rot.ton_tour_demain": "Morgen bist du dran!", "rot.section_famille": "Bei deinen Geschwistern",
 });
 
 /* ---- Envois automatiques & réponses types (admin) ---- */

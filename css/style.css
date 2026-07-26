@@ -317,34 +317,22 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .tr-quand{font-size:13.5px;margin-top:4px;color:#6b5326}
 .tr-bloc.autre .tr-quand,.tr-bloc.off .tr-quand{color:var(--doux)}
 
-/* Mini-roue tournante (tous âges) : tourne et atterrit avec un petit rebond
-   sur l'enfant de garde, repère fixe (triangle) en haut. Les émoji (hors du
-   groupe qui tourne, cf. js/ui.js) apparaissent une fois la roue posée. */
+/* Deux groupes : SON tour (mis en avant) vs frères/sœurs + jours off
+   (informatif, en retrait). */
+.tr-groupe-moi{margin-bottom:10px}
+.tr-groupe-moi:last-child{margin-bottom:0}
+.tr-groupe-autres{opacity:.82}
+.tr-groupe-autres .tr-bloc{padding:7px 10px}
+.tr-section-titre{margin:2px 0 6px 2px; font-size:11.5px; font-weight:800;
+  text-transform:uppercase; letter-spacing:.06em; color:var(--doux)}
+
+/* Mini-roue tournante : repère fixe (triangle) en haut, disque posé d'emblée
+   sur la bonne réponse (style inline, cf. js/ui.js). L'animation (rotation +
+   apparition des avatars) est déclenchée en JS par observerRoues(), au
+   moment où la roue entre réellement dans l'écran — jamais au chargement. */
 .roue-svg{display:block; overflow:visible}
-.roue-groupe{
-  transform-origin:50% 50%;
-  /* Pas de `transform` statique ici : SEULE l'animation pilote la rotation
-     (0% -> 100% couvrent tout l'intervalle), pour ne jamais risquer un
-     premier rendu déjà figé sur la position finale (roue qui semble ne pas
-     bouger). Le repli sans animation (ci-dessous) fixe le transform lui-même. */
-  animation:roue-tourne 2.1s cubic-bezier(.15,.7,.13,1) both;
-}
-@keyframes roue-tourne{
-  0%   {transform:rotate(0deg)}
-  70%  {transform:rotate(calc(var(--roue-angle, 0deg) + 1080deg + 18deg))}
-  85%  {transform:rotate(calc(var(--roue-angle, 0deg) + 1080deg - 8deg))}
-  100% {transform:rotate(calc(var(--roue-angle, 0deg) + 1080deg))}
-}
-.roue-emojis{animation:roue-emojis-in 2.1s ease both}
-@keyframes roue-emojis-in{
-  0%,60%{opacity:0}
-  100%{opacity:1}
-}
+.roue-groupe{transform-origin:50% 50%}
 .roue-pointeur{fill:#e2566d; stroke:#fff; stroke-width:1.5; filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
-@media (prefers-reduced-motion:reduce){
-  .roue-groupe{animation:none; transform:rotate(var(--roue-angle, 0deg))}
-  .roue-emojis{animation:none; opacity:1}
-}
 /* Repère « c'est ton tour » sur la tuile de mission */
 .mission.tour{border-color:#ffd79a;background:linear-gradient(180deg,#fffdf7,#fff6e6)}
 .m-tour{position:absolute;top:4px;right:6px;font-size:13px}

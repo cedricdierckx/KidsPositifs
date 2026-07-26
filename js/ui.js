@@ -2015,6 +2015,7 @@ function rendre() {
   majPastilleAttente();
   timerSurChangementEnfant();
   synchroniserTimerUI();
+  if (typeof observerRoues === "function") observerRoues();
 }
 
 // Pastille du nombre d'actions en attente sur l'onglet Parents.
@@ -2847,14 +2848,16 @@ function _pointRoue(cx, cy, rayon, angleDeg) {
   const rad = (angleDeg - 90) * Math.PI / 180;
   return [cx + rayon * Math.cos(rad), cy + rayon * Math.sin(rad)];
 }
-// Mini-roue tournante (SVG) : un secteur coloré par enfant de la tournante
-// (même couleur/emoji que sa pastille du sélecteur), un repère fixe en haut
-// (triangle rouge pointant VERS le disque), et le disque qui tourne pour
-// amener l'enfant de garde sous ce repère. Purement décorative (l'info est
-// déjà donnée par le texte à côté) : cachée aux lecteurs d'écran. Affichée
-// pour tous les âges (voir l'appelant).
+// Mini-roue tournante (SVG) : un secteur coloré par enfant de la tournante,
+// SON AVATAR (le même qu'ailleurs dans l'app, pas un émoji générique), un
+// repère fixe en haut (triangle rouge pointant VERS le disque), et le disque
+// qui tourne pour amener l'enfant de garde sous ce repère. Le disque part
+// posé sur la bonne réponse (style inline) : l'animation elle-même est
+// déclenchée à part, quand la roue entre réellement dans l'écran — voir
+// observerRoues()/jouerRoue(). Purement décorative (l'info est déjà donnée
+// par le texte à côté) : cachée aux lecteurs d'écran.
 function roueTournante(ids, idGarde, taille) {
-  taille = taille || 84;
+  taille = taille || 104;
   const cx = 60, cy = 60, rayon = 52;
   const enfants = ids.map(id => etat.enfants[id]).filter(Boolean);
   const n = enfants.length;
@@ -2873,23 +2876,77 @@ function roueTournante(ids, idGarde, taille) {
       secteurs += `<path d="M${cx},${cy} L${x0.toFixed(1)},${y0.toFixed(1)} A${rayon},${rayon} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)} Z" fill="${e.couleur || "#ccc"}" stroke="#fff" stroke-width="2"/>`;
     });
   }
-  // Les émoji sont VOLONTAIREMENT en dehors du groupe qui tourne : sinon ils
-  // pivotent avec le disque et se retrouvent de travers (voire tête en bas)
-  // selon l'angle d'arrivée. On calcule directement leur position D'ARRIVÉE
-  // (angle du secteur + rotation cible) pour qu'ils restent toujours
-  // droits, alignés sur leur secteur une fois la roue posée.
-  const emojis = enfants.map((e, i) => {
+  // Les avatars sont VOLONTAIREMENT en dehors du groupe qui tourne : sinon ils
+  // pivoteraient avec le disque et se retrouveraient de travers (voire tête en
+  // bas) selon l'angle d'arrivée. On calcule directement leur position
+  // D'ARRIVÉE (angle du secteur + rotation cible) pour qu'ils restent toujours
+  // droits, alignés sur leur secteur une fois la roue posée. Chaque avatar est
+  // la même mini-scène SVG (buildAvatar) qu'ailleurs dans l'app, imbriquée et
+  // mise à l'échelle (aucun identifiant interne dans avatar.js : pas de risque
+  // de collision entre plusieurs avatars dans le même document).
+  const TAILLE_AV = 34;
+  const avatars = enfants.map((e, i) => {
     const angleFinal = (i + 0.5) * step + angleCible;
-    const [ex, ey] = _pointRoue(cx, cy, rayon * 0.62, angleFinal);
-    return `<text x="${ex.toFixed(1)}" y="${ey.toFixed(1)}" font-size="20" text-anchor="middle" dominant-baseline="central">${e.emoji || "🙂"}</text>`;
+    const [ex, ey] = _pointRoue(cx, cy, rayon * 0.6, angleFinal);
+    return buildAvatar(e.avatar).replace("<svg ",
+      `<svg x="${(ex - TAILLE_AV / 2).toFixed(1)}" y="${(ey - TAILLE_AV / 2).toFixed(1)}" width="${TAILLE_AV}" height="${TAILLE_AV}" `);
   }).join("");
 
   return `<svg class="roue-svg" width="${taille}" height="${taille}" viewBox="0 0 120 120" aria-hidden="true">
     <circle cx="${cx}" cy="${cy}" r="${rayon + 3}" fill="none" stroke="#e3edf5" stroke-width="3"/>
-    <g class="roue-groupe" style="--roue-angle:${angleCible}deg">${secteurs}</g>
-    <g class="roue-emojis">${emojis}</g>
+    <g class="roue-groupe" data-angle-cible="${angleCible}" style="transform:rotate(${angleCible}deg)">${secteurs}</g>
+    <g class="roue-avatars">${avatars}</g>
     <polygon class="roue-pointeur" points="60,19 49,1 71,1"/>
   </svg>`;
+}
+
+// Anime une roue précise : rotation (avec petit rebond à l'atterrissage) +
+// apparition des avatars une fois le disque quasiment posé. Web Animations
+// API plutôt que CSS : on calcule l'angle cible exact en JS et on ne joue
+// l'anim QUE quand jouerRoue() est appelée (voir observerRoues), jamais au
+// chargement de la page.
+function jouerRoue(svg) {
+  const groupe = svg.querySelector(".roue-groupe");
+  if (!groupe || typeof groupe.animate !== "function") return;
+  const cible = parseFloat(groupe.dataset.angleCible || "0");
+  groupe.animate([
+    { transform: "rotate(0deg)" },
+    { transform: `rotate(${cible + 1080 + 18}deg)`, offset: 0.7 },
+    { transform: `rotate(${cible + 1080 - 8}deg)`, offset: 0.85 },
+    { transform: `rotate(${cible + 1080}deg)` }
+  ], { duration: 2100, easing: "cubic-bezier(.15,.7,.13,1)", fill: "forwards" });
+  const avatars = svg.querySelector(".roue-avatars");
+  if (avatars && typeof avatars.animate === "function") {
+    avatars.animate(
+      [{ opacity: 0 }, { opacity: 0, offset: 0.6 }, { opacity: 1 }],
+      { duration: 2100, fill: "forwards" }
+    );
+  }
+}
+
+// Observe les roues présentes dans la page et déclenche leur animation la
+// PREMIÈRE fois qu'elles entrent réellement dans la zone visible de l'écran
+// (pas au chargement, qui peut se produire hors champ si la carte est plus
+// bas que l'écran). Rejoué une seule fois par roue. Respecte le réglage
+// système « mouvement réduit » : dans ce cas, la roue reste simplement sur
+// sa position finale (déjà posée via le style inline), sans animation.
+function observerRoues() {
+  const roues = document.querySelectorAll(".roue-svg:not([data-roue-vue])");
+  if (!roues.length) return;
+  const reduit = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduit || typeof IntersectionObserver === "undefined") {
+    roues.forEach(svg => svg.setAttribute("data-roue-vue", "1"));
+    return;
+  }
+  const obs = new IntersectionObserver((entrees) => {
+    entrees.forEach(entree => {
+      if (!entree.isIntersecting) return;
+      jouerRoue(entree.target);
+      entree.target.setAttribute("data-roue-vue", "1");
+      obs.unobserve(entree.target);
+    });
+  }, { threshold: 0.4 });
+  roues.forEach(svg => obs.observe(svg));
 }
 
 function blocTournanteEnfant(enf) {
@@ -2898,7 +2955,11 @@ function blocTournanteEnfant(enf) {
   if (!rots.length) return null;
 
   const sec = el("section", "carte tournante-carte");
-  let html = "";
+  // Deux groupes bien distincts : ce qui est SON tour (important, mis en
+  // avant) et ce qui concerne un frère/une sœur ou un jour sans tâche
+  // (purement informatif, en retrait — roue plus petite, section repliée
+  // visuellement sous un intitulé).
+  let htmlMoi = "", htmlAutres = "";
   rots.forEach(r => {
     const taches = (r.missions || []).map(id => {
       const m = trouverMission(id);
@@ -2911,35 +2972,41 @@ function blocTournanteEnfant(enf) {
     const off = jourOffRotation(r, jour);
     const suivant = apercuRotation(r, jour, 2)[1];
     const prenomDe = (id) => { const e = etat.enfants[id]; return e ? echapper(e.prenom) : "—"; };
-    const roue = !off ? roueTournante(r.enfants, garde) : "";
 
     if (off) {
-      html += `<div class="tr-bloc off"><div class="tr-roue-wrap"></div><div class="tr-texte">
+      htmlAutres += `<div class="tr-bloc off"><div class="tr-roue-wrap"></div><div class="tr-texte">
         <div class="tr-titre">🔁 ${t("rot.off_titre")}</div>
         <div class="tr-taches">${taches}</div>
         <div class="tr-quand">${t("rot.off_txt")}</div></div></div>`;
     } else if (garde === enf.id) {
+      const roue = roueTournante(r.enfants, garde, 104);
       const ensuite = (suivant && suivant.enfant !== enf.id)
         ? " " + t("rot.ensuite_enf", { prenom: prenomDe(suivant.enfant) }) : "";
-      html += `<div class="tr-bloc moi"><div class="tr-roue-wrap">${roue}</div><div class="tr-texte">
+      htmlMoi += `<div class="tr-bloc moi"><div class="tr-roue-wrap">${roue}</div><div class="tr-texte">
         <div class="tr-titre">🔁 ${t("rot.moi_titre")}</div>
         <div class="tr-taches">${taches}</div>
         <div class="tr-quand">${t("rot.jusqu_a", { jour: jourLisible(p.fin) })}${ensuite}</div></div></div>`;
     } else {
       // « Ton tour revient lundi 27 » ET « et demain c'est toi » disaient la
       // même chose deux fois : quand le tour commence demain, on ne dit que ça.
+      const roue = roueTournante(r.enfants, garde, 68);
       const mien = prochainTourRotation(r, enf.id, jour);
       const demainMonTour = !!mien && mien.debut === demain(jour);
       const quand = !mien ? ""
         : (demainMonTour ? `🌙 ${t("rot.ton_tour_demain")}`
                          : t("rot.ton_tour", { jour: jourLisible(mien.debut) }));
-      html += `<div class="tr-bloc autre${demainMonTour ? " demain" : ""}"><div class="tr-roue-wrap">${roue}</div><div class="tr-texte">
+      htmlAutres += `<div class="tr-bloc autre${demainMonTour ? " demain" : ""}"><div class="tr-roue-wrap">${roue}</div><div class="tr-texte">
         <div class="tr-titre">🔁 ${t("rot.autre_titre", { prenom: prenomDe(garde) })}</div>
         <div class="tr-taches">${taches}</div>
         <div class="tr-quand">${quand}</div></div></div>`;
     }
   });
-  if (!html) return null;
+  if (!htmlMoi && !htmlAutres) return null;
+
+  let html = "";
+  if (htmlMoi) html += `<div class="tr-groupe tr-groupe-moi">${htmlMoi}</div>`;
+  if (htmlAutres) html += `<div class="tr-groupe tr-groupe-autres">
+    <p class="tr-section-titre">👨‍👩‍👧 ${t("rot.section_famille")}</p>${htmlAutres}</div>`;
 
   sec.innerHTML = html;
   return sec;
