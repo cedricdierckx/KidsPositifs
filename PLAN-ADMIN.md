@@ -1,5 +1,9 @@
 # 🛡️ Plan — Espace Admin v2
 
+> ✅ **Statut : terminé** (lots A→G tous livrés sur `dev`). Conservé pour
+> mémoire et pour la traçabilité des décisions (modèle Claude par lot, §9).
+> Nouveaux chantiers : voir `COORDINATION.md`.
+
 Document de travail (branche `dev`). Objectif : faire de l'onglet **Admin** de
 l'espace parents un véritable **tableau de bord d'administration** de FamiTeam,
 sans jamais mettre en péril les données des familles existantes.

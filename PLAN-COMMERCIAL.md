@@ -1,5 +1,9 @@
 # FamiTeam — Analyse de marché & plan de développement
 
+> 🧭 Les chantiers **techniques** dérivés de ce plan (automatisation des
+> e-mails, mesure, etc.) sont catalogués et priorisés dans `COORDINATION.md`,
+> avec le modèle Claude recommandé pour chacun.
+
 > Document de travail, révisé le 25 juillet 2026.
 > Le **suivi d'avancement** vit dans l'application : espace parents → Admin →
 > onglet **📈 Croissance**. Le plan détaillé (contraintes, chantiers, durées,

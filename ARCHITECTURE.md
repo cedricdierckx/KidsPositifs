@@ -3,6 +3,11 @@
 Document vivant. Objectif : faire évoluer l'application **par petites touches
 sûres**, sans jamais remettre en cause la **sûreté des données** (priorité n°1).
 
+> 🧭 **Plusieurs agents Claude interviennent sur ce dépôt.** Avant de
+> commencer, lire **`COORDINATION.md`** (protocole de travail concurrent +
+> catalogue des chantiers priorisés, avec le modèle Claude recommandé pour
+> chacun).
+
 ## 1. État actuel (vue d'ensemble)
 
 Application **web vanilla** (sans framework), chargée par `index.html` :
@@ -10,12 +15,17 @@ Application **web vanilla** (sans framework), chargée par `index.html` :
 | Fichier | Rôle |
 |---|---|
 | `js/config.js` | Clés Supabase (publiques, sécurité par RLS) |
+| `js/i18n.js` | Traductions FR/EN/NL/DE + helper `t("clé")` |
 | `js/data.js` | Données statiques : `APP_NOM`, enfants, missions, avatar, écosystème |
 | `js/avatar.js` | Rendu vectoriel (SVG) des avatars |
+| `js/croissance.js` | Données du plan de développement (chantiers, e-mails) — voir `PLAN-COMMERCIAL.md` |
 | `js/app.js` | État de jeu + logique (missions, badges, écosystème, sûreté données) |
-| `js/ui.js` | Rendu de tous les écrans |
+| `js/store.js` | Couche de données isolée : sync `family_state(_history)`, garde-fous d'écriture |
+| `js/ui.js` | Rendu de tous les écrans (espace enfant, parents, admin) |
 | `js/auth.js` | Auth, familles, invitations, parrainage, **synchronisation** |
 | `supabase/schema.sql` | Schéma BDD : tables, RLS, fonctions, déclencheurs |
+| `supabase/functions/` | Edge functions : `send-mail`, `delete-account`, `stripe-webhook` |
+| `test/` | Suite de non-régression headless (`node test/run.js`) |
 
 **Source de vérité** : Supabase (`family_state.data` = `etat` JSON). Le
 `localStorage` n'est qu'un **cache** local / hors-ligne.
@@ -35,24 +45,26 @@ Application **web vanilla** (sans framework), chargée par `index.html` :
 
 Chaque phase est **indépendante**, livrable seule, et **réversible**.
 
-### Phase A — Tests de non-régression (priorité, risque faible)
-- Script Node headless (déjà utilisé ponctuellement) transformé en suite :
-  - chargement des fichiers via `vm` + DOM stub ;
-  - scénarios : crédit/décrédit mission, toggle, plan « jours suivants »,
-    écosystème (prérequis, coûts), **sync** (anti inter-familles, anti-vide),
-    migrations `normaliser` (anciens formats → nouveaux).
-- But : pouvoir modifier sans peur. **À faire avant toute autre phase.**
+### Phase A — Tests de non-régression (priorité, risque faible) ✅ FAIT
+- Suite Node headless (`test/run.js` + `test/harness.js`, `vm` + DOM stub) :
+  crédit/décrédit mission, plan « jours suivants », écosystème (prérequis,
+  coûts), **sync** (anti inter-familles, anti-vide), migrations `normaliser`,
+  auto-évaluation, i18n (parité des traductions), etc.
+- **88 tests** au 26/07/2026 (`node test/run.js`). Ne couvre pas encore `js/ui.js`
+  (voir chantier « Étendre le banc d'essai à ui.js » dans `COORDINATION.md`).
 
-### Phase B — Validation de schéma à l'écriture (risque faible)
-- Une fonction `etatValide(e)` (children non vides, types corrects) appelée
-  **avant chaque `sauvegardeCloud`** ; en cas d'échec → on bloque + on alerte.
-- Renforce les garde-fous existants.
+### Phase B — Validation de schéma à l'écriture (risque faible) ✅ FAIT
+- `etatValide(e)` (enfants non vides, types corrects) appelée **avant chaque**
+  écriture cloud, centralisée dans `Store.ecritureAutorisee()` (Phase D).
 
-### Phase C — Découpage en modules (risque moyen)
+### Phase C — Découpage en modules (risque moyen) — pas commencé
 - Passer les `js/*.js` en **modules ES** (`import`/`export`) au lieu de globals.
-- Découper `ui.js` (gros fichier) en sous-vues : `ui/accueil.js`, `ui/missions.js`,
-  `ui/avatar.js`, `ui/parents.js`, `ui/recovery.js`.
-- Avantage : lisibilité, moins d'effets de bord globaux. **Nécessite la Phase A.**
+- Découper `ui.js` (très gros fichier, ~4000 lignes) en sous-vues :
+  `ui/accueil.js`, `ui/missions.js`, `ui/avatar.js`, `ui/parents.js`,
+  `ui/admin.js`, `ui/recovery.js`.
+- Avantage : lisibilité, moins d'effets de bord globaux. **Nécessite la Phase A**
+  (faite) — risque désormais couvert par la suite de tests, mais `ui.js` lui-même
+  n'est pas testé (cf. Phase A) : à faire prudemment, petit module à la fois.
 
 ### Phase D — Couche de données isolée (risque moyen) ✅ FAIT
 - Toute la sync `family_state(_history)` (lecture/écriture, realtime, garde-fous)
@@ -63,14 +75,17 @@ Chaque phase est **indépendante**, livrable seule, et **réversible**.
   validation de schéma) sont centralisés dans `Store.ecritureAutorisee()`.
 - `auth.js` ne garde que de fines délégations (compatibilité des appelants).
 
-### Phase E — Internationalisation (FR/EN/NL/DE) (risque faible, gros travail)
-- Externaliser tous les textes dans `i18n/{fr,en,nl,de}.js` + helper `t("clé")`.
-- Sélecteur de langue + détection `navigator.language`.
-- Prérequis commercial pour le multi-pays.
+### Phase E — Internationalisation (FR/EN/NL/DE) ✅ FAIT
+- Tous les textes vivent dans `js/i18n.js` (objet `I18N`, helper `t("clé")`),
+  dans les 4 langues, avec sélecteur et détection `navigator.language`.
+- Test de non-régression dédié : parité des clés + cohérence des `{variables}`
+  entre langues (voir Phase A).
 
-### Phase F — Build & qualité (optionnel)
+### Phase F — Build & qualité (optionnel) — pas commencé
 - Outil de build léger (esbuild/Vite) : minification, cache-busting.
 - Lint (ESLint) + formatage (Prettier) + CI GitHub Actions (lint + tests Phase A).
+- `supabase/schema.sql` dépasse 800 lignes : envisager un découpage en
+  `supabase/migrations/*.sql` numérotées si le fichier continue de grossir.
 
 ## 4. Règles de travail (process)
 
@@ -82,6 +97,7 @@ Chaque phase est **indépendante**, livrable seule, et **réversible**.
 
 ## 5. Ordre recommandé
 
-**A → B** (sécurité immédiate), puis **E** (i18n, valeur produit), puis **C/D**
-(confort technique), enfin **F** (industrialisation). Les phases C/D ne sont
-utiles que si l'app continue de grossir.
+**A → B** (sécurité immédiate) puis **E** (i18n, valeur produit) : **faites**.
+Restent **C** (modularisation) et **F** (industrialisation), utiles seulement
+si l'app continue de grossir — voir `COORDINATION.md` pour leur priorité
+actuelle face aux autres chantiers (croissance, dons, contenu).
