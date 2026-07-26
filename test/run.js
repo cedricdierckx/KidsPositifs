@@ -542,6 +542,22 @@ test("croissance : périmètre déclaré et durées chiffrées sur chaque étape
   assert.strictEqual(trop.length, 0, "étape plus longue qu'une séance : " + trop.map(e => e.id).join(", "));
 });
 
+test("croissance : un chantier récurrent se re-décoche au mois suivant", () => {
+  const { api } = construireContexte();
+  const rec = api.CROISSANCE_CHANTIERS.filter(ch => ch.recurrent === "mois");
+  assert.ok(rec.length >= 1, "il doit exister au moins un chantier récurrent (revue des idées)");
+  const ch = rec[0];
+  const e = ch.etapes[0];
+  // La clé d'avancement porte le mois : juillet et août ne se mélangent pas.
+  const kJuillet = api.cleEtapeCroissance(ch, e, "2026-07");
+  const kAout = api.cleEtapeCroissance(ch, e, "2026-08");
+  assert.strictEqual(kJuillet, e.id + "@2026-07");
+  assert.notStrictEqual(kJuillet, kAout);
+  // Un chantier normal garde une clé stable, sans période.
+  const normal = api.CROISSANCE_CHANTIERS.find(c => !c.recurrent);
+  assert.strictEqual(api.cleEtapeCroissance(normal, normal.etapes[0], "2026-07"), normal.etapes[0].id);
+});
+
 test("croissance : la séance de la semaine tient dans le budget d'une heure", () => {
   const { api } = construireContexte();
   const faites = new Set();

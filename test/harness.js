@@ -138,7 +138,7 @@ function construireContexte() {
       CATEGORIES, MISSIONS, TIERS_ECO, ENFANTS_DEFAUT, ETAT_VERSION,
       // plan de développement commercial (admin)
       CROISSANCE_PHASES, CROISSANCE_CHANTIERS, CROISSANCE_MAILS, CROISSANCE_CONTRAINTES, CROISSANCE_RITUEL,
-      chantiersDePhase, mailCroissance, dureeChantier, seanceDeLaSemaine,
+      chantiersDePhase, mailCroissance, dureeChantier, seanceDeLaSemaine, cleEtapeCroissance,
     };
   `;
   const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/croissance.js"), lire("js/app.js"), lire("js/store.js"), epilogue].join("\n;\n");

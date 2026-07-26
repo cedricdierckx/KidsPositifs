@@ -48,19 +48,23 @@ insuffisant pour engager quoi que ce soit : **la première étape du plan est
 d'interroger la Chambre par écrit** (modèle d'e-mail `m_chambre` fourni). Tant
 que la réponse n'est pas là, rien de ce qui touche à l'argent ne bouge.
 
-### 0.2 « Le plus anonyme possible, sans obligation de répondre »
+### 0.2 « Discrétion, et une app qui tourne seule »
 
-Le fondateur ne souhaite **ni être identifié, ni être contacté, ni s'engager à
-répondre**. L'application doit fonctionner seule.
+Le fondateur reste en retrait et souhaite que les sollicitations soient
+**naturellement rares**. Règle d'écriture, appliquée partout : **rien n'annonce
+jamais un refus de communiquer**. On ne dit pas « pas de support » — on fait en
+sorte que le besoin d'écrire ne naisse pas.
 
 Ce qui est **acquis** :
 
-- aucun service d'assistance ; la FAQ publique est l'aide de référence et la
-  boîte à idées est **à sens unique**, sans réponse individuelle ;
+- le produit répond avant qu'on ne demande : FAQ complète, export et
+  suppression **en libre-service**, réglages tous accessibles ;
 - les e-mails aux familles sont signés **« FamiTeam »**, jamais d'un nom, et
-  n'invitent plus à répondre ;
-- **export et suppression en libre-service** : les droits RGPD s'exercent sans
-  écrire à personne, ce qui réduit à presque rien le volume de demandes.
+  ne sollicitent pas de réponse — sans jamais dire qu'on n'en donnera pas ;
+- la **boîte à idées** existe et elle est accueillante : elle n'engage à rien,
+  et les idées sont revues **par lots**, une fois par mois (chantier récurrent
+  *Revue des idées*), avec un bouton qui met les retours en forme de consigne
+  prête à coller dans Claude Code.
 
 Ce qui **résiste**, et qu'il faut assumer :
 

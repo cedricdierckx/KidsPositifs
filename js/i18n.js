@@ -2757,7 +2757,7 @@ Object.assign(I18N.fr, {
   "croiss.note_ok": "Note enregistrée.",
   "croiss.voir_mail": "Modèle d'e-mail",
   "croiss.mails_titre": "✉️ Modèles d'e-mails",
-  "croiss.mails_sous": "À personnaliser avant envoi : les mentions entre accolades doivent disparaître. Un e-mail non personnalisé ne reçoit pas de réponse.",
+  "croiss.mails_sous": "À personnaliser avant envoi : les mentions entre accolades doivent disparaître. Un e-mail non personnalisé reste sans effet.",
   "croiss.mail_dest": "Pour :", "croiss.mail_quand": "Quand :", "croiss.mail_sujet": "Objet :",
   "croiss.copier": "Copier le texte", "croiss.ouvrir_mail": "Ouvrir dans ma messagerie",
   "croiss.copie": "Texte copié.", "croiss.copie_ko": "Copie impossible : sélectionne le texte à la main.",
@@ -2798,7 +2798,7 @@ Object.assign(I18N.en, {
   "croiss.note_ok": "Note saved.",
   "croiss.voir_mail": "Email template",
   "croiss.mails_titre": "✉️ Email templates",
-  "croiss.mails_sous": "Personalise before sending: the parts in braces must go. A generic email gets no reply.",
+  "croiss.mails_sous": "Personalise before sending: the parts in braces must go. A generic email falls flat.",
   "croiss.mail_dest": "To:", "croiss.mail_quand": "When:", "croiss.mail_sujet": "Subject:",
   "croiss.copier": "Copy the text", "croiss.ouvrir_mail": "Open in my mail app",
   "croiss.copie": "Text copied.", "croiss.copie_ko": "Copy failed: please select the text manually.",
@@ -2839,7 +2839,7 @@ Object.assign(I18N.nl, {
   "croiss.note_ok": "Notitie bewaard.",
   "croiss.voir_mail": "E-mailmodel",
   "croiss.mails_titre": "✉️ E-mailmodellen",
-  "croiss.mails_sous": "Personaliseer vóór het versturen: de delen tussen accolades moeten weg. Een onpersoonlijke e-mail krijgt geen antwoord.",
+  "croiss.mails_sous": "Personaliseer vóór het versturen: de delen tussen accolades moeten weg. Een onpersoonlijke e-mail heeft geen effect.",
   "croiss.mail_dest": "Voor:", "croiss.mail_quand": "Wanneer:", "croiss.mail_sujet": "Onderwerp:",
   "croiss.copier": "Tekst kopiëren", "croiss.ouvrir_mail": "In mijn mailprogramma openen",
   "croiss.copie": "Tekst gekopieerd.", "croiss.copie_ko": "Kopiëren mislukt: selecteer de tekst manueel.",
@@ -2880,7 +2880,7 @@ Object.assign(I18N.de, {
   "croiss.note_ok": "Notiz gespeichert.",
   "croiss.voir_mail": "E-Mail-Vorlage",
   "croiss.mails_titre": "✉️ E-Mail-Vorlagen",
-  "croiss.mails_sous": "Vor dem Versand anpassen: Die Teile in geschweiften Klammern müssen weg. Eine unpersönliche E-Mail bleibt unbeantwortet.",
+  "croiss.mails_sous": "Vor dem Versand anpassen: Die Teile in geschweiften Klammern müssen weg. Eine unpersönliche E-Mail verpufft.",
   "croiss.mail_dest": "An:", "croiss.mail_quand": "Wann:", "croiss.mail_sujet": "Betreff:",
   "croiss.copier": "Text kopieren", "croiss.ouvrir_mail": "In meinem Mailprogramm öffnen",
   "croiss.copie": "Text kopiert.", "croiss.copie_ko": "Kopieren fehlgeschlagen: Text bitte manuell markieren.",
@@ -3075,24 +3075,6 @@ Object.assign(I18N.de, {
   "croiss.reponses_sous": "Kopieren, einfügen, in einer Zeile anpassen. Support soll Sekunden kosten, nicht Minuten.",
 });
 
-/* ---- Retours : boîte à idées à sens unique (aucune promesse de réponse) ---- */
-Object.assign(I18N.fr, {
-  "fb.titre": "💡 Une idée, un souci ?",
-  "fb.sous": "Boîte à idées à sens unique : les messages sont lus quand le temps le permet et alimentent les mises à jour. Pas de réponse individuelle — l'app est développée sur du temps libre, sans équipe.",
-});
-Object.assign(I18N.en, {
-  "fb.titre": "💡 An idea, a problem?",
-  "fb.sous": "One-way idea box: messages are read when time allows and feed into updates. No individual reply — the app is built in spare time, without a team.",
-});
-Object.assign(I18N.nl, {
-  "fb.titre": "💡 Een idee, een probleem?",
-  "fb.sous": "Eenrichtings-ideeënbus: berichten worden gelezen wanneer het kan en voeden de updates. Geen persoonlijk antwoord — de app wordt in vrije tijd gemaakt, zonder team.",
-});
-Object.assign(I18N.de, {
-  "fb.titre": "💡 Eine Idee, ein Problem?",
-  "fb.sous": "Einweg-Ideenbox: Nachrichten werden gelesen, wenn es die Zeit erlaubt, und fließen in Updates ein. Keine persönliche Antwort — die App entsteht in der Freizeit, ohne Team.",
-});
-
 /* ---- Minimisation : surnom accepté, naissance au mois ---- */
 Object.assign(I18N.fr, {
   "profil.prenom": "Prénom ou surnom",
@@ -3117,4 +3099,52 @@ Object.assign(I18N.de, {
   "profil.naissance": "Geburt (Monat und Jahr)",
   "profil.prenom_aide": "Ein Spitzname genügt: weniger echte Daten gespeichert, gleiches Erlebnis für das Kind.",
   "profil.naissance_aide": "Der Monat genügt: Er dient nur dazu, Aufgaben und Anzeige dem Alter anzupassen.",
+});
+
+/* ---- Boîte à idées : accueillante, sans engagement affiché ---- */
+Object.assign(I18N.fr, {
+  "fb.titre": "💡 Boîte à idées",
+  "fb.sous": "Une remarque, une idée, un détail qui coince ? Écris-le ici : chaque message rejoint la liste des améliorations passées en revue à chaque mise à jour.",
+  "fb.message_ph": "Ce qui te ferait plaisir, ou ce qui t'a gêné…",
+});
+Object.assign(I18N.en, {
+  "fb.titre": "💡 Idea box",
+  "fb.sous": "A remark, an idea, a detail that bothers you? Write it here: every message joins the list of improvements reviewed at each update.",
+  "fb.message_ph": "What would help you, or what got in your way…",
+});
+Object.assign(I18N.nl, {
+  "fb.titre": "💡 Ideeënbus",
+  "fb.sous": "Een opmerking, een idee, een detail dat stoort? Schrijf het hier: elk bericht komt op de lijst met verbeteringen die bij elke update wordt bekeken.",
+  "fb.message_ph": "Wat je zou helpen, of wat je stoorde…",
+});
+Object.assign(I18N.de, {
+  "fb.titre": "💡 Ideenbox",
+  "fb.sous": "Eine Bemerkung, eine Idee, ein störendes Detail? Schreib es hier: Jede Nachricht kommt auf die Liste der Verbesserungen, die bei jedem Update durchgesehen wird.",
+  "fb.message_ph": "Was dir helfen würde, oder was dich gestört hat…",
+});
+
+/* ---- Revue des idées : consigne pour Claude Code, chantier récurrent ---- */
+Object.assign(I18N.fr, {
+  "retours.consigne": "Consigne pour Claude Code",
+  "retours.consigne_aide": "Met les retours non lus en forme de consigne prête à coller dans Claude Code : contexte du projet, garde-fous, et demande de trier avant de coder.",
+  "retours.consigne_vide": "Aucun retour non lu à mettre en forme.",
+  "croiss.recurrent": "chaque mois",
+});
+Object.assign(I18N.en, {
+  "retours.consigne": "Prompt for Claude Code",
+  "retours.consigne_aide": "Turns unread feedback into a prompt ready to paste into Claude Code: project context, guardrails, and a request to triage before coding.",
+  "retours.consigne_vide": "No unread feedback to format.",
+  "croiss.recurrent": "every month",
+});
+Object.assign(I18N.nl, {
+  "retours.consigne": "Instructie voor Claude Code",
+  "retours.consigne_aide": "Zet ongelezen feedback om in een instructie klaar om in Claude Code te plakken: projectcontext, grenzen, en de vraag eerst te sorteren.",
+  "retours.consigne_vide": "Geen ongelezen feedback om op te maken.",
+  "croiss.recurrent": "elke maand",
+});
+Object.assign(I18N.de, {
+  "retours.consigne": "Anweisung für Claude Code",
+  "retours.consigne_aide": "Wandelt ungelesene Rückmeldungen in eine Anweisung um, die sich direkt in Claude Code einfügen lässt: Projektkontext, Leitplanken und die Bitte, vor dem Programmieren zu sortieren.",
+  "retours.consigne_vide": "Keine ungelesenen Rückmeldungen zum Aufbereiten.",
+  "croiss.recurrent": "jeden Monat",
 });

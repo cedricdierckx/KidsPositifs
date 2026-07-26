@@ -31,13 +31,13 @@ const CROISSANCE_CONTRAINTES = [
     ]
   },
   {
-    id: "anonymat", emoji: "🕶️", titre: "Anonymat, et aucune obligation de répondre",
-    detail: "Le fondateur ne veut pas être identifié, pas être contacté, et ne s'engage à aucune réponse. L'app doit tourner seule.",
+    id: "anonymat", emoji: "🕶️", titre: "Discrétion, et une app qui tourne seule",
+    detail: "Le fondateur reste en retrait : pas de nom mis en avant, et surtout aucune organisation qui appellerait des sollicitations. Rien n'annonce jamais un refus de communiquer — on fait simplement en sorte que le besoin d'écrire ne naisse pas.",
     consequences: [
-      "Aucun service d'assistance : la FAQ est l'aide de référence, la boîte à idées est à sens unique.",
-      "Les e-mails aux familles sont signés « FamiTeam », jamais d'un nom, et n'invitent pas à répondre.",
-      "Export et suppression sont en libre-service : les droits RGPD s'exercent sans écrire à personne.",
-      "Les canaux qui exposent une personne (presse, podcasts, écoles en direct, communautés) passent en second plan : il reste le parrainage et le bouche-à-oreille.",
+      "Le produit répond avant qu'on ne demande : FAQ complète, export et suppression en libre-service, messages d'erreur explicites.",
+      "Les e-mails aux familles sont signés « FamiTeam » et ne sollicitent pas de réponse — sans jamais dire qu'on n'en donnera pas.",
+      "La boîte à idées existe, elle est accueillante, et elle n'engage à rien : les idées sont revues par lots, pas au fil de l'eau.",
+      "Les canaux qui exposent une personne (presse, podcasts, communautés) passent en second plan : restent le parrainage et le bouche-à-oreille.",
       "L'identité de l'éditeur reste obligatoire sur les pages légales tant qu'il est responsable de traitement — seule une structure (ASBL) déplacerait cette mention."
     ]
   },
@@ -58,7 +58,7 @@ const CROISSANCE_RITUEL = [
   { id: "s1", titre: "Semaine 1 — Les chiffres", detail: "10 min : relever l'étoile du Nord et deux indicateurs. 50 min : la prochaine étape du chantier en cours." },
   { id: "s2", titre: "Semaine 2 — Un contact", detail: "Un seul e-mail de prescripteur (école, crèche, professionnel), personnalisé, envoyé. Puis on referme." },
   { id: "s3", titre: "Semaine 3 — Le produit", detail: "Une correction ou une amélioration issue des retours des familles. Rien d'autre." },
-  { id: "s4", titre: "Semaine 4 — Les familles", detail: "Répondre aux retours, relancer une vague d'invitations, remercier un parrain." }
+  { id: "s4", titre: "Semaine 4 — Les idées", detail: "Revue des idées reçues : trier, copier la consigne pour Claude Code, faire implémenter une amélioration. Puis relancer une vague d'invitations." }
 ];
 
 /* ---------- Phases ---------- */
@@ -252,6 +252,19 @@ const CROISSANCE_CHANTIERS = [
     ]
   },
   {
+    id: "c_idees", phase: "p3", emoji: "💡", titre: "Revue des idées reçues", perimetre: "coeur",
+    recurrent: "mois",
+    but: "Transformer les idées des familles en améliorations, une fois par mois, sans jamais s'engager auprès de qui que ce soit.",
+    kpi: "Une revue par mois · une amélioration livrée · zéro idée perdue",
+    etapes: [
+      { id: "c_idees_1", titre: "Ouvrir les retours non lus", min: 10, detail: "Admin → Retours. Lecture rapide : on cherche ce qui revient, pas le détail de chaque message." },
+      { id: "c_idees_2", titre: "Trier en trois piles", min: 10, detail: "À faire maintenant (rapide et utile à tous) · plus tard (bonne idée, coûteuse) · non (hors cap ou contraire aux principes)." },
+      { id: "c_idees_3", titre: "Copier la consigne pour Claude Code", min: 5, detail: "Le bouton « Consigne pour Claude Code » met en forme les idées retenues, avec le contexte du projet. Il ne reste qu'à coller." },
+      { id: "c_idees_4", titre: "Faire implémenter et vérifier", min: 30, detail: "Une amélioration à la fois, testée, poussée sur dev. Le reste attend le mois prochain." },
+      { id: "c_idees_5", titre: "Marquer les retours comme traités", min: 5, detail: "Statut « traité » dans l'onglet Retours : la pile reste courte, et rien n'est relu deux fois." }
+    ]
+  },
+  {
     id: "c_conformite", phase: "p3", emoji: "🛡️", titre: "Conformité (données d'enfants)", perimetre: "coeur",
     but: "Grandir sans créer de risque juridique. Non négociable, y compris pour un projet gratuit.",
     kpi: "Registre à jour · zéro incident",
@@ -394,7 +407,7 @@ Vous vous étiez inscrit·e sur la liste d'attente de FamiTeam. Votre place est 
 
 FamiTeam aide les enfants de 2 à 7 ans à adopter des comportements positifs, dans l'esprit de la parentalité bienveillante : on encourage, on répare, on ne punit pas. C'est gratuit, sans publicité, et vos données restent en Europe.
 
-Les accès s'ouvrent par petites vagues : l'app est développée sur du temps libre, sans équipe et sans service d'assistance. Tout est prévu pour fonctionner seul, et les questions fréquentes sont rassemblées sur famiteam.com/faq.html
+Les accès s'ouvrent par petites vagues, pour que chaque famille démarre dans de bonnes conditions. Tout se règle depuis l'app, et les questions fréquentes sont rassemblées sur famiteam.com/faq.html
 
 FamiTeam`
   },
@@ -636,6 +649,15 @@ Si le sujet vous parle, en parlerions-nous ?
 ];
 
 /* ---------- Utilitaires (rendu & tests) ---------- */
+/* Clé d'avancement d'une étape. Pour un chantier récurrent, la clé porte la
+ * période : le chantier se re-décoche donc tout seul au mois suivant, sans
+ * rien effacer de l'historique. `moisCourant` est fourni par l'appelant
+ * (l'horloge n'appartient pas à ce fichier de données). */
+function cleEtapeCroissance(chantier, etape, moisCourant) {
+  if (chantier && chantier.recurrent === "mois" && moisCourant) return etape.id + "@" + moisCourant;
+  return etape.id;
+}
+
 // Chantiers d'une phase donnée.
 function chantiersDePhase(phaseId) {
   return CROISSANCE_CHANTIERS.filter(c => c.phase === phaseId);
@@ -659,7 +681,7 @@ function seanceDeLaSemaine(estFaite, budgetMin) {
     for (const ch of chantiersDePhase(ph.id)) {
       if (ch.perimetre !== "coeur") continue;
       for (const e of ch.etapes) {
-        if (estFaite(e)) continue;
+        if (estFaite(e, ch)) continue;
         const d = e.min || 15;
         if (total + d > budget) return choix.length ? choix : [{ chantier: ch, etape: e }];
         choix.push({ chantier: ch, etape: e });

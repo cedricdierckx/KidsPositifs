@@ -1359,6 +1359,41 @@ function ligneRetour(f) {
 
 // Sous-section « Retours » : liste filtrable des bugs & suggestions, avec
 // gestion du statut (nouveau / lu / traité) et réponse par e-mail.
+/* Met les retours non lus en forme de consigne pour Claude Code : contexte du
+ * projet, garde-fous, retours numérotés, et la demande de trier AVANT de
+ * coder. On ne demande pas d'implémenter en aveugle : on demande un tri
+ * argumenté, puis une seule amélioration à la fois. */
+function consigneClaudeCode(liste) {
+  const lignes = liste.map((f, i) => {
+    const type = f.type === "bug" ? "BOGUE" : "IDÉE";
+    const date = (f.created_at || "").slice(0, 10);
+    return `${i + 1}. [${type}] (${date}) ${String(f.message || "").trim().replace(/\s+/g, " ")}`;
+  }).join("\n");
+  return `Voici les retours reçus des familles utilisatrices de FamiTeam depuis la dernière revue.
+
+CONTEXTE DU PROJET
+- Application web familiale (2-7 ans), parentalité positive : on encourage, on répare, on ne punit jamais.
+- Projet personnel non marchand : gratuit, sans publicité, sans revente de données, hébergement européen.
+- Une heure de développement par semaine : chaque ajout doit se justifier par son rapport valeur/temps.
+- Quatre langues (fr, en, nl, de) : toute chaîne visible doit être traduite dans les quatre.
+- Tests : \`node test/run.js\` doit rester au vert.
+- Minimisation des données : aucune nouvelle donnée personnelle sans nécessité démontrée.
+
+RETOURS À EXAMINER
+${lignes}
+
+CE QUE J'ATTENDS
+1. Trie ces retours en trois piles, avec une phrase de justification chacun :
+   « à faire maintenant » (utile à toutes les familles et réalisable en moins d'une heure),
+   « plus tard » (bonne idée mais coûteuse ou peu demandée),
+   « non » (contraire au cap du projet, à la minimisation des données, ou au principe « on ne punit pas »).
+2. Attends ma validation du tri avant d'écrire la moindre ligne de code.
+3. Ensuite seulement, implémente UNE amélioration de la première pile : code, traductions dans les
+   quatre langues, test si la logique s'y prête, vérification, puis commit sur la branche dev.
+
+Ne modifie rien tant que je n'ai pas validé le tri.`;
+}
+
 function blocAdminRetours() {
   const sec = el("section", "carte");
   sec.innerHTML = `<h2>💬 ${t("admin.nav_retours")}</h2><p class="note">${t("admin.retours_desc")}</p>`;
@@ -1396,7 +1431,20 @@ function blocAdminRetours() {
     b.disabled = false; b.textContent = t("retours.recharger");
     rendreListe();
   };
-  sec.appendChild(b); sec.appendChild(corps);
+  sec.appendChild(b);
+
+  // Chantier récurrent « Revue des idées » : on met les retours en forme de
+  // consigne prête à coller dans Claude Code, avec le contexte du projet et
+  // les garde-fous. Le tri reste humain ; la mise en forme, non.
+  const bConsigne = el("button", "btn-secondaire", "🤖 " + t("retours.consigne"));
+  bConsigne.onclick = () => {
+    const liste = (adminRetoursCache || []).filter(f => (f.status || "nouveau") === "nouveau");
+    if (!liste.length) { toast(t("retours.consigne_vide"), "info"); return; }
+    copierTexte(consigneClaudeCode(liste));
+  };
+  sec.appendChild(bConsigne);
+  sec.appendChild(el("p", "reglage-aide", t("retours.consigne_aide")));
+  sec.appendChild(corps);
   if (adminRetoursCache) rendreListe();   // déjà chargé cette session
   return sec;
 }
@@ -1527,11 +1575,19 @@ function croissanceEtat() {
 }
 // Une étape est faite si l'admin l'a cochée, ou si elle est marquée comme
 // déjà livrée dans le plan et n'a pas été décochée depuis.
-function croissanceEtapeFaite(etape, etat) {
-  const v = (etat || croissanceEtat()).etapes[etape.id];
+function croissanceEtapeFaite(etape, etat, chantier) {
+  const cle = croissanceCleEtape(chantier, etape);
+  const v = (etat || croissanceEtat()).etapes[cle];
   if (v === false) return false;
   if (v) return true;
-  return !!etape.fait;
+  // Un chantier récurrent ne se souvient pas des périodes précédentes : à
+  // chaque nouveau mois, ses étapes sont de nouveau à faire.
+  return (chantier && chantier.recurrent) ? false : !!etape.fait;
+}
+// Clé d'avancement (mois courant pour les chantiers récurrents).
+function croissanceCleEtape(chantier, etape) {
+  if (typeof cleEtapeCroissance !== "function") return etape.id;
+  return cleEtapeCroissance(chantier, etape, aujourdHui().slice(0, 7));
 }
 async function croissanceEnregistrer(etat) {
   const ok = await adminDefinirConfig("croissance", JSON.stringify(etat));
@@ -1539,7 +1595,7 @@ async function croissanceEnregistrer(etat) {
   return ok;
 }
 function croissanceAvancement(chantier, etat) {
-  const faites = chantier.etapes.filter(e => croissanceEtapeFaite(e, etat)).length;
+  const faites = chantier.etapes.filter(e => croissanceEtapeFaite(e, etat, chantier)).length;
   return { faites, total: chantier.etapes.length,
            pct: Math.round((faites / Math.max(1, chantier.etapes.length)) * 100) };
 }
@@ -1547,7 +1603,7 @@ function croissanceAvancement(chantier, etat) {
 function croissanceProchaine(etat) {
   for (const ph of CROISSANCE_PHASES) {
     for (const ch of chantiersDePhase(ph.id)) {
-      const e = ch.etapes.find(x => !croissanceEtapeFaite(x, etat));
+      const e = ch.etapes.find(x => !croissanceEtapeFaite(x, etat, ch));
       if (e) return { phase: ph, chantier: ch, etape: e };
     }
   }
@@ -1581,7 +1637,7 @@ const REPONSES_TYPES = [
   { id: "bogue", titre: "Bogue signalé",
     texte: `Bonjour,\n\nMerci de l'avoir signalé. Je reproduis le problème et je le corrige dès que possible ;\nvous n'avez rien à faire de votre côté, la correction arrive toute seule (rien à installer).\n\nLa correction arrivera dans une prochaine mise à jour, sans notification particulière.\n\nFamiTeam` },
   { id: "idee", titre: "Idée reçue, mais pas pour tout de suite",
-    texte: `Bonjour,\n\nMerci pour l'idée. Je la note dans la liste.\n\nFamiTeam est développé sur du temps libre, quelques heures par mois : tout ne peut pas être fait,\net aucun délai n'est promis. Si plusieurs familles demandent la même chose, l'idée remonte naturellement.\n\nFamiTeam` },
+    texte: `Bonjour,\n\nMerci pour l'idée. Je la note dans la liste.\n\nLes idées sont passées en revue par lots, à chaque mise à jour : quand plusieurs familles demandent\nla même chose, elle remonte naturellement en tête de liste.\n\nFamiTeam` },
   { id: "donnees", titre: "Question sur les données",
     texte: `Bonjour,\n\nVos données sont hébergées en Europe, ne sont jamais revendues et ne servent à aucune publicité.\nNous demandons le strict minimum : prénom et date de naissance de l'enfant, rien d'autre.\n\nVous pouvez tout exporter ou tout supprimer en deux clics : Réglages → Mon compte.\nLe détail est ici : https://famiteam.com/confidentialite.html\n\nFamiTeam` },
   { id: "faq", titre: "Renvoi vers la FAQ",
@@ -1653,12 +1709,14 @@ function blocAdminCroissance(c) {
   const tete = el("section", "carte croiss-tete");
   // L'avancement ne compte que le périmètre « cœur » : les chantiers hors
   // périmètre sont conservés pour mémoire, pas pour être faits.
-  const coeur = CROISSANCE_CHANTIERS.filter(ch => ch.perimetre === "coeur");
+  // Les chantiers récurrents ne comptent pas dans l'avancement : ils ne se
+  // terminent jamais, par construction.
+  const coeur = CROISSANCE_CHANTIERS.filter(ch => ch.perimetre === "coeur" && !ch.recurrent);
   const totalEtapes = coeur.reduce((s, ch) => s + ch.etapes.length, 0);
   const totalFaites = coeur.reduce(
-    (s, ch) => s + ch.etapes.filter(e => croissanceEtapeFaite(e, etat0)).length, 0);
+    (s, ch) => s + ch.etapes.filter(e => croissanceEtapeFaite(e, etat0, ch)).length, 0);
   const heures = Math.round(coeur.reduce((s, ch) => s + ch.etapes
-    .filter(e => !croissanceEtapeFaite(e, etat0)).reduce((x, e) => x + (e.min || 0), 0), 0) / 60);
+    .filter(e => !croissanceEtapeFaite(e, etat0, ch)).reduce((x, e) => x + (e.min || 0), 0), 0) / 60);
   const pctGlobal = Math.round((totalFaites / Math.max(1, totalEtapes)) * 100);
   tete.innerHTML = `<h2>${t("croiss.titre")}</h2>
     <p class="note">${t("croiss.sous")}</p>
@@ -1696,7 +1754,7 @@ function blocAdminCroissance(c) {
 
   /* ----- La séance de la semaine : ce qui tient dans une heure ----- */
   const sem = el("section", "carte croiss-semaine");
-  const choix = seanceDeLaSemaine(e => croissanceEtapeFaite(e, etat0), 60);
+  const choix = seanceDeLaSemaine((e, ch) => croissanceEtapeFaite(e, etat0, ch), 60);
   const totalMin = choix.reduce((s, x) => s + (x.etape.min || 15), 0);
   sem.innerHTML = `<h2>${t("croiss.semaine")}</h2>
     <p class="note">${t("croiss.semaine_sous", { min: totalMin })}</p>`;
@@ -1708,7 +1766,7 @@ function blocAdminCroissance(c) {
       const i = el("input"); i.type = "checkbox";
       i.onchange = async () => {
         const etat = croissanceEtat();
-        etat.etapes[etape.id] = i.checked ? aujourdHui() : false;
+        etat.etapes[croissanceCleEtape(chantier, etape)] = i.checked ? aujourdHui() : false;
         i.disabled = true;
         await croissanceEnregistrer(etat);
         i.disabled = false;
@@ -1773,7 +1831,8 @@ function blocAdminCroissance(c) {
     chantiersDePhase(ph.id).forEach(ch => {
       const av = croissanceAvancement(ch, etat0);
       const marque = ch.perimetre === "hors" ? ` <span class="croiss-perim hors">${t("croiss.hors")}</span>`
-                   : ch.perimetre === "plus_tard" ? ` <span class="croiss-perim plus-tard">${t("croiss.plus_tard")}</span>` : "";
+                   : ch.perimetre === "plus_tard" ? ` <span class="croiss-perim plus-tard">${t("croiss.plus_tard")}</span>`
+                   : ch.recurrent === "mois" ? ` <span class="croiss-perim recurrent">${t("croiss.recurrent")}</span>` : "";
       const titre = `${ch.emoji} ${echapper(ch.titre)}${marque} <span class="croiss-badge${av.pct === 100 ? " ok" : ""}">${av.faites}/${av.total}</span>`;
       const { details, corps } = blocPliable(titre, false, "croiss-" + ch.id);
       if (ch.perimetre !== "coeur") details.classList.add("croiss-attenue");
@@ -1781,12 +1840,12 @@ function blocAdminCroissance(c) {
         <p class="note"><strong>${t("croiss.kpi")}</strong> ${echapper(ch.kpi)} · <strong>${t("croiss.duree")}</strong> ${t("croiss.duree_val", { min: dureeChantier(ch) })}</p>`;
 
       ch.etapes.forEach(etape => {
-        const faite = croissanceEtapeFaite(etape, etat0);
+        const faite = croissanceEtapeFaite(etape, etat0, ch);
         const l = el("label", "switch-ligne croiss-etape" + (faite ? " faite" : ""));
         const i = el("input"); i.type = "checkbox"; i.checked = faite;
         i.onchange = async () => {
           const etat = croissanceEtat();
-          etat.etapes[etape.id] = i.checked ? aujourdHui() : false;
+          etat.etapes[croissanceCleEtape(ch, etape)] = i.checked ? aujourdHui() : false;
           i.disabled = true;
           await croissanceEnregistrer(etat);
           i.disabled = false;
