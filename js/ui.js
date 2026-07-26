@@ -3162,7 +3162,14 @@ function _pointRoue(cx, cy, rayon, angleDeg) {
 function roueTournante(ids, idGarde, taille) {
   taille = taille || 104;
   const cx = 60, cy = 60, rayon = 52;
-  const enfants = ids.map(id => etat.enfants[id]).filter(Boolean);
+  // Ordre INVERSÉ pour le seul positionnement visuel : avec l'ordre direct,
+  // "le suivant chronologique" (le prochain à prendre le relais) atterrissait
+  // à droite du repère, ce qui a été signalé comme lisant "à l'envers" —
+  // vérifié avant/après par rendu réel (Chromium headless) : avec l'ordre
+  // inversé, le suivant atterrit à GAUCHE et le précédent à DROITE. Aucune
+  // autre logique (qui est de garde aujourd'hui, quelles tâches, etc.) n'est
+  // affectée : ceci ne change que l'agencement des secteurs de LA ROUE.
+  const enfants = ids.slice().reverse().map(id => etat.enfants[id]).filter(Boolean);
   const n = enfants.length;
   if (!n) return "";
   const step = 360 / n;
