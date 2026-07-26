@@ -194,6 +194,18 @@ test("blagues: liste par langue + surcharge admin via configApp", () => {
   assert.strictEqual(b.q, "Q?");
 });
 
+test("blagues : désactivées globalement (corpus en révision), même famille humour=true", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  assert.strictEqual(api.humourActif(), true);       // le réglage famille est actif...
+  assert.strictEqual(api.BLAGUES_ACTIVEES, false);   // ...mais le corpus est coupé globalement...
+  assert.strictEqual(api.blagueDuJourVisible(), null); // ...donc rien à afficher sur l'accueil.
+  // blagueDuJour() (logique de sélection pure) reste disponible pour plus
+  // tard, une fois un corpus éprouvé et libre de droits en place.
+  assert.ok(api.blagueDuJour());
+});
+
 /* ---------- Compliment du jour (espace parent) ---------- */
 test("compliment: une série de 3+ jours consécutifs est détectée et félicitée", () => {
   const { api } = construireContexte();

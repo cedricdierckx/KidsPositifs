@@ -1428,6 +1428,19 @@ function definirEvalParent(enf, valeur, jour) {
 function humourActif() {
   return !!(etat && etat.reglages && etat.reglages.humour);
 }
+// Interrupteur GLOBAL de la « blague du jour » : désactivé pour l'instant, le
+// temps de remplacer le corpus actuel par des blagues éprouvées et libres de
+// droits (certaines blagues du corpus actuel ne font pas mouche). Indépendant
+// du réglage « humour » par famille : même une famille qui a activé l'humour
+// ne verra aucune blague tant que ce commutateur est à false. Le reste du
+// corpus (messages d'état vide) n'est pas concerné.
+const BLAGUES_ACTIVEES = false;
+// Blague du jour à afficher (accueil) : null si désactivée globalement ou
+// si la famille a coupé l'humour ; sinon la blague du jour (voir blagueDuJour).
+function blagueDuJourVisible() {
+  if (!BLAGUES_ACTIVEES || !humourActif()) return null;
+  return blagueDuJour();
+}
 // Mémoire anti-répétition du dernier index tiré par préfixe.
 const _humourDernier = {};
 function humourAleatoire(prefix, arr) {

@@ -780,6 +780,9 @@ let blgLangAdmin = "fr";
 function blocAdminBlagues() {
   const sec = el("section", "carte");
   sec.innerHTML = `<h2>🃏 ${t("admin.blg_titre")}</h2><p class="note">${t("admin.blg_note")}</p>`;
+  if (typeof BLAGUES_ACTIVEES !== "undefined" && !BLAGUES_ACTIVEES) {
+    sec.appendChild(el("p", "admin-bientot-badge", "⏸️ " + t("admin.blg_desactivees")));
+  }
 
   // Choix de la langue (onglets)
   const onglets = el("div", "blg-langues");
@@ -2470,8 +2473,7 @@ function blocVerifJours(enf) {
 
 // Carte « Blague du jour » : la réponse se révèle au tap (effet surprise).
 function blocBlagueDuJour() {
-  if (typeof humourActif !== "function" || !humourActif()) return null;
-  const b = (typeof blagueDuJour === "function") ? blagueDuJour() : null;
+  const b = (typeof blagueDuJourVisible === "function") ? blagueDuJourVisible() : null;
   if (!b) return null;
   const sec = el("section", "carte blague-carte");
   sec.innerHTML = `<h2>${t("blague.titre")}</h2>
