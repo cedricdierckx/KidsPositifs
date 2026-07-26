@@ -376,6 +376,86 @@ test("i18n : mode d'emploi « Oups » et premiers pas traduits dans les 4 langue
   assert.strictEqual(soucis.length, 0, soucis.slice(0, 10).join(", "));
 });
 
+/* ---------- Tournantes : qui, quand, jusqu'à quand ---------- */
+function rotationTest(api, extra) {
+  return Object.assign({
+    id: "rot-test", missions: ["m1"], enfants: ["a", "b", "c"],
+    periode: "semaine", debut: "2026-07-06", joursOff: []      // lundi 6 juillet
+  }, extra || {});
+}
+
+test("tournantes : bornes de la période courante (semaine)", () => {
+  const { api } = construireContexte();
+  const rot = rotationTest(api);
+  const p = api.periodeRotation(rot, "2026-07-09");            // jeudi de la 1ʳᵉ semaine
+  assert.strictEqual(p.index, 0);
+  assert.strictEqual(p.debut, "2026-07-06");
+  assert.strictEqual(p.fin, "2026-07-12");                     // dimanche inclus
+  // Le lendemain du dimanche ouvre la période suivante.
+  const p2 = api.periodeRotation(rot, "2026-07-13");
+  assert.strictEqual(p2.index, 1);
+  assert.strictEqual(p2.debut, "2026-07-13");
+  assert.strictEqual(p2.fin, "2026-07-19");
+});
+
+test("tournantes : la période d'un jour dure un jour", () => {
+  const { api } = construireContexte();
+  const rot = rotationTest(api, { periode: "jour" });
+  const p = api.periodeRotation(rot, "2026-07-09");
+  assert.strictEqual(p.debut, "2026-07-09");
+  assert.strictEqual(p.fin, "2026-07-09");
+  assert.strictEqual(p.index, 3);
+});
+
+test("tournantes : l'aperçu déroule les tours dans l'ordre, sans trou", () => {
+  const { api } = construireContexte();
+  const rot = rotationTest(api);
+  const suite = api.apercuRotation(rot, "2026-07-09", 4);
+  assert.strictEqual(suite.map(x => x.enfant).join(","), "a,b,c,a");
+  assert.strictEqual(suite.map(x => x.debut).join(","),
+    "2026-07-06,2026-07-13,2026-07-20,2026-07-27");
+  // Chaque période commence le lendemain de la fin de la précédente.
+  for (let i = 1; i < suite.length; i++) {
+    const veille = new Date(suite[i].debut + "T00:00:00");
+    veille.setDate(veille.getDate() - 1);
+    assert.strictEqual(veille.toISOString().slice(0, 10), suite[i - 1].fin);
+  }
+  // L'aperçu est cohérent avec la fonction qui désigne l'enfant de garde.
+  suite.forEach(p => assert.strictEqual(api.enfantDeGardeRotation(rot, p.debut), p.enfant));
+});
+
+test("tournantes : le prochain tour d'un enfant tombe après la période en cours", () => {
+  const { api } = construireContexte();
+  const rot = rotationTest(api);
+  // Semaine de « a » : son prochain tour est dans 3 périodes.
+  const suivantA = api.prochainTourRotation(rot, "a", "2026-07-09");
+  assert.strictEqual(suivantA.dans, 3);
+  assert.strictEqual(suivantA.debut, "2026-07-27");
+  // Pour « b », c'est la semaine prochaine.
+  const suivantB = api.prochainTourRotation(rot, "b", "2026-07-09");
+  assert.strictEqual(suivantB.dans, 1);
+  assert.strictEqual(suivantB.debut, "2026-07-13");
+  // Un enfant hors tournante n'a pas de tour.
+  assert.strictEqual(api.prochainTourRotation(rot, "z", "2026-07-09"), null);
+});
+
+test("tournantes : un seul enfant garde la tâche à chaque période", () => {
+  const { api } = construireContexte();
+  const rot = rotationTest(api, { enfants: ["a"] });
+  const suite = api.apercuRotation(rot, "2026-07-09", 3);
+  assert.strictEqual(suite.map(x => x.enfant).join(","), "a,a,a");
+  // « Prochain tour » reste défini : la période suivante.
+  assert.strictEqual(api.prochainTourRotation(rot, "a", "2026-07-09").dans, 1);
+});
+
+test("tournantes : avant la date de début, on reste sur la première période", () => {
+  const { api } = construireContexte();
+  const rot = rotationTest(api);
+  const p = api.periodeRotation(rot, "2026-06-01");
+  assert.strictEqual(p.index, 0);
+  assert.strictEqual(api.enfantDeGardeRotation(rot, "2026-06-01"), "a");
+});
+
 /* ---------- Plan de développement commercial (onglet Admin « Croissance ») ---------- */
 test("croissance : chantiers bien formés, identifiants uniques, phases connues", () => {
   const { api } = construireContexte();

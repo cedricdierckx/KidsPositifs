@@ -94,6 +94,7 @@ function construireContexte() {
       selectionGroupee, definirPlanComplet,
       // tournantes de tâches
       ajouterRotation, supprimerRotation, enfantDeGardeRotation, rotationPermet, missionsTournanteDuJour, debutSemaineLundi, jourOffRotation, demain,
+      periodeRotation, apercuRotation, prochainTourRotation, joursPeriodeRotation,
       // budget de tâches par âge (≈ 3 min/jour)
       tachesConseillees, nbConseille, missionsConseillees,
       // tableau de bord science

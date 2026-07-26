@@ -2049,6 +2049,11 @@ function vueAccueil(c) {
   // Bandeau "dodo" : ambiance selon l'heure + mission coucher à l'heure
   colA.appendChild(bandeauDodo(enf));
 
+  // Tournantes : à qui le tour, jusqu'à quand — AVANT les missions, sinon
+  // l'enfant découvre une tâche (ou son absence) sans comprendre pourquoi.
+  const tr = blocTournanteEnfant(enf);
+  if (tr) colB.appendChild(tr);
+
   // Missions Famille (directement sur la page d'accueil de l'enfant)
   const titreFam = el("section", "carte titre-cat");
   titreFam.style.setProperty("--c", CATEGORIES.famille.couleur);
@@ -2062,10 +2067,6 @@ function vueAccueil(c) {
   titrePla.innerHTML = `<h2>${t("home.missions_planete")} <span class="solde-inline">💧${jeune ? "" : " " + enf.gouttes}</span></h2>`;
   colB.appendChild(titrePla);
   colB.appendChild(grilleMissions("planete"));
-
-  // Tournantes : annonce de la (des) tâche(s) de demain pour cet enfant.
-  const td = blocTournanteDemain(enf);
-  if (td) colB.appendChild(td);
 
   // Badges (seuls les badges réalisés sont affichés)
   colB.appendChild(blocBadges(enf));
@@ -2635,9 +2636,16 @@ function grilleMissions(catId) {
   actives.forEach(m => {
     const fait = (journalJour[m.id] || 0) >= 1;
     const enAttente = !retroActif && enf.enAttente.some(a => a.missionId === m.id && a.jour === jour);
-    const carte = el("button", "mission" + (fait ? " fait" : "") + (enAttente ? " attente" : "") + (retroActif ? " revision" : ""));
+    // Tâche de tournante dont c'est le tour de cet enfant : on le dit sur la
+    // tuile elle-même, avec la date de fin en infobulle.
+    const rotM = rotationsDe(m.id).find(r => (r.enfants || []).includes(enf.id)
+      && !jourOffRotation(r, jour) && enfantDeGardeRotation(r, jour) === enf.id);
+    const carte = el("button", "mission" + (fait ? " fait" : "") + (enAttente ? " attente" : "")
+      + (retroActif ? " revision" : "") + (rotM ? " tour" : ""));
+    if (rotM) carte.title = t("rot.jusqu_a", { jour: jourLisible(periodeRotation(rotM, jour).fin) });
     const recompense = pointsVisuels(pointsMission(enf, m), cat.monnaieEmoji, jeune);
     carte.innerHTML = `
+      ${rotM ? `<span class="m-tour" aria-label="${t("rot.badge")}">🔁</span>` : ""}
       <span class="m-emoji">${m.emoji}</span>
       <span class="m-titre">${titreMission(m)}</span>
       <span class="m-points">${fait ? "✅" : (enAttente ? "⏳" : recompense)}</span>`;
@@ -2740,16 +2748,68 @@ function blocCartesSurprises(enf) {
   return sec;
 }
 
-// Tournantes : prévient l'enfant de la (des) tâche(s) dont il sera de garde
-// DEMAIN, pour qu'il s'y prépare. Rien d'affiché s'il n'a pas de tour demain.
-function blocTournanteDemain(enf) {
-  const dem = demain();
-  const missions = missionsTournanteDuJour(enf, dem);
-  if (!missions.length) return null;
-  const sec = el("section", "carte tournante-demain");
-  const liste = missions.map(m => `${m.emoji} ${titreMission(m)}`).join(", ");
-  sec.innerHTML = `<div class="td-titre">🔁 ${t("rot.demain_titre")}</div>
-    <div class="td-taches">${liste}</div>`;
+// Date en toutes lettres, courte et lisible par un enfant : « dimanche 2 août ».
+function jourLisible(cle, avecMois) {
+  try {
+    const d = new Date(cle + "T00:00:00");
+    return d.toLocaleDateString(langue, avecMois === false
+      ? { weekday: "long" }
+      : { weekday: "long", day: "numeric", month: "long" });
+  } catch (e) { return cle; }
+}
+
+/* ---------- Tournantes, côté enfant ----------
+ * Une tâche qui apparaît ou disparaît sans explication est vécue comme
+ * arbitraire. Cette carte répond, pour chaque tournante à laquelle l'enfant
+ * participe, aux trois questions : c'est le tour de qui, jusqu'à quand, et
+ * quand revient le mien. Elle s'affiche AU-DESSUS des missions. */
+function blocTournanteEnfant(enf) {
+  const jour = jourAffiche();
+  const rots = (etat.rotations || []).filter(r => (r.enfants || []).includes(enf.id));
+  if (!rots.length) return null;
+
+  const sec = el("section", "carte tournante-carte");
+  let html = "";
+  rots.forEach(r => {
+    const taches = (r.missions || []).map(id => {
+      const m = trouverMission(id);
+      return m ? `${m.emoji} ${titreMission(m)}` : null;
+    }).filter(Boolean).join(", ");
+    if (!taches) return;
+
+    const p = periodeRotation(r, jour);
+    const garde = enfantDeGardeRotation(r, jour);
+    const off = jourOffRotation(r, jour);
+    const suivant = apercuRotation(r, jour, 2)[1];
+    const prenomDe = (id) => { const e = etat.enfants[id]; return e ? echapper(e.prenom) : "—"; };
+
+    if (off) {
+      html += `<div class="tr-bloc off"><div class="tr-titre">🔁 ${t("rot.off_titre")}</div>
+        <div class="tr-taches">${taches}</div>
+        <div class="tr-quand">${t("rot.off_txt")}</div></div>`;
+    } else if (garde === enf.id) {
+      const ensuite = (suivant && suivant.enfant !== enf.id)
+        ? " " + t("rot.ensuite_enf", { prenom: prenomDe(suivant.enfant) }) : "";
+      html += `<div class="tr-bloc moi"><div class="tr-titre">🔁 ${t("rot.moi_titre")}</div>
+        <div class="tr-taches">${taches}</div>
+        <div class="tr-quand">${t("rot.jusqu_a", { jour: jourLisible(p.fin) })}${ensuite}</div></div>`;
+    } else {
+      const mien = prochainTourRotation(r, enf.id, jour);
+      const quand = mien ? t("rot.ton_tour", { jour: jourLisible(mien.debut) }) : "";
+      html += `<div class="tr-bloc autre"><div class="tr-titre">🔁 ${t("rot.autre_titre", { prenom: prenomDe(garde) })}</div>
+        <div class="tr-taches">${taches}</div>
+        <div class="tr-quand">${quand}</div></div>`;
+    }
+  });
+  if (!html) return null;
+
+  // Petit rappel de la veille : « et demain, c'est toi ! »
+  const dem = demain(jour);
+  const demainMoi = rots.some(r => !jourOffRotation(r, dem) && enfantDeGardeRotation(r, dem) === enf.id
+    && enfantDeGardeRotation(r, jour) !== enf.id);
+  if (demainMoi) html += `<div class="tr-demain">🌙 ${t("rot.demain_moi")}</div>`;
+
+  sec.innerHTML = html;
   return sec;
 }
 
@@ -3330,6 +3390,74 @@ const planDate = {}; // date sélectionnée pour les missions du jour, par enfan
 // Tournantes : des tâches effectuées à tour de rôle par les enfants choisis
 // (ex. mettre/débarrasser la table, une semaine sur deux entre 2 enfants).
 let rotNouv = null;   // brouillon de création (session)
+/* ---------- Tournantes, côté parent ----------
+ * Une tournante se lit en une phrase : QUI fait QUOI, à quel RYTHME, jusqu'à
+ * QUAND, et qui vient ensuite. Le tableau des prochains tours évite d'avoir
+ * à faire le calcul de tête. */
+
+// Nom complet d'un jour de semaine (0 = dimanche), dans la langue courante.
+// On s'appuie sur une date de référence plutôt que sur une liste traduite :
+// une liste de plus à maintenir dans quatre langues serait une liste de trop.
+function nomJourSemaine(wd) {
+  const d = new Date("2026-07-05T00:00:00");        // un dimanche
+  d.setDate(d.getDate() + wd);
+  try { return d.toLocaleDateString(langue, { weekday: "long" }); } catch (e) { return String(wd); }
+}
+
+// Liste lisible des jours sans tâche : « samedi, dimanche ».
+function joursOffLisibles(rot) {
+  if (!Array.isArray(rot.joursOff) || !rot.joursOff.length) return "";
+  return [1, 2, 3, 4, 5, 6, 0].filter(wd => rot.joursOff.includes(wd)).map(nomJourSemaine).join(", ");
+}
+
+// La phrase de résumé, utilisée pour une tournante existante ET pour l'aperçu
+// en direct du formulaire de création.
+function phraseTournante(rot) {
+  const taches = (rot.missions || []).map(id => {
+    const m = trouverMission(id); return m ? `${m.emoji} ${titreMission(m)}` : null;
+  }).filter(Boolean).join(", ") || "…";
+  const prenoms = (rot.enfants || []).map(id => {
+    const e = etat.enfants[id]; return e ? echapper(e.prenom) : null;
+  }).filter(Boolean);
+  const rythme = rot.periode === "jour" ? t("rot.rythme_jour") : t("rot.rythme_semaine");
+  const qui = prenoms.length > 1
+    ? prenoms.slice(0, -1).join(", ") + " " + t("rot.et") + " " + prenoms[prenoms.length - 1]
+    : (prenoms[0] || "…");
+  let phrase = t("rot.phrase", { taches, rythme, enfants: qui });
+  const off = joursOffLisibles(rot);
+  if (off) phrase += " " + t("rot.phrase_off", { jours: off });
+  return phrase;
+}
+
+function carteTournante(r, jour) {
+  const carte = el("div", "rot-item");
+  const off = jourOffRotation(r, jour);
+  const p = periodeRotation(r, jour);
+  const suite = apercuRotation(r, jour, 5);
+  const prenomDe = (id) => { const e = etat.enfants[id]; return e ? echapper(e.prenom) : "—"; };
+
+  let html = `<p class="rot-phrase">${phraseTournante(r)}</p>`;
+  // Qui, maintenant, et jusqu'à quand.
+  html += `<p class="rot-maintenant">${off
+    ? "⏸️ " + t("rot.off_auj")
+    : "👤 " + t("rot.en_cours", { prenom: prenomDe(suite[0].enfant), jour: jourLisible(p.fin) })}`;
+  if (suite[1]) html += ` <span class="rot-ensuite">${t("rot.ensuite", { prenom: prenomDe(suite[1].enfant) })}</span>`;
+  html += `</p>`;
+  // Le calendrier des prochains tours : plus besoin de compter de tête.
+  html += `<span class="rot-apercu-t">${t("rot.apercu")}</span><div class="rot-apercu">` +
+    suite.map((x, i) => `<span class="rot-tour${i === 0 ? " en-cours" : ""}">
+      <strong>${prenomDe(x.enfant)}</strong>
+      <small>${jourLisible(x.debut)}${x.debut !== x.fin ? " → " + jourLisible(x.fin, false) : ""}</small>
+    </span>`).join("") + `</div>`;
+  html += `<p class="note rot-depuis">${t("rot.depuis", { jour: jourLisible(r.debut || jour) })}</p>`;
+  carte.innerHTML = html;
+
+  const sup = el("button", "mini-btn danger", "🗑️");
+  sup.onclick = () => { if (confirm(t("rot.confirm_suppr"))) supprimerRotation(r.id); };
+  carte.appendChild(sup);
+  return carte;
+}
+
 function blocTournantes() {
   const sec = el("section", "carte");
   sec.innerHTML = `<h2>${t("rot.titre")}</h2><p class="note">${t("rot.note")}</p>`;
@@ -3338,37 +3466,16 @@ function blocTournantes() {
   // --- Tournantes existantes ---
   const liste = etat.rotations || [];
   if (liste.length) {
-    liste.forEach(r => {
-      const garde = enfantDeGardeRotation(r, jour);
-      const enfGarde = etat.enfants[garde];
-      const ms = (r.missions || []).map(id => { const m = trouverMission(id); return m ? m.emoji + " " + titreMission(m) : id; }).join(", ");
-      const ordre = (r.enfants || []).map(id => {
-        const e = etat.enfants[id]; if (!e) return "";
-        return `<span class="rot-enf${id === garde ? " garde" : ""}">${echapper(e.prenom)}</span>`;
-      }).join(" → ");
-      const lettresOff = t("planif.jours_courts").split(",");
-      const ordreJ = [1, 2, 3, 4, 5, 6, 0];
-      const offTxt = (r.joursOff && r.joursOff.length)
-        ? " · " + t("rot.off") + " " + ordreJ.filter(wd => r.joursOff.includes(wd)).map(wd => lettresOff[ordreJ.indexOf(wd)]).join(",")
-        : "";
-      const aujOff = jourOffRotation(r, jour);
-      const carte = el("div", "rot-item");
-      carte.innerHTML = `<div class="rot-ms">${ms}</div>
-        <div class="rot-ordre">${ordre}</div>
-        <div class="rot-meta">${r.periode === "jour" ? t("rot.par_jour") : t("rot.par_semaine")} · ${aujOff ? t("rot.off_auj") : t("rot.tour", { prenom: enfGarde ? echapper(enfGarde.prenom) : "—" })}${offTxt}</div>`;
-      const sup = el("button", "mini-btn danger", "🗑️");
-      sup.onclick = () => { if (confirm(t("rot.confirm_suppr"))) supprimerRotation(r.id); };
-      carte.appendChild(sup);
-      sec.appendChild(carte);
-    });
+    liste.forEach(r => sec.appendChild(carteTournante(r, jour)));
   } else {
     sec.appendChild(el("p", "note", t("rot.aucune")));
   }
 
   // --- Création ---
-  if (!rotNouv) rotNouv = { missions: [], enfants: [], periode: "semaine", joursOff: [] };
+  if (!rotNouv) rotNouv = { missions: [], enfants: [], periode: "semaine", joursOff: [], bascule: 1 };
+  if (typeof rotNouv.bascule !== "number") rotNouv.bascule = 1;   // lundi par défaut
   const { details, corps } = blocPliable(`➕ ${t("rot.creer")}`, false, "rot-creer");
-  corps.appendChild(el("p", "note rot-priorite-aide", `⚠️ ${t("rot.priorite_aide")}`));
+  corps.appendChild(el("p", "note rot-priorite-aide", `💡 ${t("rot.priorite_aide")}`));
 
   // Missions (cases à cocher, par catégorie)
   corps.appendChild(el("p", "sous-titre", t("rot.choix_missions")));
@@ -3430,13 +3537,47 @@ function blocTournantes() {
   });
   corps.appendChild(offRow);
 
+  // Jour de bascule (rythme hebdomadaire) : le tour change ce jour-là.
+  let debutPrevu = aujourdHui();
+  if (rotNouv.periode === "semaine") {
+    corps.appendChild(el("p", "sous-titre", t("rot.bascule")));
+    const bascRow = el("div", "planif-jours");
+    [1, 2, 3, 4, 5, 6, 0].forEach((wd, i) => {
+      const b = el("button", "jour-chip" + (rotNouv.bascule === wd ? " on" : ""), lettresJ[i] || String(wd));
+      b.onclick = () => { rotNouv.bascule = wd; rendre(); };
+      bascRow.appendChild(b);
+    });
+    corps.appendChild(bascRow);
+    debutPrevu = dernierJourSemaine(aujourdHui(), rotNouv.bascule);
+    corps.appendChild(el("p", "note", t("rot.bascule_aide", { jour: nomJourSemaine(rotNouv.bascule) })));
+  }
+
+  // Aperçu en direct : la phrase exacte et les premiers tours, AVANT de valider.
+  if (rotNouv.missions.length && rotNouv.enfants.length) {
+    const projet = {
+      missions: rotNouv.missions, enfants: rotNouv.enfants,
+      periode: rotNouv.periode, debut: debutPrevu, joursOff: rotNouv.joursOff
+    };
+    const ap = el("div", "rot-apercu-creation");
+    ap.innerHTML = `<p class="sous-titre">${t("rot.apercu_creation")}</p>` +
+      `<p class="rot-phrase">${phraseTournante(projet)}</p>`;
+    const suite = apercuRotation(projet, aujourdHui(), 4);
+    ap.innerHTML += `<div class="rot-apercu">` + suite.map((x, i) => {
+      const e = etat.enfants[x.enfant];
+      return `<span class="rot-tour${i === 0 ? " en-cours" : ""}"><strong>${e ? echapper(e.prenom) : "—"}</strong>
+        <small>${jourLisible(x.debut)}${x.debut !== x.fin ? " → " + jourLisible(x.fin, false) : ""}</small></span>`;
+    }).join("") + `</div>`;
+    corps.appendChild(ap);
+  }
+
   const bGo = el("button", "gros-bouton planete", t("rot.valider"));
   bGo.onclick = () => {
     if (rotNouv.missions.length < 1) { toast(t("rot.err_mission"), "info"); return; }
     if (rotNouv.enfants.length < 1) { toast(t("rot.err_enfants"), "info"); return; }
-    const { missions, enfants, periode, joursOff } = rotNouv;
+    const { missions, enfants, periode, joursOff, bascule } = rotNouv;
+    const debut = periode === "semaine" ? dernierJourSemaine(aujourdHui(), bascule) : aujourdHui();
     rotNouv = null;
-    ajouterRotation(missions, enfants, periode, debutSemaineLundi(aujourdHui()), joursOff);
+    ajouterRotation(missions, enfants, periode, debut, joursOff);
     toast(t("rot.creee"), "succes");
   };
   corps.appendChild(bGo);

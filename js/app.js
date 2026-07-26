@@ -883,6 +883,69 @@ function jourOffRotation(rot, jour) {
 function rotationsDe(id) {
   return (etat.rotations || []).filter(r => Array.isArray(r.missions) && r.missions.includes(id));
 }
+
+/* ---------- « Qui, quand, jusqu'à quand » ----------
+ * Une tournante découpe le temps en périodes égales (1 ou 7 jours) à partir
+ * de `debut`. Ces trois fonctions répondent aux seules questions que se
+ * posent un parent et un enfant : c'est le tour de qui, jusqu'à quand, et
+ * quand revient mon tour. Tout l'affichage s'appuie dessus. */
+
+// Nombre de jours d'une période.
+function joursPeriodeRotation(rot) { return rot && rot.periode === "jour" ? 1 : 7; }
+
+// Dernière occurrence d'un jour de semaine (0 = dimanche … 6 = samedi) à la
+// date `cle` ou avant : sert à caler le début d'une tournante hebdomadaire
+// sur le jour de bascule choisi par les parents.
+function dernierJourSemaine(cle, wd) {
+  const d = new Date((cle || aujourdHui()) + "T00:00:00");
+  const cible = (typeof wd === "number" && wd >= 0 && wd <= 6) ? wd : 1;
+  d.setDate(d.getDate() - ((d.getDay() - cible + 7) % 7));
+  return dateCle(d);
+}
+
+// Bornes de la période qui contient `jour` : { index, debut, fin }.
+function periodeRotation(rot, jour) {
+  const pas = joursPeriodeRotation(rot);
+  const base = new Date((rot.debut || aujourdHui()) + "T00:00:00");
+  const d = new Date((jour || aujourdHui()) + "T00:00:00");
+  let index = Math.floor((d - base) / (pas * 86400000));
+  if (!isFinite(index) || index < 0) index = 0;      // avant le début : 1ʳᵉ période
+  const debut = new Date(base); debut.setDate(base.getDate() + index * pas);
+  const fin = new Date(debut);  fin.setDate(debut.getDate() + pas - 1);
+  return { index, debut: dateCle(debut), fin: dateCle(fin) };
+}
+
+// Les `n` prochaines périodes (celle en cours comprise) : [{ debut, fin, enfant }].
+function apercuRotation(rot, jour, n) {
+  const ids = rot.enfants || [];
+  if (!ids.length) return [];
+  const pas = joursPeriodeRotation(rot);
+  const base = new Date((rot.debut || aujourdHui()) + "T00:00:00");
+  const p0 = periodeRotation(rot, jour);
+  const out = [];
+  for (let k = 0; k < Math.max(1, n || 4); k++) {
+    const index = p0.index + k;
+    const debut = new Date(base); debut.setDate(base.getDate() + index * pas);
+    const fin = new Date(debut);  fin.setDate(debut.getDate() + pas - 1);
+    out.push({
+      index, debut: dateCle(debut), fin: dateCle(fin),
+      enfant: ids[((index % ids.length) + ids.length) % ids.length]
+    });
+  }
+  return out;
+}
+
+// Le prochain tour d'un enfant, APRÈS la période en cours : { debut, fin, dans }
+// (`dans` = nombre de périodes à attendre). null s'il n'est pas de la tournante.
+function prochainTourRotation(rot, enfantId, jour) {
+  const ids = rot.enfants || [];
+  if (!ids.length || !ids.includes(enfantId)) return null;
+  const suite = apercuRotation(rot, jour, ids.length + 1);
+  for (let k = 1; k < suite.length; k++) {
+    if (suite[k].enfant === enfantId) return { debut: suite[k].debut, fin: suite[k].fin, dans: k };
+  }
+  return null;
+}
 // La tournante autorise-t-elle cette mission pour cet enfant ce jour ?
 // (si l'enfant fait partie d'une tournante de cette mission mais que ce n'est
 //  pas son tour, ou que c'est un jour off, la mission lui est masquée.)
