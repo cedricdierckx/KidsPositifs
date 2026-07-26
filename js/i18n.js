@@ -2926,7 +2926,6 @@ Object.assign(I18N.fr, {
   "rot.ton_tour": "Ton tour revient {jour}.",
   "rot.off_titre": "Pas de tour aujourd'hui",
   "rot.off_txt": "C'est un jour de congé : personne ne s'en occupe.",
-  "rot.demain_moi": "Et demain, ce sera à toi !",
   "rot.badge": "C'est ton tour",
   "rot.priorite_aide": "Pour les enfants de la tournante, la tâche n'apparaît que le jour de leur tour : rien d'autre à régler. Les enfants qui n'en font pas partie la gardent comme d'habitude.",
 });
@@ -2950,7 +2949,6 @@ Object.assign(I18N.en, {
   "rot.ton_tour": "Your turn comes back on {jour}.",
   "rot.off_titre": "No turn today",
   "rot.off_txt": "It's a day off: nobody takes care of it.",
-  "rot.demain_moi": "And tomorrow, it's you!",
   "rot.badge": "It's your turn",
   "rot.priorite_aide": "For the children in the rotation, the task only shows up on their turn — nothing else to set. Children outside the rotation keep it as usual.",
 });
@@ -2974,7 +2972,6 @@ Object.assign(I18N.nl, {
   "rot.ton_tour": "Jouw beurt komt terug op {jour}.",
   "rot.off_titre": "Vandaag geen beurt",
   "rot.off_txt": "Het is een rustdag: niemand doet het.",
-  "rot.demain_moi": "En morgen ben jij aan de beurt!",
   "rot.badge": "Het is jouw beurt",
   "rot.priorite_aide": "Voor de kinderen in de toerbeurt verschijnt de taak alleen op hun beurt — verder niets in te stellen. Kinderen buiten de toerbeurt houden ze zoals gewoonlijk.",
 });
@@ -2998,7 +2995,6 @@ Object.assign(I18N.de, {
   "rot.ton_tour": "Du bist wieder dran am {jour}.",
   "rot.off_titre": "Heute keine Runde",
   "rot.off_txt": "Heute ist frei: niemand kümmert sich darum.",
-  "rot.demain_moi": "Und morgen bist du dran!",
   "rot.badge": "Du bist dran",
   "rot.priorite_aide": "Für die Kinder im Wechsel erscheint die Aufgabe nur an ihrem Tag — sonst ist nichts einzustellen. Kinder außerhalb des Wechsels behalten sie wie gewohnt.",
 });

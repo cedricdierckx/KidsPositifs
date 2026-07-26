@@ -2805,11 +2805,25 @@ function blocTournanteEnfant(enf) {
   });
   if (!html) return null;
 
-  // Petit rappel de la veille : « et demain, c'est toi ! »
+  // Petit rappel de la veille : « demain, c'est ton tour pour [telle(s) tâche(s)] ! »
+  // On NOMME la ou les tâches concernées (sinon le rappel, affiché juste sous la
+  // carte du tour du jour, se lit comme s'il la contredisait quand ce n'est pas
+  // la même tournante qui bascule).
   const dem = demain(jour);
-  const demainMoi = rots.some(r => !jourOffRotation(r, dem) && enfantDeGardeRotation(r, dem) === enf.id
-    && enfantDeGardeRotation(r, jour) !== enf.id);
-  if (demainMoi) html += `<div class="tr-demain">🌙 ${t("rot.demain_moi")}</div>`;
+  const tachesDemain = [];
+  rots.forEach(r => {
+    if (jourOffRotation(r, dem)) return;
+    if (enfantDeGardeRotation(r, dem) !== enf.id) return;
+    if (enfantDeGardeRotation(r, jour) === enf.id) return;   // déjà son tour aujourd'hui : rien de nouveau
+    (r.missions || []).forEach(id => {
+      const m = trouverMission(id);
+      if (m && !tachesDemain.some(x => x.id === id)) tachesDemain.push(m);
+    });
+  });
+  if (tachesDemain.length) {
+    const nomsTaches = tachesDemain.map(m => `${m.emoji} ${titreMission(m)}`).join(", ");
+    html += `<div class="tr-demain">🌙 ${t("rot.demain_titre")} ${nomsTaches}</div>`;
+  }
 
   sec.innerHTML = html;
   return sec;

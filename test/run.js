@@ -468,6 +468,40 @@ test("tournantes : avant la date de début, on reste sur la première période",
   assert.strictEqual(api.enfantDeGardeRotation(rot, "2026-06-01"), "a");
 });
 
+// Reproduit le cas signalé par un utilisateur : deux tournantes quotidiennes
+// distinctes, l'une qui QUITTE l'enfant demain, l'autre qui LUI ARRIVE demain.
+// Le rappel « et demain, ce sera à toi » ne doit se déclencher (et nommer la
+// bonne tâche) que pour la seconde, jamais pour la première.
+test("tournantes : le rappel « demain » distingue la tournante qui arrive de celle qui part", () => {
+  const { api } = construireContexte();
+  const rangerJouets = rotationTest(api, {
+    id: "rot-jouets", missions: ["m1"], enfants: ["maria", "jojo"],
+    periode: "jour", debut: "2026-07-26"
+  });
+  const debarrasser = rotationTest(api, {
+    id: "rot-debarras", missions: ["m2"], enfants: ["capu", "maria"],
+    periode: "jour", debut: "2026-07-26"
+  });
+  const auj = "2026-07-26", dem = "2026-07-27";
+
+  // Aujourd'hui : Maria a « ranger les jouets », pas « débarrasser ».
+  assert.strictEqual(api.enfantDeGardeRotation(rangerJouets, auj), "maria");
+  assert.strictEqual(api.enfantDeGardeRotation(debarrasser, auj), "capu");
+  // Demain : « ranger les jouets » passe à Jojo (Maria ne le garde PAS)...
+  assert.strictEqual(api.enfantDeGardeRotation(rangerJouets, dem), "jojo");
+  // ...mais « débarrasser la table » lui arrive.
+  assert.strictEqual(api.enfantDeGardeRotation(debarrasser, dem), "maria");
+
+  // Le prédicat du rappel (même logique que blocTournanteEnfant, js/ui.js) :
+  // une tournante compte pour le rappel seulement si elle devient la sienne
+  // demain ET n'était pas déjà la sienne aujourd'hui.
+  const compteDansLeRappel = (rot) =>
+    !api.jourOffRotation(rot, dem) && api.enfantDeGardeRotation(rot, dem) === "maria"
+      && api.enfantDeGardeRotation(rot, auj) !== "maria";
+  assert.strictEqual(compteDansLeRappel(rangerJouets), false, "elle la quitte, ne doit pas apparaître");
+  assert.strictEqual(compteDansLeRappel(debarrasser), true, "elle lui arrive, doit apparaître");
+});
+
 /* ---------- Plan de développement commercial (onglet Admin « Croissance ») ---------- */
 test("croissance : chantiers bien formés, identifiants uniques, phases connues", () => {
   const { api } = construireContexte();
