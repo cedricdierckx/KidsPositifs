@@ -2765,11 +2765,54 @@ function jourLisible(cle, avecMois) {
  * arbitraire. Cette carte répond, pour chaque tournante à laquelle l'enfant
  * participe, aux trois questions : c'est le tour de qui, jusqu'à quand, et
  * quand revient le mien. Elle s'affiche AU-DESSUS des missions. */
+// Point sur un cercle : angle en degrés, 0° = midi (haut), sens horaire.
+function _pointRoue(cx, cy, rayon, angleDeg) {
+  const rad = (angleDeg - 90) * Math.PI / 180;
+  return [cx + rayon * Math.cos(rad), cy + rayon * Math.sin(rad)];
+}
+// Mini-roue tournante (SVG) : un secteur coloré par enfant de la tournante
+// (même couleur/emoji que sa pastille du sélecteur), un repère fixe en haut,
+// et le disque qui tourne pour amener l'enfant de garde sous ce repère.
+// Purement décorative (l'info est déjà donnée par le texte à côté) : cachée
+// aux lecteurs d'écran. Réservée aux petits (estJeune) — voir l'appelant.
+function roueTournante(ids, idGarde, taille) {
+  taille = taille || 84;
+  const cx = 60, cy = 60, rayon = 52;
+  const enfants = ids.map(id => etat.enfants[id]).filter(Boolean);
+  const n = enfants.length;
+  if (!n) return "";
+  const step = 360 / n;
+  const idx = Math.max(0, enfants.findIndex(e => e.id === idGarde));
+  const angleCible = -((idx + 0.5) * step);
+
+  let secteurs = "";
+  if (n === 1) {
+    secteurs = `<circle cx="${cx}" cy="${cy}" r="${rayon}" fill="${enfants[0].couleur || "#ccc"}"/>`;
+  } else {
+    enfants.forEach((e, i) => {
+      const [x0, y0] = _pointRoue(cx, cy, rayon, i * step);
+      const [x1, y1] = _pointRoue(cx, cy, rayon, (i + 1) * step);
+      secteurs += `<path d="M${cx},${cy} L${x0.toFixed(1)},${y0.toFixed(1)} A${rayon},${rayon} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)} Z" fill="${e.couleur || "#ccc"}" stroke="#fff" stroke-width="2"/>`;
+    });
+  }
+  const emojis = enfants.map((e, i) => {
+    const [ex, ey] = _pointRoue(cx, cy, rayon * 0.62, (i + 0.5) * step);
+    return `<text x="${ex.toFixed(1)}" y="${ey.toFixed(1)}" font-size="20" text-anchor="middle" dominant-baseline="central">${e.emoji || "🙂"}</text>`;
+  }).join("");
+
+  return `<svg class="roue-svg" width="${taille}" height="${taille}" viewBox="0 0 120 120" aria-hidden="true">
+    <circle cx="${cx}" cy="${cy}" r="${rayon + 3}" fill="none" stroke="#e3edf5" stroke-width="3"/>
+    <g class="roue-groupe" style="--roue-angle:${angleCible}deg">${secteurs}${emojis}</g>
+    <polygon class="roue-pointeur" points="60,2 51,17 69,17"/>
+  </svg>`;
+}
+
 function blocTournanteEnfant(enf) {
   const jour = jourAffiche();
   const rots = (etat.rotations || []).filter(r => (r.enfants || []).includes(enf.id));
   if (!rots.length) return null;
 
+  const jeune = estJeune(enf);   // affichage imagé (roue) pour les non-lecteurs
   const sec = el("section", "carte tournante-carte");
   let html = "";
   rots.forEach(r => {
@@ -2784,23 +2827,27 @@ function blocTournanteEnfant(enf) {
     const off = jourOffRotation(r, jour);
     const suivant = apercuRotation(r, jour, 2)[1];
     const prenomDe = (id) => { const e = etat.enfants[id]; return e ? echapper(e.prenom) : "—"; };
+    const roue = (!off && jeune) ? roueTournante(r.enfants, garde) : "";
 
     if (off) {
-      html += `<div class="tr-bloc off"><div class="tr-titre">🔁 ${t("rot.off_titre")}</div>
+      html += `<div class="tr-bloc off"><div class="tr-roue-wrap"></div><div class="tr-texte">
+        <div class="tr-titre">🔁 ${t("rot.off_titre")}</div>
         <div class="tr-taches">${taches}</div>
-        <div class="tr-quand">${t("rot.off_txt")}</div></div>`;
+        <div class="tr-quand">${t("rot.off_txt")}</div></div></div>`;
     } else if (garde === enf.id) {
       const ensuite = (suivant && suivant.enfant !== enf.id)
         ? " " + t("rot.ensuite_enf", { prenom: prenomDe(suivant.enfant) }) : "";
-      html += `<div class="tr-bloc moi"><div class="tr-titre">🔁 ${t("rot.moi_titre")}</div>
+      html += `<div class="tr-bloc moi"><div class="tr-roue-wrap">${roue}</div><div class="tr-texte">
+        <div class="tr-titre">🔁 ${t("rot.moi_titre")}</div>
         <div class="tr-taches">${taches}</div>
-        <div class="tr-quand">${t("rot.jusqu_a", { jour: jourLisible(p.fin) })}${ensuite}</div></div>`;
+        <div class="tr-quand">${t("rot.jusqu_a", { jour: jourLisible(p.fin) })}${ensuite}</div></div></div>`;
     } else {
       const mien = prochainTourRotation(r, enf.id, jour);
       const quand = mien ? t("rot.ton_tour", { jour: jourLisible(mien.debut) }) : "";
-      html += `<div class="tr-bloc autre"><div class="tr-titre">🔁 ${t("rot.autre_titre", { prenom: prenomDe(garde) })}</div>
+      html += `<div class="tr-bloc autre"><div class="tr-roue-wrap">${roue}</div><div class="tr-texte">
+        <div class="tr-titre">🔁 ${t("rot.autre_titre", { prenom: prenomDe(garde) })}</div>
         <div class="tr-taches">${taches}</div>
-        <div class="tr-quand">${quand}</div></div>`;
+        <div class="tr-quand">${quand}</div></div></div>`;
     }
   });
   if (!html) return null;

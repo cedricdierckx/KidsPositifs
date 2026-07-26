@@ -302,11 +302,14 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .rot-item .mini-btn.danger{position:absolute;top:8px;right:8px}
 /* Tournantes côté enfant : à qui le tour, jusqu'à quand */
 .tournante-carte{border-top:6px solid #f6a623;padding:12px}
-.tr-bloc{border-radius:14px;padding:10px 12px;margin-bottom:8px}
+.tr-bloc{display:flex; align-items:center; gap:12px; border-radius:14px;padding:10px 12px;margin-bottom:8px}
 .tr-bloc:last-child{margin-bottom:0}
 .tr-bloc.moi{background:linear-gradient(180deg,#fff6e0,#ffe8c2)}
 .tr-bloc.autre{background:#f3f6fa}
 .tr-bloc.off{background:#f6f7f9}
+.tr-roue-wrap:empty{display:none}
+.tr-roue-wrap{flex:0 0 auto}
+.tr-texte{flex:1 1 auto; min-width:0}
 .tr-titre{font-weight:900;font-size:17px;color:#a86412}
 .tr-bloc.autre .tr-titre,.tr-bloc.off .tr-titre{color:#54616f;font-size:16px}
 .tr-taches{font-size:17px;font-weight:800;margin-top:4px;color:#5a3a0a}
@@ -314,6 +317,22 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .tr-quand{font-size:13.5px;margin-top:4px;color:#6b5326}
 .tr-bloc.autre .tr-quand,.tr-bloc.off .tr-quand{color:var(--doux)}
 .tr-demain{margin-top:6px;font-size:13px;font-weight:800;color:#3a7bd5}
+
+/* Mini-roue tournante (visuel pour les petits, cf. estJeune) */
+.roue-svg{display:block; overflow:visible}
+.roue-groupe{
+  transform-origin:50% 50%;
+  transform:rotate(var(--roue-angle, 0deg));
+  animation:roue-tourne 1.3s cubic-bezier(.2,.7,.3,1) both;
+}
+@keyframes roue-tourne{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(calc(var(--roue-angle, 0deg) + 720deg))}
+}
+.roue-pointeur{fill:#e2566d; stroke:#fff; stroke-width:1.5}
+@media (prefers-reduced-motion:reduce){
+  .roue-groupe{animation:none}
+}
 /* Repère « c'est ton tour » sur la tuile de mission */
 .mission.tour{border-color:#ffd79a;background:linear-gradient(180deg,#fffdf7,#fff6e6)}
 .m-tour{position:absolute;top:4px;right:6px;font-size:13px}
