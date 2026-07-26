@@ -3392,3 +3392,103 @@ Object.assign(I18N.de, {
   "a11y.valider": "Bestätigen",
   "a11y.refuser": "Ablehnen",
 });
+
+/* ---- Coût, capacité et soutien (admin » Croissance) ---- */
+Object.assign(I18N.fr, {
+  "cout.titre": "🕊️ Coût, dons et plafond",
+  "cout.sous": "Ce que le projet coûte réellement, ce que les dons couvrent, et la place qui reste avant le plafond.",
+  "cout.domaine": "Nom de domaine", "cout.domaine_n": "famiteam.com, renouvellement annuel",
+  "cout.mail": "Envoi d'e-mails", "cout.mail_n": "boîte et SMTP sortant",
+  "cout.base": "Base de données", "cout.base_n": "palier gratuit Supabase, tant qu'il suffit",
+  "cout.site": "Hébergement du site", "cout.site_n": "palier gratuit Vercel, projet non marchand",
+  "cout.gratuit": "0 €", "cout.total": "Total par an",
+  "cout.dons": "Dons reçus", "cout.dons_p": "{n} don(s)",
+  "cout.couverture": "Frais couverts", "cout.couverture_p": "sur {total} par an",
+  "cout.equilibre_ok": "Les frais de l'année sont couverts. Tout don supplémentaire reste en réserve pour l'année suivante — il n'y a rien à en tirer d'autre.",
+  "cout.equilibre_non": "Les frais ne sont pas encore couverts ; ils restent à charge de l'éditeur. C'est assumé : le don est facultatif et l'app reste gratuite.",
+  "cout.plafond": "Familles", "cout.plafond_p": "{pct} % du plafond",
+  "cout.base_pleine": "Base remplie", "cout.base_pleine_p": "{u} sur {max} gratuits",
+  "cout.plafond_libre": "Encore {reste} familles avant le plafond. Au-delà, les inscriptions passeront d'elles-mêmes en liste d'attente.",
+  "cout.plafond_atteint": "Plafond atteint : les inscriptions sont passées en liste d'attente. Mieux vaut attendre son tour qu'un service qui ne suit plus.",
+  "cout.plafond_reglage": "Plafond de familles",
+  "cout.plafond_aide": "Deux limites le fixent : le temps de support (une heure par semaine) et les 500 Mo gratuits de la base, soit environ 1 000 familles.",
+  "cap.bascule": "Plafond atteint : les inscriptions passent en liste d'attente.",
+});
+Object.assign(I18N.en, {
+  "cout.titre": "🕊️ Cost, donations and cap",
+  "cout.sous": "What the project really costs, what donations cover, and how much room is left before the cap.",
+  "cout.domaine": "Domain name", "cout.domaine_n": "famiteam.com, yearly renewal",
+  "cout.mail": "Email sending", "cout.mail_n": "mailbox and outgoing SMTP",
+  "cout.base": "Database", "cout.base_n": "Supabase free tier, while it is enough",
+  "cout.site": "Site hosting", "cout.site_n": "Vercel free tier, non-commercial project",
+  "cout.gratuit": "€0", "cout.total": "Total per year",
+  "cout.dons": "Donations received", "cout.dons_p": "{n} donation(s)",
+  "cout.couverture": "Costs covered", "cout.couverture_p": "out of {total} a year",
+  "cout.equilibre_ok": "This year's costs are covered. Any further donation stays in reserve for next year — there is nothing else to draw from it.",
+  "cout.equilibre_non": "Costs are not covered yet; the editor carries them. That is by design: donating is optional and the app stays free.",
+  "cout.plafond": "Families", "cout.plafond_p": "{pct} % of the cap",
+  "cout.base_pleine": "Database used", "cout.base_pleine_p": "{u} of {max} free",
+  "cout.plafond_libre": "{reste} families to go before the cap. Beyond it, sign-ups switch to a waiting list on their own.",
+  "cout.plafond_atteint": "Cap reached: sign-ups have switched to a waiting list. Waiting your turn beats a service that can no longer keep up.",
+  "cout.plafond_reglage": "Family cap",
+  "cout.plafond_aide": "Two limits set it: support time (one hour a week) and the 500 MB free database tier, i.e. roughly 1,000 families.",
+  "cap.bascule": "Cap reached: sign-ups switch to a waiting list.",
+});
+Object.assign(I18N.nl, {
+  "cout.titre": "🕊️ Kosten, giften en plafond",
+  "cout.sous": "Wat het project echt kost, wat de giften dekken, en hoeveel plaats er rest voor het plafond.",
+  "cout.domaine": "Domeinnaam", "cout.domaine_n": "famiteam.com, jaarlijkse verlenging",
+  "cout.mail": "E-mailverzending", "cout.mail_n": "mailbox en uitgaande SMTP",
+  "cout.base": "Databank", "cout.base_n": "gratis Supabase-niveau, zolang het volstaat",
+  "cout.site": "Hosting van de site", "cout.site_n": "gratis Vercel-niveau, niet-commercieel project",
+  "cout.gratuit": "€ 0", "cout.total": "Totaal per jaar",
+  "cout.dons": "Ontvangen giften", "cout.dons_p": "{n} gift(en)",
+  "cout.couverture": "Kosten gedekt", "cout.couverture_p": "op {total} per jaar",
+  "cout.equilibre_ok": "De kosten van dit jaar zijn gedekt. Elke extra gift blijft in reserve voor volgend jaar — er valt niets anders uit te halen.",
+  "cout.equilibre_non": "De kosten zijn nog niet gedekt; de uitgever draagt ze. Dat is bewust: geven is vrijwillig en de app blijft gratis.",
+  "cout.plafond": "Gezinnen", "cout.plafond_p": "{pct} % van het plafond",
+  "cout.base_pleine": "Databank gevuld", "cout.base_pleine_p": "{u} van {max} gratis",
+  "cout.plafond_libre": "Nog {reste} gezinnen voor het plafond. Daarna gaan de inschrijvingen vanzelf naar een wachtlijst.",
+  "cout.plafond_atteint": "Plafond bereikt: de inschrijvingen staan op wachtlijst. Wachten op je beurt is beter dan een dienst die niet meer volgt.",
+  "cout.plafond_reglage": "Plafond aantal gezinnen",
+  "cout.plafond_aide": "Twee grenzen bepalen het: de ondersteuningstijd (één uur per week) en de 500 MB gratis databank, dus ongeveer 1 000 gezinnen.",
+  "cap.bascule": "Plafond bereikt: de inschrijvingen gaan naar een wachtlijst.",
+});
+Object.assign(I18N.de, {
+  "cout.titre": "🕊️ Kosten, Spenden und Obergrenze",
+  "cout.sous": "Was das Projekt wirklich kostet, was die Spenden decken, und wie viel Platz bis zur Obergrenze bleibt.",
+  "cout.domaine": "Domainname", "cout.domaine_n": "famiteam.com, jährliche Verlängerung",
+  "cout.mail": "E-Mail-Versand", "cout.mail_n": "Postfach und ausgehendes SMTP",
+  "cout.base": "Datenbank", "cout.base_n": "kostenlose Supabase-Stufe, solange sie reicht",
+  "cout.site": "Hosting der Website", "cout.site_n": "kostenlose Vercel-Stufe, nicht kommerzielles Projekt",
+  "cout.gratuit": "0 €", "cout.total": "Gesamt pro Jahr",
+  "cout.dons": "Erhaltene Spenden", "cout.dons_p": "{n} Spende(n)",
+  "cout.couverture": "Kosten gedeckt", "cout.couverture_p": "von {total} pro Jahr",
+  "cout.equilibre_ok": "Die Kosten dieses Jahres sind gedeckt. Jede weitere Spende bleibt als Reserve für das nächste Jahr — mehr ist daraus nicht zu holen.",
+  "cout.equilibre_non": "Die Kosten sind noch nicht gedeckt; der Herausgeber trägt sie. Das ist so gewollt: Spenden ist freiwillig und die App bleibt kostenlos.",
+  "cout.plafond": "Familien", "cout.plafond_p": "{pct} % der Obergrenze",
+  "cout.base_pleine": "Datenbank belegt", "cout.base_pleine_p": "{u} von {max} kostenlos",
+  "cout.plafond_libre": "Noch {reste} Familien bis zur Obergrenze. Danach wechseln die Anmeldungen von selbst auf eine Warteliste.",
+  "cout.plafond_atteint": "Obergrenze erreicht: die Anmeldungen laufen über eine Warteliste. Warten ist besser als ein Dienst, der nicht mehr mitkommt.",
+  "cout.plafond_reglage": "Obergrenze Familien",
+  "cout.plafond_aide": "Zwei Grenzen setzen sie: die Support-Zeit (eine Stunde pro Woche) und die 500 MB der kostenlosen Datenbank, also etwa 1 000 Familien.",
+  "cap.bascule": "Obergrenze erreicht: die Anmeldungen laufen über eine Warteliste.",
+});
+
+/* ---- Dons : transparence (ce qu'ils financent, ce qu'ils ne donnent pas) ---- */
+Object.assign(I18N.fr, {
+  "don.transparence": "Les dons couvrent uniquement les frais (domaine, e-mails, hébergement) et n'ouvrent aucune fonction : donner ou non ne change rien à l'app.",
+  "don.en_savoir": "En savoir plus",
+});
+Object.assign(I18N.en, {
+  "don.transparence": "Donations only cover running costs (domain, emails, hosting) and unlock nothing: giving or not changes nothing in the app.",
+  "don.en_savoir": "Learn more",
+});
+Object.assign(I18N.nl, {
+  "don.transparence": "Giften dekken enkel de kosten (domein, e-mails, hosting) en openen geen functies: geven of niet verandert niets aan de app.",
+  "don.en_savoir": "Meer weten",
+});
+Object.assign(I18N.de, {
+  "don.transparence": "Spenden decken nur die Kosten (Domain, E-Mails, Hosting) und schalten nichts frei: ob du spendest oder nicht, ändert nichts an der App.",
+  "don.en_savoir": "Mehr erfahren",
+});

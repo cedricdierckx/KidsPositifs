@@ -1436,6 +1436,74 @@ test("accessibilité : les boutons-icônes portent un nom accessible", () => {
       "manque " + lg + " → " + k)));
 });
 
+/* ---------- Modèle non marchand : coût, plafond, promesses ---------- */
+test("plafond : la valeur par défaut est 800 familles et se règle par configuration", () => {
+  const plafond = (cfg) => fonctionDeSource("js/auth.js", "plafondFamilles", { configApp: cfg })();
+  assert.strictEqual(plafond({}), 800, "défaut : 800 familles");
+  assert.strictEqual(plafond({ plafond_familles: "1500" }), 1500);
+  assert.strictEqual(plafond({ plafond_familles: "0" }), 800, "0 n'a pas de sens");
+  assert.strictEqual(plafond({ plafond_familles: "abc" }), 800);
+});
+
+test("plafond : la protection s'applique même quand les e-mails sont coupés", () => {
+  const fs = require("fs"), path = require("path");
+  const auth = fs.readFileSync(path.join(__dirname, "..", "js", "auth.js"), "utf8");
+  const bloc = auth.slice(auth.indexOf("async function declencherEnvoisAuto"));
+  const fin = bloc.indexOf("\n}");
+  const corps = bloc.slice(0, fin);
+  const posPlafond = corps.indexOf("appliquerPlafond()");
+  const posGarde = corps.indexOf("if (!mailsAutoArmes()) return;");
+  assert.ok(posPlafond > -1, "le plafond doit être vérifié au démarrage");
+  assert.ok(posGarde > -1, "la garde des envois doit exister");
+  assert.ok(posPlafond < posGarde,
+    "le plafond est une protection, pas une communication : il doit s'appliquer avant la garde des e-mails");
+});
+
+test("coût : le total annuel est cohérent avec le détail affiché", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js", "ui.js"), "utf8");
+  const bloc = ui.slice(ui.indexOf("const COUT_ANNUEL"), ui.indexOf("function coutAnnuelCents"));
+  const montants = (bloc.match(/montant:\s*(\d+)/g) || []).map(s => parseInt(s.split(":")[1], 10));
+  assert.strictEqual(montants.length, 4, "quatre postes de frais attendus");
+  assert.strictEqual(montants.reduce((a, b) => a + b, 0), 2700,
+    "le total doit valoir 27 € (1500 + 1200 + 0 + 0 centimes)");
+});
+
+test("modèle : promesse de gratuité et cadre des dons sont publiés", () => {
+  const fs = require("fs"), path = require("path");
+  const racine = path.join(__dirname, "..");
+  const legal = fs.readFileSync(path.join(racine, "mentions-legales.html"), "utf8");
+  ["Promesse de gratuité", "sans contrepartie", "Plafond d'utilisateurs",
+   "Continuité et fin du service", "deux mois"].forEach(k =>
+    assert.ok(legal.includes(k), "les mentions légales doivent couvrir « " + k + " »"));
+  const faq = fs.readFileSync(path.join(racine, "faq.html"), "utf8");
+  ["À quoi servent les dons", "liste d'attente", 'id="dons"'].forEach(k =>
+    assert.ok(faq.includes(k), "la FAQ doit couvrir « " + k + " »"));
+  // Le bouton de don doit renvoyer vers cette explication.
+  const ui = fs.readFileSync(path.join(racine, "js", "ui.js"), "utf8");
+  assert.ok(ui.includes('faq.html#dons'), "le bloc de don doit pointer vers l'explication");
+});
+
+test("modèle : libellés de coût et de plafond traduits dans les 4 langues", () => {
+  const { api } = construireContexte();
+  const cles = ["cout.titre", "cout.sous", "cout.total", "cout.gratuit", "cout.dons",
+                "cout.couverture", "cout.couverture_p", "cout.plafond", "cout.plafond_p",
+                "cout.base_pleine", "cout.base_pleine_p", "cout.plafond_libre",
+                "cout.plafond_atteint", "cout.plafond_reglage", "cout.plafond_aide",
+                "cout.equilibre_ok", "cout.equilibre_non", "cap.bascule",
+                "don.transparence", "don.en_savoir"];
+  const manquantes = [];
+  Object.keys(api.LANGUES).forEach(lg => cles.forEach(k => {
+    const v = api.I18N[lg][k];
+    if (typeof v !== "string" || !v.length) manquantes.push(lg + " → " + k);
+  }));
+  assert.strictEqual(manquantes.length, 0, manquantes.slice(0, 8).join(", "));
+  Object.keys(api.LANGUES).forEach(lg => {
+    assert.ok(api.I18N[lg]["cout.plafond_libre"].includes("{reste}"), lg + " : {reste} perdu");
+    assert.ok(api.I18N[lg]["cout.base_pleine_p"].includes("{u}"), lg + " : {u} perdu");
+  });
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

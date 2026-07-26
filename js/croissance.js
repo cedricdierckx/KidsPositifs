@@ -245,11 +245,11 @@ const CROISSANCE_CHANTIERS = [
     but: "Couvrir les frais sans jamais transformer le projet en commerce.",
     kpi: "Frais couverts par les dons · zéro recette commerciale",
     etapes: [
-      { id: "c_modele_1", titre: "Chiffrer le coût réel annuel", min: 20, detail: "Hébergement, domaine, envoi d'e-mails. Aujourd'hui quelques dizaines d'euros." },
-      { id: "c_modele_2", titre: "Écrire la promesse de gratuité", min: 20, detail: "« Gratuit, sans publicité, sans revente de données. » L'écrire publiquement engage et rassure." },
-      { id: "c_modele_3", titre: "Dons : cadre et transparence", min: 45, detail: "Sous la forme retenue au chantier Cadre. Publier ce que financent les dons." },
-      { id: "c_modele_4", titre: "Décider du plafond de familles", min: 25, detail: "Au-delà, le support déborde l'heure hebdomadaire. Mieux vaut une liste d'attente qu'un service dégradé." },
-      { id: "c_modele_5", titre: "Prévoir la sortie", min: 30, detail: "Si le projet dépasse le temps disponible : céder, ouvrir le code, ou fermer proprement en exportant les données des familles. À écrire tant que tout va bien." }
+      { id: "c_modele_1", titre: "Chiffrer le coût réel annuel", min: 20, detail: "Fait : 27 €/an aujourd'hui (domaine 15 €, e-mails 12 € ; base et site sur les paliers gratuits). Le détail et les dons reçus s'affichent dans « Coût, dons et plafond ». Mesuré : 410 Ko par famille, soit environ 1 000 familles avant que la base gratuite ne suffise plus (≈ 280 €/an de plus).", fait: true },
+      { id: "c_modele_2", titre: "Écrire la promesse de gratuité", min: 20, detail: "Fait : « tout ce qui est gratuit aujourd'hui le restera, pour toutes les familles » — publié dans les mentions légales et la FAQ, avec l'engagement de ne jamais déplacer une fonction existante derrière un paiement.", fait: true },
+      { id: "c_modele_3", titre: "Dons : cadre et transparence", min: 45, detail: "Fait : le don est un cadeau sans contrepartie (aucune fonction, aucune limite levée), sans reçu fiscal, et le surplus reste en réserve. Publié dans les mentions légales et la FAQ, rappelé sous le bouton de don.", fait: true },
+      { id: "c_modele_4", titre: "Décider du plafond de familles", min: 25, detail: "Fait : 800 familles, réglable dans l'admin. Surtout, le plafond s'applique tout seul — au-delà, les inscriptions basculent en liste d'attente sans intervention, et le basculement ne se fait jamais dans l'autre sens par accident.", fait: true },
+      { id: "c_modele_5", titre: "Prévoir la sortie", min: 30, detail: "Fait : reprise, ouverture du code, ou fermeture ordonnée — dans cet ordre. En cas de fermeture, deux mois de préavis par e-mail, export disponible pendant toute la période, puis suppression. Publié dans les mentions légales.", fait: true }
     ]
   },
   {

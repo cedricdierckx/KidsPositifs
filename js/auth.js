@@ -43,6 +43,33 @@ function tailleVague() {
   const n = parseInt((configApp && configApp.vague_taille) || "", 10);
   return (isNaN(n) || n < 1) ? 20 : Math.min(n, 200);
 }
+// Plafond de familles : ce que le temps de support et la capacité gratuite
+// permettent de tenir. Modifiable depuis l'admin.
+function plafondFamilles() {
+  const n = parseInt((configApp && configApp.plafond_familles) || "", 10);
+  return (isNaN(n) || n < 1) ? 800 : n;
+}
+// Capacité du projet : familles / plafond, et remplissage de la base.
+async function capaciteProjet() {
+  if (!estAdmin) return null;
+  try {
+    const { data, error } = await sb.rpc("capacite_projet");
+    return error ? null : (data || null);
+  } catch (e) { return null; }
+}
+/* Plafond atteint : les inscriptions passent d'elles-mêmes en « vagues ».
+ * Une liste d'attente est plus honnête qu'un support qui ne suit plus. Le
+ * basculement ne se fait qu'une fois, et jamais dans l'autre sens. */
+async function appliquerPlafond() {
+  if (!estAdmin || (typeof modeDemo !== "undefined" && modeDemo)) return false;
+  try {
+    const { data, error } = await sb.rpc("appliquer_plafond");
+    if (error || !data) return false;
+    configApp.inscriptions = "vagues";     // le cache local suit la bascule
+    if (typeof toast === "function") toast(t("cap.bascule"), "info");
+    return true;
+  } catch (e) { return false; }
+}
 
 // Invitations/parrainages : plus aucune limite de nombre (true = illimité).
 const INVITATIONS_ILLIMITEES = true;
@@ -500,12 +527,17 @@ async function envoyerRapportMensuel() {
 // Déclencheur : à l'ouverture de l'app par l'administrateur, une fois par jour.
 async function declencherEnvoisAuto() {
   try {
-    if (!estAdmin || !mailsAutoArmes()) return;
+    if (!estAdmin) return;
     if (typeof modeDemo !== "undefined" && modeDemo) return;
     const cle = "kp_envois_auto";
     const auj = new Date().toISOString().slice(0, 10);
     if (localStorage.getItem(cle) === auj) return;
     localStorage.setItem(cle, auj);
+    // Le plafond se surveille tout seul, et indépendamment des envois : c'est
+    // une protection, pas une communication. Il s'applique donc même quand
+    // l'interrupteur des e-mails automatiques est coupé.
+    await appliquerPlafond();
+    if (!mailsAutoArmes()) return;
     const n = await envoyerRelancesActivation()
             + await envoyerPropositionsParrainage()
             + await envoyerVagueDuMois()

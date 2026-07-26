@@ -973,6 +973,52 @@ begin
     order by f.created_at;
 end; $$;
 
+-- ---------- Plafond de familles (chantier « Modèle non marchand ») ----------
+-- Le plafond protège deux ressources : le temps de support (une heure par
+-- semaine) et la capacité gratuite de la base. Quand il est atteint, les
+-- inscriptions passent d'elles-mêmes en mode « vagues » : une liste d'attente
+-- est plus honnête qu'un service dégradé. Aucune intervention requise.
+create or replace function public.capacite_projet()
+returns json language plpgsql security definer set search_path = public as $$
+declare v_plafond integer; v_familles integer; v_octets bigint;
+begin
+  select coalesce(nullif(trim(value), '')::integer, 800) into v_plafond
+    from app_config where key = 'plafond_familles';
+  if v_plafond is null then v_plafond := 800; end if;
+
+  select count(*) into v_familles from families;
+  select pg_database_size(current_database()) into v_octets;
+
+  return json_build_object(
+    'familles',        v_familles,
+    'plafond',         v_plafond,
+    'atteint',         v_familles >= v_plafond,
+    'part_plafond',    case when v_plafond > 0
+                            then round(v_familles * 100.0 / v_plafond)::int else null end,
+    -- Palier gratuit Supabase : 500 Mo. Au-delà, l'offre payante devient nécessaire.
+    'base_octets',     v_octets,
+    'base_limite',     500 * 1024 * 1024,
+    'part_base',       round(v_octets * 100.0 / (500 * 1024 * 1024))::int
+  );
+end; $$;
+
+-- Bascule automatique : appelée à l'ouverture de l'app par l'administrateur.
+-- Ne referme jamais rien de force et ne rouvre jamais seule : elle ne fait que
+-- fermer les inscriptions une fois le plafond franchi.
+create or replace function public.appliquer_plafond()
+returns boolean language plpgsql security definer set search_path = public as $$
+declare v_cap json; v_mode text;
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  v_cap := capacite_projet();
+  if not (v_cap ->> 'atteint')::boolean then return false; end if;
+  select value into v_mode from app_config where key = 'inscriptions';
+  if coalesce(v_mode, '') = 'vagues' then return false; end if;   -- déjà fermé
+  insert into app_config(key, value, updated_at) values ('inscriptions', 'vagues', now())
+    on conflict (key) do update set value = 'vagues', updated_at = now();
+  return true;
+end; $$;
+
 -- ---------- Droits d'exécution ----------
 grant execute on function public.create_family(text, text)            to authenticated;
 grant execute on function public.set_app_config(text, text)     to authenticated;
@@ -997,6 +1043,8 @@ grant execute on function public.admin_vague_suivante(integer)  to authenticated
 grant execute on function public.admin_vague_marquer(text)      to authenticated;
 grant execute on function public.admin_vagues_a_relancer()      to authenticated;
 grant execute on function public.admin_vagues_stats()           to authenticated;
+grant execute on function public.capacite_projet()              to authenticated;
+grant execute on function public.appliquer_plafond()            to authenticated;
 grant execute on function public.admin_remove_waitlist(text)    to authenticated;
 grant execute on function public.is_admin()                     to authenticated;
 grant execute on function public.admin_list_families()          to authenticated;

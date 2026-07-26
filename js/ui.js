@@ -1853,6 +1853,91 @@ function blocVagues() {
   return sec;
 }
 
+/* Coût, capacité et soutien (chantier « Modèle non marchand »).
+ * Trois questions, une seule carte : combien le projet coûte par an, combien
+ * les dons couvrent, et à quelle distance on est du plafond de familles.
+ * Le plafond se referme tout seul ; ce bloc sert à le voir venir. */
+const COUT_ANNUEL = [
+  { poste: "cout.domaine", montant: 1500, note: "cout.domaine_n" },
+  { poste: "cout.mail",    montant: 1200, note: "cout.mail_n" },
+  { poste: "cout.base",    montant: 0,    note: "cout.base_n" },
+  { poste: "cout.site",    montant: 0,    note: "cout.site_n" }
+];
+function coutAnnuelCents() { return COUT_ANNUEL.reduce((s, l) => s + l.montant, 0); }
+
+function blocCoutSoutien() {
+  const sec = el("section", "carte croiss-cout");
+  const total = coutAnnuelCents();
+  sec.innerHTML = `<h2>${t("cout.titre")}</h2><p class="note">${t("cout.sous")}</p>`;
+
+  // Le détail des frais : écrit une fois, il ne bouge presque jamais.
+  const tbl = el("div", "cout-lignes");
+  tbl.innerHTML = COUT_ANNUEL.map(l =>
+    `<div class="cout-l"><span>${t(l.poste)}<small>${t(l.note)}</small></span>
+       <strong>${l.montant ? montantLisible(l.montant, "eur") : t("cout.gratuit")}</strong></div>`).join("") +
+    `<div class="cout-l total"><span>${t("cout.total")}</span>
+       <strong>${montantLisible(total, "eur")}</strong></div>`;
+  sec.appendChild(tbl);
+
+  const zone = el("div", "cout-zone");
+  zone.innerHTML = `<p class="note">${t("common.chargement")}</p>`;
+  sec.appendChild(zone);
+  (async () => {
+    const [dons, cap] = await Promise.all([
+      (typeof adminDonationsStats === "function") ? adminDonationsStats() : null,
+      (typeof capaciteProjet === "function") ? capaciteProjet() : null
+    ]);
+    zone.innerHTML = "";
+
+    // Dons reçus face au coût : le projet est-il à l'équilibre ?
+    if (dons) {
+      const recu = dons.total_cents || 0;
+      const couvert = total > 0 ? Math.round((recu / total) * 100) : null;
+      const g = el("div", "stat-grille");
+      g.innerHTML =
+        carteStat("💛", montantLisible(recu, "eur"), t("cout.dons"),
+                  dons.nb_dons ? t("cout.dons_p", { n: dons.nb_dons }) : "") +
+        carteStat("⚖️", couvert === null ? "—" : couvert + " %", t("cout.couverture"),
+                  t("cout.couverture_p", { total: montantLisible(total, "eur") }));
+      zone.appendChild(g);
+      zone.appendChild(el("p", "reglage-aide",
+        t(recu >= total ? "cout.equilibre_ok" : "cout.equilibre_non")));
+    }
+
+    // Capacité : familles / plafond, et remplissage de la base gratuite.
+    if (cap) {
+      const g2 = el("div", "stat-grille");
+      const mo = (o) => Math.round((o || 0) / (1024 * 1024)) + " Mo";
+      g2.innerHTML =
+        carteStat("👪", `${cap.familles} / ${cap.plafond}`, t("cout.plafond"),
+                  cap.part_plafond != null ? t("cout.plafond_p", { pct: cap.part_plafond }) : "") +
+        carteStat("💾", cap.part_base + " %", t("cout.base_pleine"),
+                  t("cout.base_pleine_p", { u: mo(cap.base_octets), max: mo(cap.base_limite) }));
+      zone.appendChild(g2);
+      zone.appendChild(el("p", "reglage-aide",
+        t(cap.atteint ? "cout.plafond_atteint" : "cout.plafond_libre",
+          { reste: Math.max(0, cap.plafond - cap.familles) })));
+
+      // Le plafond lui-même se règle ici.
+      const l = el("label", "reglage-ligne");
+      l.appendChild(el("span", null, t("cout.plafond_reglage")));
+      const i = el("input", "champ-nombre");
+      i.type = "number"; i.min = "1"; i.max = "100000"; i.value = String(cap.plafond);
+      i.onchange = async () => {
+        const n = Math.max(1, parseInt(i.value, 10) || 800);
+        i.value = String(n); i.disabled = true;
+        await adminDefinirConfig("plafond_familles", String(n));
+        i.disabled = false;
+        majSansSaut(() => rendre());
+      };
+      l.appendChild(i);
+      zone.appendChild(l);
+      zone.appendChild(el("p", "reglage-aide", t("cout.plafond_aide")));
+    }
+  })();
+  return sec;
+}
+
 function blocAdminCroissance(c) {
   const etat0 = croissanceEtat();
 
@@ -1979,6 +2064,9 @@ function blocAdminCroissance(c) {
 
   /* ----- Vagues d'invitation : mode d'inscription, cadence, conversion ----- */
   c.appendChild(blocVagues());
+
+  /* ----- Coût annuel, dons reçus, plafond de familles ----- */
+  c.appendChild(blocCoutSoutien());
 
   /* ----- Les chantiers, phase par phase ----- */
   CROISSANCE_PHASES.forEach(ph => {
@@ -3527,7 +3615,12 @@ function blocDon() {
   if (!ponct.length && !mens.length && libre) {
     html += `<a class="gros-bouton don-bouton" href="${libre}" target="_blank" rel="noopener">${t("don.bouton")}</a>`;
   }
-  if (ponct.length || mens.length || libre) html += `<p class="don-merci">${t("don.merci")}</p>`;
+  if (ponct.length || mens.length || libre) {
+    html += `<p class="don-merci">${t("don.merci")}</p>`;
+    // Transparence : ce que les dons financent, et ce qu'ils ne donnent pas.
+    html += `<p class="don-transparence">${t("don.transparence")}
+      <a href="faq.html#dons" target="_blank" rel="noopener">${t("don.en_savoir")}</a></p>`;
+  }
   sec.innerHTML = html;
   return sec;
 }

@@ -223,7 +223,21 @@ aucune commission.
 téléphonie : le projet est finançable sur fonds propres sans difficulté, et
 quelques dons suffiraient à l'équilibrer.
 
-### 3.3 Le vrai plafond n'est pas l'argent, c'est le support
+### 3.2 bis Ce que le projet coûte réellement
+
+| Poste | Aujourd'hui | Quand cela change |
+|---|---|---|
+| Nom de domaine (famiteam.com) | 15 €/an | jamais |
+| Boîte + SMTP sortant (OVH) | 12 €/an | volume d'envois très élevé |
+| Base de données (Supabase) | **0 €** — palier gratuit | ≈ 1 000 familles → ≈ 280 €/an |
+| Hébergement du site (Vercel) | **0 €** — palier gratuit | usage commercial (exclu ici) |
+| **Total** | **≈ 27 €/an** | **≈ 307 €/an au-delà de 1 000 familles** |
+
+Ces chiffres, les dons reçus et le taux de couverture sont affichés en continu
+dans l'onglet Croissance (« Coût, dons et plafond ») : rien à retenir, rien à
+recalculer.
+
+### 3.3 Les deux plafonds : le support et la facture
 
 C'est le calcul structurant de ce plan. En supposant que **1 % des familles
 actives écrivent chaque mois** et que chaque réponse prenne **5 minutes** :
@@ -235,10 +249,32 @@ actives écrivent chaque mois** et que chaque réponse prenne **5 minutes** :
 | **2 000** | **20** | **≈ 1 h 40/mois** | **40 %** |
 | 5 000 | 50 | ≈ 4 h/mois | 100 % — plus rien pour le reste |
 
-**Certitude : 50 %** (le taux de sollicitation est une hypothèse). Conclusion :
-**le plafond soutenable se situe autour de 2 000 familles actives**, et il se
-recule uniquement par la FAQ et les réponses types — pas par l'effort. Au-delà,
-mieux vaut une liste d'attente qu'un service dégradé.
+**Certitude : 50 %** (le taux de sollicitation est une hypothèse). Le plafond
+lié au support se situe donc autour de **2 000 familles actives**, et il se
+recule uniquement par la FAQ et les réponses types — pas par l'effort.
+
+#### Correction : la limite technique arrive avant celle du support
+
+Mesuré sur la base réelle (14 Mo, 10 familles) : une famille occupe environ
+**410 Ko** à son régime stable — 40 Ko d'état courant et ~370 Ko d'historique,
+ce dernier étant plafonné à 40 versions par famille. Le palier **gratuit de
+Supabase est de 500 Mo**.
+
+| | Plafond | Ce qui se passe au-delà |
+|---|---|---|
+| Base de données gratuite | **≈ 1 000 familles** | Supabase Pro : ≈ 280 €/an |
+| Temps de support | ≈ 2 000 familles | Le service se dégrade |
+
+**C'est donc l'argent qui contraint en premier, pas le support** — l'inverse de
+ce que ce plan supposait. Sans dons, le premier vrai choix se présente vers
+1 000 familles : payer ≈ 280 €/an de sa poche, ou s'arrêter là. C'est
+exactement ce que les dons doivent couvrir, et c'est la seule raison pour
+laquelle ils existent.
+
+**Décision.** Plafond fixé à **800 familles**, réglable dans l'admin — une
+marge délibérée sous les 1 000, pour voir venir. Il **s'applique tout seul** :
+au-delà, les inscriptions basculent en liste d'attente sans intervention.
+Attendre son tour est plus honnête qu'un service qui ne suit plus.
 
 ### 3.4 Trajectoire visée (familles, pas euros)
 

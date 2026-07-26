@@ -1466,3 +1466,16 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .vag-zone .croiss-file{margin-top:12px}
 .retours-restant{font-size:12.5px; color:var(--doux); margin:8px 0 0; line-height:1.4}
 .retours-restant.actif{color:#b26a00; font-weight:700}
+
+/* Coût, dons et plafond (admin » Croissance) */
+.cout-lignes{margin:10px 0 4px}
+.cout-l{display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+  padding:8px 0; border-bottom:1px solid #eef4f9; font-size:14px}
+.cout-l span{display:flex; flex-direction:column; color:var(--texte); font-weight:700}
+.cout-l small{font-weight:600; font-size:11.5px; color:var(--doux); margin-top:1px}
+.cout-l strong{flex:none; font-size:15px; color:var(--texte)}
+.cout-l.total{border-bottom:none; border-top:2px solid #e3edf5; margin-top:2px}
+.cout-l.total strong{color:#b26a00}
+.cout-zone{margin-top:6px}
+.don-transparence{font-size:11.5px; color:var(--doux); line-height:1.5; margin:8px 0 0}
+.don-transparence a{color:#3a7bd5; font-weight:700; text-decoration:none; white-space:nowrap}
