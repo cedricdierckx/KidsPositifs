@@ -43,6 +43,19 @@ function tailleVague() {
   const n = parseInt((configApp && configApp.vague_taille) || "", 10);
   return (isNaN(n) || n < 1) ? 20 : Math.min(n, 200);
 }
+/* Mode vacances (chantier « Soutenabilité »). Le projet doit survivre à une
+ * semaine chargée : pendant une pause, plus rien ne part — ni aux familles, ni
+ * à l'administrateur — et les nouvelles inscriptions attendent leur tour.
+ * L'app, elle, continue de fonctionner normalement pour les familles. */
+function enVacances() {
+  const jusqua = String((configApp && configApp.vacances_jusqua) || "").trim();
+  if (!jusqua) return false;
+  return jusqua >= new Date().toISOString().slice(0, 10);   // inclus le dernier jour
+}
+function vacancesJusqua() {
+  return enVacances() ? String(configApp.vacances_jusqua).trim() : "";
+}
+
 // Plafond de familles : ce que le temps de support et la capacité gratuite
 // permettent de tenir. Modifiable depuis l'admin.
 function plafondFamilles() {
@@ -460,6 +473,80 @@ async function envoyerMailAuto(type, cle, dest, modele, valeurs) {
   return false;
 }
 
+/* ---------- Avertir l'administrateur d'un changement ----------
+ * Tout ce qui s'applique tout seul doit être signalé : un e-mail court, le
+ * changement en une phrase, et le lien vers la page Croissance où se prennent
+ * les décisions. Le verrou est en base (table changements) : un même
+ * changement ne peut donner lieu qu'à un seul e-mail, quel que soit
+ * l'appareil. Indépendant de l'interrupteur des e-mails aux familles : ceci
+ * part chez l'administrateur, pas chez les parents. */
+function notifsAdminActives() {
+  return String((configApp && configApp.notifs_admin) || "on").trim() !== "off";
+}
+function lienCroissance() {
+  return (location.origin || "https://famiteam.com") + "/croissance";
+}
+async function notifierAdmin(type, cle, resume, decisions) {
+  if (!estAdmin || !notifsAdminActives()) return false;
+  if (typeof modeDemo !== "undefined" && modeDemo) return false;
+  if (typeof enVacances === "function" && enVacances()) return false;
+  let nouveau = false;
+  try {
+    const { data, error } = await sb.rpc("changement_noter",
+      { p_type: type, p_cle: String(cle), p_resume: resume });
+    nouveau = !error && !!data;
+  } catch (e) { return false; }
+  if (!nouveau) return false;                 // déjà signalé : on n'écrit pas deux fois
+
+  let corps = `${resume}\n\n`;
+  // Les décisions en attente, avec leurs options et celle recommandée.
+  if (decisions && decisions.length) {
+    corps += `À DÉCIDER\n`;
+    decisions.forEach(d => {
+      corps += `\n${d.titre}\n${d.contexte}\n`;
+      d.options.forEach(o => {
+        corps += `  ${o.recommande ? "→ [recommandé]" : "  -"} ${o.titre} : ${o.detail}\n`;
+      });
+    });
+    corps += `\nChaque option se choisit en un clic sur la page :\n`;
+  } else {
+    corps += `Rien à décider : c'est une information.\n\n`;
+  }
+  corps += `${lienCroissance()}\n`;
+
+  const res = await envoyerMailFn({
+    to: emailSupport(),
+    subject: `FamiTeam — ${resume.slice(0, 70)}`,
+    text: corps
+  });
+  if (res && res.ok) {
+    try { await sb.rpc("changement_notifie", { p_type: type, p_cle: String(cle) }); } catch (e) { /* best-effort */ }
+    return true;
+  }
+  return false;
+}
+// Les derniers changements appliqués (page Croissance).
+async function adminChangements(limite) {
+  if (!estAdmin) return [];
+  try {
+    const { data, error } = await sb.rpc("admin_changements", { p_limit: limite || 20 });
+    return error ? [] : (data || []);
+  } catch (e) { return []; }
+}
+// Décision tranchée : on l'enregistre, elle ne reviendra plus.
+async function enregistrerDecision(id, optionId) {
+  const ok = await adminDefinirConfig("decision_" + id, optionId);
+  if (ok) configApp["decision_" + id] = optionId;
+  return ok;
+}
+function decisionsPrises() {
+  const out = {};
+  Object.keys(configApp || {}).forEach(k => {
+    if (k.indexOf("decision_") === 0 && configApp[k]) out[k.slice(9)] = configApp[k];
+  });
+  return out;
+}
+
 // E-mail de bienvenue : envoyé au parent qui vient de créer sa famille.
 async function envoyerBienvenue(familleId) {
   const u = utilisateurCourant();
@@ -524,6 +611,29 @@ async function envoyerRapportMensuel() {
   if (res && res.ok) { await mailAutoMarquer("rapport", periode); return true; }
   return false;
 }
+/* Contexte des décisions : les chiffres réels sur lesquels se déclenchent les
+ * questions à trancher. Une seule collecte, réutilisée par l'e-mail et par la
+ * page Croissance. */
+async function contexteDecisions() {
+  const [cap, dons, vag, act] = await Promise.all([
+    capaciteProjet(),
+    (typeof adminDonationsStats === "function") ? adminDonationsStats() : null,
+    (typeof adminVaguesStats === "function") ? adminVaguesStats() : null,
+    (typeof adminActivation === "function") ? adminActivation() : null
+  ]);
+  return {
+    familles:            cap ? cap.familles : 0,
+    plafond:             cap ? cap.plafond : plafondFamilles(),
+    plafondAtteint:      cap ? !!cap.atteint : false,
+    partBase:            cap ? cap.part_base : 0,
+    envoisArmes:         mailsAutoArmes(),
+    inscriptionsOuvertes: inscriptionsOuvertes(),
+    tauxVague:           (vag && vag.taux != null) ? vag.taux : 0,
+    tauxActivation:      (act && act.taux != null) ? act.taux : 0,
+    donsCents:           (dons && dons.total_cents) || 0,
+    coutCents:           (typeof coutAnnuelCents === "function") ? coutAnnuelCents() : 2700
+  };
+}
 // Déclencheur : à l'ouverture de l'app par l'administrateur, une fois par jour.
 async function declencherEnvoisAuto() {
   try {
@@ -533,17 +643,42 @@ async function declencherEnvoisAuto() {
     const auj = new Date().toISOString().slice(0, 10);
     if (localStorage.getItem(cle) === auj) return;
     localStorage.setItem(cle, auj);
+    if (enVacances()) return;                 // pause : rien ne part, rien ne bascule
+
     // Le plafond se surveille tout seul, et indépendamment des envois : c'est
     // une protection, pas une communication. Il s'applique donc même quand
     // l'interrupteur des e-mails automatiques est coupé.
-    await appliquerPlafond();
-    if (!mailsAutoArmes()) return;
-    const n = await envoyerRelancesActivation()
-            + await envoyerPropositionsParrainage()
-            + await envoyerVagueDuMois()
-            + await envoyerRelancesVague();
-    await envoyerRapportMensuel();
-    if (n > 0 && typeof toast === "function") toast(t("croiss.mails_partis", { n }), "succes");
+    const bascule = await appliquerPlafond();
+
+    // Les décisions à prendre, calculées sur les chiffres du jour.
+    const ctx = await contexteDecisions();
+    const aDecider = (typeof decisionsEnAttente === "function")
+      ? decisionsEnAttente(ctx, decisionsPrises()) : [];
+
+    if (bascule) {
+      await notifierAdmin("plafond", String(ctx.plafond),
+        `Plafond de ${ctx.plafond} familles atteint : les inscriptions sont passées en liste d'attente.`,
+        aDecider);
+    }
+
+    if (mailsAutoArmes()) {
+      const nAct = await envoyerRelancesActivation();
+      const nPar = await envoyerPropositionsParrainage();
+      const nVag = await envoyerVagueDuMois();
+      const nRel = await envoyerRelancesVague();
+      const n = nAct + nPar + nVag + nRel;
+      await envoyerRapportMensuel();
+      if (nVag > 0) {
+        await notifierAdmin("vague", new Date().toISOString().slice(0, 7),
+          `Vague d'invitations partie : ${nVag} famille(s) invitée(s) depuis la liste d'attente.`, []);
+      }
+      if (n > 0 && typeof toast === "function") toast(t("croiss.mails_partis", { n }), "succes");
+    }
+
+    // Une décision nouvellement ouverte mérite un mot, même sans autre changement.
+    for (const d of aDecider) {
+      await notifierAdmin("decision", d.id, `Une décision vous attend : ${d.titre}`, [d]);
+    }
   } catch (e) { /* best-effort : jamais bloquant */ }
 }
 

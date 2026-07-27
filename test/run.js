@@ -1448,15 +1448,19 @@ test("plafond : la valeur par défaut est 800 familles et se règle par configur
 test("plafond : la protection s'applique même quand les e-mails sont coupés", () => {
   const fs = require("fs"), path = require("path");
   const auth = fs.readFileSync(path.join(__dirname, "..", "js", "auth.js"), "utf8");
-  const bloc = auth.slice(auth.indexOf("async function declencherEnvoisAuto"));
-  const fin = bloc.indexOf("\n}");
-  const corps = bloc.slice(0, fin);
-  const posPlafond = corps.indexOf("appliquerPlafond()");
-  const posGarde = corps.indexOf("if (!mailsAutoArmes()) return;");
+  const debut = auth.indexOf("async function declencherEnvoisAuto");
+  assert.notStrictEqual(debut, -1, "declencherEnvoisAuto introuvable");
+  const corps = auth.slice(debut, auth.indexOf("\n}", auth.indexOf("catch", debut)));
+  const posPlafond = corps.indexOf("appliquerPlafond(");
+  const posGarde = corps.indexOf("mailsAutoArmes(");
   assert.ok(posPlafond > -1, "le plafond doit être vérifié au démarrage");
   assert.ok(posGarde > -1, "la garde des envois doit exister");
   assert.ok(posPlafond < posGarde,
-    "le plafond est une protection, pas une communication : il doit s'appliquer avant la garde des e-mails");
+    "le plafond est une protection, pas une communication : il doit s'appliquer avant toute garde liée aux e-mails");
+  // Une pause suspend tout, y compris le basculement de plafond.
+  const posPause = corps.indexOf("enVacances()");
+  assert.ok(posPause > -1 && posPause < posPlafond,
+    "le mode vacances doit court-circuiter avant le reste");
 });
 
 test("coût : le total annuel est cohérent avec le détail affiché", () => {
@@ -1501,6 +1505,120 @@ test("modèle : libellés de coût et de plafond traduits dans les 4 langues", (
   Object.keys(api.LANGUES).forEach(lg => {
     assert.ok(api.I18N[lg]["cout.plafond_libre"].includes("{reste}"), lg + " : {reste} perdu");
     assert.ok(api.I18N[lg]["cout.base_pleine_p"].includes("{u}"), lg + " : {u} perdu");
+  });
+});
+
+/* ---------- Décisions & avertissements ---------- */
+test("décisions : chacune est bien formée et porte une seule recommandation", () => {
+  const { api } = construireContexte();
+  const vus = new Set();
+  assert.ok(api.CROISSANCE_DECISIONS.length >= 3, "au moins trois décisions");
+  api.CROISSANCE_DECISIONS.forEach(d => {
+    assert.ok(d.id && d.titre && d.contexte, "décision incomplète : " + d.id);
+    assert.ok(!vus.has(d.id), "identifiant en double : " + d.id);
+    vus.add(d.id);
+    assert.strictEqual(typeof d.declencheur, "function", d.id + " doit porter un déclencheur");
+    assert.ok(d.options.length >= 2, d.id + " doit offrir plusieurs réponses possibles");
+    const reco = d.options.filter(o => o.recommande);
+    assert.strictEqual(reco.length, 1, d.id + " doit avoir exactement une option recommandée");
+    d.options.forEach(o => {
+      assert.ok(o.id && o.titre && o.detail, "option incomplète dans " + d.id);
+      assert.ok(!vus.has(d.id + ":" + o.id), "option en double : " + d.id + ":" + o.id);
+      vus.add(d.id + ":" + o.id);
+    });
+    assert.strictEqual(api.optionRecommandee(d).id, reco[0].id);
+  });
+});
+
+test("décisions : rien ne s'affiche tant que la situation ne l'appelle pas", () => {
+  const { api } = construireContexte();
+  // Projet tout neuf, tout va bien : aucune décision ne doit s'imposer.
+  const calme = { familles: 1, plafond: 800, plafondAtteint: false, partBase: 3,
+                  envoisArmes: true, inscriptionsOuvertes: true, tauxVague: 0,
+                  tauxActivation: 0, donsCents: 0, coutCents: 2700 };
+  assert.strictEqual(api.decisionsEnAttente(calme, {}).length, 0,
+    "aucune décision ne doit apparaître sans raison");
+});
+
+test("décisions : chaque situation ouvre bien la question attendue", () => {
+  const { api } = construireContexte();
+  const base = { familles: 10, plafond: 800, plafondAtteint: false, partBase: 3,
+                 envoisArmes: true, inscriptionsOuvertes: true, tauxVague: 0,
+                 tauxActivation: 0, donsCents: 0, coutCents: 2700 };
+  const ids = (ctx) => api.decisionsEnAttente(ctx, {}).map(d => d.id);
+
+  assert.ok(ids(Object.assign({}, base, { envoisArmes: false })).includes("d_envois"),
+    "envois coupés et familles présentes : on doit proposer de les armer");
+  assert.ok(ids(Object.assign({}, base, { plafondAtteint: true })).includes("d_plafond"),
+    "plafond atteint : la question doit s'ouvrir");
+  assert.ok(ids(Object.assign({}, base, { partBase: 75 })).includes("d_base"),
+    "base à 75 % : la question doit s'ouvrir");
+  assert.ok(ids(Object.assign({}, base, { donsCents: 5000 })).includes("d_dons"),
+    "dons supérieurs aux frais : la question doit s'ouvrir");
+  assert.ok(ids(Object.assign({}, base,
+      { inscriptionsOuvertes: false, tauxVague: 45, tauxActivation: 60 })).includes("d_ouverture"),
+    "les deux critères atteints : on doit proposer d'ouvrir");
+  // Les critères à moitié atteints ne suffisent pas.
+  assert.strictEqual(ids(Object.assign({}, base,
+      { inscriptionsOuvertes: false, tauxVague: 45, tauxActivation: 20 })).includes("d_ouverture"), false,
+    "activation insuffisante : on ne propose pas d'ouvrir");
+});
+
+test("décisions : une décision tranchée ne revient plus", () => {
+  const { api } = construireContexte();
+  const ctx = { familles: 10, plafond: 800, plafondAtteint: true, partBase: 3,
+                envoisArmes: true, inscriptionsOuvertes: true, tauxVague: 0,
+                tauxActivation: 0, donsCents: 0, coutCents: 2700 };
+  assert.ok(api.decisionsEnAttente(ctx, {}).map(d => d.id).includes("d_plafond"));
+  assert.strictEqual(api.decisionsEnAttente(ctx, { d_plafond: "rester" }).map(d => d.id).includes("d_plafond"),
+    false, "une fois tranchée, la question ne doit plus se poser");
+});
+
+test("avertissements : un même changement ne peut donner qu'un seul e-mail", () => {
+  const fs = require("fs"), path = require("path");
+  const auth = fs.readFileSync(path.join(__dirname, "..", "js", "auth.js"), "utf8");
+  const bloc = auth.slice(auth.indexOf("async function notifierAdmin"));
+  // Le verrou est en base, pas en localStorage : il tient entre appareils.
+  assert.ok(/changement_noter/.test(bloc), "le changement doit être noté en base");
+  assert.ok(/if \(!nouveau\) return false/.test(bloc),
+    "un changement déjà noté ne doit pas redonner lieu à un e-mail");
+  assert.ok(/changement_notifie/.test(bloc), "l'envoi réussi doit être marqué");
+  // L'e-mail porte le lien vers la page des décisions.
+  assert.ok(/lienCroissance\(\)/.test(bloc), "l'e-mail doit pointer vers la page Croissance");
+  assert.ok(/recommandé/.test(bloc), "l'e-mail doit signaler l'option recommandée");
+  // Une pause suspend aussi les avertissements.
+  assert.ok(/enVacances\(\)/.test(bloc), "le mode vacances doit suspendre les avertissements");
+});
+
+test("pause : le mode vacances s'ouvre et se referme sur une date", () => {
+  const enVac = (cfg) => fonctionDeSource("js/auth.js", "enVacances", { configApp: cfg })();
+  const hier = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const demain = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  const auj = new Date().toISOString().slice(0, 10);
+  assert.strictEqual(enVac({}), false, "sans date, pas de pause");
+  assert.strictEqual(enVac({ vacances_jusqua: "" }), false);
+  assert.strictEqual(enVac({ vacances_jusqua: demain }), true, "date future : en pause");
+  assert.strictEqual(enVac({ vacances_jusqua: auj }), true, "le dernier jour est inclus");
+  assert.strictEqual(enVac({ vacances_jusqua: hier }), false, "date passée : la pause est finie");
+});
+
+test("avertissements : libellés traduits dans les 4 langues", () => {
+  const { api } = construireContexte();
+  const cles = ["dec.titre", "dec.sous", "dec.aucune", "dec.recommande", "dec.confirm",
+                "dec.enregistree", "dec.prises", "dec.revenir", "dec.revenir_confirm",
+                "dec.journal", "dec.journal_sous", "dec.chg_notifie", "dec.chg_non_notifie",
+                "pause.titre", "pause.sous", "pause.notifs", "pause.notifs_on",
+                "pause.notifs_off", "pause.jusqua", "pause.active", "pause.inactive"];
+  const manquantes = [];
+  Object.keys(api.LANGUES).forEach(lg => cles.forEach(k => {
+    const v = api.I18N[lg][k];
+    if (typeof v !== "string" || !v.length) manquantes.push(lg + " → " + k);
+  }));
+  assert.strictEqual(manquantes.length, 0, manquantes.slice(0, 8).join(", "));
+  Object.keys(api.LANGUES).forEach(lg => {
+    assert.ok(api.I18N[lg]["dec.confirm"].includes("{choix}"), lg + " : {choix} perdu");
+    assert.ok(api.I18N[lg]["pause.active"].includes("{jour}"), lg + " : {jour} perdu");
+    assert.ok(api.I18N[lg]["dec.prises"].includes("{n}"), lg + " : {n} perdu");
   });
 });
 

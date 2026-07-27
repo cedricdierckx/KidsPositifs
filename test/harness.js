@@ -139,6 +139,7 @@ function construireContexte() {
       // plan de développement commercial (admin)
       CROISSANCE_PHASES, CROISSANCE_CHANTIERS, CROISSANCE_MAILS, CROISSANCE_CONTRAINTES, CROISSANCE_RITUEL,
       chantiersDePhase, mailCroissance, dureeChantier, seanceDeLaSemaine, cleEtapeCroissance,
+      CROISSANCE_DECISIONS, decisionsEnAttente, optionRecommandee, decisionCroissance,
     };
   `;
   const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/croissance.js"), lire("js/app.js"), lire("js/store.js"), epilogue].join("\n;\n");

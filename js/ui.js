@@ -1938,6 +1938,136 @@ function blocCoutSoutien() {
   return sec;
 }
 
+/* Décisions à prendre (chantier « Soutenabilité »).
+ * Une décision n'apparaît que si la situation l'appelle. Chaque option est
+ * chiffrée et l'une est recommandée : trancher doit prendre une minute. Le
+ * choix est enregistré, la question ne revient plus. C'est la page vers
+ * laquelle pointent les e-mails de changement. */
+function blocDecisions() {
+  const sec = el("section", "carte croiss-decisions");
+  sec.id = "decisions";
+  sec.innerHTML = `<h2>${t("dec.titre")}</h2><p class="note">${t("dec.sous")}</p>`;
+  const zone = el("div", "dec-zone");
+  zone.innerHTML = `<p class="note">${t("common.chargement")}</p>`;
+  sec.appendChild(zone);
+
+  (async () => {
+    const ctx = (typeof contexteDecisions === "function") ? await contexteDecisions() : null;
+    const prises = (typeof decisionsPrises === "function") ? decisionsPrises() : {};
+    const liste = (ctx && typeof decisionsEnAttente === "function")
+      ? decisionsEnAttente(ctx, prises) : [];
+    zone.innerHTML = "";
+
+    if (!liste.length) {
+      zone.appendChild(el("p", "note", t("dec.aucune")));
+    } else {
+      liste.forEach(d => {
+        const carte = el("div", "dec-carte");
+        carte.innerHTML = `<p class="dec-q">${echapper(d.titre)}</p>
+          <p class="dec-ctx">${echapper(d.contexte)}</p>`;
+        d.options.forEach(o => {
+          const b = el("button", "dec-opt" + (o.recommande ? " reco" : ""));
+          b.innerHTML = `<span class="dec-opt-t">${echapper(o.titre)}${
+            o.recommande ? ` <em>${t("dec.recommande")}</em>` : ""}</span>
+            <span class="dec-opt-d">${echapper(o.detail)}</span>`;
+          b.onclick = async () => {
+            if (!confirm(t("dec.confirm", { choix: o.titre }))) return;
+            b.disabled = true;
+            await enregistrerDecision(d.id, o.id);
+            toast(t("dec.enregistree"), "succes");
+            majSansSaut(() => rendre());
+          };
+          carte.appendChild(b);
+        });
+        zone.appendChild(carte);
+      });
+    }
+
+    // Décisions déjà tranchées : on garde la trace, sans les remettre en avant.
+    const ids = Object.keys(prises);
+    if (ids.length) {
+      const { details, corps } = blocPliable("📜 " + t("dec.prises", { n: ids.length }), false, "dec-prises");
+      ids.forEach(id => {
+        const d = (typeof decisionCroissance === "function") ? decisionCroissance(id) : null;
+        if (!d) return;
+        const o = d.options.find(x => x.id === prises[id]);
+        const l = el("div", "dec-prise-l");
+        l.innerHTML = `<span>${echapper(d.titre)}</span>
+          <strong>${echapper(o ? o.titre : prises[id])}</strong>`;
+        const b = el("button", "mini-btn", t("dec.revenir"));
+        b.onclick = async () => {
+          if (!confirm(t("dec.revenir_confirm"))) return;
+          await enregistrerDecision(id, "");
+          majSansSaut(() => rendre());
+        };
+        l.appendChild(b);
+        corps.appendChild(l);
+      });
+      zone.appendChild(details);
+    }
+
+    // Ce qui s'est appliqué tout seul, et ce qui a été signalé par e-mail.
+    const chg = (typeof adminChangements === "function") ? await adminChangements(10) : [];
+    if (chg.length) {
+      const { details, corps } = blocPliable("🔔 " + t("dec.journal"), false, "dec-journal");
+      corps.appendChild(el("p", "note", t("dec.journal_sous")));
+      chg.forEach(x => {
+        const l = el("div", "dec-chg-l");
+        l.innerHTML = `<span>${echapper(x.resume || x.type)}</span>
+          <small>${echapper(jourLisible(String(x.created_at || "").slice(0, 10)) || "—")}
+            · ${x.notifie_le ? t("dec.chg_notifie") : t("dec.chg_non_notifie")}</small>`;
+        corps.appendChild(l);
+      });
+      zone.appendChild(details);
+    }
+  })();
+  return sec;
+}
+
+/* Soutenabilité : mode vacances et avertissements par e-mail.
+ * Pendant une pause, plus rien ne part et rien ne bascule ; l'app continue de
+ * fonctionner normalement pour les familles. */
+function blocSoutenabilite() {
+  const sec = el("section", "carte croiss-pause");
+  sec.innerHTML = `<h2>${t("pause.titre")}</h2><p class="note">${t("pause.sous")}</p>`;
+
+  // Avertissements à l'administrateur : allumés par défaut.
+  const actives = (typeof notifsAdminActives === "function") ? notifsAdminActives() : true;
+  const l = el("label", "switch-ligne");
+  const i = el("input"); i.type = "checkbox"; i.checked = actives;
+  i.onchange = async () => {
+    i.disabled = true;
+    await adminDefinirConfig("notifs_admin", i.checked ? "on" : "off");
+    configApp.notifs_admin = i.checked ? "on" : "off";
+    i.disabled = false;
+    majSansSaut(() => rendre());
+  };
+  l.appendChild(i);
+  l.appendChild(el("span", null, t("pause.notifs")));
+  sec.appendChild(l);
+  sec.appendChild(el("p", "reglage-aide", t(actives ? "pause.notifs_on" : "pause.notifs_off")));
+
+  // Mode vacances : une date de reprise, rien de plus.
+  const enPause = (typeof enVacances === "function") ? enVacances() : false;
+  const lv = el("label", "reglage-ligne");
+  lv.appendChild(el("span", null, t("pause.jusqua")));
+  const iv = el("input", "champ-date"); iv.type = "date";
+  iv.min = aujourdHui();
+  iv.value = (typeof vacancesJusqua === "function") ? vacancesJusqua() : "";
+  iv.onchange = async () => {
+    iv.disabled = true;
+    await adminDefinirConfig("vacances_jusqua", iv.value || "");
+    configApp.vacances_jusqua = iv.value || "";
+    iv.disabled = false;
+    majSansSaut(() => rendre());
+  };
+  lv.appendChild(iv);
+  sec.appendChild(lv);
+  sec.appendChild(el("p", "reglage-aide" + (enPause ? " pause-actif" : ""),
+    enPause ? t("pause.active", { jour: jourLisible(vacancesJusqua(), true) }) : t("pause.inactive")));
+  return sec;
+}
+
 function blocAdminCroissance(c) {
   const etat0 = croissanceEtat();
 
@@ -1975,6 +2105,9 @@ function blocAdminCroissance(c) {
   lienPlan.target = "_blank"; lienPlan.rel = "noopener";
   tete.appendChild(lienPlan);
   c.appendChild(tete);
+
+  /* ----- Décisions à prendre : en tête, c'est ce que les e-mails pointent ----- */
+  c.appendChild(blocDecisions());
 
   /* ----- Les deux contraintes : elles gouvernent tout le plan ----- */
   const contr = el("section", "carte croiss-contraintes");
@@ -2067,6 +2200,9 @@ function blocAdminCroissance(c) {
 
   /* ----- Coût annuel, dons reçus, plafond de familles ----- */
   c.appendChild(blocCoutSoutien());
+
+  /* ----- Pause, et avertissements par e-mail ----- */
+  c.appendChild(blocSoutenabilite());
 
   /* ----- Les chantiers, phase par phase ----- */
   CROISSANCE_PHASES.forEach(ph => {

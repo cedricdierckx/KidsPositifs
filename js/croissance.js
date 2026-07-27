@@ -284,8 +284,8 @@ const CROISSANCE_CHANTIERS = [
     etapes: [
       { id: "c_soutenabilite_1", titre: "Poser le créneau dans l'agenda", min: 10, detail: "Une heure fixe, même jour, même heure. Un projet sans créneau meurt." },
       { id: "c_soutenabilite_2", titre: "Une action par semaine, pas trois", min: 5, detail: "La séance se compose depuis « Ma semaine » : ce qui n'entre pas dans l'heure attend." },
-      { id: "c_soutenabilite_3", titre: "Mode vacances", min: 30, detail: "Vérifier que trois semaines sans intervention ne cassent rien (e-mails, quotas, sauvegardes)." },
-      { id: "c_soutenabilite_4", titre: "Consigner les décisions", min: 10, detail: "Deux lignes dans les notes du chantier : dans six mois, on ne s'en souviendra pas." },
+      { id: "c_soutenabilite_3", titre: "Mode vacances", min: 30, detail: "Fait : une date de reprise suffit. Pendant la pause, aucun e-mail ne part, aucune vague, aucun basculement de plafond — et l'app continue de fonctionner normalement pour les familles. Réglé dans « Pause et avertissements ».", fait: true },
+      { id: "c_soutenabilite_4", titre: "Consigner les décisions", min: 10, detail: "Fait, et automatisé : chaque décision tranchée est enregistrée avec l'option retenue, et chaque changement qui s'applique tout seul est consigné dans le journal. Plus rien à noter à la main.", fait: true },
       { id: "c_soutenabilite_5", titre: "Bilan semestriel : continuer ou arrêter", min: 30, detail: "Question honnête, deux fois par an. Arrêter proprement est une option respectable." }
     ]
   },
@@ -672,6 +672,87 @@ Si le sujet vous parle, en parlerions-nous ?
 function cleEtapeCroissance(chantier, etape, moisCourant) {
   if (chantier && chantier.recurrent === "mois" && moisCourant) return etape.id + "@" + moisCourant;
   return etape.id;
+}
+
+/* ---------- Décisions à prendre ----------
+ * Une décision n'apparaît que lorsque la situation l'appelle : chacune porte un
+ * déclencheur évalué sur les chiffres réels. Chaque option est chiffrée, et
+ * l'une d'elles est recommandée — pour que trancher prenne une minute, pas une
+ * soirée. Le choix est enregistré ; la décision ne revient plus. */
+const CROISSANCE_DECISIONS = [
+  {
+    id: "d_envois",
+    titre: "Armer les envois automatiques ?",
+    contexte: "Bienvenue, relance d'activation, vagues d'invitation, proposition de parrainage et rapport mensuel sont écrits et testés, mais l'interrupteur est coupé : aucun e-mail ne part. Chaque envoi est journalisé en base, donc rien ne peut partir deux fois.",
+    declencheur: (c) => !c.envoisArmes && c.familles >= 3,
+    options: [
+      { id: "armer", titre: "Armer maintenant", detail: "Les familles reçoivent la bienvenue et la relance d'activation. C'est ce qui fait la différence entre une famille qui démarre et une qui oublie l'app.", recommande: true },
+      { id: "attendre", titre: "Attendre encore quelques familles", detail: "Prudent, mais chaque semaine sans relance laisse partir des familles inscrites qui n'ont jamais commencé." },
+      { id: "jamais", titre: "Ne pas envoyer d'e-mails du tout", detail: "Le plus discret. À assumer : l'activation restera basse et le parrainage ne se proposera jamais." }
+    ]
+  },
+  {
+    id: "d_ouverture",
+    titre: "Ouvrir les inscriptions à tout le monde ?",
+    contexte: "Les deux critères fixés au plan sont atteints : la conversion des vagues dépasse 40 % et l'activation J+1 dépasse 55 %. Les vagues ont fait leur travail.",
+    declencheur: (c) => !c.inscriptionsOuvertes && c.tauxVague >= 40 && c.tauxActivation >= 55
+                        && c.familles < c.plafond * 0.8,
+    options: [
+      { id: "ouvrir", titre: "Ouvrir les inscriptions", detail: "La croissance reprend son cours. Le plafond continue de protéger : au-delà, la liste d'attente revient toute seule.", recommande: true },
+      { id: "vagues", titre: "Garder les vagues", detail: "Plus lent, mais chaque famille démarre accompagnée. Raisonnable si le support vous a déjà semblé lourd." },
+      { id: "agrandir", titre: "Garder les vagues, mais plus grandes", detail: "Compromis : on double la taille de vague sans ouvrir en grand. À réévaluer dans un mois." }
+    ]
+  },
+  {
+    id: "d_plafond",
+    titre: "Le plafond de familles est atteint",
+    contexte: "Les inscriptions sont passées d'elles-mêmes en liste d'attente. Rien n'est cassé : il s'agit de décider si le projet grandit encore, et à quel prix.",
+    declencheur: (c) => c.plafondAtteint,
+    options: [
+      { id: "rester", titre: "Rester à ce plafond", detail: "Coût inchangé, support tenable, liste d'attente qui s'allonge. C'est le choix cohérent avec une heure par semaine.", recommande: true },
+      { id: "payer", titre: "Relever le plafond et passer à Supabase Pro", detail: "≈ 280 €/an de plus. À ne faire que si les dons couvrent déjà les frais actuels — sinon c'est de votre poche, chaque année." },
+      { id: "alleger", titre: "Relever le plafond en allégeant l'historique", detail: "Passer de 40 à 15 versions conservées par famille libère environ 60 % de la place. Gratuit, mais la récupération remonte moins loin." }
+    ]
+  },
+  {
+    id: "d_base",
+    titre: "La base gratuite se remplit",
+    contexte: "Au-delà de 500 Mo, le palier gratuit de Supabase ne suffit plus. Mieux vaut décider maintenant, à froid, que le jour où l'écriture est bloquée.",
+    declencheur: (c) => c.partBase >= 70 && !c.plafondAtteint,
+    options: [
+      { id: "alleger", titre: "Réduire l'historique conservé", detail: "De 40 à 15 versions par famille : environ 60 % de place regagnée, sans rien payer. La récupération de données remonte moins loin, ce qui n'a jamais servi au-delà de quelques jours.", recommande: true },
+      { id: "payer", titre: "Passer à Supabase Pro", detail: "≈ 280 €/an. Simple, immédiat, mais engage le budget pour de bon." },
+      { id: "attendre", titre: "Ne rien faire pour l'instant", detail: "Acceptable jusqu'à 85 % environ. Au-delà, le risque est de découvrir le problème par une écriture refusée." }
+    ]
+  },
+  {
+    id: "d_dons",
+    titre: "Les dons dépassent les frais",
+    contexte: "Les frais de l'année sont couverts. La promesse publiée dit que le surplus reste en réserve et ne rémunère personne : il s'agit de choisir ce qu'on en fait concrètement.",
+    declencheur: (c) => c.donsCents > 0 && c.donsCents >= c.coutCents,
+    options: [
+      { id: "reserve", titre: "Garder en réserve pour les années suivantes", detail: "Conforme à ce qui est publié, et couvre d'avance le passage à Supabase Pro le jour venu.", recommande: true },
+      { id: "capacite", titre: "Financer le passage au palier supérieur", detail: "Relever le plafond de familles, puisque le coût est couvert. Cohérent si la liste d'attente s'allonge." },
+      { id: "pause", titre: "Retirer le bouton de don", detail: "Le plus sobre : on ne demande plus tant que les frais sont couverts. Il faudra penser à le remettre." }
+    ]
+  }
+];
+
+// Décisions dont la situation est réunie et qui n'ont pas encore été tranchées.
+// `ctx` porte les chiffres réels, `choix` les décisions déjà prises.
+function decisionsEnAttente(ctx, choix) {
+  const prises = choix || {};
+  return CROISSANCE_DECISIONS.filter(d => {
+    if (prises[d.id]) return false;
+    try { return !!d.declencheur(ctx || {}); } catch (e) { return false; }
+  });
+}
+// L'option recommandée d'une décision.
+function optionRecommandee(decision) {
+  return (decision && decision.options.find(o => o.recommande)) || null;
+}
+function decisionCroissance(id) {
+  return CROISSANCE_DECISIONS.find(d => d.id === id) || null;
 }
 
 // Chantiers d'une phase donnée.

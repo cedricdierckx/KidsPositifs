@@ -1479,3 +1479,26 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .cout-zone{margin-top:6px}
 .don-transparence{font-size:11.5px; color:var(--doux); line-height:1.5; margin:8px 0 0}
 .don-transparence a{color:#3a7bd5; font-weight:700; text-decoration:none; white-space:nowrap}
+
+/* Décisions à prendre & pause (admin » Croissance) */
+.croiss-decisions{border-top:6px solid #5b8def}
+.dec-carte{border:2px solid #e3edf5; border-radius:14px; padding:12px; margin:10px 0; background:#fbfdff}
+.dec-q{font-size:16px; font-weight:800; color:var(--texte); margin:0 0 4px}
+.dec-ctx{font-size:13px; color:var(--doux); line-height:1.5; margin:0 0 10px}
+.dec-opt{display:block; width:100%; text-align:left; border:2px solid #e3edf5; background:#fff;
+  border-radius:12px; padding:10px 12px; margin:6px 0; cursor:pointer; font-family:inherit}
+.dec-opt:hover{border-color:#c5dcf5}
+.dec-opt.reco{border-color:#bfe9da; background:#f4fbf8}
+.dec-opt-t{display:block; font-size:14.5px; font-weight:800; color:var(--texte)}
+.dec-opt-t em{font-style:normal; font-size:11px; font-weight:800; color:#1f7a5a;
+  background:#d9f2e8; border-radius:20px; padding:2px 8px; margin-left:6px; vertical-align:1px}
+.dec-opt-d{display:block; font-size:12.5px; color:var(--doux); line-height:1.5; margin-top:3px}
+.dec-prise-l,.dec-chg-l{display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:8px 0; border-bottom:1px solid #eef4f9; font-size:13px}
+.dec-prise-l span,.dec-chg-l span{color:var(--texte); font-weight:700}
+.dec-prise-l strong{color:#1f7a5a; font-size:12.5px}
+.dec-chg-l{flex-direction:column; align-items:flex-start; gap:2px}
+.dec-chg-l small{color:var(--doux); font-size:11.5px; font-weight:600}
+.croiss-pause .champ-date{flex:none; font-family:inherit; font-size:14px; font-weight:700;
+  padding:8px; border:2px solid #e3edf5; border-radius:10px}
+.reglage-aide.pause-actif{color:#b26a00; font-weight:700}

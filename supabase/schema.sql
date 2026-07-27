@@ -973,6 +973,56 @@ begin
     order by f.created_at;
 end; $$;
 
+-- ---------- Journal des changements automatiques ----------
+-- Tout ce qui s'applique tout seul (plafond franchi, vague partie, décision
+-- nouvellement ouverte) est consigné ici, et l'administrateur en est averti
+-- par e-mail — une seule fois par changement, quel que soit l'appareil.
+create table if not exists public.changements (
+  id bigint generated always as identity primary key,
+  type text not null,                 -- 'plafond' | 'vague' | 'relances' | 'decision'
+  cle text not null,                  -- clé d'unicité (mois, id de décision…)
+  resume text,                        -- une phrase, telle qu'envoyée
+  notifie_le timestamptz,             -- e-mail parti
+  created_at timestamptz default now(),
+  unique (type, cle)
+);
+alter table public.changements enable row level security;
+-- Pas de politique publique : tout passe par les RPC ci-dessous.
+
+-- Enregistre un changement. Renvoie true seulement la PREMIÈRE fois : c'est ce
+-- booléen qui autorise l'envoi de l'e-mail, donc jamais deux fois le même.
+create or replace function public.changement_noter(p_type text, p_cle text, p_resume text)
+returns boolean language plpgsql security definer set search_path = public as $$
+declare v_nouveau boolean := false;
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  insert into changements(type, cle, resume) values (p_type, p_cle, left(coalesce(p_resume, ''), 500))
+    on conflict (type, cle) do nothing;
+  get diagnostics v_nouveau = row_count;
+  return v_nouveau;
+end; $$;
+
+-- Marque l'e-mail comme parti.
+create or replace function public.changement_notifie(p_type text, p_cle text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  update changements set notifie_le = now()
+   where type = p_type and cle = p_cle and notifie_le is null;
+end; $$;
+
+-- Les derniers changements, pour la page Croissance.
+create or replace function public.admin_changements(p_limit integer default 20)
+returns table(type text, cle text, resume text, notifie_le timestamptz, created_at timestamptz)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  return query
+    select c.type::text, c.cle::text, c.resume::text, c.notifie_le, c.created_at
+    from changements c order by c.created_at desc
+    limit greatest(1, least(coalesce(p_limit, 20), 100));
+end; $$;
+
 -- ---------- Plafond de familles (chantier « Modèle non marchand ») ----------
 -- Le plafond protège deux ressources : le temps de support (une heure par
 -- semaine) et la capacité gratuite de la base. Quand il est atteint, les
@@ -1045,6 +1095,9 @@ grant execute on function public.admin_vagues_a_relancer()      to authenticated
 grant execute on function public.admin_vagues_stats()           to authenticated;
 grant execute on function public.capacite_projet()              to authenticated;
 grant execute on function public.appliquer_plafond()            to authenticated;
+grant execute on function public.changement_noter(text, text, text) to authenticated;
+grant execute on function public.changement_notifie(text, text) to authenticated;
+grant execute on function public.admin_changements(integer)     to authenticated;
 grant execute on function public.admin_remove_waitlist(text)    to authenticated;
 grant execute on function public.is_admin()                     to authenticated;
 grant execute on function public.admin_list_families()          to authenticated;
