@@ -51,16 +51,23 @@ function tailleVague() {
  * enverrait de vrais e-mails, ou consommerait le verrou du mois sans rien
  * envoyer : la vague serait alors perdue pour de bon.
  * L'hôte de production est configurable, au cas où le domaine change. */
-function hoteProduction() {
+// Domaines officiels. Le « www. » de chacun est accepté sans avoir à l'écrire.
+// Liste surchargeable (app_config → hote_prod, séparés par des virgules) au
+// cas où un domaine s'ajoute ou disparaît, sans redéploiement.
+const HOTES_PRODUCTION = ["famiteam.com", "fami.team"];
+function hotesProduction() {
   const cfg = (typeof configApp !== "undefined" && configApp) ? configApp : {};
   const kp = (typeof window !== "undefined" && window.KP_CONFIG) ? window.KP_CONFIG : {};
-  return String(cfg.hote_prod || kp.HOTE_PROD || "famiteam.com").trim().toLowerCase();
+  const brut = String(cfg.hote_prod || kp.HOTE_PROD || "").trim();
+  const liste = brut ? brut.split(",") : HOTES_PRODUCTION;
+  return liste.map(h => String(h).trim().toLowerCase().replace(/^www\./, "")).filter(Boolean);
 }
 function estProduction() {
   const hote = String((typeof location !== "undefined" && location.hostname) || "").toLowerCase();
-  const prod = hoteProduction();
-  if (!prod || !hote) return false;
-  return hote === prod || hote === "www." + prod;
+  if (!hote) return false;
+  // Comparaison exacte, jamais « se termine par » : famiteam.com.exemple.net
+  // ne doit surtout pas passer pour la production.
+  return hotesProduction().some(p => hote === p || hote === "www." + p);
 }
 
 /* Mode vacances (chantier « Soutenabilité »). Le projet doit survivre à une

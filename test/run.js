@@ -1623,24 +1623,31 @@ test("avertissements : libellés traduits dans les 4 langues", () => {
 });
 
 /* ---------- Aucun envoi hors production ---------- */
-test("production : seul le domaine de production est reconnu", () => {
+test("production : les quatre domaines officiels, et eux seuls", () => {
   const estProd = (hote, cfg) => fonctionDeSource("js/auth.js", "estProduction", {
     location: { hostname: hote },
-    configApp: cfg || {},
-    hoteProduction: fonctionDeSource("js/auth.js", "hoteProduction", {
-      configApp: cfg || {}, window: { KP_CONFIG: {} }
+    HOTES_PRODUCTION: ["famiteam.com", "fami.team"],
+    hotesProduction: fonctionDeSource("js/auth.js", "hotesProduction", {
+      configApp: cfg || {}, window: { KP_CONFIG: {} },
+      HOTES_PRODUCTION: ["famiteam.com", "fami.team"]
     })
   })();
-  assert.strictEqual(estProd("famiteam.com"), true);
-  assert.strictEqual(estProd("www.famiteam.com"), true, "le www doit rester la production");
+  ["famiteam.com", "www.famiteam.com", "fami.team", "www.fami.team"].forEach(h =>
+    assert.strictEqual(estProd(h), true, "doit être la production : " + h));
   // Tout le reste est un aperçu : rien ne doit en partir.
   ["kidspositifs-git-dev-cedric.vercel.app", "kidspositifs-abc123.vercel.app",
-   "localhost", "127.0.0.1", "", "famiteam.com.attaquant.net",
-   "dev.famiteam.com"].forEach(h =>
+   "localhost", "127.0.0.1", "", "dev.famiteam.com", "preview.fami.team",
+   "famiteam.com.attaquant.net", "fami.team.evil.net", "notfamiteam.com",
+   "famiteam.be"].forEach(h =>
     assert.strictEqual(estProd(h), false, "doit être considéré comme un aperçu : " + h));
-  // Le domaine de production reste configurable si l'adresse change un jour.
-  assert.strictEqual(estProd("nouveau.be", { hote_prod: "nouveau.be" }), true);
-  assert.strictEqual(estProd("famiteam.com", { hote_prod: "nouveau.be" }), false);
+  // La liste reste surchargeable si un domaine s'ajoute ou disparaît.
+  assert.strictEqual(estProd("nouveau.be", { hote_prod: "nouveau.be, fami.team" }), true);
+  assert.strictEqual(estProd("www.nouveau.be", { hote_prod: "nouveau.be, fami.team" }), true);
+  assert.strictEqual(estProd("fami.team", { hote_prod: "nouveau.be, fami.team" }), true);
+  assert.strictEqual(estProd("famiteam.com", { hote_prod: "nouveau.be, fami.team" }), false,
+    "un domaine retiré de la liste ne doit plus compter comme production");
+  // Un « www. » écrit dans la configuration ne doit pas casser la comparaison.
+  assert.strictEqual(estProd("nouveau.be", { hote_prod: "www.nouveau.be" }), true);
 });
 
 test("production : le point de sortie des e-mails bloque par défaut", () => {
