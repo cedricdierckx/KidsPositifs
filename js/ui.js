@@ -109,7 +109,8 @@ async function reinitPinParMail(apresOk) {
   const res = await envoyerMailFn({
     to: email,
     subject: t("pin.reset_sujet"),
-    text: t("pin.reset_corps", { code, app: APP_NOM })
+    text: t("pin.reset_corps", { code, app: APP_NOM }),
+    interactif: true            // demandé par le parent : doit marcher partout
   });
   if (!res || !res.ok) { toast(t("pin.reset_echec", { detail: (res && res.detail) || "" }), "info"); return; }
   // 1) Saisie du code reçu par e-mail.
@@ -1079,7 +1080,8 @@ function blocAdminConfig() {
     const res = await envoyerMailFn({
       to,
       subject: t("admin.mailtest_sujet", { app: APP_NOM }),
-      text: t("admin.mailtest_corps", { app: APP_NOM, date: new Date().toLocaleString() })
+      text: t("admin.mailtest_corps", { app: APP_NOM, date: new Date().toLocaleString() }),
+      interactif: true          // c'est un test : il doit partir même hors production
     });
     bMail.disabled = false; bMail.textContent = t("admin.mailtest_envoyer");
     if (res.ok) {
@@ -2106,6 +2108,14 @@ function blocAdminCroissance(c) {
   tete.appendChild(lienPlan);
   c.appendChild(tete);
 
+  /* ----- Aperçu : le dire franchement, sinon on croit que rien ne marche ----- */
+  if (typeof estProduction === "function" && !estProduction()) {
+    const av = el("section", "carte bandeau-apercu");
+    av.innerHTML = `<p class="apercu-t">${t("apercu.titre")}</p>
+      <p class="apercu-d">${t("apercu.detail", { hote: echapper(location.hostname || "—") })}</p>`;
+    c.appendChild(av);
+  }
+
   /* ----- Décisions à prendre : en tête, c'est ce que les e-mails pointent ----- */
   c.appendChild(blocDecisions());
 
@@ -2355,7 +2365,18 @@ function vueAdmin(c) {
 // On utilise un fetch direct (et non sb.functions.invoke) car invoke masque le
 // message d'erreur renvoyé par la fonction (« non-2xx » générique). Retourne
 // { ok, status, detail }.
+/* Point de sortie unique des e-mails, et dernier garde-fou.
+ * dev, les aperçus Vercel et la production partagent la MÊME base : sans ce
+ * verrou, ouvrir l'app sur un aperçu enverrait de vrais e-mails à de vraies
+ * familles, avec un code qui n'est pas encore celui de la production.
+ * Règle : hors production, rien ne part. Seuls les envois déclenchés par un
+ * clic explicite — test d'envoi de l'admin, code PIN demandé par le parent —
+ * passent, via { interactif: true } : sans eux, dev serait intestable. */
 async function envoyerMailFn(payload) {
+  payload = payload || {};
+  if (!payload.interactif && typeof estProduction === "function" && !estProduction()) {
+    return { ok: false, status: 0, bloque: true, detail: "hors production : aucun envoi" };
+  }
   const cfg = (typeof window !== "undefined" && window.KP_CONFIG) ? window.KP_CONFIG : {};
   const url = (cfg.SUPABASE_URL || "") + "/functions/v1/send-mail";
   let token = "";

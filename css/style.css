@@ -1502,3 +1502,8 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .croiss-pause .champ-date{flex:none; font-family:inherit; font-size:14px; font-weight:700;
   padding:8px; border:2px solid #e3edf5; border-radius:10px}
 .reglage-aide.pause-actif{color:#b26a00; font-weight:700}
+
+/* Bandeau « aperçu » : ici, aucun e-mail ne part */
+.bandeau-apercu{border-top:6px solid #b26a00; background:linear-gradient(180deg,#fffdf6,#fff4e2)}
+.apercu-t{margin:0 0 4px; font-size:16px; font-weight:800; color:#8a4f00}
+.apercu-d{margin:0; font-size:13px; line-height:1.5; color:#7a5a30}

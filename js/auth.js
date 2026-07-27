@@ -43,6 +43,26 @@ function tailleVague() {
   const n = parseInt((configApp && configApp.vague_taille) || "", 10);
   return (isNaN(n) || n < 1) ? 20 : Math.min(n, 200);
 }
+/* ---------- Production ou aperçu ? ----------
+ * dev, les aperçus Vercel et la production pointent tous vers la MÊME base.
+ * Tout ce qui a un effet vers l'extérieur — envoyer un e-mail à une famille,
+ * fermer les inscriptions, poser un verrou d'envoi mensuel — ne doit se
+ * produire que depuis la production. Sinon une simple visite sur un aperçu
+ * enverrait de vrais e-mails, ou consommerait le verrou du mois sans rien
+ * envoyer : la vague serait alors perdue pour de bon.
+ * L'hôte de production est configurable, au cas où le domaine change. */
+function hoteProduction() {
+  const cfg = (typeof configApp !== "undefined" && configApp) ? configApp : {};
+  const kp = (typeof window !== "undefined" && window.KP_CONFIG) ? window.KP_CONFIG : {};
+  return String(cfg.hote_prod || kp.HOTE_PROD || "famiteam.com").trim().toLowerCase();
+}
+function estProduction() {
+  const hote = String((typeof location !== "undefined" && location.hostname) || "").toLowerCase();
+  const prod = hoteProduction();
+  if (!prod || !hote) return false;
+  return hote === prod || hote === "www." + prod;
+}
+
 /* Mode vacances (chantier « Soutenabilité »). Le projet doit survivre à une
  * semaine chargée : pendant une pause, plus rien ne part — ni aux familles, ni
  * à l'administrateur — et les nouvelles inscriptions attendent leur tour.
@@ -75,6 +95,7 @@ async function capaciteProjet() {
  * basculement ne se fait qu'une fois, et jamais dans l'autre sens. */
 async function appliquerPlafond() {
   if (!estAdmin || (typeof modeDemo !== "undefined" && modeDemo)) return false;
+  if (!estProduction()) return false;    // un aperçu ne ferme pas les inscriptions réelles
   try {
     const { data, error } = await sb.rpc("appliquer_plafond");
     if (error || !data) return false;
@@ -464,6 +485,7 @@ async function mailAutoMarquer(type, cle) {
 // Envoi unitaire, journalisé. Retourne true si l'e-mail est bien parti.
 async function envoyerMailAuto(type, cle, dest, modele, valeurs) {
   if (!mailsAutoArmes() || !dest) return false;
+  if (!estProduction()) return false;          // aperçu : on ne touche pas aux familles
   if (typeof modeDemo !== "undefined" && modeDemo) return false;
   if (await mailAutoDeja(type, cle)) return false;
   const m = modeleMailCroissance(modele, valeurs);
@@ -490,6 +512,9 @@ async function notifierAdmin(type, cle, resume, decisions) {
   if (!estAdmin || !notifsAdminActives()) return false;
   if (typeof modeDemo !== "undefined" && modeDemo) return false;
   if (typeof enVacances === "function" && enVacances()) return false;
+  // Hors production : on sort AVANT de noter le changement. Sinon l'aperçu
+  // consommerait le verrou et la production ne signalerait jamais rien.
+  if (!estProduction()) return false;
   let nouveau = false;
   try {
     const { data, error } = await sb.rpc("changement_noter",
@@ -639,6 +664,10 @@ async function declencherEnvoisAuto() {
   try {
     if (!estAdmin) return;
     if (typeof modeDemo !== "undefined" && modeDemo) return;
+    // Aperçu (dev, déploiement de test, local) : on ne touche à rien. La base
+    // est partagée avec la production — un basculement de plafond ou un verrou
+    // d'envoi posé ici aurait des effets bien réels sur les familles.
+    if (!estProduction()) return;
     const cle = "kp_envois_auto";
     const auj = new Date().toISOString().slice(0, 10);
     if (localStorage.getItem(cle) === auj) return;

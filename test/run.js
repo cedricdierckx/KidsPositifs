@@ -1622,6 +1622,92 @@ test("avertissements : libellés traduits dans les 4 langues", () => {
   });
 });
 
+/* ---------- Aucun envoi hors production ---------- */
+test("production : seul le domaine de production est reconnu", () => {
+  const estProd = (hote, cfg) => fonctionDeSource("js/auth.js", "estProduction", {
+    location: { hostname: hote },
+    configApp: cfg || {},
+    hoteProduction: fonctionDeSource("js/auth.js", "hoteProduction", {
+      configApp: cfg || {}, window: { KP_CONFIG: {} }
+    })
+  })();
+  assert.strictEqual(estProd("famiteam.com"), true);
+  assert.strictEqual(estProd("www.famiteam.com"), true, "le www doit rester la production");
+  // Tout le reste est un aperçu : rien ne doit en partir.
+  ["kidspositifs-git-dev-cedric.vercel.app", "kidspositifs-abc123.vercel.app",
+   "localhost", "127.0.0.1", "", "famiteam.com.attaquant.net",
+   "dev.famiteam.com"].forEach(h =>
+    assert.strictEqual(estProd(h), false, "doit être considéré comme un aperçu : " + h));
+  // Le domaine de production reste configurable si l'adresse change un jour.
+  assert.strictEqual(estProd("nouveau.be", { hote_prod: "nouveau.be" }), true);
+  assert.strictEqual(estProd("famiteam.com", { hote_prod: "nouveau.be" }), false);
+});
+
+test("production : le point de sortie des e-mails bloque par défaut", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js", "ui.js"), "utf8");
+  const bloc = ui.slice(ui.indexOf("async function envoyerMailFn"));
+  const corps = bloc.slice(0, bloc.indexOf("\n}"));
+  assert.ok(/!payload\.interactif[\s\S]*?!estProduction\(\)/.test(corps),
+    "hors production, seul un envoi interactif doit passer");
+  assert.ok(corps.indexOf("bloque: true") < corps.indexOf("fetch("),
+    "le blocage doit précéder l'appel réseau, pas le suivre");
+});
+
+test("production : les envois automatiques sortent avant de poser leurs verrous", () => {
+  const fs = require("fs"), path = require("path");
+  const auth = fs.readFileSync(path.join(__dirname, "..", "js", "auth.js"), "utf8");
+
+  // notifierAdmin : sortir APRÈS avoir noté le changement condamnerait la
+  // production à ne jamais le signaler (le verrou serait déjà consommé).
+  const notif = auth.slice(auth.indexOf("async function notifierAdmin"));
+  const corpsNotif = notif.slice(0, notif.indexOf("\n}"));
+  assert.ok(corpsNotif.indexOf("!estProduction()") < corpsNotif.indexOf("changement_noter"),
+    "le contrôle de production doit précéder la pose du verrou");
+
+  // declencherEnvoisAuto : idem, avant le marqueur du jour et avant le plafond.
+  const decl = auth.slice(auth.indexOf("async function declencherEnvoisAuto"));
+  const corpsDecl = decl.slice(0, decl.indexOf("\n}", decl.indexOf("catch")));
+  const posProd = corpsDecl.indexOf("!estProduction()");
+  assert.ok(posProd > -1, "declencherEnvoisAuto doit vérifier la production");
+  assert.ok(posProd < corpsDecl.indexOf("localStorage.setItem"),
+    "sortir avant de marquer le jour, sinon la production perdrait son tour");
+  assert.ok(posProd < corpsDecl.indexOf("appliquerPlafond("),
+    "un aperçu ne doit pas fermer les inscriptions réelles");
+
+  // Le plafond et les envois aux familles portent chacun leur propre garde.
+  ["async function appliquerPlafond", "async function envoyerMailAuto"].forEach(sig => {
+    const f = auth.slice(auth.indexOf(sig));
+    assert.ok(/!estProduction\(\)/.test(f.slice(0, f.indexOf("\n}"))),
+      sig + " doit refuser de s'exécuter hors production");
+  });
+});
+
+test("production : les envois déclenchés par un clic restent possibles en aperçu", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js", "ui.js"), "utf8");
+  // Exactement deux envois interactifs : le code PIN et le test d'envoi admin.
+  // On ne compte que les lignes de code, pas le commentaire qui documente la règle.
+  const marques = ui.split("\n").filter(l =>
+    /interactif:\s*true/.test(l) && !/^\s*\*/.test(l)).length;
+  assert.strictEqual(marques, 2,
+    "seuls le code PIN et le test d'envoi doivent être marqués interactifs");
+  assert.ok(/t\("pin\.reset_corps"[\s\S]{0,120}interactif: true/.test(ui),
+    "le code PIN doit rester envoyable hors production");
+  assert.ok(/mailtest_corps[\s\S]{0,120}interactif: true/.test(ui),
+    "le test d'envoi doit rester utilisable hors production");
+});
+
+test("production : le bandeau d'aperçu est traduit dans les 4 langues", () => {
+  const { api } = construireContexte();
+  Object.keys(api.LANGUES).forEach(lg => {
+    ["apercu.titre", "apercu.detail"].forEach(k =>
+      assert.ok(typeof api.I18N[lg][k] === "string" && api.I18N[lg][k].length,
+        "manque " + lg + " → " + k));
+    assert.ok(api.I18N[lg]["apercu.detail"].includes("{hote}"), lg + " : {hote} perdu");
+  });
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

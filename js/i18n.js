@@ -3586,3 +3586,21 @@ Object.assign(I18N.de, {
   "pause.active": "Pause aktiv bis {jour}: keine E-Mail, keine Welle, keine Umschaltung der Obergrenze.",
   "pause.inactive": "Keine Pause aktiv. Datum leer lassen, um normal fortzufahren.",
 });
+
+/* ---- Aperçu (dev, déploiement de test) : aucun envoi ---- */
+Object.assign(I18N.fr, {
+  "apercu.titre": "🧪 Aperçu — aucun e-mail ne partira",
+  "apercu.detail": "Vous êtes sur {hote}, pas sur la production. Les e-mails aux familles, les vagues d'invitation et le basculement automatique du plafond sont suspendus, alors que la base est bien celle de production. Le test d'envoi et le code PIN restent actifs.",
+});
+Object.assign(I18N.en, {
+  "apercu.titre": "🧪 Preview — no email will be sent",
+  "apercu.detail": "You are on {hote}, not on production. Emails to families, invitation waves and the automatic cap switch are suspended, even though the database is the production one. The send test and the PIN code still work.",
+});
+Object.assign(I18N.nl, {
+  "apercu.titre": "🧪 Voorbeeld — er vertrekt geen e-mail",
+  "apercu.detail": "Je zit op {hote}, niet op productie. E-mails naar gezinnen, uitnodigingsgolven en de automatische plafondomschakeling zijn opgeschort, ook al is de databank die van productie. De verzendtest en de pincode blijven werken.",
+});
+Object.assign(I18N.de, {
+  "apercu.titre": "🧪 Vorschau — es geht keine E-Mail raus",
+  "apercu.detail": "Du bist auf {hote}, nicht auf der Produktion. E-Mails an Familien, Einladungswellen und die automatische Umschaltung der Obergrenze sind ausgesetzt, obwohl die Datenbank die der Produktion ist. Sendetest und PIN-Code funktionieren weiter.",
+});
