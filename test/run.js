@@ -2017,6 +2017,69 @@ test("impression : seule la carte d'ami part sur le papier", () => {
   assert.ok(/print-color-adjust:\s*exact/.test(bloc), "les couleurs ne sont pas forcées à l'impression");
 });
 
+/* ---------- Le tableau d'honneur ---------- */
+test("tableau d'honneur : libellés complets et paramètres préservés (4 langues)", () => {
+  const { api } = construireContexte();
+  const cles = ["hon.titre", "hon.mois", "hon.tout", "hon.pas_encore", "hon.vide", "hon.mien",
+    "hon.ma_place", "hon.inscrite", "hon.non_inscrite", "hon.consentement", "hon.pseudo_ph",
+    "hon.pseudo_requis", "hon.rejoindre", "hon.retirer", "hon.retirer_conf", "hon.retiree", "hon.inscrite_ok"];
+  Object.keys(api.LANGUES).forEach(lg => {
+    cles.forEach(k => assert.ok(typeof api.I18N[lg][k] === "string" && api.I18N[lg][k].length, "manque " + lg + " → " + k));
+    assert.ok(api.I18N[lg]["hon.pas_encore"].includes("{n}") && api.I18N[lg]["hon.pas_encore"].includes("{actuel}"),
+      lg + " : paramètres perdus dans hon.pas_encore");
+    assert.ok(api.I18N[lg]["hon.ma_place"].includes("{rang}"), lg + " : {rang} perdu");
+    assert.ok(api.I18N[lg]["hon.mien"].includes("{n}"), lg + " : {n} perdu");
+  });
+});
+
+test("tableau d'honneur : le consentement est annoncé, et son étendue exacte", () => {
+  const { api } = construireContexte();
+  // Le texte doit dire les trois choses qui protègent la famille : nom
+  // d'équipe seul, jamais le nom de famille, jamais le prénom d'un enfant.
+  const attendus = {
+    fr: [/nom d'équipe/i, /jamais votre nom de famille/i, /jamais le prénom/i, /retirer à tout moment/i],
+    en: [/team name/i, /never your family name/i, /never a child's first name/i, /withdraw at any time/i],
+    nl: [/teamnaam/i, /nooit je familienaam/i, /nooit de voornaam/i, /elk moment terugtrekken/i],
+    de: [/Teamname/i, /niemals dein Familienname/i, /niemals der Vorname/i, /jederzeit zurückziehen/i]
+  };
+  Object.keys(attendus).forEach(lg => {
+    const txt = api.I18N[lg]["hon.consentement"];
+    attendus[lg].forEach(re => assert.ok(re.test(txt), lg + " : promesse manquante — " + re));
+  });
+});
+
+test("tableau d'honneur : le vocabulaire du podium est proscrit", () => {
+  const { api } = construireContexte();
+  Object.keys(api.LANGUES).forEach(lg => {
+    // « Merci », pas « meilleures familles » ; aucun classement de progression.
+    ["hon.titre", "hon.ma_place", "hon.mien", "hon.vide"].forEach(k => {
+      const v = api.I18N[lg][k];
+      assert.ok(!/meilleur|gagnant|champion|best famil|winner|beste famil|winnaar|Sieger|Gewinner/i.test(v),
+        lg + " → " + k + " : vocabulaire de compétition — « " + v + " »");
+      assert.ok(!/places? gagnée|places? up|▲|↑/i.test(v), lg + " → " + k + " : progression de rang affichée");
+    });
+  });
+});
+
+test("tableau d'honneur : le code n'expose jamais le nom réel de la famille", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const sql = fs.readFileSync(path.join(__dirname, "..", "supabase/schema.sql"), "utf8");
+  const debut = sql.indexOf("create or replace function public.classement_parrainages");
+  const fin = sql.indexOf("$$;", debut);
+  const fn = sql.slice(debut, fin);
+  assert.ok(debut > -1 && fn.length > 400, "fonction classement_parrainages introuvable");
+  // Le tableau ne doit sélectionner que le pseudonyme.
+  assert.ok(/classement_pseudo/.test(fn), "le pseudonyme n'est pas utilisé");
+  assert.ok(!/\bf\.name\b/.test(fn), "families.name apparaît dans le classement");
+  assert.ok(/f\.classement_optin/.test(fn), "le consentement n'est pas filtré");
+  // Le rang ne doit être calculé que sous condition de consentement.
+  assert.ok(/classement_optin[\s\S]{0,200}mon_rang|mon_rang[\s\S]{0,400}classement_optin/.test(fn),
+    "le rang semble calculé sans vérifier le consentement");
+  // Le seuil doit être réglable sans redéploiement.
+  assert.ok(/app_config[\s\S]{0,120}classement_seuil/.test(fn), "seuil non réglable depuis app_config");
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

@@ -414,6 +414,94 @@ begin
   return resultat;
 end; $$;
 
+-- ---------- Le tableau d'honneur : consentement explicite et pseudonyme ------
+-- `families.name` contient très souvent un patronyme. L'afficher dans un
+-- classement, c'est PUBLIER une donnée personnelle : il faut une base légale,
+-- et seul le consentement tient ici (RGPD art. 6.1.a et 7). D'où :
+--   * opt-in décoché par défaut, révocable en un clic ;
+--   * un pseudonyme d'équipe choisi par la famille, JAMAIS families.name ;
+--   * aucun prénom d'enfant, jamais ;
+--   * visible des familles connectées seulement, pas du web public.
+alter table public.families add column if not exists classement_optin boolean not null default false;
+alter table public.families add column if not exists classement_pseudo text;
+
+-- Consentement et pseudonyme. Refuse d'inscrire une famille sans pseudonyme :
+-- accepter sans pseudonyme reviendrait à publier son vrai nom.
+create or replace function public.definir_classement_optin(p_family uuid, p_optin boolean, p_pseudo text)
+returns void language plpgsql security definer set search_path = public as $$
+declare pseudo text := nullif(btrim(coalesce(p_pseudo, '')), '');
+begin
+  if not is_family_member(p_family) and not is_admin() then raise exception 'Accès refusé'; end if;
+  if p_optin then
+    if pseudo is null then raise exception 'Un nom d''équipe est nécessaire pour figurer au tableau'; end if;
+    if length(pseudo) > 24 then pseudo := left(pseudo, 24); end if;
+    update families set classement_optin = true, classement_pseudo = pseudo where id = p_family;
+  else
+    -- Retrait : on efface aussi le pseudonyme, on ne conserve rien d'inutile.
+    update families set classement_optin = false, classement_pseudo = null where id = p_family;
+  end if;
+end; $$;
+
+-- Tableau d'honneur. p_saison = 'AAAA-MM' pour le mois, null pour tous les temps.
+-- Sans saison, la première famille arrivée gagnerait à vie et démotiverait
+-- toutes les suivantes : la saison mensuelle est structurelle, pas cosmétique.
+-- Renvoie le seuil d'apparition, le nombre de familles consentantes, le top 10
+-- (pseudonymes seulement) et la ligne de la famille appelante. Le rang n'est
+-- calculé que pour une famille CONSENTANTE : on n'apprend jamais à une famille
+-- qu'elle est 47ᵉ sur 52.
+create or replace function public.classement_parrainages(p_saison text default null)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  ma_famille uuid; seuil integer; consentantes integer;
+  top json; mien integer; mon_rang integer; resultat json;
+begin
+  if auth.uid() is null then raise exception 'Accès refusé'; end if;
+  select coalesce(nullif(value, '')::integer, 10) into seuil from app_config where key = 'classement_seuil';
+  seuil := coalesce(seuil, 10);
+  select count(*) into consentantes from families where classement_optin;
+
+  create temp table if not exists _cls (family_id uuid, n integer) on commit drop;
+  delete from _cls;
+  insert into _cls
+    select r.family_id, count(*)::integer
+    from referrals r
+    where r.accepted_family is not null
+      and r.accepted_at is not null
+      and arbre_jours_actifs(r.accepted_family) >= 3
+      and (p_saison is null or to_char(r.accepted_at, 'YYYY-MM') = p_saison)
+    group by r.family_id;
+
+  select coalesce(json_agg(x order by x.n desc, x.pseudo), '[]'::json) into top from (
+    select f.classement_pseudo::text as pseudo, c.n
+    from _cls c join families f on f.id = c.family_id
+    where f.classement_optin and f.classement_pseudo is not null and c.n > 0
+    order by c.n desc, f.classement_pseudo
+    limit 10
+  ) x;
+
+  -- La famille appelante : son propre compte, et son rang seulement si elle a
+  -- consenti à figurer.
+  select fm.family_id into ma_famille from family_members fm where fm.user_id = auth.uid() limit 1;
+  select coalesce((select n from _cls where family_id = ma_famille), 0) into mien;
+  if ma_famille is not null and mien > 0
+     and exists (select 1 from families where id = ma_famille and classement_optin) then
+    select count(*) + 1 into mon_rang from _cls c
+      join families f on f.id = c.family_id
+      where f.classement_optin and c.n > mien;
+  else
+    mon_rang := null;
+  end if;
+
+  select json_build_object(
+    'saison', p_saison, 'seuil', seuil, 'consentantes', consentantes,
+    'visible', (consentantes >= seuil),
+    'top', top, 'mien', mien, 'mon_rang', mon_rang,
+    'moi_inscrite', coalesce((select classement_optin from families where id = ma_famille), false),
+    'mon_pseudo', (select classement_pseudo from families where id = ma_famille)
+  ) into resultat;
+  return resultat;
+end; $$;
+
 -- ---------- Liste d'attente (inscriptions sur invitation uniquement) ----------
 create table if not exists public.waitlist (
   email text primary key,
@@ -1252,6 +1340,8 @@ grant execute on function public.claim_referral_code(text, uuid) to authenticate
 grant execute on function public.arbre_jours_actifs(uuid)       to authenticated;
 grant execute on function public.parrainage_bilan(uuid)         to authenticated;
 grant execute on function public.parrainage_jauge()             to authenticated;
+grant execute on function public.definir_classement_optin(uuid, boolean, text) to authenticated;
+grant execute on function public.classement_parrainages(text)   to authenticated;
 grant execute on function public.join_waitlist(text, text)            to anon, authenticated;
 grant execute on function public.admin_list_waitlist()          to authenticated;
 grant execute on function public.admin_activation()             to authenticated;

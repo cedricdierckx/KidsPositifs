@@ -212,6 +212,98 @@ function blocArbreEnfant() {
   return sec;
 }
 
+/* ---------- Le tableau d'honneur ----------
+ * Un mur de mercis, pas un podium. Trois règles tenues par construction :
+ *   1. on n'y figure que sur consentement explicite, avec un pseudonyme
+ *      d'équipe — jamais le nom de la famille, jamais un prénom d'enfant ;
+ *   2. une famille non consentante voit le tableau mais ne reçoit AUCUN rang :
+ *      « 47ᵉ sur 52 » ne se dit pas ;
+ *   3. le tableau n'apparaît qu'au-delà d'un seuil de familles consentantes,
+ *      réglable sans redéploiement (app_config.classement_seuil) : sur trois
+ *      lignes, un classement humilie au lieu de motiver.
+ * Saison mensuelle, plus « tous les temps » : sans saison, la première famille
+ * arrivée gagne à vie et démotive toutes les suivantes. */
+function blocTableauHonneur() {
+  const sec = el("section", "carte tableau-honneur");
+  sec.innerHTML = `<h2>${t("hon.titre")}</h2>
+    <div class="hon-onglets" role="tablist">
+      <button class="hon-onglet actif" data-saison="mois">${t("hon.mois")}</button>
+      <button class="hon-onglet" data-saison="tout">${t("hon.tout")}</button>
+    </div>
+    <div id="hon-corps"><p class="note">${t("arbre.attente")}</p></div>
+    <div id="hon-optin" class="hon-optin"></div>`;
+
+  const corps = sec.querySelector("#hon-corps");
+  const zoneOptin = sec.querySelector("#hon-optin");
+  let saisonAffichee = "mois";
+
+  const dessinerOptin = (etatCls) => {
+    const inscrite = !!(etatCls && etatCls.moi_inscrite);
+    const pseudo = (etatCls && etatCls.mon_pseudo) || "";
+    zoneOptin.innerHTML = `<p class="hon-optin-titre">${t(inscrite ? "hon.inscrite" : "hon.non_inscrite")}</p>
+      <p class="note">${t("hon.consentement")}</p>`;
+    if (inscrite) {
+      const b = el("button", "btn-secondaire", t("hon.retirer"));
+      b.onclick = async () => {
+        if (!confirm(t("hon.retirer_conf"))) return;
+        if (await definirClassementOptin(false, null)) { toast(t("hon.retiree"), "succes"); charger(); }
+      };
+      zoneOptin.appendChild(el("p", "hon-pseudo-actuel", pseudo));
+      zoneOptin.appendChild(b);
+    } else {
+      const inp = el("input", "aj-val");
+      inp.placeholder = t("hon.pseudo_ph"); inp.maxLength = 24; inp.value = pseudo;
+      const b = el("button", "gros-bouton planete", t("hon.rejoindre"));
+      b.onclick = async () => {
+        const v = (inp.value || "").trim();
+        if (!v) { inp.focus(); toast(t("hon.pseudo_requis"), "info"); return; }
+        if (await definirClassementOptin(true, v)) { toast(t("hon.inscrite_ok"), "succes"); charger(); }
+      };
+      zoneOptin.appendChild(inp);
+      zoneOptin.appendChild(b);
+    }
+  };
+
+  const dessiner = (cls) => {
+    if (!cls) { sec.remove(); return; }
+    if (!cls.visible) {
+      // Sous le seuil : on ne montre pas un tableau de trois lignes, mais on
+      // dit franchement à partir de quand il apparaîtra.
+      corps.innerHTML = `<p class="hon-attente">${t("hon.pas_encore", { n: cls.seuil, actuel: cls.consentantes })}</p>` +
+        (cls.mien > 0 ? `<p class="note">${t("hon.mien", { n: cls.mien })}</p>` : "");
+      dessinerOptin(cls);
+      return;
+    }
+    const lignes = (cls.top || []).map((r, i) =>
+      `<li class="hon-ligne"><span class="hon-place">${i + 1}</span>
+         <span class="hon-nom">${echapper(r.pseudo || "")}</span>
+         <span class="hon-n">${r.n}</span></li>`).join("");
+    corps.innerHTML = lignes
+      ? `<ol class="hon-liste">${lignes}</ol>`
+      : `<p class="note">${t("hon.vide")}</p>`;
+    // Le rang n'est affiché QUE si la famille a consenti à figurer.
+    if (cls.mon_rang) corps.innerHTML += `<p class="hon-ma-place">${t("hon.ma_place", { rang: cls.mon_rang })}</p>`;
+    else if (cls.mien > 0) corps.innerHTML += `<p class="note">${t("hon.mien", { n: cls.mien })}</p>`;
+    dessinerOptin(cls);
+  };
+
+  function charger() {
+    corps.innerHTML = `<p class="note">${t("arbre.attente")}</p>`;
+    classementParrainages(saisonAffichee === "mois" ? saisonCourante() : null)
+      .then(dessiner).catch(() => sec.remove());
+  }
+
+  sec.querySelectorAll(".hon-onglet").forEach(b => {
+    b.onclick = () => {
+      saisonAffichee = b.dataset.saison;
+      sec.querySelectorAll(".hon-onglet").forEach(x => x.classList.toggle("actif", x === b));
+      charger();
+    };
+  });
+  charger();
+  return sec;
+}
+
 /* ---------- La carte d'ami : le seul objet confié à l'enfant ----------
  * Une page à imprimer, à colorier, et à donner à un copain. L'enfant n'est
  * jamais chargé de recruter (PLAN-PARRAINAGE § 1.2) : il montre quelque chose
@@ -5298,6 +5390,9 @@ function sectionsFamille(c) {
     bCarte.onclick = () => modaleCarteAmi(enfCarte);
     par.appendChild(bCarte);
   }
+
+  // ----- Le tableau d'honneur (mur de mercis, sur consentement) -----
+  if (!(typeof modeDemo !== "undefined" && modeDemo)) c.appendChild(blocTableauHonneur());
 
   // ----- Abonnement (masqué provisoirement : early adopters = gratuit) -----
   if (AFFICHER_ABONNEMENT) {

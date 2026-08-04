@@ -707,6 +707,28 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* Carte du 7e jour : même traitement que « beau moment », jamais plus insistant. */
 .arbre-j7{border-left:4px solid #39c0a0}
 
+/* ---- Le tableau d'honneur (mur de mercis, jamais un podium) ---- */
+.hon-onglets{display:flex; gap:6px; margin:4px 0 10px}
+.hon-onglet{flex:1 1 auto; border:1px solid #dbe4ee; background:#fff; border-radius:10px;
+  padding:8px 10px; font-size:14px; font-weight:700; cursor:pointer; color:var(--doux)}
+.hon-onglet.actif{background:#eafaf2; border-color:#bfe9da; color:#1d7a52}
+.hon-liste{list-style:none; margin:0; padding:0}
+.hon-ligne{display:flex; align-items:center; gap:10px; padding:8px 4px;
+  border-bottom:1px solid #eef2f7; font-size:15px}
+.hon-ligne:last-child{border-bottom:none}
+/* Un numéro d'ordre, pas une médaille : aucune flèche, aucun « +3 places ». */
+.hon-place{flex:0 0 24px; text-align:center; font-weight:800; color:var(--doux)}
+.hon-nom{flex:1 1 auto; font-weight:700; overflow-wrap:anywhere}
+.hon-n{flex:0 0 auto; font-weight:800; color:#1d7a52; background:#eafaf2;
+  border:1px solid #bfe9da; border-radius:8px; padding:2px 8px}
+.hon-ma-place{margin:10px 0 0; font-size:14px; background:#eafaf2; color:#1d7a52;
+  border:1px solid #bfe9da; border-radius:10px; padding:8px 10px}
+.hon-attente{margin:0; font-size:14px; color:var(--doux)}
+.hon-optin{margin-top:12px; border-top:1px solid #eef2f7; padding-top:10px}
+.hon-optin-titre{margin:0 0 4px; font-size:15px; font-weight:700}
+.hon-pseudo-actuel{margin:6px 0; font-weight:800}
+.hon-optin .aj-val{width:100%; margin:6px 0}
+
 /* ---- La carte d'ami (à imprimer, à colorier, à donner) ---- */
 .carte-ami-hote{max-width:400px; position:relative}
 .carte-ami-page{background:#fff; border:2px dashed #cbd6e2; border-radius:14px;

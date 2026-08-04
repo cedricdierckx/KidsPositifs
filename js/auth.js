@@ -819,6 +819,28 @@ async function parrainageJauge() {
   const { data, error } = await sb.rpc("parrainage_jauge");
   return error ? null : (data || null);
 }
+/* Tableau d'honneur. La lecture est ouverte à toute famille connectée : voir
+ * n'est pas figurer. Y FIGURER exige un consentement explicite et un
+ * pseudonyme d'équipe — jamais le nom de la famille (RGPD art. 7). */
+async function classementParrainages(saison) {
+  if (modeDemo) return null;
+  const { data, error } = await sb.rpc("classement_parrainages", { p_saison: saison || null });
+  return error ? null : (data || null);
+}
+async function definirClassementOptin(optin, pseudo) {
+  if (!familleId) return null;
+  const { error } = await sb.rpc("definir_classement_optin",
+    { p_family: familleId, p_optin: !!optin, p_pseudo: pseudo || null });
+  if (error) { toast(error.message, "info"); return false; }
+  return true;
+}
+// Saison en cours, au format AAAA-MM (mensuelle : sans saison, la première
+// famille arrivée gagnerait à vie).
+function saisonCourante() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+}
+
 async function infoParrainageCode(code) {
   try {
     const { data } = await sb.rpc("referral_info_par_code", { p_code: code });
