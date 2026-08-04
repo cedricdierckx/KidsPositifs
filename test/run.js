@@ -1876,6 +1876,92 @@ test("Arbre des familles : l'enfant n'est jamais récompensé pour un parrainage
     "le bloc enfant ne doit proposer aucun geste de parrainage");
 });
 
+/* ---------- Le 7ᵉ jour : détecter la famille convaincue ---------- */
+// Fabrique un état où la famille a été active aux jours indiqués (décalages
+// négatifs par rapport à `fin`).
+function familleActiveLesJours(api, fin, decalages) {
+  const e = api.etatVierge();
+  const enf = e.enfants[Object.keys(e.enfants)[0]];
+  enf.journal = {};
+  decalages.forEach(d => { enf.journal[decalerJour(fin, d)] = { table_mettre: 1 }; });
+  api.etat = e;
+  return enf;
+}
+
+test("7e jour : la famille convaincue exige 5 jours actifs ET 7 jours d'ancienneté", () => {
+  const { api } = construireContexte();
+  const fin = api.aujourdHui();
+  assert.strictEqual(api.ARBRE_J7_JOURS_ACTIFS, 5);
+  assert.strictEqual(api.ARBRE_J7_ANCIENNETE, 7);
+
+  // Cinq jours actifs mais tous récents : l'ancienneté manque.
+  familleActiveLesJours(api, fin, [0, -1, -2, -3, -4]);
+  assert.strictEqual(api.familleConvaincue(fin), false, "5 jours mais installée depuis 5 jours : trop tôt");
+
+  // Cinq jours actifs répartis sur sept : convaincue.
+  familleActiveLesJours(api, fin, [0, -1, -3, -5, -6]);
+  assert.strictEqual(api.familleConvaincue(fin), true, "5 jours sur 7 : convaincue");
+
+  // Quatre jours seulement, ancienneté suffisante : pas encore.
+  familleActiveLesJours(api, fin, [0, -2, -4, -6]);
+  assert.strictEqual(api.familleConvaincue(fin), false, "4 jours actifs : insuffisant");
+
+  // Une famille ancienne mais inactive cette semaine : pas convaincue.
+  familleActiveLesJours(api, fin, [-20, -21, -22, -23, -24]);
+  assert.strictEqual(api.familleConvaincue(fin), false, "active il y a trois semaines, pas cette semaine");
+
+  // État vierge : jamais convaincue (et jamais d'erreur).
+  api.etat = api.etatVierge();
+  assert.strictEqual(api.familleConvaincue(fin), false, "état vierge");
+});
+
+test("7e jour : les jours actifs se comptent au niveau de la FAMILLE", () => {
+  const { api } = construireContexte();
+  const fin = api.aujourdHui();
+  const e = api.etatVierge();
+  const ids = Object.keys(e.enfants);
+  // Deux enfants actifs des jours différents : la famille cumule les deux.
+  e.enfants[ids[0]].journal = { [decalerJour(fin, 0)]: { table_mettre: 1 }, [decalerJour(fin, -1)]: { table_mettre: 1 } };
+  if (ids[1]) e.enfants[ids[1]].journal = { [decalerJour(fin, -2)]: { table_mettre: 1 }, [decalerJour(fin, -3)]: { table_mettre: 1 } };
+  api.etat = e;
+  const attendu = ids[1] ? 4 : 2;
+  assert.strictEqual(api.joursActifsFamille(fin, 7), attendu, "les jours des frères et sœurs s'additionnent");
+  // Un journal à zéro ne compte pas comme un jour actif.
+  e.enfants[ids[0]].journal[decalerJour(fin, -4)] = { table_mettre: 0 };
+  api.etat = e;
+  assert.strictEqual(api.joursActifsFamille(fin, 7), attendu, "une case à zéro n'est pas une activité");
+});
+
+test("7e jour : la carte demande UNE famille, jamais le maximum", () => {
+  const { api } = construireContexte();
+  Object.keys(api.LANGUES).forEach(lg => {
+    ["arbre.j7_titre", "arbre.j7_texte", "arbre.j7_bouton"].forEach(k =>
+      assert.ok(typeof api.I18N[lg][k] === "string" && api.I18N[lg][k].length, "manque " + lg + " → " + k));
+    assert.ok(api.I18N[lg]["arbre.j7_texte"].includes("{app}"), lg + " : {app} perdu");
+    // Le vocabulaire du « maximum » est proscrit : il fait fuir.
+    assert.ok(!/maximum|le plus de|as many as possible|zoveel mogelijk|so viele wie möglich/i.test(api.I18N[lg]["arbre.j7_texte"]),
+      lg + " : la carte réclame un maximum de familles au lieu d'une seule");
+  });
+});
+
+test("7e jour : le chantier de l'Arbre est déclaré, avec son e-mail", () => {
+  const { api } = construireContexte();
+  const ch = api.CROISSANCE_CHANTIERS.find(x => x.id === "c_parrainage");
+  assert.ok(ch, "chantier introuvable");
+  ["c_arbre_1", "c_arbre_1b", "c_arbre_2", "c_arbre_3"].forEach(id =>
+    assert.ok(ch.etapes.some(e => e.id === id), "étape manquante : " + id));
+  const j7 = ch.etapes.find(e => e.id === "c_arbre_3");
+  assert.strictEqual(j7.mail, "m_parrainage_actif");
+  assert.ok(api.mailCroissance("m_parrainage_actif"), "modèle d'e-mail m_parrainage_actif absent");
+  // Le modèle ne doit plus promettre de quota, et doit parler du code.
+  const m = api.mailCroissance("m_parrainage_actif");
+  assert.ok(!/par semaine|per week|pro Woche/i.test(m.corps), "quota hebdomadaire ressuscité");
+  assert.ok(/\{prenom\}/.test(m.corps) && /\{lien\}/.test(m.corps), "paramètres du modèle perdus");
+  // L'ancien modèle non plus ne doit plus annoncer trois familles par semaine.
+  assert.ok(!/Trois familles par semaine/i.test(api.mailCroissance("m_parrainage").corps),
+    "m_parrainage annonce encore un quota");
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

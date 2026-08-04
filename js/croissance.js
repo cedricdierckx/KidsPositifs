@@ -141,11 +141,15 @@ const CROISSANCE_CHANTIERS = [
 
   /* ===== Phase 1 — Traction organique ===== */
   {
-    id: "c_parrainage", phase: "p1", emoji: "🎁", titre: "Boucle de parrainage", perimetre: "coeur",
+    id: "c_parrainage", phase: "p1", emoji: "🌳", titre: "L’Arbre des familles", perimetre: "coeur",
     but: "Le seul canal qui grandit sans consommer d'heures : chaque famille heureuse en amène une.",
     kpi: "Coefficient viral k > 0,4",
     etapes: [
-      { id: "c_parrainage_1", titre: "Parrainage en place (3 familles/semaine)", min: 0, detail: "Fait : pastille 🎁, table referrals, quota hebdomadaire.", fait: true },
+      { id: "c_parrainage_1", titre: "Parrainage en place (illimite)", min: 0, detail: "Fait : pastille 🎁, table referrals, plus aucun quota.", fait: true },
+      { id: "c_arbre_1", titre: "Code de parrainage permanent", min: 45, detail: "Fait : un code unique par famille (7 caracteres sans O/0 ni I/1/L) et son lien reutilisable, a coller une fois dans le groupe de l'ecole. Mesure avant : 30 liens a usage unique n'avaient produit que 4 filleuls.", fait: true },
+      { id: "c_arbre_1b", titre: "QR code, sans aucune dependance", min: 35, detail: "Fait : encodeur QR ecrit dans le projet (une CDN casserait le hors-ligne), verifie contre une implementation independante puis decode apres rendu navigateur. Le code s'affiche, se montre et s'imprime.", fait: true },
+      { id: "c_arbre_2", titre: "Paliers d'effort et jauge collective", min: 60, detail: "Fait : quatre paliers (1, 3, 5, 10 familles vivantes), jamais perdus, atteignables par toute famille ; un arbre qui se couvre de feuilles ; une jauge commune vers 25, 50, 100 familles. Un filleul ne compte qu'apres trois jours d'usage de SA famille.", fait: true },
+      { id: "c_arbre_3", titre: "Relancer au 7e jour, pas a trois semaines", min: 50, detail: "Fait : la famille convaincue (5 jours d'usage, installee depuis 7 jours, sans filleul) voit une carte une seule fois et recoit un e-mail unique. Le message demande UNE famille, jamais le maximum.", mail: "m_parrainage_actif", fait: true },
       { id: "c_parrainage_2", titre: "Demander au bon moment", min: 45, detail: "Fait : une carte « beau moment en famille » apparaît dans l'écran parents pendant les sept jours qui suivent une carte surprise débloquée — le moment où le parent est content. Proposée une seule fois, avec « Ne plus me le proposer ».", fait: true },
       { id: "c_parrainage_3", titre: "E-mail de demande de parrainage", min: 20, detail: "Fait : proposé une seule fois aux familles installées depuis trois semaines, actives, et qui n'ont encore créé aucun lien. Part avec les autres envois automatiques, quand ils sont armés.", mail: "m_parrainage", fait: true },
       { id: "c_parrainage_4", titre: "Remercier le parrain", min: 15, detail: "Fait : dès qu'un filleul crée sa famille, le parrain voit un « Merci & bravo ! » avec confettis à sa prochaine ouverture. Automatique, sans e-mail à écrire : c'est ce qui déclenche le deuxième parrainage.", fait: true },
@@ -432,9 +436,26 @@ FamiTeam`
 
 Cela fait quelques semaines que votre famille utilise FamiTeam. Merci — vous faites partie des premières familles, celles qui façonnent l'app.
 
-Si vous connaissez une famille avec des enfants de 2 à 7 ans qui galère sur les routines du soir, vous pouvez lui offrir un accès : la pastille 🎁 en haut à gauche de l'app crée un lien de parrainage. Trois familles par semaine, gratuitement.
+Si vous connaissez une famille avec des enfants de 2 à 7 ans qui galère sur les routines du soir, vous pouvez lui offrir un accès : la pastille 🎁 en haut à gauche de l'app affiche le code de votre famille, avec son lien et son QR code. Le même lien sert autant de fois que vous voulez, gratuitement.
 
 C'est la seule façon dont FamiTeam se fait connaître : pas de publicité, pas de budget, juste des parents qui en parlent à d'autres parents.
+
+FamiTeam — {lien}`
+  },
+  {
+    id: "m_parrainage_actif", titre: "Le 7e jour : une famille a qui offrir l'app",
+    dest: "Famille convaincue (5 jours d'usage, installee depuis 7 jours), sans filleul",
+    quand: "Chantier Arbre des familles, automatique, une seule fois",
+    sujet: "Une famille, une seule, a qui offrir FamiTeam ?",
+    corps: `Bonjour {prenom},
+
+Une semaine. C'est le moment ou l'habitude prend : la plupart des familles qui tiennent sept jours restent. Bravo, et merci — vous faites partie des premieres.
+
+Une question, une seule : qui, autour de vous, meriterait de vivre ca ? Un nom suffit. Pas une liste.
+
+Le code de votre famille se trouve derriere la pastille 🎁, en haut a gauche de l'app : un lien, un QR code, et il sert autant de fois que vous voulez. La famille qui l'utilise cree la sienne, independante de la votre — vous ne voyez rien de chez elle, et elle ne voit rien de chez vous.
+
+C'est la seule facon dont FamiTeam se fait connaitre : pas de publicite, pas de budget, juste des parents qui en parlent a d'autres parents.
 
 FamiTeam — {lien}`
   },

@@ -1538,6 +1538,50 @@ function joursActifsPeriode(enf, finJour, nbJours) {
   }
   return n;
 }
+/* Jours réellement actifs de la FAMILLE (au moins un enfant a coché quelque
+ * chose), sur les `nbJours` derniers jours. Calculé en local, sur le journal
+ * déjà présent dans l'état : aucune requête, donc valable hors-ligne. */
+function joursActifsFamille(finJour, nbJours) {
+  const enfants = Object.values((etat && etat.enfants) || {});
+  let cle = finJour, n = 0;
+  for (let i = 0; i < nbJours; i++) {
+    const actif = enfants.some(e => {
+      const j = e && e.journal && e.journal[cle];
+      return !!j && Object.values(j).some(v => v > 0);
+    });
+    if (actif) n++;
+    const d = new Date(cle + "T00:00:00");
+    d.setDate(d.getDate() - 1);
+    cle = dateCle(d);
+  }
+  return n;
+}
+
+/* La famille est-elle « convaincue » ? Définition retenue (PLAN-PARRAINAGE
+ * § 2.E) : au moins cinq jours d'activité distincts, et une première activité
+ * remontant à sept jours au moins. C'est le moment où proposer d'en parler a
+ * un sens : le pli est pris, mais l'enthousiasme est encore neuf.
+ * La proposition automatique préexistante attendait trois semaines — deux
+ * semaines de trop. */
+const ARBRE_J7_JOURS_ACTIFS = 5;
+const ARBRE_J7_ANCIENNETE = 7;
+function familleConvaincue(finJour) {
+  const fin = finJour || aujourdHui();
+  if (joursActifsFamille(fin, ARBRE_J7_ANCIENNETE) < ARBRE_J7_JOURS_ACTIFS) return false;
+  // Ancienneté : la plus ancienne trace d'activité doit dater d'au moins 7 jours.
+  const jours = [];
+  Object.values((etat && etat.enfants) || {}).forEach(e => {
+    Object.keys((e && e.journal) || {}).forEach(k => {
+      const j = e.journal[k];
+      if (j && Object.values(j).some(v => v > 0)) jours.push(k);
+    });
+  });
+  if (!jours.length) return false;
+  jours.sort();
+  const ecart = Math.floor((new Date(fin + "T00:00:00") - new Date(jours[0] + "T00:00:00")) / 86400000);
+  return ecart >= ARBRE_J7_ANCIENNETE - 1;
+}
+
 // Remplace {var} dans un gabarit de phrase (même logique que t(), mais pour
 // un texte de données brut, pas une clé i18n).
 function remplirGabarit(gabarit, vars) {

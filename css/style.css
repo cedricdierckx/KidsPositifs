@@ -701,6 +701,11 @@ main{max-width:680px; margin:0 auto; padding:14px}
   border:1px solid #dde7e3}
 .arbre-jauge-rempl{height:100%; background:linear-gradient(90deg,#39c0a0,#2aa88a);
   border-radius:8px; transition:width .6s ease}
+/* Palier annoncé dans la fête du parrainage : un objectif personnel, jamais un rang. */
+.badge-pop-palier:not(:empty){margin-top:10px; font-size:14px; background:rgba(255,255,255,.75);
+  border-radius:10px; padding:8px 10px}
+/* Carte du 7e jour : même traitement que « beau moment », jamais plus insistant. */
+.arbre-j7{border-left:4px solid #39c0a0}
 
 /* Sélecteur de langue (écran d'accueil public) */
 .choix-langue{margin:-4px 0 8px; justify-content:center}

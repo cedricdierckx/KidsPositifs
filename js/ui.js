@@ -22,7 +22,10 @@ function animationBadge(emoji, nom) {
   setTimeout(fermer, 2800);
 }
 
-// Félicite et remercie le parrain quand un·e filleul·e a créé sa famille.
+/* Félicite et remercie le parrain quand un·e filleul·e a créé sa famille.
+ * C'est le moment où le deuxième parrainage coûte le moins cher à obtenir :
+ * on y annonce donc le palier suivant de l'arbre — jamais un rang, jamais une
+ * comparaison avec d'autres familles. */
 function feterParrainage(nb) {
   const ov = el("div", "badge-pop");
   const sfx = nb > 1 ? `${nb} familles ont` : "Une famille a";
@@ -31,12 +34,24 @@ function feterParrainage(nb) {
       <div class="badge-pop-rayons">🎉</div>
       <div class="badge-pop-titre">Merci & bravo ! 💛</div>
       <div class="badge-pop-nom">${sfx} rejoint ${APP_NOM} grâce à toi.<br>Tu répands les ondes positives ! 🤝🌍</div>
+      <div class="badge-pop-palier" id="pop-palier"></div>
     </div>`;
   document.body.appendChild(ov);
   if (typeof confettis === "function") confettis();
+  // Le palier arrive de la base : s'il n'arrive pas, la fête reste complète.
+  if (typeof parrainageBilan === "function") {
+    parrainageBilan().then(bilan => {
+      const zone = ov.querySelector("#pop-palier");
+      if (!bilan || !zone) return;
+      const suivant = arbrePalierSuivant(bilan.installees || 0);
+      zone.innerHTML = suivant
+        ? t("arbre.manque", { n: Math.max(suivant.seuil - (bilan.installees || 0), 0), emoji: suivant.emoji, nom: t("arbre.p" + suivant.rang) })
+        : t("arbre.tout_atteint");
+    }).catch(() => {});
+  }
   const fermer = () => ov.remove();
   ov.addEventListener("click", fermer);
-  setTimeout(fermer, 4200);
+  setTimeout(fermer, 5600);
 }
 
 // Saisie d'un code PIN : masqué par des points, clavier numérique sur mobile.
@@ -3889,6 +3904,40 @@ function blocBonMoment() {
   return sec;
 }
 
+/* ---------- Le 7ᵉ jour : demander UNE famille, pas le maximum ----------
+ * La proposition automatique préexistante attend trois semaines. Une famille
+ * qui a tenu sept jours est déjà convaincue : c'est là que l'envie d'en parler
+ * est la plus vive. Le texte ne réclame pas « le maximum de familles » — il
+ * demande UN nom. Demander un maximum fait fuir ; demander un nom fait agir.
+ * Affiché une seule fois, refermable définitivement, jamais insistant. */
+function blocArbreSeptiemeJour() {
+  if (typeof modeDemo !== "undefined" && modeDemo) return null;
+  if (etat.reglages && etat.reglages.arbreJ7Vu) return null;
+  if (typeof familleConvaincue !== "function" || !familleConvaincue()) return null;
+
+  const sec = el("section", "carte bon-moment arbre-j7");
+  sec.innerHTML = `<h2>${t("arbre.j7_titre")}</h2>
+    <p class="note">${t("arbre.j7_texte", { app: APP_NOM })}</p>`;
+  const b = el("button", "gros-bouton famille", "🌳 " + t("arbre.j7_bouton"));
+  b.onclick = () => modaleParrainage();
+  sec.appendChild(b);
+  const bNon = el("button", "lien-oubli", t("bm.masquer"));
+  bNon.onclick = () => {
+    if (!etat.reglages) etat.reglages = {};
+    etat.reglages.arbreJ7Vu = true;
+    sauver(); rendre();
+  };
+  sec.appendChild(bNon);
+  // Une famille qui a DÉJÀ semé n'a pas besoin qu'on le lui demande : on
+  // retire la carte dès que le bilan revient avec au moins une famille amenée.
+  if (typeof parrainageBilan === "function") {
+    parrainageBilan().then(bilan => {
+      if (bilan && ((bilan.invitees || 0) > 0 || (bilan.installees || 0) > 0)) sec.remove();
+    }).catch(() => {});
+  }
+  return sec;
+}
+
 // Défis réparation (alternative bienveillante à la punition).
 // Ce bloc est affiché dans l'espace parents : le mode d'emploi ci-dessous
 // s'adresse donc au parent, qui coche le geste AVEC l'enfant.
@@ -5314,6 +5363,8 @@ function vueReglages(c) {
     if (totalAttente) c.appendChild(blocAttente(totalAttente));
     const bm = blocBonMoment();
     if (bm) c.appendChild(bm);
+    const j7 = blocArbreSeptiemeJour();
+    if (j7) c.appendChild(j7);
     c.appendChild(blocMissionsDuJour(enfantActif()));
     c.appendChild(blocEval(enfantActif(), "parent"));
     c.appendChild(blocReparation());
@@ -5338,6 +5389,8 @@ function vueReglages(c) {
     // ----- Le bon moment pour parler de l'app (après une carte débloquée) -----
     const bmExp = blocBonMoment();
     if (bmExp) c.appendChild(bmExp);
+    const j7Exp = blocArbreSeptiemeJour();
+    if (j7Exp) c.appendChild(j7Exp);
 
     // ----- Validations en attente (affichées seulement s'il y en a) -----
     if (totalAttente) c.appendChild(blocAttente(totalAttente));

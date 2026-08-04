@@ -1115,6 +1115,29 @@ begin
     order by f.created_at;
 end; $$;
 
+-- Familles CONVAINCUES à qui proposer de semer : au moins cinq jours
+-- d'ouverture distincts, une première ouverture remontant à sept jours au
+-- moins, aucune famille amenée à ce jour, et jamais relancées sur ce motif.
+-- La proposition voisine (admin_parrainages_a_proposer) attend trois semaines :
+-- deux semaines de trop pour une famille qui a déjà pris le pli.
+-- Ne lit aucune donnée d'enfant : usage_events et referrals seulement.
+create or replace function public.admin_parrainages_actifs_a_relancer()
+returns table(famille_id uuid, famille text, email text, jours_actifs integer)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  return query
+    select f.id, f.name::text,
+           (select u.email::text from auth.users u where u.id = f.owner_id),
+           (select count(distinct e.day)::int from usage_events e where e.family_id = f.id)
+    from families f
+    where (select count(distinct e.day) from usage_events e where e.family_id = f.id) >= 5
+      and (select min(e.day) from usage_events e where e.family_id = f.id) <= current_date - 7
+      and not exists (select 1 from referrals r where r.family_id = f.id and r.accepted_at is not null)
+      and not exists (select 1 from mails_auto m where m.type = 'parrainage_actif' and m.cle = f.id::text)
+    order by f.created_at;
+end; $$;
+
 -- ---------- Journal des changements automatiques ----------
 -- Tout ce qui s'applique tout seul (plafond franchi, vague partie, décision
 -- nouvellement ouverte) est consigné ici, et l'administrateur en est averti
@@ -1237,6 +1260,7 @@ grant execute on function public.mail_auto_marquer(text, text)  to authenticated
 grant execute on function public.mail_auto_deja(text, text)     to authenticated;
 grant execute on function public.admin_mails_en_attente()       to authenticated;
 grant execute on function public.admin_parrainages_a_proposer() to authenticated;
+grant execute on function public.admin_parrainages_actifs_a_relancer() to authenticated;
 grant execute on function public.waitlist_invitation_valide(uuid) to anon, authenticated;
 grant execute on function public.admin_vague_suivante(integer)  to authenticated;
 grant execute on function public.admin_vague_marquer(text)      to authenticated;

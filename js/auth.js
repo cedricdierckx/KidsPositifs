@@ -600,6 +600,23 @@ async function adminMailsEnAttente() {
   if (error) return [];
   return data || [];
 }
+/* Le 7e jour : proposer d'offrir l'app aux familles CONVAINCUES.
+ * Une seule fois par famille (verrou en base, type « parrainage_actif »), et
+ * seulement si aucune famille n'a encore été amenée. Le message demande UNE
+ * famille, jamais le maximum. */
+async function envoyerPropositionsParrainageActifs(liste) {
+  const familles = liste || await adminParrainagesActifsARelancer();
+  let n = 0;
+  for (const f of familles) {
+    if (!f.email) continue;
+    const prenom = (f.email.split("@")[0] || "").replace(/[._-]+/g, " ");
+    const ok = await envoyerMailAuto("parrainage_actif", f.famille_id, f.email, "m_parrainage_actif",
+      { prenom, lien: location.origin || "https://famiteam.com" });
+    if (ok) n++;
+  }
+  return n;
+}
+
 // Propose le parrainage aux familles installées depuis trois semaines.
 // Une seule fois par famille, jamais de relance.
 async function envoyerPropositionsParrainage(liste) {
@@ -705,9 +722,10 @@ async function declencherEnvoisAuto() {
     if (mailsAutoArmes()) {
       const nAct = await envoyerRelancesActivation();
       const nPar = await envoyerPropositionsParrainage();
+      const nJ7 = await envoyerPropositionsParrainageActifs();
       const nVag = await envoyerVagueDuMois();
       const nRel = await envoyerRelancesVague();
-      const n = nAct + nPar + nVag + nRel;
+      const n = nAct + nPar + nJ7 + nVag + nRel;
       await envoyerRapportMensuel();
       if (nVag > 0) {
         await notifierAdmin("vague", new Date().toISOString().slice(0, 7),
@@ -861,6 +879,13 @@ async function adminActivation() {
   const { data, error } = await sb.rpc("admin_activation");
   if (error) { toast("Erreur admin : " + error.message, "info"); return null; }
   return data || null;
+}
+// RPC admin : familles convaincues au 7e jour, sans filleul (Arbre des familles).
+async function adminParrainagesActifsARelancer() {
+  if (!estAdmin) return [];
+  const { data, error } = await sb.rpc("admin_parrainages_actifs_a_relancer");
+  if (error) return [];
+  return data || [];
 }
 // RPC admin : familles à qui proposer de parrainer (chantier Parrainage).
 async function adminParrainagesAProposer() {

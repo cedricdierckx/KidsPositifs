@@ -383,6 +383,9 @@ Object.assign(I18N.fr, {
   "fam.creer_invitation": "🔗 Créer un lien d'invitation", "fam.changer": "🔁 Changer / créer une famille",
   // L'Arbre des familles : code de parrainage permanent (+ QR)
   "common.fermer": "Fermer",
+  "arbre.j7_titre": "🌳 Une semaine ! L'habitude est prise.",
+  "arbre.j7_texte": "Sept jours, c'est le moment où ça tient. Une question, une seule : qui, autour de vous, mériterait de vivre ça ? <strong>Un nom suffit</strong> — {app} se fait connaître uniquement par des parents qui en parlent à d'autres parents.",
+  "arbre.j7_bouton": "Offrir à une famille",
   "arbre.p1": "la graine", "arbre.p2": "la pousse", "arbre.p3": "l'arbre", "arbre.p4": "le verger",
   "arbre.palier_atteint": "Vous avez atteint <strong>{nom}</strong>",
   "arbre.palier_aucun": "Votre arbre attend sa première feuille",
@@ -545,6 +548,9 @@ Object.assign(I18N.en, {
   "fam.creer_invitation": "🔗 Create an invite link", "fam.changer": "🔁 Switch / create a family",
   // The Family Tree: permanent referral code (+ QR)
   "common.fermer": "Close",
+  "arbre.j7_titre": "🌳 One week! The habit has taken hold.",
+  "arbre.j7_texte": "Seven days is when it sticks. One question, just one: who around you deserves to experience this? <strong>One name is enough</strong> — {app} gets known only through parents telling other parents.",
+  "arbre.j7_bouton": "Give it to one family",
   "arbre.p1": "the seed", "arbre.p2": "the sprout", "arbre.p3": "the tree", "arbre.p4": "the orchard",
   "arbre.palier_atteint": "You've reached <strong>{nom}</strong>",
   "arbre.palier_aucun": "Your tree is waiting for its first leaf",
@@ -707,6 +713,9 @@ Object.assign(I18N.nl, {
   "fam.creer_invitation": "🔗 Uitnodigingslink maken", "fam.changer": "🔁 Familie wisselen / aanmaken",
   // De Familieboom: permanente verwijzingscode (+ QR)
   "common.fermer": "Sluiten",
+  "arbre.j7_titre": "🌳 Een week! De gewoonte zit erin.",
+  "arbre.j7_texte": "Na zeven dagen blijft het hangen. Eén vraag, slechts één: wie in je omgeving verdient het om dit mee te maken? <strong>Één naam is genoeg</strong> — {app} raakt enkel bekend doordat ouders het aan andere ouders vertellen.",
+  "arbre.j7_bouton": "Aan één familie geven",
   "arbre.p1": "het zaadje", "arbre.p2": "de scheut", "arbre.p3": "de boom", "arbre.p4": "de boomgaard",
   "arbre.palier_atteint": "Je hebt <strong>{nom}</strong> bereikt",
   "arbre.palier_aucun": "Je boom wacht op zijn eerste blad",
@@ -869,6 +878,9 @@ Object.assign(I18N.de, {
   "fam.creer_invitation": "🔗 Einladungslink erstellen", "fam.changer": "🔁 Familie wechseln / erstellen",
   // Der Familienbaum: dauerhafter Empfehlungscode (+ QR)
   "common.fermer": "Schließen",
+  "arbre.j7_titre": "🌳 Eine Woche! Die Gewohnheit sitzt.",
+  "arbre.j7_texte": "Nach sieben Tagen bleibt es hängen. Eine Frage, nur eine: wer in deinem Umfeld hätte es verdient, das zu erleben? <strong>Ein Name genügt</strong> — {app} wird nur bekannt, weil Eltern es anderen Eltern erzählen.",
+  "arbre.j7_bouton": "Einer Familie schenken",
   "arbre.p1": "das Samenkorn", "arbre.p2": "der Sprössling", "arbre.p3": "der Baum", "arbre.p4": "der Obstgarten",
   "arbre.palier_atteint": "Du hast <strong>{nom}</strong> erreicht",
   "arbre.palier_aucun": "Dein Baum wartet auf sein erstes Blatt",
