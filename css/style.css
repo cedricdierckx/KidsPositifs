@@ -668,6 +668,21 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .btn-mail{display:block; text-align:center; text-decoration:none; margin-top:8px}
 .parrain-pop{background:linear-gradient(135deg,#fff3d6,#ffe0ec)}
 
+/* ---- L'Arbre des familles : code permanent + QR ---- */
+.arbre-code-bloc{margin:10px 0 4px; text-align:center}
+.arbre-code-label{font-size:13px; color:var(--doux); margin:0 0 2px}
+/* Le code se lit à voix haute et se recopie à la main : chiffres tabulaires,
+   lettres espacées, taille généreuse. */
+.arbre-code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:28px; font-weight:800; letter-spacing:.18em; margin:0 0 10px;
+  color:#1d7a52; background:#eafaf2; border:1px solid #bfe9da; border-radius:12px;
+  padding:10px 8px; word-break:break-all}
+.arbre-qr-cadre{display:flex; justify-content:center; margin:4px 0 6px}
+/* Fond blanc et marge propres : les lecteurs bon marché exigent le contraste
+   maximal et la zone de silence normalisée (déjà incluse dans le SVG). */
+.arbre-qr{width:180px; height:180px; background:#fff; border-radius:10px;
+  border:1px solid #e6ecf2; padding:6px}
+
 /* Sélecteur de langue (écran d'accueil public) */
 .choix-langue{margin:-4px 0 8px; justify-content:center}
 .choix-langue select{border:2px solid #e3edf5; border-radius:10px; padding:6px 10px;

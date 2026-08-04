@@ -1287,13 +1287,14 @@ test("vagues : les modèles d'e-mail n'attendent que le lien fourni par le code"
 test("vagues : un jeton de vague suffit à autoriser la création d'une famille", () => {
   const autorisee = (stock, ouvertes) => fonctionDeSource("js/auth.js", "inscriptionAutorisee", {
     inscriptionsOuvertes: () => ouvertes,
-    INVITE_KEY: "i", PARRAIN_KEY: "p", VAGUE_KEY: "v",
+    INVITE_KEY: "i", PARRAIN_KEY: "p", PARRAIN_CODE_KEY: "pc", VAGUE_KEY: "v",
     localStorage: { getItem: (k) => (k in stock ? stock[k] : null) }
   })();
   assert.strictEqual(autorisee({}, false), false, "inscriptions fermées, aucun jeton : refus");
   assert.strictEqual(autorisee({ v: "abc" }, false), true, "jeton de vague : accepté");
   assert.strictEqual(autorisee({ i: "abc" }, false), true, "invitation : toujours acceptée");
   assert.strictEqual(autorisee({ p: "abc" }, false), true, "parrainage : toujours accepté");
+  assert.strictEqual(autorisee({ pc: "K7M2QX" }, false), true, "code permanent : accepté");
   assert.strictEqual(autorisee({}, true), true, "inscriptions ouvertes : tout le monde entre");
 });
 
@@ -1713,6 +1714,88 @@ test("production : le bandeau d'aperçu est traduit dans les 4 langues", () => {
         "manque " + lg + " → " + k));
     assert.ok(api.I18N[lg]["apercu.detail"].includes("{hote}"), lg + " : {hote} perdu");
   });
+});
+
+/* ---------- Encodeur QR (Arbre des familles) ----------
+ * Référence : la matrice ci-dessous a été produite par notre encodeur PUIS
+ * vérifiée module par module contre `segno` (implémentation Python
+ * indépendante), et le SVG correspondant a été décodé sans erreur par
+ * OpenCV après rendu dans un navigateur sans affichage. Le cas retenu
+ * (53 caractères) sature les 55 mots de données : aucun octet de bourrage
+ * n'intervient, donc la comparaison ne laisse aucune latitude d'encodage.
+ * Chaque ligne de 29 modules est écrite sur 8 chiffres hexadécimaux. */
+const QR_TEMOIN = "1fd6db7f,10424941,1754925d,1756db5d,175db65d,10449241,1fd5557f,00024900," +
+  "1e5b6d9d,0f16db75,0c524966,15b49251,15cadb2f,1e21b6c3,1354920b,0235248a,0f4db699,08ab6dae," +
+  "124d24d0,0606493c,0ee76df4,0012db15,1fc24b56,10409113,174ad9fc,175db593,175c93a9,105d27da,1fd5b73a";
+
+function qrEmpreinte(m) {
+  return m.map(l => { let v = 0n; l.forEach(b => { v = (v << 1n) | BigInt(b); }); return v.toString(16).padStart(8, "0"); }).join(",");
+}
+
+test("QR : la matrice reproduit la référence vérifiée (segno + décodage OpenCV)", () => {
+  const { api } = construireContexte();
+  const m = api.qrMatrice("x".repeat(53), 3);
+  assert.ok(m, "matrice absente");
+  assert.strictEqual(m.length, 29, "la version 3 fait 29 modules de côté");
+  assert.strictEqual(qrEmpreinte(m), QR_TEMOIN, "la matrice QR a changé : elle n'est plus celle qui a été validée");
+});
+
+test("QR : motifs de service conformes (repères, synchronisation, module sombre)", () => {
+  const { api } = construireContexte();
+  const m = api.qrMatrice("https://famiteam.com/?p=K7M2QX");
+  // Les trois repères d'angle : centre sombre, anneau clair.
+  [[0, 0], [0, 22], [22, 0]].forEach(([r, c]) => {
+    assert.strictEqual(m[r + 3][c + 3], 1, `centre du repère (${r},${c})`);
+    assert.strictEqual(m[r + 1][c + 1], 0, `anneau du repère (${r},${c})`);
+  });
+  // Séparateurs : la ligne 7 et la colonne 7 du repère haut-gauche sont claires.
+  for (let i = 0; i <= 7; i++) { assert.strictEqual(m[7][i], 0); assert.strictEqual(m[i][7], 0); }
+  // Synchronisation : alternance sur la ligne 6 et la colonne 6.
+  for (let i = 8; i <= 20; i++) {
+    assert.strictEqual(m[6][i], i % 2 === 0 ? 1 : 0, "ligne 6, colonne " + i);
+    assert.strictEqual(m[i][6], i % 2 === 0 ? 1 : 0, "colonne 6, ligne " + i);
+  }
+  assert.strictEqual(m[21][8], 1, "le module toujours sombre doit rester sombre");
+  assert.strictEqual(m[22][22], 1, "centre du motif d'alignement");
+  // Aucune case ne doit rester indéterminée.
+  m.forEach((l, i) => l.forEach((v, j) => assert.ok(v === 0 || v === 1, `module (${i},${j}) = ${v}`)));
+});
+
+test("QR : capacité respectée et repli propre au-delà", () => {
+  const { api } = construireContexte();
+  assert.strictEqual(api.QR_CAPACITE, 53);
+  assert.ok(api.qrMatrice("x".repeat(53)), "53 caractères doivent tenir");
+  assert.strictEqual(api.qrMatrice("x".repeat(54)), null, "54 caractères doivent être refusés");
+  assert.strictEqual(api.qrSvg("x".repeat(54)), null, "le SVG doit valoir null plutôt que d'être tronqué");
+});
+
+test("QR : le SVG porte la zone de silence normalisée et reste autonome", () => {
+  const { api } = construireContexte();
+  const svg = api.qrSvg("https://famiteam.com/?p=K7M2QX", { classe: "arbre-qr" });
+  assert.ok(svg.startsWith("<svg "), "doit être un SVG");
+  assert.ok(svg.includes('viewBox="0 0 37 37"'), "29 modules + 4 de marge de chaque côté");
+  assert.ok(svg.includes('class="arbre-qr"'), "classe transmise");
+  assert.ok(!/https?:\/\/(?!www\.w3\.org)/.test(svg.replace(/\?p=[^"]*/g, "")),
+    "aucune ressource externe ne doit être chargée");
+  assert.ok(svg.includes('fill="#fff"') && svg.includes('fill="#000"'),
+    "contraste maximal exigé par les lecteurs bon marché");
+});
+
+test("Arbre des familles : les libellés existent dans les 4 langues", () => {
+  const { api } = construireContexte();
+  const cles = ["arbre.titre", "arbre.modale_titre", "arbre.modale_note", "arbre.code_label",
+    "arbre.qr_note", "arbre.partage", "arbre.attente", "arbre.indispo",
+    "arbre.regenerer", "arbre.regenerer_conf", "arbre.regenere", "common.fermer"];
+  Object.keys(api.LANGUES).forEach(lg => cles.forEach(k =>
+    assert.ok(typeof api.I18N[lg][k] === "string" && api.I18N[lg][k].length, "manque " + lg + " → " + k)));
+});
+
+test("Arbre des familles : le quota hebdomadaire n'est plus annoncé nulle part", () => {
+  const { api } = construireContexte();
+  // Les parrainages sont illimités : promettre « 3 par semaine » serait faux.
+  Object.keys(api.LANGUES).forEach(lg =>
+    assert.ok(!/3 familles par semaine|3 families per week|3 families per week|3 Familien pro Woche/.test(api.I18N[lg]["parr.note"] || ""),
+      lg + " : le quota de 3/semaine subsiste dans parr.note"));
 });
 
 /* ---------- Exécution ---------- */

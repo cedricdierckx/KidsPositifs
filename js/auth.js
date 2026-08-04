@@ -21,6 +21,7 @@ let estAdmin = false;          // l'utilisateur est-il administrateur de l'app ?
 const FAMILLE_KEY = "kp_famille_active";
 const INVITE_KEY = "kp_pending_invite";
 const PARRAIN_KEY = "kp_pending_parrain";   // parrainage : créer SA propre famille
+const PARRAIN_CODE_KEY = "kp_pending_parrain_code";  // code permanent (?p=), Arbre des familles
 const VAGUE_KEY = "kp_pending_vague";      // jeton de vague (liste d'attente)
 
 // Interrupteur global des inscriptions :
@@ -135,6 +136,10 @@ async function demarrer() {
   // Lien de parrainage (?parrain=...) : l'ami créera SA propre famille.
   const par = params.get("parrain");
   if (par) { localStorage.setItem(PARRAIN_KEY, par); nettoyerUrl(); }
+  // Code de parrainage permanent (?p=...) : même effet, mais le lien est
+  // réutilisable — c'est celui que les familles partagent en groupe.
+  const pcode = params.get("p");
+  if (pcode) { localStorage.setItem(PARRAIN_CODE_KEY, normaliserCodeParrainage(pcode)); nettoyerUrl(); }
   // Jeton de vague (?vague=...) : le candidat de la liste d'attente crée sa
   // famille. On vérifie le jeton en base avant de le retenir, pour qu'une
   // valeur inventée n'ouvre pas les inscriptions.
@@ -739,8 +744,55 @@ async function creerFamille(nom, nbEnfants) {
     try { await sb.rpc("claim_referral", { p_token: par, p_family: data }); } catch {}
     localStorage.removeItem(PARRAIN_KEY);
   }
+  // Même chose pour un code permanent (?p=). La RPC est silencieuse en cas de
+  // code inconnu ou d'auto-parrainage : une inscription ne doit jamais échouer
+  // pour cette raison.
+  const pcode = localStorage.getItem(PARRAIN_CODE_KEY);
+  if (pcode && data) {
+    try { await sb.rpc("claim_referral_code", { p_code: pcode, p_family: data }); } catch {}
+    localStorage.removeItem(PARRAIN_CODE_KEY);
+  }
   // Jeton de vague consommé : la famille existe, il n'a plus d'utilité.
   if (data) localStorage.removeItem(VAGUE_KEY);
+}
+
+/* ---------- L'Arbre des familles : code de parrainage permanent ----------
+ * Un seul code par famille, réutilisable indéfiniment : il se colle une fois
+ * dans un groupe de parents, se met sur un QR code et s'imprime. */
+// Nettoyage d'un code saisi ou lu : majuscules, sans les caractères ambigus
+// écartés de l'alphabet (O→0 et I/L→1 sont des confusions de lecture).
+function normaliserCodeParrainage(brut) {
+  return String(brut || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+}
+let _codeParrainageCache = null;
+async function codeParrainage() {
+  if (_codeParrainageCache) return _codeParrainageCache;
+  if (!familleId) return null;
+  const { data, error } = await sb.rpc("referral_code_famille", { p_family: familleId });
+  if (error || !data) return null;
+  _codeParrainageCache = data;
+  return data;
+}
+function lienDepuisCode(code) {
+  return location.origin + location.pathname + "?p=" + encodeURIComponent(code);
+}
+async function lienParrainagePermanent() {
+  const code = await codeParrainage();
+  return code ? lienDepuisCode(code) : null;
+}
+async function regenererCodeParrainage() {
+  if (!familleId) return null;
+  const { data, error } = await sb.rpc("regenerer_referral_code", { p_family: familleId });
+  if (error) { toast("Erreur : " + error.message, "info"); return null; }
+  _codeParrainageCache = data || null;
+  return _codeParrainageCache;
+}
+async function infoParrainageCode(code) {
+  try {
+    const { data } = await sb.rpc("referral_info_par_code", { p_code: code });
+    const info = Array.isArray(data) ? data[0] : data;
+    return info || null;
+  } catch { return null; }
 }
 
 /* ---------- Parrainage (inviter un ami à créer sa propre famille) ---------- */
@@ -783,7 +835,7 @@ function changerFamille() { ecranFamilles({}); }
 function inscriptionAutorisee() {
   return inscriptionsOuvertes() ||
          !!(localStorage.getItem(INVITE_KEY) || localStorage.getItem(PARRAIN_KEY) ||
-            localStorage.getItem(VAGUE_KEY));
+            localStorage.getItem(PARRAIN_CODE_KEY) || localStorage.getItem(VAGUE_KEY));
 }
 // Rejoindre la liste d'attente (candidats sans invitation).
 async function rejoindreListeAttente(email) {
@@ -1022,6 +1074,7 @@ function ecranConfig() {
 
 function ecranAuth() {
   const parrain = localStorage.getItem(PARRAIN_KEY);
+  const parrainCode = localStorage.getItem(PARRAIN_CODE_KEY);
   const boutonsLangue = Object.keys(LANGUES).map(l =>
     `<button type="button" class="langue-btn${l === langue ? " actif" : ""}" data-lang="${l}">
        <span class="langue-drapeau">${drapeau(l)}</span><span class="langue-nom">${LANGUES[l]}</span>
@@ -1112,12 +1165,14 @@ function ecranAuth() {
     b.onclick = () => { const l = b.dataset.lang; if (l && l !== langue) { definirLangue(l); ecranAuth(); } };
   });
 
-  // Bannière personnalisée si on arrive via un lien de parrainage.
-  if (parrain) {
+  // Bannière personnalisée si on arrive via un lien de parrainage — jeton
+  // unique (?parrain=) ou code permanent (?p=), le message est le même.
+  if (parrain || parrainCode) {
     const b = document.getElementById("parrain-banniere");
     if (b) {
       b.innerHTML = `<div class="parrain-carte">${t("auth.parrain_generique")}</div>`;
-      infoParrainage(parrain).then(info => {
+      const promesse = parrain ? infoParrainage(parrain) : infoParrainageCode(parrainCode);
+      promesse.then(info => {
         if (info && info.parrain_name) {
           b.querySelector(".parrain-carte").innerHTML =
             t("auth.parrain_nomme", { nom: echapper(info.parrain_name), app: APP_NOM });
@@ -1127,7 +1182,7 @@ function ecranAuth() {
   }
 
   const peutSinscrire = inscriptionAutorisee();      // inscription sur invitation seulement
-  let inscriptionMode = !!parrain;                   // parrainage → création de compte
+  let inscriptionMode = !!(parrain || parrainCode);  // parrainage → création de compte
   const elEmail = document.getElementById("email");
   const elMdp = document.getElementById("mdp");
   const bPrinc = document.getElementById("b-principal");

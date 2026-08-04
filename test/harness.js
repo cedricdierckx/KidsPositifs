@@ -140,9 +140,11 @@ function construireContexte() {
       CROISSANCE_PHASES, CROISSANCE_CHANTIERS, CROISSANCE_MAILS, CROISSANCE_CONTRAINTES, CROISSANCE_RITUEL,
       chantiersDePhase, mailCroissance, dureeChantier, seanceDeLaSemaine, cleEtapeCroissance,
       CROISSANCE_DECISIONS, decisionsEnAttente, optionRecommandee, decisionCroissance,
+      // encodeur QR (Arbre des familles)
+      qrMatrice, qrSvg, QR_TAILLE, QR_CAPACITE,
     };
   `;
-  const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/croissance.js"), lire("js/app.js"), lire("js/store.js"), epilogue].join("\n;\n");
+  const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/croissance.js"), lire("js/qr.js"), lire("js/app.js"), lire("js/store.js"), epilogue].join("\n;\n");
   vm.runInContext(source, contexte, { filename: "famiteam-bundle.js" });
   return { contexte, api: contexte.contexteExports };
 }

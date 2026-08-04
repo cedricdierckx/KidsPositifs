@@ -272,6 +272,89 @@ begin
           where family_id = p_family and accepted_at is not null);
 end; $$;
 
+-- ---------- L'Arbre des familles : code de parrainage permanent ----------
+-- Un lien à usage unique oblige à un aller-retour par ami invité : mesuré en
+-- production, 30 liens créés n'avaient produit que 4 filleuls. Un code unique
+-- et permanent par famille se colle une fois dans un groupe de parents, se
+-- met sur un QR code et s'imprime. Le mécanisme à jeton unique ci-dessus est
+-- conservé : il sert aux invitations nominatives.
+alter table public.families add column if not exists referral_code text;
+create unique index if not exists idx_families_refcode
+  on public.families(referral_code) where referral_code is not null;
+-- Trace du code effectivement utilisé (un parrainage peut venir d'un jeton).
+alter table public.referrals add column if not exists via_code text;
+
+-- Alphabet sans caractère ambigu : ni O/0, ni I/1/L, pour qu'un code lu sur
+-- une carte imprimée puisse être recopié à la main sans erreur.
+create or replace function public.gen_referral_code()
+returns text language plpgsql as $$
+declare alphabet text := 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; r text := ''; i integer;
+begin
+  for i in 1..7 loop
+    r := r || substr(alphabet, 1 + floor(random() * length(alphabet))::int, 1);
+  end loop;
+  return r;
+end; $$;
+
+-- Renvoie le code permanent de la famille, en le créant au premier appel.
+create or replace function public.referral_code_famille(p_family uuid)
+returns text language plpgsql security definer set search_path = public as $$
+declare c text; essai integer := 0;
+begin
+  if not is_family_member(p_family) and not is_admin() then raise exception 'Accès refusé'; end if;
+  select referral_code into c from families where id = p_family;
+  if c is not null then return c; end if;
+  loop
+    essai := essai + 1;
+    c := gen_referral_code();
+    begin
+      update families set referral_code = c where id = p_family;
+      return c;
+    exception when unique_violation then
+      if essai >= 10 then raise exception 'Génération du code impossible'; end if;
+    end;
+  end loop;
+end; $$;
+
+-- Régénère le code : le lien précédemment partagé cesse d'être reconnu.
+-- (Le seul « risque » d'un code diffusé est d'amener des familles ; mais une
+-- famille doit pouvoir reprendre la main sur ce qu'elle a publié.)
+create or replace function public.regenerer_referral_code(p_family uuid)
+returns text language plpgsql security definer set search_path = public as $$
+begin
+  if not is_family_member(p_family) and not is_admin() then raise exception 'Accès refusé'; end if;
+  update families set referral_code = null where id = p_family;
+  return referral_code_famille(p_family);
+end; $$;
+
+-- Nom du parrain, à partir du code, pour la bannière d'accueil (sans compte).
+-- Un code permanent n'est jamais « consommé » : il reste valable.
+create or replace function public.referral_info_par_code(p_code text)
+returns table(parrain_name text, valid boolean)
+language plpgsql security definer set search_path = public as $$
+begin
+  return query
+    select f.name::text, true
+    from families f
+    where f.referral_code = upper(trim(p_code));
+end; $$;
+
+-- Rattache la famille nouvellement créée au parrain désigné par le code.
+-- Silencieuse en cas de code inconnu, d'auto-parrainage, ou si la famille est
+-- déjà rattachée : une inscription ne doit jamais échouer pour cette raison.
+create or replace function public.claim_referral_code(p_code text, p_family uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare parrain uuid; code text := upper(trim(coalesce(p_code, '')));
+begin
+  if code = '' or p_family is null then return; end if;
+  if not is_family_member(p_family) then return; end if;   -- on ne rattache que SA famille
+  select id into parrain from families where referral_code = code;
+  if parrain is null or parrain = p_family then return; end if;
+  if exists (select 1 from referrals where accepted_family = p_family) then return; end if;
+  insert into referrals(family_id, created_by, accepted_at, accepted_family, via_code)
+    values (parrain, auth.uid(), now(), p_family, code);
+end; $$;
+
 -- ---------- Liste d'attente (inscriptions sur invitation uniquement) ----------
 create table if not exists public.waitlist (
   email text primary key,
@@ -1080,6 +1163,10 @@ grant execute on function public.create_referral(uuid)          to authenticated
 grant execute on function public.referral_info(uuid)            to anon, authenticated;
 grant execute on function public.claim_referral(uuid, uuid)     to authenticated;
 grant execute on function public.referral_accepted_count(uuid)  to authenticated;
+grant execute on function public.referral_code_famille(uuid)    to authenticated;
+grant execute on function public.regenerer_referral_code(uuid)  to authenticated;
+grant execute on function public.referral_info_par_code(text)   to anon, authenticated;
+grant execute on function public.claim_referral_code(text, uuid) to authenticated;
 grant execute on function public.join_waitlist(text, text)            to anon, authenticated;
 grant execute on function public.admin_list_waitlist()          to authenticated;
 grant execute on function public.admin_activation()             to authenticated;

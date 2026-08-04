@@ -137,17 +137,20 @@ async function reinitPinParMail(apresOk) {
   });
 }
 
-// Modale rapide pour parrainer une autre famille (depuis la pastille en-tête).
+/* Modale de partage : le code permanent de la famille, son QR code et le lien.
+ * Un seul code, réutilisable indéfiniment — c'est tout l'intérêt : il se colle
+ * une fois dans le groupe de parents de l'école, au lieu d'exiger un
+ * aller-retour dans l'application par ami invité. */
 function modaleParrainage() {
   const ov = el("div", "pin-modal");
   ov.innerHTML = `
     <div class="pin-carte parrain-modale">
-      <button class="modale-fermer" aria-label="Fermer">✕</button>
-      <div class="pin-titre">🎁 Inviter une famille amie</div>
-      <p class="note">Offre ${APP_NOM} à des amis : ils créeront <strong>leur propre famille</strong>.</p>
-      <p id="pm-quota" class="note">Vérification de ton quota…</p>
+      <button class="modale-fermer" aria-label="${t("common.fermer")}">✕</button>
+      <div class="pin-titre">${t("arbre.modale_titre")}</div>
+      <p class="note">${t("arbre.modale_note")}</p>
+      <div id="pm-code" class="arbre-code-bloc"><p class="note">${t("arbre.attente")}</p></div>
       <div id="pm-zone"></div>
-      <button id="pm-creer" class="gros-bouton planete">🎁 Créer un lien de parrainage</button>
+      <button id="pm-regen" class="lien-oubli">${t("arbre.regenerer")}</button>
     </div>`;
   document.body.appendChild(ov);
   const fermer = () => ov.remove();
@@ -155,25 +158,29 @@ function modaleParrainage() {
   ov.addEventListener("click", e => { if (e.target === ov) fermer(); });
 
   const zone = ov.querySelector("#pm-zone");
-  const bCreer = ov.querySelector("#pm-creer");
-  const illimite = (typeof INVITATIONS_ILLIMITEES !== "undefined" && INVITATIONS_ILLIMITEES) || (typeof estAdmin !== "undefined" && estAdmin);
-  const majQuota = () => parrainageRestant().then(n => {
-    const q = ov.querySelector("#pm-quota");
-    if (illimite) { q.innerHTML = t("parr.illimite"); bCreer.disabled = false; }
-    else { q.innerHTML = t("parr.restant", { n }); bCreer.disabled = n <= 0; }
-  });
-  majQuota();
-  bCreer.onclick = async () => {
-    bCreer.disabled = true; bCreer.textContent = t("common.creation");
-    const lien = await creerParrainage();
-    bCreer.textContent = t("parr.creer");
-    if (lien) {
-      montrerLienInvitation(zone, lien, t("parr.partage"), {
-        sujet: t("parr.sujet", { app: APP_NOM }),
-        corps: t("parr.corps", { app: APP_NOM, lien: "{lien}" })
-      });
-    }
-    majQuota();
+  const blocCode = ov.querySelector("#pm-code");
+
+  const afficher = (code) => {
+    if (!code) { blocCode.innerHTML = `<p class="note">${t("arbre.indispo")}</p>`; return; }
+    const lien = lienDepuisCode(code);
+    const qr = (typeof qrSvg === "function") ? qrSvg(lien, { classe: "arbre-qr", titre: code }) : null;
+    blocCode.innerHTML =
+      `<p class="arbre-code-label">${t("arbre.code_label")}</p>
+       <p class="arbre-code">${echapper(code)}</p>
+       ${qr ? `<div class="arbre-qr-cadre">${qr}</div><p class="note">${t("arbre.qr_note")}</p>` : ""}`;
+    zone.innerHTML = "";
+    montrerLienInvitation(zone, lien, t("arbre.partage"), {
+      sujet: t("parr.sujet", { app: APP_NOM }),
+      corps: t("parr.corps", { app: APP_NOM, lien: "{lien}" })
+    });
+  };
+
+  codeParrainage().then(afficher);
+
+  ov.querySelector("#pm-regen").onclick = async () => {
+    if (!confirm(t("arbre.regenerer_conf"))) return;
+    const code = await regenererCodeParrainage();
+    if (code) { afficher(code); toast(t("arbre.regenere"), "succes"); }
   };
 }
 
@@ -5032,40 +5039,36 @@ function sectionsFamille(c) {
   fam.appendChild(bSwitch);
   c.appendChild(fam);
 
-  // ----- Parrainage : inviter une famille amie à créer la sienne -----
+  // ----- L'Arbre des familles : le code permanent de la famille -----
+  // Un seul code, affiché en clair, avec son QR : rien à créer, rien à
+  // renouveler. C'est le geste le plus court possible pour offrir l'app.
   const par = el("section", "carte");
-  par.innerHTML = `<h2>${t("parr.titre")}</h2>
-    <p class="note">${t("parr.note", { app: APP_NOM })}</p>
-    <p id="par-quota" class="parr-quota">${t("parr.quota_check")}</p>`;
-  const bPar = el("button", "gros-bouton planete", t("parr.creer"));
-  par.appendChild(bPar);
+  par.innerHTML = `<h2>${t("arbre.titre")}</h2>
+    <p class="note">${t("arbre.modale_note")}</p>
+    <div id="par-code" class="arbre-code-bloc"><p class="note">${t("arbre.attente")}</p></div>`;
   c.appendChild(par);
-  // Affiche le quota + reflète le nombre restant dans le bouton lui-même.
-  const illimitePar = (typeof INVITATIONS_ILLIMITEES !== "undefined" && INVITATIONS_ILLIMITEES) || estAdmin;
-  const majQuotaPar = (n) => {
-    const q = par.querySelector("#par-quota");
-    if (illimitePar) {
-      q.innerHTML = t("parr.illimite"); q.className = "parr-quota ok";
-      bPar.disabled = false; bPar.textContent = t("parr.creer");
-    } else {
-      q.innerHTML = t("parr.restant", { n }); q.className = "parr-quota " + (n > 0 ? "ok" : "vide");
-      bPar.disabled = n <= 0;
-      bPar.textContent = n > 0 ? t("parr.creer_n", { n }) : t("parr.epuise");
-    }
+  const blocCodePar = par.querySelector("#par-code");
+  const afficherCodePar = (code) => {
+    if (!code) { blocCodePar.innerHTML = `<p class="note">${t("arbre.indispo")}</p>`; return; }
+    const lien = lienDepuisCode(code);
+    const qr = (typeof qrSvg === "function") ? qrSvg(lien, { classe: "arbre-qr", titre: code }) : null;
+    blocCodePar.innerHTML =
+      `<p class="arbre-code-label">${t("arbre.code_label")}</p>
+       <p class="arbre-code">${echapper(code)}</p>
+       ${qr ? `<div class="arbre-qr-cadre">${qr}</div><p class="note">${t("arbre.qr_note")}</p>` : ""}`;
+    montrerLienInvitation(blocCodePar, lien, t("arbre.partage"), {
+      sujet: t("parr.sujet", { app: APP_NOM }),
+      corps: t("parr.corps", { app: APP_NOM, lien: "{lien}" })
+    });
+    const bRegen = el("button", "lien-oubli", t("arbre.regenerer"));
+    bRegen.onclick = async () => {
+      if (!confirm(t("arbre.regenerer_conf"))) return;
+      const nouveau = await regenererCodeParrainage();
+      if (nouveau) { afficherCodePar(nouveau); toast(t("arbre.regenere"), "succes"); }
+    };
+    blocCodePar.appendChild(bRegen);
   };
-  parrainageRestant().then(majQuotaPar);
-  bPar.onclick = async () => {
-    bPar.disabled = true; bPar.textContent = t("common.creation");
-    const lien = await creerParrainage();
-    if (lien) {
-      const mailto = {
-        sujet: t("parr.sujet", { app: APP_NOM }),
-        corps: t("parr.corps", { app: APP_NOM, lien: "{lien}" })
-      };
-      montrerLienInvitation(par, lien, t("parr.partage"), mailto);
-      parrainageRestant().then(majQuotaPar);
-    } else { parrainageRestant().then(majQuotaPar); }
-  };
+  codeParrainage().then(afficherCodePar);
 
   // ----- Abonnement (masqué provisoirement : early adopters = gratuit) -----
   if (AFFICHER_ABONNEMENT) {
