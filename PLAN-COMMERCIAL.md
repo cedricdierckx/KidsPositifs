@@ -119,10 +119,12 @@ comportements positifs, dans l'esprit de la parentalité bienveillante.
 - Multi-familles, temps réel, hors-ligne, quatre langues, hébergement
   européen, aucune publicité.
 
-Déjà construit : comptes, invitations, **parrainage 3 familles/semaine**,
-liste d'attente, espace admin, retours utilisateurs, statistiques d'usage,
-export et suppression des données, pages légales, e-mails transactionnels,
-tutoriel, espace parents simplifié.
+Déjà construit : comptes, invitations, **parrainage illimité par code
+permanent (lien + QR)**, **L'Arbre des familles** (paliers, jauge collective,
+tableau d'honneur sur consentement, carte d'ami imprimable), liste d'attente,
+espace admin, retours utilisateurs, statistiques d'usage, export et suppression
+des données, pages légales, e-mails transactionnels, tutoriel, espace parents
+simplifié.
 
 ---
 
@@ -301,7 +303,7 @@ tourne encore au bout de trois ans.
 | Phase | Chantiers | Périmètre |
 |---|---|---|
 | **0 — Le cadre** | ⚖️ Cadre déontologique · 📏 Socle de mesure · 🤖 Automatiser le récurrent · 🪧 Page publique & preuve · 🚀 Activation | cœur |
-| **1 — Traction organique** | 🎁 Parrainage · 📨 Liste d'attente · 💬 Communautés · 📰 Presse & podcasts | cœur |
+| **1 — Traction organique** | 🌳 L'Arbre des familles · 📨 Liste d'attente · 💬 Communautés · 📰 Presse & podcasts | cœur |
 | | ✍️ Contenu & référencement | plus tard |
 | **2 — Prescripteurs** | 🏫 Écoles · 🧸 Crèches · 🩺 Professionnels de l'enfance | cœur |
 | **3 — Tenir dans la durée** | 🕊️ Modèle non marchand · 🛡️ Conformité · 🧘 Soutenabilité du fondateur | cœur |
@@ -314,7 +316,8 @@ Ensuite : mesurer, automatiser, puis faire venir des familles.
 
 **Le meilleur rendement horaire** est du côté des **prescripteurs** (une
 directrice d'école parle à vingt-cinq familles pour trente minutes de travail)
-et du **parrainage** (qui tourne tout seul une fois branché). Le contenu et le
+et de **L'Arbre des familles** (qui tourne tout seul une fois branché ; le
+détail du dispositif et de ses garde-fous est dans `PLAN-PARRAINAGE.md`). Le contenu et le
 référencement, très rentables sur le papier, sont trop lents pour une heure
 par semaine : ils attendent.
 

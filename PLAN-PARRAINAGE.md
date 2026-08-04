@@ -1,8 +1,25 @@
 # PLAN-PARRAINAGE — « L'Arbre des familles »
 
 *Comment faire grandir le nombre de parrainages sans trahir l'esprit du projet.*
-Document de travail. Rien n'est implémenté à ce stade : ce plan est à valider,
-et il pose trois questions qui doivent être tranchées (§ 9).
+
+> **Statut : ✅ mis en œuvre.** Les six lots sont livrés (branche
+> `claude/familyteam-main-07437a`). Les trois décisions du § 9 ont été
+> tranchées : **« L'Arbre des familles »**, seuil du tableau d'honneur à
+> **10 familles consentantes**, **saison mensuelle**.
+>
+> **Deux écarts au plan ont été assumés en chemin, et ils sont documentés
+> ici parce qu'ils corrigent le plan, pas parce qu'ils l'arrangent :**
+>
+> 1. **Les paliers ne débloquent plus d'espèce d'écosystème ni d'accessoire
+>    d'avatar** (§ 2.B annonçait le contraire). Une récompense qui atterrit
+>    chez l'enfant rétablit par la fenêtre le lien transactionnel entre son
+>    plaisir et une inscription obtenue — exactement ce que le § 1.2 interdit.
+>    La reconnaissance reste familiale et visuelle : un arbre qui se couvre de
+>    feuilles. Un test verrouille la règle.
+> 2. **Le lot 1 a été scindé en deux étapes de chantier** : aucune étape ne peut
+>    dépasser 60 minutes, c'est la contrainte du budget d'une séance
+>    hebdomadaire, et le test de cohérence du plan de croissance la fait
+>    respecter.
 
 ---
 
@@ -128,8 +145,12 @@ Trois raisons convergentes, et elles sont dirimantes :
    frôle la réglementation des loteries. **Certitude : 75 %.**
 3. Toute logistique consomme l'heure hebdomadaire, la ressource la plus rare.
 
-Les récompenses sont donc **intégralement dans l'app et gratuites** : espèces
-d'écosystème, accessoires d'avatar, badges, mention au tableau d'honneur.
+Les récompenses sont donc **intégralement dans l'app et gratuites** — et,
+correction apportée à la mise en œuvre (voir l'encadré de statut) : elles
+restent **familiales**. Ni espèce d'écosystème, ni accessoire d'avatar : tout ce
+qui atterrit chez l'enfant rétablirait le lien entre son plaisir et une
+inscription obtenue. Il reste l'arbre qui se garnit et la mention au tableau
+d'honneur.
 
 ---
 
@@ -154,12 +175,15 @@ nominatives). **Gain attendu sur le taux de transmission : ×2 à ×4, certitude
 
 ### B. Les paliers d'effort — tout le monde peut gagner
 
-| Filleuls *qualifiés* | Palier | Ce qui se débloque |
+| Filleuls *qualifiés* | Palier | Ce qui se débloque *(tel que livré)* |
 |---|---|---|
-| 1 | 🌱 **La graine** | Badge « Semeur » + une espèce d'écosystème offerte |
-| 3 | 🌿 **La pousse** | Badge + accessoire d'avatar |
-| 5 | 🌳 **L'arbre** | Badge + espèce rare |
-| 10 | 🏞️ **Le verger** | Badge + mention permanente au tableau d'honneur |
+| 1 | 🌱 **La graine** | Une première feuille sur l'arbre de la famille |
+| 3 | 🌿 **La pousse** | L'arbre se garnit ; le palier est nommé dans l'espace parents |
+| 5 | 🌳 **L'arbre** | L'arbre se garnit encore |
+| 10 | 🏞️ **Le verger** | Arbre complet, et « +N » au-delà de dix feuilles |
+
+*(Le plan annonçait ici des espèces d'écosystème et des accessoires d'avatar :
+ils ont été retirés, voir l'encadré de statut en tête de document.)*
 
 Un palier ne se perd jamais (cohérent avec « aucun point n'est jamais
 retiré »). Rien ici ne dépend des autres familles : **c'est ce qui rend le
@@ -175,7 +199,8 @@ dispositif papapositif malgré le classement.**
   voit son propre compteur et ses paliers, mais n'apparaît pas et **ne se voit
   attribuer aucun rang**.
 - **Seuil d'apparition automatique** : le tableau ne s'affiche qu'à partir de
-  **20 familles consentantes** (réglable via `app_config.classement_seuil`).
+  **10 familles consentantes** (décision du fondateur ; réglable via
+  `app_config.classement_seuil`).
   En dessous, seuls les paliers et la jauge sont visibles. Aucune intervention
   manuelle : c'est le même mécanisme que le plafond de familles.
 - **Vocabulaire** : « Merci à ces familles », pas « Meilleures familles ». Une
@@ -380,11 +405,30 @@ aimé pour être offert. On retire alors le tableau plutôt que d'empiler
 
 1. **Le mot.** *« L'Arbre des familles »* (proposé, cohérent avec l'écosystème
    déjà présent) ou *« La Chaîne des familles »* (le badge `eco_chaine` existe
-   déjà, risque de confusion) ?
-2. **Le seuil du tableau d'honneur.** 20 familles consentantes est un choix de
-   prudence ; 10 le rendrait visible plus vite, au risque d'un tableau maigre.
+   déjà, risque de confusion) ? → **Retenu : L'Arbre des familles.**
+2. **Le seuil du tableau d'honneur.** 20 familles consentantes serait un choix
+   de prudence ; 10 le rend visible plus vite, au risque d'un tableau maigre.
+   → **Retenu : 10.**
 3. **La saison.** Mensuelle (proposé) ou trimestrielle — une saison courte
    relance souvent, une saison longue laisse le temps d'y arriver.
+   → **Retenu : mensuelle.**
 
-À défaut de réponse, j'applique les valeurs proposées : *Arbre*, seuil 20,
-saison mensuelle. Toutes trois sont réglables sans migration.
+**Réponses données :** *L'Arbre des familles*, **seuil 10**, **saison
+mensuelle**. Le seuil est réglable sans migration
+(`app_config.classement_seuil`) ; la saison est calculée à la volée.
+
+---
+
+## 10. Ce qui reste à faire de la main du fondateur
+
+Le code est en place ; deux gestes ne peuvent pas être automatisés :
+
+| Geste | Pourquoi il ne s'automatise pas |
+|---|---|
+| Appliquer `supabase/schema.sql` sur la base de production | Le schéma est idempotent et ne détruit rien, mais l'exécution reste une décision |
+| Armer les envois automatiques (`app_config.mails_auto`) si ce n'est pas déjà fait | L'e-mail du 7ᵉ jour ne partira pas tant que l'interrupteur est fermé — c'est le garde-fou voulu |
+
+Et une vérification à faire une fois en production : **imprimer réellement une
+carte d'ami et scanner son QR code avec un téléphone.** Le code a été validé par
+un décodeur indépendant après rendu navigateur, mais l'encre sur le papier est
+le seul juge de la taille retenue (30 mm de côté).

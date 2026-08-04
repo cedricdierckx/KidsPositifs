@@ -98,6 +98,26 @@ et le présent registre est tenu.
 
 ---
 
+### T6 — Tableau d'honneur des familles (« L'Arbre des familles »)
+
+| | |
+|---|---|
+| Finalité | Remercier publiquement, à l'intérieur de l'application, les familles qui en ont fait connaître d'autres |
+| Base légale | **Consentement — art. 6.1.a**, recueilli par une case décochée par défaut, retirable en un clic (art. 7.3) |
+| Personnes concernées | Familles qui ont explicitement demandé à y figurer |
+| Catégories de données | **Un nom d'équipe choisi par la famille** (24 caractères) et un nombre de familles amenées. Rien d'autre |
+| Données **non** publiées | Le nom de la famille (`families.name`), l'adresse e-mail, le prénom d'un enfant, l'identité des familles amenées |
+| Destinataires | Les autres familles **connectées** à l'application. Jamais le web public, jamais un tiers |
+| Conservation | Tant que le consentement dure. Le retrait **efface le nom d'équipe** ; il n'en reste aucune trace |
+| Mesures | Opt-in refusé sans nom d'équipe (accepter sans pseudonyme reviendrait à publier le vrai nom) ; aucun rang attribué à une famille non consentante ; tableau masqué sous un seuil de familles consentantes |
+
+Le **code de parrainage** (`families.referral_code`) et le rattachement d'une
+famille à son parrain (`referrals`) relèvent de **T4 — Liste d'attente et
+invitations** : ce sont les mêmes finalité et base légale. Le parrain ne reçoit
+jamais l'identité de la famille qu'il a amenée, seulement un compteur.
+
+---
+
 ## 3. Sous-traitants
 
 | Sous-traitant | Rôle | Localisation | Encadrement |

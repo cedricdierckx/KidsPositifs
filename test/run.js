@@ -2080,6 +2080,48 @@ test("tableau d'honneur : le code n'expose jamais le nom réel de la famille", (
   assert.ok(/app_config[\s\S]{0,120}classement_seuil/.test(fn), "seuil non réglable depuis app_config");
 });
 
+/* ---------- Conformité documentaire ----------
+ * Le § 1.3 du plan impose que le registre des traitements et la politique de
+ * confidentialité soient à jour DANS LE MÊME LOT que la mise en service. Ces
+ * tests empêchent la dérive : le code ne peut pas avancer sans les documents. */
+test("conformité : le tableau d'honneur figure au registre des traitements", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const r = fs.readFileSync(path.join(__dirname, "..", "REGISTRE-TRAITEMENTS.md"), "utf8");
+  assert.ok(/###\s*T6\b/.test(r), "aucun traitement T6 déclaré");
+  const t6 = r.slice(r.indexOf("### T6"), r.indexOf("## 3. Sous-traitants"));
+  assert.ok(/art\.\s*6\.1\.a/.test(t6), "la base légale (consentement) n'est pas citée");
+  assert.ok(/art\.\s*7\.3/.test(t6), "le droit de retrait (art. 7.3) n'est pas cité");
+  assert.ok(/nom d'équipe/i.test(t6), "le pseudonyme n'est pas décrit");
+  assert.ok(/families\.name|nom de la famille/i.test(t6), "les données NON publiées ne sont pas listées");
+  assert.ok(/prénom d'un enfant/i.test(t6), "l'exclusion des prénoms d'enfants n'est pas écrite");
+});
+
+test("conformité : la politique de confidentialité décrit le tableau et le code", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const c = fs.readFileSync(path.join(__dirname, "..", "confidentialite.html"), "utf8");
+  assert.ok(/tableau d'honneur/i.test(c), "le tableau d'honneur n'est pas mentionné");
+  assert.ok(/consentement explicite/i.test(c), "le consentement explicite n'est pas annoncé");
+  assert.ok(/code\s*<\/strong>|code permanent/i.test(c), "le code de parrainage n'est pas mentionné");
+  assert.ok(/jamais le prénom d'un\s*\n?\s*<strong>enfant|jamais le prénom d'un\s+enfant|prénom d'un\s*\n?\s*enfant/i.test(c.replace(/<\/?strong>/g, "")),
+    "l'exclusion des prénoms d'enfants n'est pas promise");
+  assert.ok(/en un clic/i.test(c), "la révocabilité en un clic n'est pas annoncée");
+  // La promesse la plus importante : rien ne récompense un enfant pour une inscription.
+  assert.ok(/Aucune récompense destinée à un enfant/i.test(c),
+    "la politique ne dit pas que rien ne récompense un enfant pour une inscription");
+});
+
+test("conformité : la FAQ ne promet plus trois parrainages par semaine", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const f = fs.readFileSync(path.join(__dirname, "..", "faq.html"), "utf8");
+  assert.ok(!/trois familles amies par semaine/i.test(f), "le quota hebdomadaire subsiste dans la FAQ");
+  assert.ok(/code permanent/i.test(f), "la FAQ ne décrit pas le code permanent");
+  assert.ok(/Arbre des familles/.test(f), "la FAQ n'explique pas l'Arbre des familles");
+  assert.ok(/trois jours d'utilisation/i.test(f), "la FAQ n'explique pas quand une famille compte");
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

@@ -190,12 +190,20 @@ Une fois la recette **entièrement validée** :
 | `family_members` | liens utilisateur ↔ famille | moyenne |
 | `family_state` | **état de jeu** (enfants, points, écosystème) — le cœur | **haute** |
 | `family_state_history` | 40 instantanés/famille (anti-perte) | **haute** |
-| `invites` / `referrals` | invitations & parrainages | faible |
+| `invites` / `referrals` | invitations & parrainages (`referrals.via_code` = code permanent utilisé) | faible |
 | `waitlist` | e-mails en liste d'attente | moyenne |
 | `feedback` | bugs & suggestions | faible |
 | `app_config` | réglages globaux (liens Stripe, blagues…) | faible |
 | `usage_events` | activité (ouvertures) agrégée | faible |
 | `donations` | dons reçus (Stripe), alimentée par le webhook | moyenne |
+
+Trois colonnes ont été ajoutées à `families` par « L'Arbre des familles » :
+`referral_code` (code de parrainage permanent, index unique partiel),
+`classement_optin` et `classement_pseudo`. **`classement_optin` matérialise un
+consentement RGPD** : une restauration qui le remettrait à `true` par erreur
+publierait un nom d'équipe sans accord. En cas de restauration partielle, cette
+colonne doit être remise à `false` si le doute existe — la famille peut se
+réinscrire en un clic, l'inverse n'est pas réparable.
 | `auth.users` | comptes (géré par Supabase) | **haute** |
 
 Toute migration doit préserver en priorité `family_state`,
