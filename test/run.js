@@ -1981,14 +1981,14 @@ test("carte d'ami : la mission de générosité porte sur le geste, pas sur l'ap
 
 test("carte d'ami : libellés complets dans les 4 langues, paramètres préservés", () => {
   const { api } = construireContexte();
-  const cles = ["carte.titre", "carte.bouton", "carte.mode_emploi", "carte.moi",
-    "carte.invite", "carte.colorier", "carte.parents_titre", "carte.parents_texte", "carte.imprimer"];
+  const cles = ["cami.titre", "cami.bouton", "cami.mode_emploi", "cami.moi",
+    "cami.invite", "cami.colorier", "cami.parents_titre", "cami.parents_texte", "cami.imprimer"];
   Object.keys(api.LANGUES).forEach(lg => {
     cles.forEach(k => assert.ok(typeof api.I18N[lg][k] === "string" && api.I18N[lg][k].length, "manque " + lg + " → " + k));
-    assert.ok(api.I18N[lg]["carte.moi"].includes("{prenom}"), lg + " : {prenom} perdu");
-    assert.ok(api.I18N[lg]["carte.bouton"].includes("{prenom}"), lg + " : {prenom} perdu (bouton)");
-    assert.ok(api.I18N[lg]["carte.invite"].includes("{app}"), lg + " : {app} perdu");
-    assert.ok(api.I18N[lg]["carte.parents_texte"].includes("{app}"), lg + " : {app} perdu (parents)");
+    assert.ok(api.I18N[lg]["cami.moi"].includes("{prenom}"), lg + " : {prenom} perdu");
+    assert.ok(api.I18N[lg]["cami.bouton"].includes("{prenom}"), lg + " : {prenom} perdu (bouton)");
+    assert.ok(api.I18N[lg]["cami.invite"].includes("{app}"), lg + " : {app} perdu");
+    assert.ok(api.I18N[lg]["cami.parents_texte"].includes("{app}"), lg + " : {app} perdu (parents)");
   });
 });
 

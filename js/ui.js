@@ -332,21 +332,21 @@ function modaleCarteAmi(enf) {
   ov.innerHTML = `
     <div class="pin-carte carte-ami-hote">
       <button class="modale-fermer" aria-label="${t("common.fermer")}">✕</button>
-      <div class="pin-titre">${t("carte.titre")}</div>
-      <p class="note">${t("carte.mode_emploi")}</p>
+      <div class="pin-titre">${t("cami.titre")}</div>
+      <p class="note">${t("cami.mode_emploi")}</p>
       <div class="carte-ami-page" id="carte-ami-page">
         <div class="carte-ami-haut">
           <div class="carte-ami-avatar">${avatar}</div>
           <div class="carte-ami-mots">
-            <p class="carte-ami-moi">${t("carte.moi", { prenom })}</p>
-            <p class="carte-ami-invite">${t("carte.invite", { app: APP_NOM })}</p>
+            <p class="carte-ami-moi">${t("cami.moi", { prenom })}</p>
+            <p class="carte-ami-invite">${t("cami.invite", { app: APP_NOM })}</p>
           </div>
         </div>
         ${zonesAColorier()}
-        <p class="carte-ami-colorier-note">${t("carte.colorier")}</p>
+        <p class="carte-ami-colorier-note">${t("cami.colorier")}</p>
         <div class="carte-ami-bas" id="carte-ami-bas"><p class="note">${t("arbre.attente")}</p></div>
       </div>
-      <button id="carte-imprimer" class="gros-bouton planete">🖨️ ${t("carte.imprimer")}</button>
+      <button id="carte-imprimer" class="gros-bouton planete">🖨️ ${t("cami.imprimer")}</button>
     </div>`;
   document.body.appendChild(ov);
   const fermer = () => { document.body.classList.remove("impression-carte"); ov.remove(); };
@@ -359,8 +359,8 @@ function modaleCarteAmi(enf) {
     const lien = lienDepuisCode(code);
     const qr = (typeof qrSvg === "function") ? qrSvg(lien, { classe: "carte-ami-qr", titre: code }) : "";
     bas.innerHTML = `${qr}<div class="carte-ami-parents">
-        <p class="carte-ami-parents-titre">${t("carte.parents_titre")}</p>
-        <p class="carte-ami-parents-texte">${t("carte.parents_texte", { app: APP_NOM })}</p>
+        <p class="carte-ami-parents-titre">${t("cami.parents_titre")}</p>
+        <p class="carte-ami-parents-texte">${t("cami.parents_texte", { app: APP_NOM })}</p>
         <p class="carte-ami-code">${echapper(code)}</p></div>`;
   }).catch(() => {});
 
@@ -5386,7 +5386,7 @@ function sectionsFamille(c) {
   // imprime, l'enfant qui colorie et qui donne.
   const enfCarte = enfantActif();
   if (enfCarte) {
-    const bCarte = el("button", "btn-secondaire", "🖨️ " + t("carte.bouton", { prenom: echapper(enfCarte.prenom || "") }));
+    const bCarte = el("button", "btn-secondaire", "🖨️ " + t("cami.bouton", { prenom: echapper(enfCarte.prenom || "") }));
     bCarte.onclick = () => modaleCarteAmi(enfCarte);
     par.appendChild(bCarte);
   }
