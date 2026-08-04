@@ -142,6 +142,8 @@ function construireContexte() {
       CROISSANCE_DECISIONS, decisionsEnAttente, optionRecommandee, decisionCroissance,
       // encodeur QR (Arbre des familles)
       qrMatrice, qrSvg, QR_TAILLE, QR_CAPACITE,
+      // Arbre des familles : paliers d'effort
+      ARBRE_PALIERS, arbrePalier, arbrePalierSuivant,
     };
   `;
   const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/croissance.js"), lire("js/qr.js"), lire("js/app.js"), lire("js/store.js"), epilogue].join("\n;\n");

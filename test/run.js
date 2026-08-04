@@ -1798,6 +1798,84 @@ test("Arbre des familles : le quota hebdomadaire n'est plus annoncé nulle part"
       lg + " : le quota de 3/semaine subsiste dans parr.note"));
 });
 
+/* ---------- Arbre des familles : paliers d'effort ---------- */
+test("paliers : atteignables par tous, jamais perdus, et sans rang comparatif", () => {
+  const { api } = construireContexte();
+  assert.strictEqual(api.arbrePalier(0), 0, "aucune famille : aucun palier");
+  assert.strictEqual(api.arbrePalier(1), 1);
+  assert.strictEqual(api.arbrePalier(2), 1, "entre deux seuils, le palier reste acquis");
+  assert.strictEqual(api.arbrePalier(3), 2);
+  assert.strictEqual(api.arbrePalier(4), 2);
+  assert.strictEqual(api.arbrePalier(5), 3);
+  assert.strictEqual(api.arbrePalier(9), 3);
+  assert.strictEqual(api.arbrePalier(10), 4);
+  assert.strictEqual(api.arbrePalier(999), 4, "le dernier palier ne se dépasse pas");
+  // Un palier ne se perd jamais : la fonction est monotone croissante.
+  let precedent = 0;
+  for (let n = 0; n <= 30; n++) { const p = api.arbrePalier(n); assert.ok(p >= precedent, "recul en " + n); precedent = p; }
+});
+
+test("paliers : le palier suivant indique un écart avec soi, pas avec les autres", () => {
+  const { api } = construireContexte();
+  assert.strictEqual(api.arbrePalierSuivant(0).seuil, 1);
+  assert.strictEqual(api.arbrePalierSuivant(1).seuil, 3);
+  assert.strictEqual(api.arbrePalierSuivant(4).seuil, 5);
+  assert.strictEqual(api.arbrePalierSuivant(9).seuil, 10);
+  assert.strictEqual(api.arbrePalierSuivant(10), null, "au dernier palier, plus rien à viser");
+  // Les seuils sont strictement croissants et chacun porte un emoji.
+  let s = 0;
+  api.ARBRE_PALIERS.forEach(p => {
+    assert.ok(p.seuil > s, "seuils non croissants"); s = p.seuil;
+    assert.ok(typeof p.emoji === "string" && p.emoji.length, "emoji manquant au palier " + p.rang);
+  });
+});
+
+test("Arbre des familles : bilan et jauge traduits dans les 4 langues", () => {
+  const { api } = construireContexte();
+  const cles = ["arbre.p1", "arbre.p2", "arbre.p3", "arbre.p4", "arbre.palier_atteint",
+    "arbre.palier_aucun", "arbre.compte", "arbre.compte_detail", "arbre.manque",
+    "arbre.tout_atteint", "arbre.ensemble", "arbre.ensemble_note",
+    "arbre.enfant_zero", "arbre.enfant_une", "arbre.enfant_n"];
+  Object.keys(api.LANGUES).forEach(lg => cles.forEach(k =>
+    assert.ok(typeof api.I18N[lg][k] === "string" && api.I18N[lg][k].length, "manque " + lg + " → " + k)));
+  // Les paramètres attendus par le code doivent survivre à la traduction.
+  Object.keys(api.LANGUES).forEach(lg => {
+    assert.ok(api.I18N[lg]["arbre.manque"].includes("{n}") && api.I18N[lg]["arbre.manque"].includes("{nom}"),
+      lg + " : paramètres perdus dans arbre.manque");
+    assert.ok(api.I18N[lg]["arbre.ensemble"].includes("{n}") && api.I18N[lg]["arbre.ensemble"].includes("{jalon}"),
+      lg + " : paramètres perdus dans arbre.ensemble");
+    assert.ok(api.I18N[lg]["arbre.compte_detail"].includes("{arrivees}") && api.I18N[lg]["arbre.compte_detail"].includes("{vivantes}"),
+      lg + " : paramètres perdus dans arbre.compte_detail");
+  });
+});
+
+test("Arbre des familles : l'enfant n'est jamais récompensé pour un parrainage", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const racine = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(racine, "js/ui.js"), "utf8");
+  const data = fs.readFileSync(path.join(racine, "js/data.js"), "utf8");
+  const app = fs.readFileSync(path.join(racine, "js/app.js"), "utf8");
+  // Aucun badge, aucune espèce, aucune monnaie ne doit dépendre d'un filleul.
+  // On borne l'extrait au catalogue lui-même, sinon on teste tout le fichier.
+  const debut = data.indexOf("const BADGES_CATALOGUE");
+  const catalogue = data.slice(debut, data.indexOf("\n];", debut));
+  assert.ok(debut > -1 && catalogue.length > 200, "catalogue de badges introuvable");
+  assert.ok(!/(filleul|parrain|installees)/i.test(catalogue),
+    "aucun badge d'enfant ne doit dépendre d'un parrainage");
+  assert.ok(!/verifierBadges[\s\S]{0,2000}(filleul|parrain|installees)/i.test(app),
+    "l'attribution des badges ne doit jamais lire un compteur de parrainage");
+  // Le bloc enfant doit rester contemplatif : pas de bouton de partage.
+  // Bornage sur la fin réelle de la fonction, sinon l'extrait déborde sur la
+  // suivante (qui, elle, a parfaitement le droit de parler de parrainage).
+  const debutBloc = ui.indexOf("function blocArbreEnfant");
+  const finBloc = ui.indexOf("\n}", debutBloc);
+  const bloc = ui.slice(debutBloc, finBloc);
+  assert.ok(debutBloc > -1 && bloc.includes("arbreSvgFamilles"), "bloc enfant introuvable");
+  assert.ok(!/modaleParrainage|creerParrainage|codeParrainage/.test(bloc),
+    "le bloc enfant ne doit proposer aucun geste de parrainage");
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

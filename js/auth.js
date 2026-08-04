@@ -787,6 +787,20 @@ async function regenererCodeParrainage() {
   _codeParrainageCache = data || null;
   return _codeParrainageCache;
 }
+// Bilan de SA famille : familles arrivées, familles vivantes, palier atteint
+// et ce qui manque pour le suivant. Aucune identité de filleul n'est renvoyée.
+async function parrainageBilan() {
+  if (!familleId || modeDemo) return null;
+  const { data, error } = await sb.rpc("parrainage_bilan", { p_family: familleId });
+  return error ? null : (data || null);
+}
+// Jauge collective : des agrégats seulement, pour transformer un classement
+// en quête commune.
+async function parrainageJauge() {
+  if (modeDemo) return null;
+  const { data, error } = await sb.rpc("parrainage_jauge");
+  return error ? null : (data || null);
+}
 async function infoParrainageCode(code) {
   try {
     const { data } = await sb.rpc("referral_info_par_code", { p_code: code });

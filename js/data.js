@@ -675,6 +675,30 @@ const BADGES_CATALOGUE = [
   { id: "equipe",     emoji: "🤝", nom: "Esprit d'équipe",          comment: "Aide à débloquer une carte surprise" }
 ];
 
+/* ---- L'Arbre des familles : paliers d'effort ----------------------
+ * Quatre paliers, atteignables par TOUTE famille et jamais perdus. Ils ne
+ * dépendent pas de ce que font les autres familles : c'est ce qui permet
+ * d'afficher un tableau d'honneur sans fabriquer des perdants.
+ * Le seuil se compte en familles VIVANTES (trois jours d'ouverture), jamais
+ * en liens envoyés — voir parrainage_bilan() dans supabase/schema.sql.
+ * Les noms sont dans les traductions (arbre.p1 … arbre.p4). */
+const ARBRE_PALIERS = [
+  { rang: 1, seuil: 1,  emoji: "🌱" },
+  { rang: 2, seuil: 3,  emoji: "🌿" },
+  { rang: 3, seuil: 5,  emoji: "🌳" },
+  { rang: 4, seuil: 10, emoji: "🏞️" }
+];
+// Palier atteint pour n familles vivantes (0 = aucun encore).
+function arbrePalier(n) {
+  let rang = 0;
+  ARBRE_PALIERS.forEach(p => { if ((n || 0) >= p.seuil) rang = p.rang; });
+  return rang;
+}
+// Palier suivant, ou null quand le dernier est atteint.
+function arbrePalierSuivant(n) {
+  return ARBRE_PALIERS.find(p => (n || 0) < p.seuil) || null;
+}
+
 /* ---- Cartes surprises (objectifs d'équipe) ------------------------
  * Activités à faire EN FAMILLE, débloquées ensemble : les enfants
  * donnent volontairement des Cœurs 💛 à une carte commune jusqu'à

@@ -137,6 +137,66 @@ async function reinitPinParMail(apresOk) {
   });
 }
 
+/* ---------- L'Arbre des familles : le dessin partagé ----------
+ * Chaque famille VIVANTE amenée par la famille fait apparaître une feuille.
+ * Volontairement sans chiffre pour l'enfant : on voit l'arbre se garnir, on ne
+ * se compare à personne. Au-delà de dix feuilles, un « +N » discret. */
+const ARBRE_FEUILLES_MAX = 10;
+// Branches : [départ sur le tronc, extrémité]. Toujours dessinées, même sans
+// feuille — un arbre nu qui se couvre de feuilles se comprend d'un coup d'œil,
+// là où une couronne de pastilles ressemble à une jauge circulaire.
+const ARBRE_BRANCHES = [
+  [60, 88, 36, 72], [60, 82, 84, 66], [60, 70, 42, 54],
+  [60, 64, 78, 48], [60, 54, 50, 38], [60, 52, 70, 36]
+];
+// Feuilles, dans l'ordre d'apparition : du sommet vers le bas, en alternant à
+// gauche et à droite, pour que l'arbre paraisse toujours équilibré.
+const ARBRE_FEUILLES = [
+  [60, 30], [48, 36], [72, 34], [40, 52], [80, 46],
+  [34, 70], [86, 64], [54, 46], [68, 48], [60, 58]
+];
+function arbreSvgFamilles(n, options) {
+  const o = options || {};
+  const total = Math.max(0, parseInt(n, 10) || 0);
+  const visibles = Math.min(total, ARBRE_FEUILLES_MAX);
+  const branches = ARBRE_BRANCHES.map(([x1, y1, x2, y2]) =>
+    `<path d="M${x1},${y1} Q${(x1 + x2) / 2},${y2 + 4} ${x2},${y2}" fill="none" stroke="#b07a45" stroke-width="3.5" stroke-linecap="round"/>`).join("");
+  const feuilles = ARBRE_FEUILLES.map(([cx, cy], i) => {
+    const vive = i < visibles;
+    // Ellipse inclinée : lisible comme une feuille dès 24 px de large.
+    return `<ellipse cx="${cx}" cy="${cy}" rx="11" ry="7.5"` +
+      ` transform="rotate(${i % 2 ? 28 : -28} ${cx} ${cy})"` +
+      ` fill="${vive ? "#39c0a0" : "#f2f6f5"}" stroke="${vive ? "#2aa88a" : "#dde7e3"}" stroke-width="1.5"/>`;
+  }).join("");
+  const surplus = total > ARBRE_FEUILLES_MAX
+    ? `<circle cx="97" cy="30" r="14" fill="#2aa88a"/>` +
+      `<text x="97" y="35" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">+${total - ARBRE_FEUILLES_MAX}</text>`
+    : "";
+  return `<svg viewBox="0 0 120 118" class="arbre-dessin${o.classe ? " " + o.classe : ""}" role="img" aria-label="${o.alt || ""}">` +
+    `<rect x="26" y="109" width="68" height="5" rx="2.5" fill="#e6ecf2"/>` +
+    `<path d="M55,110 C55,92 54,74 57,44 L63,44 C66,74 65,92 65,110 Z" fill="#b07a45"/>` +
+    branches + feuilles + surplus + `</svg>`;
+}
+
+/* Bloc « Arbre des familles » côté ENFANT : le dessin, une phrase, rien à
+ * compter et rien à faire. L'enfant n'est jamais chargé de recruter (voir
+ * PLAN-PARRAINAGE § 1.2) ; il voit seulement l'arbre de la famille grandir. */
+function blocArbreEnfant() {
+  const sec = el("section", "carte arbre-enfant");
+  sec.innerHTML = `<h2>${t("arbre.titre")}</h2>
+    <div class="arbre-enfant-corps">${arbreSvgFamilles(0, { alt: t("arbre.titre") })}
+    <p class="note">${t("arbre.attente")}</p></div>`;
+  if (typeof parrainageBilan !== "function") return sec;
+  parrainageBilan().then(b => {
+    const n = b ? (b.installees || 0) : 0;
+    const phrase = n === 0 ? t("arbre.enfant_zero")
+                 : (n === 1 ? t("arbre.enfant_une") : t("arbre.enfant_n", { n }));
+    sec.querySelector(".arbre-enfant-corps").innerHTML =
+      arbreSvgFamilles(n, { alt: phrase }) + `<p class="arbre-enfant-phrase">${phrase}</p>`;
+  }).catch(() => sec.remove());
+  return sec;
+}
+
 /* Modale de partage : le code permanent de la famille, son QR code et le lien.
  * Un seul code, réutilisable indéfiniment — c'est tout l'intérêt : il se colle
  * une fois dans le groupe de parents de l'école, au lieu d'exiger un
@@ -3882,6 +3942,9 @@ function vueFamille(c) {
 
   // Cartes surprises : objectif d'équipe à débloquer ensemble.
   c.appendChild(blocCartesSurprises(enf));
+
+  // L'Arbre des familles : purement contemplatif pour l'enfant.
+  if (!(typeof modeDemo !== "undefined" && modeDemo)) c.appendChild(blocArbreEnfant());
 }
 
 /* ---------- Vue Planète : écosystème ---------- */
@@ -5044,9 +5107,49 @@ function sectionsFamille(c) {
   // renouveler. C'est le geste le plus court possible pour offrir l'app.
   const par = el("section", "carte");
   par.innerHTML = `<h2>${t("arbre.titre")}</h2>
+    <div id="par-bilan" class="arbre-bilan"></div>
     <p class="note">${t("arbre.modale_note")}</p>
-    <div id="par-code" class="arbre-code-bloc"><p class="note">${t("arbre.attente")}</p></div>`;
+    <div id="par-code" class="arbre-code-bloc"><p class="note">${t("arbre.attente")}</p></div>
+    <div id="par-jauge" class="arbre-jauge-bloc"></div>`;
   c.appendChild(par);
+
+  // Bilan : ce que la famille a semé, et son palier. Jamais un rang, jamais un
+  // écart avec les autres familles — seulement l'écart avec son PROPRE palier
+  // suivant (PLAN-PARRAINAGE § 1.1).
+  const zoneBilan = par.querySelector("#par-bilan");
+  parrainageBilan().then(b => {
+    if (!b) { zoneBilan.remove(); return; }
+    const inst = b.installees || 0, inv = b.invitees || 0;
+    const rang = arbrePalier(inst);
+    const suivant = arbrePalierSuivant(inst);
+    const palierP = ARBRE_PALIERS.find(p => p.rang === rang);
+    const titre = rang
+      ? `<p class="arbre-palier"><span class="arbre-palier-emoji">${palierP.emoji}</span>
+           <span>${t("arbre.palier_atteint", { nom: t("arbre.p" + rang) })}</span></p>`
+      : `<p class="arbre-palier arbre-palier-vide"><span class="arbre-palier-emoji">🌱</span>
+           <span>${t("arbre.palier_aucun")}</span></p>`;
+    // « Arrivées » et « vivantes » sont distinguées : un filleul ne compte
+    // qu'une fois sa famille vivante (trois jours d'ouverture).
+    const compte = inv > inst
+      ? t("arbre.compte_detail", { arrivees: inv, vivantes: inst })
+      : t("arbre.compte", { n: inst });
+    const reste = suivant
+      ? `<p class="arbre-reste">${t("arbre.manque", { n: Math.max(suivant.seuil - inst, 0), emoji: suivant.emoji, nom: t("arbre.p" + suivant.rang) })}</p>`
+      : `<p class="arbre-reste">${t("arbre.tout_atteint")}</p>`;
+    zoneBilan.innerHTML = arbreSvgFamilles(inst, { classe: "arbre-dessin-parent", alt: compte }) +
+      `<div class="arbre-bilan-texte">${titre}<p class="note">${compte}</p>${reste}</div>`;
+  }).catch(() => zoneBilan.remove());
+
+  // Jauge collective : la croissance devient une quête commune plutôt qu'un
+  // affrontement. Le jalon (25, 50, 100…) n'est PAS le plafond de familles.
+  const zoneJauge = par.querySelector("#par-jauge");
+  parrainageJauge().then(j => {
+    if (!j || !j.jalon) { zoneJauge.remove(); return; }
+    const part = Math.max(0, Math.min(100, Math.round((j.familles / j.jalon) * 100)));
+    zoneJauge.innerHTML = `<p class="arbre-jauge-titre">${t("arbre.ensemble", { n: j.familles, jalon: j.jalon })}</p>
+      <div class="arbre-jauge"><div class="arbre-jauge-rempl" style="width:${part}%"></div></div>
+      <p class="note">${t("arbre.ensemble_note")}</p>`;
+  }).catch(() => zoneJauge.remove());
   const blocCodePar = par.querySelector("#par-code");
   const afficherCodePar = (code) => {
     if (!code) { blocCodePar.innerHTML = `<p class="note">${t("arbre.indispo")}</p>`; return; }

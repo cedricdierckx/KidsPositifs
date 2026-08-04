@@ -682,6 +682,25 @@ main{max-width:680px; margin:0 auto; padding:14px}
    maximal et la zone de silence normalisée (déjà incluse dans le SVG). */
 .arbre-qr{width:180px; height:180px; background:#fff; border-radius:10px;
   border:1px solid #e6ecf2; padding:6px}
+/* Le dessin de l'arbre : une feuille par famille vivante amenée. */
+.arbre-dessin{width:120px; height:118px; flex:0 0 auto}
+.arbre-bilan{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:6px 0 10px}
+.arbre-bilan-texte{flex:1 1 170px; min-width:170px; text-align:left}
+.arbre-palier{margin:0 0 4px; font-size:15px; display:flex; align-items:center; gap:8px}
+.arbre-palier-emoji{font-size:22px}
+.arbre-palier-vide{color:var(--doux)}
+.arbre-reste{margin:6px 0 0; font-size:14px; background:#eafaf2; color:#1d7a52;
+  border:1px solid #bfe9da; border-radius:10px; padding:8px 10px}
+/* Côté enfant : le dessin et une phrase, sans aucun chiffre à comparer. */
+.arbre-enfant-corps{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.arbre-enfant-phrase{flex:1 1 150px; margin:0; font-size:16px; font-weight:700; text-align:left}
+/* Jauge collective : une quête commune, jamais un classement. */
+.arbre-jauge-bloc{margin-top:12px}
+.arbre-jauge-titre{margin:0 0 6px; font-size:15px}
+.arbre-jauge{height:14px; background:#eef4f2; border-radius:8px; overflow:hidden;
+  border:1px solid #dde7e3}
+.arbre-jauge-rempl{height:100%; background:linear-gradient(90deg,#39c0a0,#2aa88a);
+  border-radius:8px; transition:width .6s ease}
 
 /* Sélecteur de langue (écran d'accueil public) */
 .choix-langue{margin:-4px 0 8px; justify-content:center}

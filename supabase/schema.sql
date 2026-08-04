@@ -355,6 +355,65 @@ begin
     values (parrain, auth.uid(), now(), p_family, code);
 end; $$;
 
+-- ---------- L'Arbre des familles : bilan d'une famille et jauge collective ----
+-- Règle cardinale : **un filleul compte quand sa famille est vivante**, c'est-
+-- à-dire quand elle a ouvert l'application trois jours différents. Deux effets,
+-- indissociables : créer des comptes jetables ne rapporte rien, et le décompte
+-- récompense les familles bien choisies plutôt que le volume de liens envoyés.
+-- Aucune donnée d'enfant n'est lue : seuls usage_events (jours d'ouverture) et
+-- referrals interviennent. Aucune identité de filleul n'est renvoyée au parrain.
+create or replace function public.arbre_jours_actifs(p_family uuid)
+returns integer language sql stable security definer set search_path = public as $$
+  select coalesce(count(distinct day), 0)::integer from usage_events where family_id = p_family;
+$$;
+
+create or replace function public.parrainage_bilan(p_family uuid)
+returns json language plpgsql security definer set search_path = public as $$
+declare invitees integer; installees integer; palier integer; suivant integer; resultat json;
+begin
+  if not is_family_member(p_family) and not is_admin() then raise exception 'Accès refusé'; end if;
+  select count(*) into invitees
+    from referrals r where r.family_id = p_family and r.accepted_at is not null;
+  select count(*) into installees
+    from referrals r
+    where r.family_id = p_family and r.accepted_family is not null
+      and arbre_jours_actifs(r.accepted_family) >= 3;
+  -- Paliers d'effort : atteignables par toute famille, jamais perdus, et
+  -- indépendants de ce que font les autres.
+  palier := case when installees >= 10 then 4 when installees >= 5 then 3
+                 when installees >= 3 then 2 when installees >= 1 then 1 else 0 end;
+  suivant := case palier when 0 then 1 when 1 then 3 when 2 then 5 when 3 then 10 else null end;
+  select json_build_object(
+    'invitees', invitees,               -- familles arrivées grâce à cette famille
+    'installees', installees,           -- celles qui vivent vraiment (3 jours)
+    'palier', palier,                   -- 0 à 4
+    'palier_suivant', suivant,          -- seuil du palier suivant (null si dernier)
+    'manque', case when suivant is null then 0 else greatest(suivant - installees, 0) end
+  ) into resultat;
+  return resultat;
+end; $$;
+
+-- Jauge collective : des agrégats, jamais une identité. Le denominateur est un
+-- jalon d'encouragement (25, 50, 100…), délibérément PAS le plafond de
+-- familles : afficher un plafond comme objectif serait promettre une fête au
+-- moment précis où les inscriptions basculent en liste d'attente.
+create or replace function public.parrainage_jauge()
+returns json language plpgsql security definer set search_path = public as $$
+declare familles integer; filleuls integer; jalon integer; precedent integer; resultat json;
+begin
+  if auth.uid() is null then raise exception 'Accès refusé'; end if;
+  select count(*) into familles from families;
+  select count(*) into filleuls
+    from referrals r where r.accepted_family is not null and arbre_jours_actifs(r.accepted_family) >= 3;
+  select min(v) into jalon from (values (25),(50),(100),(250),(500)) as j(v) where v > familles;
+  select max(v) into precedent from (values (0),(25),(50),(100),(250),(500)) as j(v) where v <= familles;
+  select json_build_object(
+    'familles', familles, 'filleuls', filleuls,
+    'jalon', jalon, 'jalon_precedent', coalesce(precedent, 0)
+  ) into resultat;
+  return resultat;
+end; $$;
+
 -- ---------- Liste d'attente (inscriptions sur invitation uniquement) ----------
 create table if not exists public.waitlist (
   email text primary key,
@@ -1167,6 +1226,9 @@ grant execute on function public.referral_code_famille(uuid)    to authenticated
 grant execute on function public.regenerer_referral_code(uuid)  to authenticated;
 grant execute on function public.referral_info_par_code(text)   to anon, authenticated;
 grant execute on function public.claim_referral_code(text, uuid) to authenticated;
+grant execute on function public.arbre_jours_actifs(uuid)       to authenticated;
+grant execute on function public.parrainage_bilan(uuid)         to authenticated;
+grant execute on function public.parrainage_jauge()             to authenticated;
 grant execute on function public.join_waitlist(text, text)            to anon, authenticated;
 grant execute on function public.admin_list_waitlist()          to authenticated;
 grant execute on function public.admin_activation()             to authenticated;
