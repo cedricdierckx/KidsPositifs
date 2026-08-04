@@ -69,6 +69,10 @@ const MISSIONS = [
   { id: "lit_faire",     cat: "famille", emoji: "🛏️", titre: "Faire son lit",            ageMin: 3, points: 2, type: "quotidien" },
   { id: "ranger_jouets", cat: "famille", emoji: "🧹", titre: "Ranger les jouets",         ageMin: 2, points: 2, type: "quotidien" },
   { id: "partager",      cat: "famille", emoji: "🤲", titre: "Partager un jouet",         ageMin: 2, points: 2, type: "quotidien" },
+  // Générosité : faire découvrir quelque chose qu'on aime à un copain. La
+  // mission se valide sur le GESTE, jamais sur son résultat — voir
+  // PLAN-PARRAINAGE § 1.2 : l'enfant n'est jamais payé pour une inscription.
+  { id: "faire_decouvrir", cat: "famille", emoji: "🫂", titre: "Faire découvrir un jeu à un copain", ageMin: 4, points: 2, type: "ponctuel" },
   { id: "jouer_calme",   cat: "famille", emoji: "🧩", titre: "Jouer calmement",           ageMin: 2, points: 1, type: "quotidien" },
   { id: "chaussures",    cat: "famille", emoji: "👟", titre: "Mettre ses chaussures seul", ageMin: 3, points: 1, type: "quotidien" },
   { id: "aider_cuisine", cat: "famille", emoji: "🍳", titre: "Aider à cuisiner",          ageMin: 4, points: 2, type: "quotidien" },

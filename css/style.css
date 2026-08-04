@@ -707,6 +707,56 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* Carte du 7e jour : même traitement que « beau moment », jamais plus insistant. */
 .arbre-j7{border-left:4px solid #39c0a0}
 
+/* ---- La carte d'ami (à imprimer, à colorier, à donner) ---- */
+.carte-ami-hote{max-width:400px; position:relative}
+.carte-ami-page{background:#fff; border:2px dashed #cbd6e2; border-radius:14px;
+  padding:14px; margin:10px 0; text-align:center}
+.carte-ami-haut{display:flex; align-items:center; gap:12px; text-align:left}
+.carte-ami-avatar{flex:0 0 86px}
+.carte-ami-avatar .av-svg{width:86px; height:86px}
+.carte-ami-mots{flex:1 1 auto}
+.carte-ami-moi{margin:0 0 4px; font-size:20px; font-weight:800}
+.carte-ami-invite{margin:0; font-size:16px; font-weight:700; color:#1d7a52}
+.carte-ami-colorier{width:100%; height:70px; margin:8px 0 0}
+.carte-ami-colorier-note{margin:0 0 8px; font-size:13px; color:var(--doux)}
+.carte-ami-bas{display:flex; align-items:center; gap:12px; text-align:left;
+  border-top:1px dashed #cbd6e2; padding-top:10px; flex-wrap:wrap;
+  justify-content:center}
+/* 37 modules : il faut au moins 4 px par module pour qu'un telephone lise
+   sans effort, et 30 mm sur le papier (0,8 mm par module). En dessous, le
+   code est joli et inutilisable. */
+.carte-ami-qr{width:150px; height:150px; flex:0 0 150px}
+.carte-ami-parents{flex:1 1 auto}
+.carte-ami-parents-titre{margin:0 0 2px; font-size:12px; font-weight:800; text-transform:uppercase;
+  letter-spacing:.06em; color:var(--doux)}
+.carte-ami-parents-texte{margin:0 0 4px; font-size:12px; line-height:1.35}
+.carte-ami-code{margin:0; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:15px; font-weight:800; letter-spacing:.12em}
+
+/* ---- Impression ----
+   Seule la carte d'ami s'imprime : le reste de l'application n'a aucun sens
+   sur papier. Fond blanc imposé et couleurs conservées (le QR exige le
+   contraste maximal, et l'avatar perdrait son sens en niveaux de gris). */
+@media print {
+  body.impression-carte{background:#fff}
+  body.impression-carte .haut-fixe,
+  body.impression-carte .navbar,
+  body.impression-carte #contenu,
+  body.impression-carte #toast,
+  body.impression-carte #confettis,
+  body.impression-carte .modale-fermer,
+  body.impression-carte .pin-titre,
+  body.impression-carte .carte-ami-hote > .note,
+  body.impression-carte #carte-imprimer{display:none !important}
+  body.impression-carte .pin-modal{position:static; background:none; display:block; padding:0}
+  body.impression-carte .carte-ami-hote{max-width:none; box-shadow:none; border:none; padding:0}
+  body.impression-carte .carte-ami-page{border:2px dashed #999; page-break-inside:avoid;
+    max-width:130mm; margin:0 auto}
+  body.impression-carte .carte-ami-qr{width:30mm; height:30mm; flex:0 0 30mm}
+  .carte-ami-page, .carte-ami-page *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+  @page{margin:12mm}
+}
+
 /* Sélecteur de langue (écran d'accueil public) */
 .choix-langue{margin:-4px 0 8px; justify-content:center}
 .choix-langue select{border:2px solid #e3edf5; border-radius:10px; padding:6px 10px;

@@ -212,6 +212,74 @@ function blocArbreEnfant() {
   return sec;
 }
 
+/* ---------- La carte d'ami : le seul objet confié à l'enfant ----------
+ * Une page à imprimer, à colorier, et à donner à un copain. L'enfant n'est
+ * jamais chargé de recruter (PLAN-PARRAINAGE § 1.2) : il montre quelque chose
+ * dont il est fier. La transmission passe par les parents — le copain montre
+ * la carte chez lui, et c'est SON parent qui scanne le code.
+ * Aucune donnée du copain n'est jamais saisie : la carte est du papier. */
+function zonesAColorier() {
+  // Contours vides, épais, sans remplissage : faits pour être coloriés au
+  // crayon par un enfant de 4 ans (traits de 2,5 px à l'impression).
+  const f = 'fill="none" stroke="#9fb3c8" stroke-width="2.5" stroke-linejoin="round"';
+  return `<svg viewBox="0 0 300 70" class="carte-ami-colorier" role="presentation">
+    <circle cx="38" cy="35" r="20" ${f}/>
+    ${[0, 45, 90, 135, 180, 225, 270, 315].map(a => {
+      const r = a * Math.PI / 180;
+      return `<line x1="${(38 + Math.cos(r) * 24).toFixed(1)}" y1="${(35 + Math.sin(r) * 24).toFixed(1)}" x2="${(38 + Math.cos(r) * 31).toFixed(1)}" y2="${(35 + Math.sin(r) * 31).toFixed(1)}" stroke="#9fb3c8" stroke-width="2.5" stroke-linecap="round"/>`;
+    }).join("")}
+    <path d="M150,60 C120,40 124,18 138,18 c6,0 10,4 12,8 2,-4 6,-8 12,-8 14,0 18,22 -12,42 z" ${f}/>
+    <path d="M252,14 l7,15 16,2 -12,11 3,16 -14,-8 -14,8 3,-16 -12,-11 16,-2 z" ${f}/>
+  </svg>`;
+}
+
+function modaleCarteAmi(enf) {
+  const prenom = (enf && enf.prenom) ? echapper(enf.prenom) : "";
+  const avatar = (typeof buildAvatar === "function" && enf && enf.avatar) ? buildAvatar(enf.avatar) : "";
+  const ov = el("div", "pin-modal carte-ami-modal");
+  ov.innerHTML = `
+    <div class="pin-carte carte-ami-hote">
+      <button class="modale-fermer" aria-label="${t("common.fermer")}">✕</button>
+      <div class="pin-titre">${t("carte.titre")}</div>
+      <p class="note">${t("carte.mode_emploi")}</p>
+      <div class="carte-ami-page" id="carte-ami-page">
+        <div class="carte-ami-haut">
+          <div class="carte-ami-avatar">${avatar}</div>
+          <div class="carte-ami-mots">
+            <p class="carte-ami-moi">${t("carte.moi", { prenom })}</p>
+            <p class="carte-ami-invite">${t("carte.invite", { app: APP_NOM })}</p>
+          </div>
+        </div>
+        ${zonesAColorier()}
+        <p class="carte-ami-colorier-note">${t("carte.colorier")}</p>
+        <div class="carte-ami-bas" id="carte-ami-bas"><p class="note">${t("arbre.attente")}</p></div>
+      </div>
+      <button id="carte-imprimer" class="gros-bouton planete">🖨️ ${t("carte.imprimer")}</button>
+    </div>`;
+  document.body.appendChild(ov);
+  const fermer = () => { document.body.classList.remove("impression-carte"); ov.remove(); };
+  ov.querySelector(".modale-fermer").onclick = fermer;
+  ov.addEventListener("click", e => { if (e.target === ov) fermer(); });
+
+  codeParrainage().then(code => {
+    const bas = ov.querySelector("#carte-ami-bas");
+    if (!code) { bas.innerHTML = `<p class="note">${t("arbre.indispo")}</p>`; return; }
+    const lien = lienDepuisCode(code);
+    const qr = (typeof qrSvg === "function") ? qrSvg(lien, { classe: "carte-ami-qr", titre: code }) : "";
+    bas.innerHTML = `${qr}<div class="carte-ami-parents">
+        <p class="carte-ami-parents-titre">${t("carte.parents_titre")}</p>
+        <p class="carte-ami-parents-texte">${t("carte.parents_texte", { app: APP_NOM })}</p>
+        <p class="carte-ami-code">${echapper(code)}</p></div>`;
+  }).catch(() => {});
+
+  ov.querySelector("#carte-imprimer").onclick = () => {
+    // La classe bascule les règles @media print : seule la carte s'imprime.
+    document.body.classList.add("impression-carte");
+    if (typeof window.print === "function") window.print();
+    setTimeout(() => document.body.classList.remove("impression-carte"), 1000);
+  };
+}
+
 /* Modale de partage : le code permanent de la famille, son QR code et le lien.
  * Un seul code, réutilisable indéfiniment — c'est tout l'intérêt : il se colle
  * une fois dans le groupe de parents de l'école, au lieu d'exiger un
@@ -5221,6 +5289,15 @@ function sectionsFamille(c) {
     blocCodePar.appendChild(bRegen);
   };
   codeParrainage().then(afficherCodePar);
+
+  // La carte d'ami : à imprimer pour l'enfant actif. C'est le parent qui
+  // imprime, l'enfant qui colorie et qui donne.
+  const enfCarte = enfantActif();
+  if (enfCarte) {
+    const bCarte = el("button", "btn-secondaire", "🖨️ " + t("carte.bouton", { prenom: echapper(enfCarte.prenom || "") }));
+    bCarte.onclick = () => modaleCarteAmi(enfCarte);
+    par.appendChild(bCarte);
+  }
 
   // ----- Abonnement (masqué provisoirement : early adopters = gratuit) -----
   if (AFFICHER_ABONNEMENT) {

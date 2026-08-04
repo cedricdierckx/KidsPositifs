@@ -1962,6 +1962,61 @@ test("7e jour : le chantier de l'Arbre est déclaré, avec son e-mail", () => {
     "m_parrainage annonce encore un quota");
 });
 
+/* ---------- La carte d'ami & la mission de générosité ---------- */
+test("carte d'ami : la mission de générosité porte sur le geste, pas sur l'app", () => {
+  const { api } = construireContexte();
+  const mi = api.MISSIONS.find(m => m.id === "faire_decouvrir");
+  assert.ok(mi, "mission faire_decouvrir absente");
+  assert.strictEqual(mi.cat, "famille", "la générosité relève des Cœurs 💛");
+  assert.strictEqual(mi.ageMin, 4);
+  assert.ok(mi.points > 0 && mi.points <= 3, "des points ordinaires, ni prime ni bonus");
+  // Le libellé ne doit nommer NI l'app NI le parrainage : la mission se valide
+  // sur le geste, même si personne ne s'inscrit jamais.
+  const libelles = [mi.titre].concat(Object.keys(api.LANGUES)
+    .map(lg => api.I18N[lg]["mission.faire_decouvrir"]).filter(Boolean));
+  assert.ok(libelles.length >= 4, "traductions manquantes pour la mission");
+  libelles.forEach(l => assert.ok(!/famiteam|parrain|invit|filleul/i.test(l),
+    "le libellé instrumentalise l'enfant : " + l));
+});
+
+test("carte d'ami : libellés complets dans les 4 langues, paramètres préservés", () => {
+  const { api } = construireContexte();
+  const cles = ["carte.titre", "carte.bouton", "carte.mode_emploi", "carte.moi",
+    "carte.invite", "carte.colorier", "carte.parents_titre", "carte.parents_texte", "carte.imprimer"];
+  Object.keys(api.LANGUES).forEach(lg => {
+    cles.forEach(k => assert.ok(typeof api.I18N[lg][k] === "string" && api.I18N[lg][k].length, "manque " + lg + " → " + k));
+    assert.ok(api.I18N[lg]["carte.moi"].includes("{prenom}"), lg + " : {prenom} perdu");
+    assert.ok(api.I18N[lg]["carte.bouton"].includes("{prenom}"), lg + " : {prenom} perdu (bouton)");
+    assert.ok(api.I18N[lg]["carte.invite"].includes("{app}"), lg + " : {app} perdu");
+    assert.ok(api.I18N[lg]["carte.parents_texte"].includes("{app}"), lg + " : {app} perdu (parents)");
+  });
+});
+
+test("carte d'ami : le QR reste lisible — 4 px par module à l'écran, 30 mm au papier", () => {
+  const fs = require("fs");
+  const css = fs.readFileSync(require("path").join(__dirname, "..", "css/style.css"), "utf8");
+  const { api } = construireContexte();
+  const modules = api.QR_TAILLE + 8;                       // 29 modules + 2×4 de marge
+  const ecran = /\.carte-ami-qr\{width:(\d+)px/.exec(css);
+  assert.ok(ecran, "règle .carte-ami-qr introuvable");
+  assert.ok(parseInt(ecran[1], 10) / modules >= 4,
+    `${ecran[1]} px pour ${modules} modules : moins de 4 px par module, illisible par un téléphone`);
+  const papier = /impression-carte \.carte-ami-qr\{width:(\d+)mm/.exec(css);
+  assert.ok(papier, "taille d'impression du QR non fixée");
+  assert.ok(parseInt(papier[1], 10) >= 25, "un QR imprimé sous 25 mm ne se scanne pas de façon fiable");
+});
+
+test("impression : seule la carte d'ami part sur le papier", () => {
+  const fs = require("fs");
+  const css = fs.readFileSync(require("path").join(__dirname, "..", "css/style.css"), "utf8");
+  assert.ok(/@media print\s*\{/.test(css), "aucune feuille d'impression");
+  const bloc = css.slice(css.indexOf("@media print"));
+  ["\\.navbar", "#contenu", "\\.haut-fixe", "#carte-imprimer"].forEach(sel =>
+    assert.ok(new RegExp(sel).test(bloc), "l'impression ne masque pas " + sel));
+  // Les couleurs doivent être conservées : un QR en niveaux de gris se scanne mal.
+  assert.ok(/print-color-adjust:\s*exact/.test(bloc), "les couleurs ne sont pas forcées à l'impression");
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {
