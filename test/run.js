@@ -2001,20 +2001,42 @@ test("carte d'ami : le QR reste lisible — 4 px par module à l'écran, 30 mm a
   assert.ok(ecran, "règle .carte-ami-qr introuvable");
   assert.ok(parseInt(ecran[1], 10) / modules >= 4,
     `${ecran[1]} px pour ${modules} modules : moins de 4 px par module, illisible par un téléphone`);
-  const papier = /impression-carte \.carte-ami-qr\{width:(\d+)mm/.exec(css);
+  const papier = /\.carte-ami-qr\{width:(\d+)mm/.exec(css);
   assert.ok(papier, "taille d'impression du QR non fixée");
   assert.ok(parseInt(papier[1], 10) >= 25, "un QR imprimé sous 25 mm ne se scanne pas de façon fiable");
 });
 
-test("impression : seule la carte d'ami part sur le papier", () => {
+test("dépliant : le QR reste lisible lui aussi, à l'écran comme au papier", () => {
   const fs = require("fs");
   const css = fs.readFileSync(require("path").join(__dirname, "..", "css/style.css"), "utf8");
+  const { api } = construireContexte();
+  const modules = api.QR_TAILLE + 8;
+  const ecran = /\.depliant-qr\{width:(\d+)px/.exec(css);
+  assert.ok(ecran, "règle .depliant-qr introuvable");
+  assert.ok(parseInt(ecran[1], 10) / modules >= 4,
+    `${ecran[1]} px pour ${modules} modules : moins de 4 px par module`);
+  const papier = /\.depliant-qr\{width:(\d+)mm/.exec(css);
+  assert.ok(papier && parseInt(papier[1], 10) >= 25, "le QR du dépliant doit faire au moins 25 mm au papier");
+});
+
+test("impression : seuls les documents destinés au papier s'impriment", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const css = fs.readFileSync(path.join(__dirname, "..", "css/style.css"), "utf8");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
   assert.ok(/@media print\s*\{/.test(css), "aucune feuille d'impression");
   const bloc = css.slice(css.indexOf("@media print"));
-  ["\\.navbar", "#contenu", "\\.haut-fixe", "#carte-imprimer"].forEach(sel =>
+  // L'application elle-même n'a aucun sens sur papier : son cadre est masqué.
+  ["\\.navbar", "#contenu", "\\.haut-fixe", "\\.gros-bouton", "\\.modale-fermer"].forEach(sel =>
     assert.ok(new RegExp(sel).test(bloc), "l'impression ne masque pas " + sel));
   // Les couleurs doivent être conservées : un QR en niveaux de gris se scanne mal.
   assert.ok(/print-color-adjust:\s*exact/.test(bloc), "les couleurs ne sont pas forcées à l'impression");
+  // Le mécanisme est partagé, et chaque document imprimable se déclare.
+  assert.ok(/\.impression-cible/.test(bloc), "aucune cible d'impression générique");
+  assert.ok(/function imprimerCible/.test(ui), "l'impression n'est pas mutualisée");
+  ["carte-ami-page", "depliant-page"].forEach(cls =>
+    assert.ok(new RegExp(cls + '[^"`]*impression-cible|impression-cible[^"`]*' + cls).test(ui),
+      cls + " ne se déclare pas comme cible d'impression"));
 });
 
 /* ---------- Le tableau d'honneur ---------- */
@@ -2217,6 +2239,56 @@ test("activation : le chantier déclare l'entonnoir et le réveil comme faits", 
   const rev = ch.etapes.find(e => e.id === "c_activation_4");
   assert.ok(rev && rev.fait, "le réveil trimestriel n'est pas déclaré fait");
   assert.strictEqual(rev.mail, "m_reactivation");
+});
+
+test("dépliant : il tient sur une A5, et ne porte aucun code de famille", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const css = fs.readFileSync(path.join(__dirname, "..", "css/style.css"), "utf8");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  // A5 = 148 mm ; moins 2 × 12 mm de marge, il reste 124 mm utiles.
+  const large = /impression \.depliant-page\{[^}]*max-width:(\d+)mm/.exec(css);
+  assert.ok(large, "largeur d'impression du dépliant non fixée");
+  assert.ok(parseInt(large[1], 10) <= 124,
+    `${large[1]} mm dépasse les 124 mm utiles d'une A5 : le dépliant déborderait`);
+  // Une feuille distribuée à vingt-cinq familles n'est pas un parrainage : elle
+  // ne doit donc porter aucun code de famille, seulement un lien marqué ?src=.
+  const debut = ui.indexOf("function modaleDepliant");
+  const bloc = ui.slice(debut, ui.indexOf("\n}", ui.indexOf("dep-imprimer", debut)));
+  assert.ok(debut > -1 && bloc.length > 200, "modaleDepliant introuvable");
+  assert.ok(!/codeParrainage|lienDepuisCode|referral/.test(bloc),
+    "le dépliant porte un code de famille : ce serait attribuer 25 parrainages à une seule");
+  assert.ok(/lienDepliant/.test(bloc), "le dépliant n'utilise pas de lien marqué");
+  assert.ok(/\?src=/.test(ui.slice(ui.indexOf("function lienDepliant"), ui.indexOf("function lienDepliant") + 500)),
+    "le lien du dépliant ne porte pas de marqueur d'origine");
+});
+
+test("dépliant : le nom d'école est assaini et borné à la capacité du QR", () => {
+  const fs = require("fs");
+  const ui = fs.readFileSync(require("path").join(__dirname, "..", "js/ui.js"), "utf8");
+  const d = ui.indexOf("function normaliserSourceDepliant");
+  const src = ui.slice(ui.indexOf("const DEPLIANT_HOTE"), ui.indexOf("function modaleDepliant"));
+  const f = new Function(src + "; return { normaliserSourceDepliant, lienDepliant, DEPLIANT_SRC_MAX, DEPLIANT_HOTE };")();
+  assert.ok(d > -1, "fonction absente");
+  assert.strictEqual(f.normaliserSourceDepliant("École Sainte-Marie"), "ecole-sainte-marie");
+  assert.strictEqual(f.normaliserSourceDepliant("  Saint-Josse (2e) "), "saint-josse-2e");
+  assert.strictEqual(f.normaliserSourceDepliant(""), "");
+  assert.ok(f.normaliserSourceDepliant("a".repeat(60)).length <= f.DEPLIANT_SRC_MAX,
+    "un nom trop long ferait dépasser la capacité du QR");
+  // Le lien complet doit tenir dans la capacité de l'encodeur, même au maximum.
+  const { api } = construireContexte();
+  const lienMax = f.lienDepliant("z".repeat(60));
+  assert.ok(lienMax.length <= api.QR_CAPACITE,
+    `lien de ${lienMax.length} caractères pour une capacité de ${api.QR_CAPACITE} : le QR serait refusé`);
+  assert.ok(api.qrSvg(lienMax), "le QR du dépliant doit être produit même au nom le plus long");
+  // Un papier ne doit jamais porter l'URL d'un aperçu de déploiement : le lien
+  // est ancré sur un domaine officiel, indépendamment de l'origine courante.
+  assert.ok(/^https:\/\/(fami\.team|famiteam\.com)\//.test(f.DEPLIANT_HOTE),
+    "le dépliant doit pointer vers un domaine officiel : " + f.DEPLIANT_HOTE);
+  const ui2 = fs.readFileSync(require("path").join(__dirname, "..", "js/ui.js"), "utf8");
+  const corps = ui2.slice(ui2.indexOf("function lienDepliant"), ui2.indexOf("function modaleDepliant"));
+  assert.ok(!/location/.test(corps),
+    "lienDepliant dépend de location : imprimé depuis un aperçu, le dépliant porterait une URL d'aperçu");
 });
 
 /* ---------- Exécution ---------- */

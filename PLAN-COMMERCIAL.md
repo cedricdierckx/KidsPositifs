@@ -121,10 +121,11 @@ comportements positifs, dans l'esprit de la parentalité bienveillante.
 
 Déjà construit : comptes, invitations, **parrainage illimité par code
 permanent (lien + QR)**, **L'Arbre des familles** (paliers, jauge collective,
-tableau d'honneur sur consentement, carte d'ami imprimable), liste d'attente,
-espace admin, retours utilisateurs, statistiques d'usage, export et suppression
-des données, pages légales, e-mails transactionnels, tutoriel, espace parents
-simplifié.
+tableau d'honneur sur consentement, carte d'ami imprimable), **entonnoir
+d'activation** et **réveil trimestriel des familles endormies**, **dépliant A5
+pour les écoles**, liste d'attente, espace admin, retours utilisateurs,
+statistiques d'usage, export et suppression des données, pages légales,
+e-mails transactionnels, tutoriel, espace parents simplifié.
 
 ---
 
@@ -277,6 +278,33 @@ laquelle ils existent.
 marge délibérée sous les 1 000, pour voir venir. Il **s'applique tout seul** :
 au-delà, les inscriptions basculent en liste d'attente sans intervention.
 Attendre son tour est plus honnête qu'un service qui ne suit plus.
+
+### 3.3 bis Ce que la mesure a corrigé : le goulot n'est pas l'acquisition
+
+Relevé sur la base de production le 5 août 2026, sur les dix premières familles :
+
+| Étape | Familles | Part |
+|---|---|---|
+| Inscrites | 10 | 100 % |
+| Ont créé un enfant | 10 | **100 %** |
+| Ont essayé au moins une fois | 10 | **100 %** |
+| Y sont revenues **trois** fois | 2 | **20 %** |
+| Actives sur 30 jours | 2 | 20 % |
+
+**Certitude : 100 %** sur les comptages ; l'interprétation qui suit est à 85 %.
+
+L'accueil ne pose aucun problème : tout le monde entre, crée un enfant et
+essaie. **Huit familles sur dix renoncent entre le premier et le troisième
+usage.** Et les quatre familles amenées par parrainage se comportent de la même
+façon : aucune n'a atteint trois jours d'usage.
+
+Conséquence sur les priorités : **tout euro d'attention consacré à
+l'acquisition avant d'avoir réparé le troisième soir est gaspillé.** Le plan
+plaçait l'activation en phase 0 — la mesure confirme que c'est bien là, et que
+ce chantier n'est pas terminé : l'entonnoir est désormais mesuré et affiché,
+mais la cause du décrochage reste à trouver, et la boîte à idées est vide
+(aucun retour reçu à ce jour). Il faudra donc la chercher autrement :
+observation directe d'une famille, ou question posée à celles qui ont décroché.
 
 ### 3.4 Trajectoire visée (familles, pas euros)
 

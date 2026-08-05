@@ -768,27 +768,57 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .carte-ami-code{margin:0; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   font-size:15px; font-weight:800; letter-spacing:.12em}
 
+/* ---- Le dépliant A5 pour les écoles ----
+   Destiné à un PARENT qui ne connaît pas encore FamiTeam et qui trouve la
+   feuille dans le cartable. Il ne porte donc aucun code de famille — une
+   feuille distribuée à vingt-cinq familles n'est pas un parrainage — mais un
+   lien marqué (?src=) qui permet de savoir quelle école a réellement amené des
+   familles. Et il porte le nom du projet, jamais celui d'une personne. */
+.depliant-page{background:#fff; border:1px solid #e6ecf2; border-radius:14px;
+  padding:16px; margin:10px 0; text-align:center}
+.depliant-logo{margin:0 0 2px; font-size:22px; font-weight:800}
+.depliant-promesse{margin:0 0 10px; font-size:14px; line-height:1.4}
+.depliant-points{list-style:none; margin:0 0 10px; padding:0; text-align:left}
+.depliant-points li{display:flex; gap:8px; align-items:flex-start; padding:4px 0; font-size:13px; line-height:1.35}
+.depliant-points b{white-space:nowrap}
+.depliant-qr-cadre{display:flex; justify-content:center; margin:6px 0 4px}
+.depliant-qr{width:150px; height:150px}
+.depliant-url{margin:0 0 8px; font-weight:800; font-size:15px}
+.depliant-gratuit{margin:0 0 8px; font-size:13px; font-weight:700; color:#1d7a52;
+  background:#eafaf2; border:1px solid #bfe9da; border-radius:10px; padding:7px 9px}
+.depliant-rgpd{margin:0; font-size:11px; line-height:1.4; color:var(--doux); text-align:left}
+.depliant-hote .aj-val{width:100%; margin:6px 0}
+
 /* ---- Impression ----
-   Seule la carte d'ami s'imprime : le reste de l'application n'a aucun sens
-   sur papier. Fond blanc imposé et couleurs conservées (le QR exige le
-   contraste maximal, et l'avatar perdrait son sens en niveaux de gris). */
+   Seuls les documents destinés au papier s'impriment : la carte d'ami et le
+   dépliant. Le reste de l'application n'a aucun sens imprimé. Fond blanc
+   imposé et couleurs conservées — le QR exige le contraste maximal, et
+   l'avatar perdrait son sens en niveaux de gris. */
 @media print {
-  body.impression-carte{background:#fff}
-  body.impression-carte .haut-fixe,
-  body.impression-carte .navbar,
-  body.impression-carte #contenu,
-  body.impression-carte #toast,
-  body.impression-carte #confettis,
-  body.impression-carte .modale-fermer,
-  body.impression-carte .pin-titre,
-  body.impression-carte .carte-ami-hote > .note,
-  body.impression-carte #carte-imprimer{display:none !important}
-  body.impression-carte .pin-modal{position:static; background:none; display:block; padding:0}
-  body.impression-carte .carte-ami-hote{max-width:none; box-shadow:none; border:none; padding:0}
-  body.impression-carte .carte-ami-page{border:2px dashed #999; page-break-inside:avoid;
-    max-width:130mm; margin:0 auto}
-  body.impression-carte .carte-ami-qr{width:30mm; height:30mm; flex:0 0 30mm}
-  .carte-ami-page, .carte-ami-page *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+  body.impression{background:#fff}
+  body.impression .haut-fixe,
+  body.impression .navbar,
+  body.impression #contenu,
+  body.impression #toast,
+  body.impression #confettis,
+  body.impression .modale-fermer,
+  body.impression .pin-titre,
+  body.impression .pin-carte > .note,
+  body.impression .gros-bouton,
+  body.impression .btn-secondaire,
+  body.impression .lien-oubli{display:none !important}
+  body.impression .pin-modal{position:static; background:none; display:block; padding:0}
+  body.impression .pin-carte{max-width:none; box-shadow:none; border:none; padding:0}
+  /* La cible d'impression, quelle qu'elle soit, occupe la page seule. */
+  body.impression .impression-cible{page-break-inside:avoid; margin:0 auto; box-shadow:none}
+  body.impression .carte-ami-page{border:2px dashed #999; max-width:130mm}
+  body.impression .carte-ami-qr{width:30mm; height:30mm; flex:0 0 30mm}
+  /* A5 = 148 mm de large ; moins 2 x 12 mm de marge, il reste 124 mm utiles.
+     On se tient sous cette borne pour que le depliant tienne sur une A5 comme
+     sur une A4 : verifie par generation PDF, une page, zone encree 115 x 134 mm. */
+  body.impression .depliant-page{border:none; max-width:120mm}
+  body.impression .depliant-qr{width:34mm; height:34mm}
+  .impression-cible, .impression-cible *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
   @page{margin:12mm}
 }
 

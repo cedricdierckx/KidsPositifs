@@ -304,6 +304,82 @@ function blocTableauHonneur() {
   return sec;
 }
 
+/* Bascule les règles @media print le temps de l'impression : seule la cible
+ * marquée `.impression-cible` part sur le papier. Partagé par la carte d'ami et
+ * le dépliant des écoles. */
+function imprimerCible() {
+  document.body.classList.add("impression");
+  if (typeof window.print === "function") window.print();
+  setTimeout(() => document.body.classList.remove("impression"), 1000);
+}
+
+/* ---------- Le dépliant A5 des écoles ----------
+ * Une institutrice convaincue parle à vingt-cinq familles d'un coup : c'est le
+ * meilleur rendement horaire du plan commercial. La feuille s'adresse donc à un
+ * PARENT qui ne connaît pas encore l'app et qui la trouve dans le cartable.
+ * Elle ne porte AUCUN code de famille — distribuer une feuille à vingt-cinq
+ * familles n'est pas un parrainage — mais un lien marqué (?src=), qui fait
+ * apparaître l'école dans « l'origine des inscriptions ». Et elle porte le nom
+ * du projet, jamais celui d'une personne (contrainte d'anonymat, § 0.2). */
+/* Le dépliant part sur du papier : son lien ne doit JAMAIS dépendre de l'origine
+ * courante. Imprimé depuis un aperçu de déploiement, il porterait une URL
+ * d'aperçu — illisible dans six mois — et dépasserait au passage la capacité du
+ * QR. On écrit donc le domaine officiel, et le plus court des deux : sur du
+ * papier, une adresse courte se recopie à la main. */
+const DEPLIANT_HOTE = "https://fami.team/";
+const DEPLIANT_SRC_MAX = 24;          // au-delà, le QR déborde de sa capacité
+function normaliserSourceDepliant(brut) {
+  return String(brut || "").trim().toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")   // accents retirés : l'URL reste lisible
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, DEPLIANT_SRC_MAX);
+}
+function lienDepliant(source) {
+  const src = normaliserSourceDepliant(source) || "ecole";
+  return DEPLIANT_HOTE + "?src=" + src;
+}
+
+function modaleDepliant() {
+  const ov = el("div", "pin-modal");
+  ov.innerHTML = `
+    <div class="pin-carte depliant-hote">
+      <button class="modale-fermer" aria-label="${t("common.fermer")}">✕</button>
+      <div class="pin-titre">${t("dep.titre")}</div>
+      <p class="note">${t("dep.mode_emploi")}</p>
+      <input id="dep-src" class="aj-val" maxlength="${DEPLIANT_SRC_MAX}" placeholder="${t("dep.src_ph")}">
+      <div id="dep-page"></div>
+      <button id="dep-imprimer" class="gros-bouton planete">🖨️ ${t("cami.imprimer")}</button>
+    </div>`;
+  document.body.appendChild(ov);
+  const fermer = () => { document.body.classList.remove("impression"); ov.remove(); };
+  ov.querySelector(".modale-fermer").onclick = fermer;
+  ov.addEventListener("click", e => { if (e.target === ov) fermer(); });
+
+  const zone = ov.querySelector("#dep-page");
+  const champ = ov.querySelector("#dep-src");
+  const dessiner = () => {
+    const lien = lienDepliant(champ.value);
+    const qr = (typeof qrSvg === "function") ? qrSvg(lien, { classe: "depliant-qr" }) : "";
+    // L'URL affichée en clair sous le QR : tous les parents ne scannent pas.
+    const visible = lien.replace(/^https?:\/\//, "");
+    zone.innerHTML = `<div class="depliant-page impression-cible">
+      <p class="depliant-logo">🌟 ${APP_NOM}</p>
+      <p class="depliant-promesse">${t("dep.promesse")}</p>
+      <ul class="depliant-points">
+        <li><span>🎯</span><span>${t("dep.p1")}</span></li>
+        <li><span>💛</span><span>${t("dep.p2")}</span></li>
+        <li><span>🛠️</span><span>${t("dep.p3")}</span></li>
+      </ul>
+      <div class="depliant-qr-cadre">${qr}</div>
+      <p class="depliant-url">${echapper(visible)}</p>
+      <p class="depliant-gratuit">${t("dep.gratuit")}</p>
+      <p class="depliant-rgpd">${t("dep.rgpd")}</p>
+    </div>`;
+  };
+  champ.oninput = dessiner;
+  dessiner();
+  ov.querySelector("#dep-imprimer").onclick = imprimerCible;
+}
+
 /* ---------- La carte d'ami : le seul objet confié à l'enfant ----------
  * Une page à imprimer, à colorier, et à donner à un copain. L'enfant n'est
  * jamais chargé de recruter (PLAN-PARRAINAGE § 1.2) : il montre quelque chose
@@ -334,7 +410,7 @@ function modaleCarteAmi(enf) {
       <button class="modale-fermer" aria-label="${t("common.fermer")}">✕</button>
       <div class="pin-titre">${t("cami.titre")}</div>
       <p class="note">${t("cami.mode_emploi")}</p>
-      <div class="carte-ami-page" id="carte-ami-page">
+      <div class="carte-ami-page impression-cible" id="carte-ami-page">
         <div class="carte-ami-haut">
           <div class="carte-ami-avatar">${avatar}</div>
           <div class="carte-ami-mots">
@@ -349,7 +425,7 @@ function modaleCarteAmi(enf) {
       <button id="carte-imprimer" class="gros-bouton planete">🖨️ ${t("cami.imprimer")}</button>
     </div>`;
   document.body.appendChild(ov);
-  const fermer = () => { document.body.classList.remove("impression-carte"); ov.remove(); };
+  const fermer = () => { document.body.classList.remove("impression"); ov.remove(); };
   ov.querySelector(".modale-fermer").onclick = fermer;
   ov.addEventListener("click", e => { if (e.target === ov) fermer(); });
 
@@ -365,10 +441,7 @@ function modaleCarteAmi(enf) {
   }).catch(() => {});
 
   ov.querySelector("#carte-imprimer").onclick = () => {
-    // La classe bascule les règles @media print : seule la carte s'imprime.
-    document.body.classList.add("impression-carte");
-    if (typeof window.print === "function") window.print();
-    setTimeout(() => document.body.classList.remove("impression-carte"), 1000);
+    imprimerCible();
   };
 }
 
@@ -2474,6 +2547,14 @@ function blocAdminCroissance(c) {
       kpi.appendChild(tbl);
     }
   })();
+
+  /* ----- Le dépliant A5 des écoles : le meilleur rendement horaire du plan ----- */
+  const dep = el("section", "carte");
+  dep.innerHTML = `<h2>${t("dep.titre")}</h2><p class="note">${t("dep.pourquoi")}</p>`;
+  const bDep = el("button", "gros-bouton planete", "🖨️ " + t("dep.bouton"));
+  bDep.onclick = () => modaleDepliant();
+  dep.appendChild(bDep);
+  c.appendChild(dep);
 
   /* ----- Envois automatiques : interrupteur, file d'attente, réponses types ----- */
   c.appendChild(blocEnvoisAuto());

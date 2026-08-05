@@ -213,7 +213,7 @@ const CROISSANCE_CHANTIERS = [
     kpi: "2 écoles · 40 familles issues des écoles",
     etapes: [
       { id: "c_ecoles_1", titre: "Commencer par l'école de ses enfants", min: 15, detail: "La confiance existe déjà : c'est le contact le moins coûteux et le plus probable." },
-      { id: "c_ecoles_2", titre: "Dépliant A5 imprimable", min: 50, detail: "À glisser dans le cartable : QR code, promesse, gratuité, RGPD. Fait une fois, resservi partout." },
+      { id: "c_ecoles_2", titre: "Dépliant A5 imprimable", min: 50, detail: "Fait : onglet Croissance → « Le dépliant des écoles ». Une page A5 avec la promesse, les trois points, le QR code, la gratuité et le RGPD. On nomme l'école : son nom part dans le lien (?src=) et réapparaît dans « l'origine des inscriptions », donc on sait laquelle a réellement amené des familles. Aucun code de famille dessus — distribuer une feuille à vingt-cinq familles n'est pas un parrainage.", fait: true },
       { id: "c_ecoles_3", titre: "Contacter deux directions", min: 30, detail: "Proposer quinze minutes en réunion d'équipe.", mail: "m_ecole" },
       { id: "c_ecoles_4", titre: "Un pilote d'un trimestre", min: 60, detail: "Une seule école à la fois. Bilan écrit à la fin." },
       { id: "c_ecoles_5", titre: "Décider de recommencer ou non", min: 15, detail: "Si le pilote n'amène pas dix familles, chercher pourquoi avant d'en lancer un deuxième." }
