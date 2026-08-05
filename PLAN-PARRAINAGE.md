@@ -2,8 +2,10 @@
 
 *Comment faire grandir le nombre de parrainages sans trahir l'esprit du projet.*
 
-> **Statut : ✅ mis en œuvre.** Les six lots sont livrés (branche
-> `claude/familyteam-main-07437a`). Les trois décisions du § 9 ont été
+> **Statut : ✅ mis en œuvre.** Les six lots sont livrés sur `dev`, et les deux
+> migrations correspondantes sont **déjà appliquées sur la base de production**
+> (`arbre_des_familles_code_permanent_paliers_tableau_honneur` puis
+> `arbre_des_familles_search_path_gen_referral_code`). Les trois décisions du § 9 ont été
 > tranchées : **« L'Arbre des familles »**, seuil du tableau d'honneur à
 > **10 familles consentantes**, **saison mensuelle**.
 >
@@ -423,12 +425,39 @@ mensuelle**. Le seuil est réglable sans migration
 
 Le code est en place ; deux gestes ne peuvent pas être automatisés :
 
-| Geste | Pourquoi il ne s'automatise pas |
+| Geste | État |
 |---|---|
-| Appliquer `supabase/schema.sql` sur la base de production | Le schéma est idempotent et ne détruit rien, mais l'exécution reste une décision |
-| Armer les envois automatiques (`app_config.mails_auto`) si ce n'est pas déjà fait | L'e-mail du 7ᵉ jour ne partira pas tant que l'interrupteur est fermé — c'est le garde-fou voulu |
+| Appliquer le schéma sur la base de production | ✅ **fait** — deux migrations, compteurs vérifiés identiques avant/après, et **aucune famille inscrite au tableau d'honneur par la migration** (0 consentement, 0 pseudonyme) |
+| Déployer le code applicatif sur `main` | ⏳ à décider — le dispositif est sur `dev` |
+| Armer les envois automatiques (`app_config.mails_auto`) | ⏳ à vérifier — l'e-mail du 7ᵉ jour ne partira pas tant que l'interrupteur est fermé, c'est le garde-fou voulu |
 
 Et une vérification à faire une fois en production : **imprimer réellement une
 carte d'ami et scanner son QR code avec un téléphone.** Le code a été validé par
 un décodeur indépendant après rendu navigateur, mais l'encre sur le papier est
 le seul juge de la taille retenue (30 mm de côté).
+
+---
+
+## 11. Ce que la mise en production a révélé, et qui déplace le diagnostic
+
+Le § 0 attribuait le faible rendement à la **transmission** du lien (certitude
+65 %). La mesure faite après application oblige à corriger.
+
+Les quatre filleuls arrivés totalisent, **toutes sources de preuve de vie
+réunies** (jours d'ouverture mesurés, jours d'archivage d'état, dernière
+activité), **1, 0, 2 et 1 jours de vie**. Aucun n'atteint les trois jours de la
+règle de qualification. L'un n'a même jamais créé de profil d'enfant.
+
+Ce n'est pas un défaut de mesure : `usage_events` ne collecte que depuis le
+25 juillet 2026, mais les deux autres sources sont bien antérieures et
+concordent. **Certitude : 90 %.**
+
+Conséquence : **le lien de parrainage fonctionnait déjà** — quatre familles ont
+bien été créées — **mais aucune n'a pris**. Le goulot n'est donc pas seulement
+la transmission, c'est l'**activation de la famille invitée**. Le chantier
+`c_activation` devient au moins aussi important que celui-ci, et l'Arbre des
+familles n'en produira son effet plein qu'une fois l'activation réparée.
+
+Corollaire pratique : **l'arbre affichera zéro feuille pour tout le monde au
+premier jour.** C'est voulu, et c'est honnête — mais il faut le savoir avant de
+conclure que le dispositif ne marche pas.
