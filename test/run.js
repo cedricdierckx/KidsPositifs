@@ -2122,6 +2122,49 @@ test("conformité : la FAQ ne promet plus trois parrainages par semaine", () => 
   assert.ok(/trois jours d'utilisation/i.test(f), "la FAQ n'explique pas quand une famille compte");
 });
 
+test("base : toute fonction de l'Arbre fixe son search_path", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const sql = fs.readFileSync(path.join(__dirname, "..", "supabase/schema.sql"), "utf8");
+  const fonctions = ["referral_code_famille", "regenerer_referral_code", "referral_info_par_code",
+    "claim_referral_code", "gen_referral_code", "arbre_jours_actifs", "parrainage_bilan",
+    "parrainage_jauge", "definir_classement_optin", "classement_parrainages",
+    "admin_parrainages_actifs_a_relancer"];
+  fonctions.forEach(nom => {
+    const i = sql.indexOf("function public." + nom + "(");
+    assert.ok(i > -1, "fonction absente du schéma : " + nom);
+    // L'en-tête va jusqu'au corps ($$) : search_path doit y être fixé.
+    const entete = sql.slice(i, sql.indexOf("$$", i));
+    assert.ok(/set search_path\s*=\s*public/.test(entete),
+      nom + " : search_path mutable (signalé par l'analyseur Supabase)");
+  });
+});
+
+test("base : chaque fonction de l'Arbre porte sa propre garde d'accès", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const sql = fs.readFileSync(path.join(__dirname, "..", "supabase/schema.sql"), "utf8");
+  // Les droits d'exécution sont ouverts à PUBLIC par défaut dans PostgreSQL, et
+  // c'est le motif de tout le schéma : la garde interne est donc la SEULE
+  // barrière. Aucune fonction touchant à des données ne peut en être dépourvue.
+  const gardes = {
+    referral_code_famille: /is_family_member|is_admin/,
+    regenerer_referral_code: /is_family_member|is_admin/,
+    claim_referral_code: /is_family_member/,
+    parrainage_bilan: /is_family_member|is_admin/,
+    parrainage_jauge: /auth\.uid\(\) is null/,
+    definir_classement_optin: /is_family_member|is_admin/,
+    classement_parrainages: /auth\.uid\(\) is null/,
+    admin_parrainages_actifs_a_relancer: /is_admin/
+  };
+  Object.keys(gardes).forEach(nom => {
+    const i = sql.indexOf("function public." + nom + "(");
+    const fin = sql.indexOf("$$;", i);
+    const corps = sql.slice(i, fin);
+    assert.ok(gardes[nom].test(corps), nom + " : aucune garde d'accès détectée");
+  });
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

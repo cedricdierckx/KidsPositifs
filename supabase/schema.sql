@@ -286,8 +286,11 @@ alter table public.referrals add column if not exists via_code text;
 
 -- Alphabet sans caractère ambigu : ni O/0, ni I/1/L, pour qu'un code lu sur
 -- une carte imprimée puisse être recopié à la main sans erreur.
+-- `search_path` fixé même sans security definer : la fonction n'appelle que des
+-- primitives, mais un search_path mutable est signalé par l'analyseur Supabase
+-- et rien ne justifie de le laisser ouvert.
 create or replace function public.gen_referral_code()
-returns text language plpgsql as $$
+returns text language plpgsql set search_path = public as $$
 declare alphabet text := 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; r text := ''; i integer;
 begin
   for i in 1..7 loop
