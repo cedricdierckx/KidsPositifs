@@ -134,7 +134,8 @@ const CROISSANCE_CHANTIERS = [
       { id: "c_activation_1", titre: "Carte « Premiers pas » dans l'espace parents", min: 0, detail: "Fait : trois gestes, état réel, disparaît une fois faite.", fait: true },
       { id: "c_activation_2", titre: "Lire les cinq derniers retours", min: 15, detail: "Les familles disent où ça coince mieux que n'importe quelle statistique." },
       { id: "c_activation_3", titre: "Corriger le premier point de friction", min: 60, detail: "Un seul, celui qui revient le plus. Puis on remesure." },
-      { id: "c_activation_4", titre: "Réveil trimestriel des familles endormies", min: 20, detail: "Un envoi par trimestre, jamais plus.", mail: "m_reactivation" },
+      { id: "c_activation_2b", titre: "Mesurer l'entonnoir, pas seulement J+1", min: 40, detail: "Fait : l'onglet Croissance montre l'entonnoir complet — familles, enfant créé, un usage, trois usages, dix usages, endormies. C'est ce qui a montré que la friction n'est pas l'accueil : 10 familles sur 10 avaient créé un enfant et essayé l'app, 2 seulement y étaient revenues trois fois.", fait: true },
+      { id: "c_activation_4", titre: "Réveil trimestriel des familles endormies", min: 20, detail: "Fait : les familles sans activité depuis 30 jours, et depuis moins de six mois, reçoivent un seul e-mail par trimestre. Au-delà de six mois de silence, plus rien : insister devient du harcèlement, et le silence est une réponse.", mail: "m_reactivation", fait: true },
       { id: "c_activation_5", titre: "Vérifier l'effet, sinon annuler", min: 15, detail: "Si la correction n'a rien changé, la retirer plutôt que d'empiler." }
     ]
   },
@@ -387,16 +388,22 @@ Si quelque chose vous a bloqué, la page des questions fréquentes couvre l'esse
 FamiTeam — {lien}`
   },
   {
-    id: "m_reactivation", titre: "Réveil d'une famille endormie", dest: "Famille sans activité depuis 30 jours",
-    quand: "Chantier Activation, une fois par trimestre au maximum",
+    id: "m_reactivation", titre: "Réveil d'une famille endormie",
+    dest: "Famille sans activité depuis 30 jours, et depuis moins de six mois",
+    quand: "Automatique : un envoi par trimestre au maximum, et plus rien après six mois de silence",
     sujet: "On vous a gardé votre place 🌱",
+    // Deux variables ont été retirées du modèle d'origine, {enfant} et
+    // {nouveautes} : la première obligerait à faire circuler des prénoms
+    // d'enfants dans l'espace admin pour un gain de chaleur marginal, la
+    // seconde exige une phrase écrite à la main et empêchait donc tout envoi
+    // automatique. Un modèle qui ne peut pas partir seul ne part jamais.
     corps: `Bonjour {prenom},
 
-Vos données sont intactes : les cœurs, l'avatar et l'écosystème de {enfant} vous attendent exactement là où vous les avez laissés.
+Vos données sont intactes : les cœurs, l'avatar et l'écosystème vous attendent exactement là où vous les avez laissés. Rien n'a été effacé, rien ne l'a été entre-temps.
 
-Depuis votre dernière visite : {nouveautes}.
+Si le moment n'était pas le bon, il n'y a rien à faire : le compte peut rester en sommeil aussi longtemps que vous voulez, sans conséquence et sans frais. Nous n'écrirons pas plus d'une fois par trimestre, et plus du tout après six mois.
 
-Si FamiTeam ne vous convient pas, rien à faire : le compte peut rester en sommeil sans conséquence. Et si vous préférez tout effacer, cela se fait en deux clics dans Réglages → Mon compte, sans passer par nous.
+Et si vous préférez tout effacer, cela se fait en deux clics dans Réglages → Mon compte, sans passer par nous.
 
 FamiTeam — {lien}`
   },

@@ -723,9 +723,10 @@ async function declencherEnvoisAuto() {
       const nAct = await envoyerRelancesActivation();
       const nPar = await envoyerPropositionsParrainage();
       const nJ7 = await envoyerPropositionsParrainageActifs();
+      const nRev = await envoyerReveils();
       const nVag = await envoyerVagueDuMois();
       const nRel = await envoyerRelancesVague();
-      const n = nAct + nPar + nJ7 + nVag + nRel;
+      const n = nAct + nPar + nJ7 + nRev + nVag + nRel;
       await envoyerRapportMensuel();
       if (nVag > 0) {
         await notifierAdmin("vague", new Date().toISOString().slice(0, 7),
@@ -902,6 +903,38 @@ async function adminActivation() {
   if (error) { toast("Erreur admin : " + error.message, "info"); return null; }
   return data || null;
 }
+// RPC admin : entonnoir d'activation (chantier Activation & rétention).
+// admin_activation() ne mesure que J+1 ; l'entonnoir montre où l'on perd les
+// familles ensuite, ce que rien n'affichait.
+async function adminEntonnoir() {
+  if (!estAdmin) return null;
+  const { data, error } = await sb.rpc("admin_entonnoir");
+  return error ? null : (data || null);
+}
+// RPC admin : familles endormies à réveiller (30 jours à six mois).
+async function adminFamillesEndormies() {
+  if (!estAdmin) return [];
+  const { data, error } = await sb.rpc("admin_familles_endormies");
+  if (error) return [];
+  return data || [];
+}
+/* Réveil d'une famille endormie : un seul envoi par trimestre, et plus rien
+ * passé six mois de silence (le filtre est en base). La clé d'idempotence est
+ * calculée par la RPC elle-même, pour que la base et le client ne puissent pas
+ * diverger dans leur définition du trimestre. */
+async function envoyerReveils(liste) {
+  const familles = liste || await adminFamillesEndormies();
+  let n = 0;
+  for (const f of familles) {
+    if (!f.email || !f.cle_trimestre) continue;
+    const prenom = (f.email.split("@")[0] || "").replace(/[._-]+/g, " ");
+    const ok = await envoyerMailAuto("reactivation", f.cle_trimestre, f.email, "m_reactivation",
+      { prenom, lien: location.origin || "https://famiteam.com" });
+    if (ok) n++;
+  }
+  return n;
+}
+
 // RPC admin : familles convaincues au 7e jour, sans filleul (Arbre des familles).
 async function adminParrainagesActifsARelancer() {
   if (!estAdmin) return [];

@@ -2129,7 +2129,7 @@ test("base : toute fonction de l'Arbre fixe son search_path", () => {
   const fonctions = ["referral_code_famille", "regenerer_referral_code", "referral_info_par_code",
     "claim_referral_code", "gen_referral_code", "arbre_jours_actifs", "parrainage_bilan",
     "parrainage_jauge", "definir_classement_optin", "classement_parrainages",
-    "admin_parrainages_actifs_a_relancer"];
+    "admin_parrainages_actifs_a_relancer", "admin_entonnoir", "admin_familles_endormies"];
   fonctions.forEach(nom => {
     const i = sql.indexOf("function public." + nom + "(");
     assert.ok(i > -1, "fonction absente du schéma : " + nom);
@@ -2155,7 +2155,9 @@ test("base : chaque fonction de l'Arbre porte sa propre garde d'accès", () => {
     parrainage_jauge: /auth\.uid\(\) is null/,
     definir_classement_optin: /is_family_member|is_admin/,
     classement_parrainages: /auth\.uid\(\) is null/,
-    admin_parrainages_actifs_a_relancer: /is_admin/
+    admin_parrainages_actifs_a_relancer: /is_admin/,
+    admin_entonnoir: /is_admin/,
+    admin_familles_endormies: /is_admin/
   };
   Object.keys(gardes).forEach(nom => {
     const i = sql.indexOf("function public." + nom + "(");
@@ -2163,6 +2165,58 @@ test("base : chaque fonction de l'Arbre porte sa propre garde d'accès", () => {
     const corps = sql.slice(i, fin);
     assert.ok(gardes[nom].test(corps), nom + " : aucune garde d'accès détectée");
   });
+});
+
+/* ---------- Activation & rétention : entonnoir et réveil ---------- */
+test("activation : l'entonnoir est traduit dans les 4 langues, paramètres préservés", () => {
+  const { api } = construireContexte();
+  const cles = ["ent.titre", "ent.inscrites", "ent.avec_enfant", "ent.un_usage",
+    "ent.trois_usages", "ent.dix_usages", "ent.actives_30j", "ent.perte", "ent.endormies"];
+  Object.keys(api.LANGUES).forEach(lg => {
+    cles.forEach(k => assert.ok(typeof api.I18N[lg][k] === "string" && api.I18N[lg][k].length, "manque " + lg + " → " + k));
+    assert.ok(api.I18N[lg]["ent.perte"].includes("{n}"), lg + " : {n} perdu dans ent.perte");
+    assert.ok(api.I18N[lg]["ent.endormies"].includes("{n}"), lg + " : {n} perdu dans ent.endormies");
+  });
+});
+
+test("activation : le réveil est automatisable — aucune variable à écrire à la main", () => {
+  const { api } = construireContexte();
+  const m = api.mailCroissance("m_reactivation");
+  assert.ok(m, "modèle m_reactivation absent");
+  // Un modèle qui exige une phrase écrite à la main ne part jamais tout seul.
+  assert.ok(!/\{enfant\}/.test(m.corps), "{enfant} ferait circuler un prénom d'enfant dans l'admin");
+  assert.ok(!/\{nouveautes\}/.test(m.corps), "{nouveautes} empêche tout envoi automatique");
+  const variables = (m.corps.match(/\{[a-z_]+\}/g) || []);
+  variables.forEach(v => assert.ok(["{prenom}", "{lien}"].includes(v),
+    "variable non fournie par l'envoi automatique : " + v));
+  // La promesse faite dans le corps doit correspondre au comportement réel.
+  assert.ok(/trimestre/i.test(m.corps), "la cadence promise n'est pas écrite");
+  assert.ok(/six mois/i.test(m.corps), "l'arrêt après six mois n'est pas promis");
+});
+
+test("activation : la borne de six mois est bien dans la requête, pas seulement promise", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const sql = fs.readFileSync(path.join(__dirname, "..", "supabase/schema.sql"), "utf8");
+  const i = sql.indexOf("function public.admin_familles_endormies");
+  const fn = sql.slice(i, sql.indexOf("$$;", i));
+  assert.ok(i > -1, "fonction absente");
+  assert.ok(/current_date - 180/.test(fn), "aucune borne supérieure : on relancerait indéfiniment");
+  assert.ok(/current_date - 30/.test(fn), "aucun seuil de sommeil");
+  // L'idempotence doit porter le trimestre, sinon on envoie en boucle.
+  assert.ok(/to_char\(now\(\), 'Q'\)|'T' \|\| to_char/.test(fn), "la clé ne porte pas le trimestre");
+  assert.ok(/mails_auto[\s\S]{0,160}reactivation/.test(fn), "aucun verrou d'envoi");
+});
+
+test("activation : le chantier déclare l'entonnoir et le réveil comme faits", () => {
+  const { api } = construireContexte();
+  const ch = api.CROISSANCE_CHANTIERS.find(x => x.id === "c_activation");
+  assert.ok(ch, "chantier c_activation introuvable");
+  const ent = ch.etapes.find(e => e.id === "c_activation_2b");
+  assert.ok(ent && ent.fait, "l'étape de mesure de l'entonnoir n'est pas déclarée faite");
+  const rev = ch.etapes.find(e => e.id === "c_activation_4");
+  assert.ok(rev && rev.fait, "le réveil trimestriel n'est pas déclaré fait");
+  assert.strictEqual(rev.mail, "m_reactivation");
 });
 
 /* ---------- Exécution ---------- */

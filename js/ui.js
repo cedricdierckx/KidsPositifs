@@ -2413,10 +2413,11 @@ function blocAdminCroissance(c) {
     <div id="croiss-kpi" class="stat-grille"><p class="note">${t("common.chargement")}</p></div>`;
   c.appendChild(kpi);
   (async () => {
-    const [s, u, a, src] = await Promise.all([
+    const [s, u, a, src, ent] = await Promise.all([
       adminStats(), adminUsageStats(),
       (typeof adminActivation === "function") ? adminActivation() : null,
-      (typeof adminSources === "function") ? adminSources() : []
+      (typeof adminSources === "function") ? adminSources() : [],
+      (typeof adminEntonnoir === "function") ? adminEntonnoir() : null
     ]);
     const grille = kpi.querySelector("#croiss-kpi");
     if (!grille) return;
@@ -2433,6 +2434,36 @@ function blocAdminCroissance(c) {
       carteStat("🔁", coefficientViral(s, u), t("croiss.kpi_k"), t("croiss.kpi_k_p")) +
       carteStat("📋", v(s, "waitlist_total"), t("croiss.kpi_attente")) +
       carteStat("📈", v(u, "ouvertures_30j"), t("croiss.kpi_ouvertures"));
+
+    // L'entonnoir d'activation : où les familles décrochent réellement.
+    // Un taux J+1 seul cachait l'essentiel — c'est entre le premier et le
+    // troisième usage que tout se perd.
+    if (ent && ent.familles) {
+      const etapes = [
+        ["👪", t("ent.inscrites"), ent.familles],
+        ["🧒", t("ent.avec_enfant"), ent.avec_enfant],
+        ["1️⃣", t("ent.un_usage"), ent.un_usage],
+        ["3️⃣", t("ent.trois_usages"), ent.trois_usages],
+        ["🔟", t("ent.dix_usages"), ent.dix_usages],
+        ["⭐", t("ent.actives_30j"), ent.actives_30j]
+      ];
+      const bloc = el("div", "croiss-entonnoir");
+      bloc.innerHTML = `<p class="stat-graph-titre">${t("ent.titre")}</p>` +
+        etapes.map(([emo, lib, n]) => {
+          const part = Math.max(0, Math.min(100, Math.round((n / ent.familles) * 100)));
+          return `<div class="ent-ligne"><span class="ent-emo">${emo}</span>
+            <span class="ent-lib">${lib}</span>
+            <span class="ent-barre"><span class="ent-rempl" style="width:${part}%"></span></span>
+            <span class="ent-val"><strong>${n}</strong> <small>${part}%</small></span></div>`;
+        }).join("") +
+        // La perte la plus coûteuse, dite en une phrase : ces familles ont
+        // essayé, donc le produit les intéressait.
+        (ent.essaye_puis_parti
+          ? `<p class="ent-alerte">${t("ent.perte", { n: ent.essaye_puis_parti })}</p>` : "") +
+        (ent.endormies_30j
+          ? `<p class="note">${t("ent.endormies", { n: ent.endormies_30j })}</p>` : "");
+      kpi.appendChild(bloc);
+    }
 
     // Origine des inscriptions : ce qui amène réellement des familles.
     if (Array.isArray(src) && src.length) {

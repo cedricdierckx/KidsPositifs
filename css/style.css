@@ -707,6 +707,19 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* Carte du 7e jour : même traitement que « beau moment », jamais plus insistant. */
 .arbre-j7{border-left:4px solid #39c0a0}
 
+/* ---- Entonnoir d'activation (onglet Croissance) ---- */
+.croiss-entonnoir{margin-top:14px}
+.ent-ligne{display:flex; align-items:center; gap:8px; padding:5px 0; font-size:13px}
+.ent-emo{flex:0 0 20px; text-align:center}
+.ent-lib{flex:1 1 130px; min-width:0; overflow-wrap:anywhere}
+.ent-barre{flex:0 0 72px; height:9px; background:#eef2f7; border-radius:5px; overflow:hidden}
+.ent-rempl{display:block; height:100%; background:linear-gradient(90deg,#7aa7ff,#4f7ce0); border-radius:5px}
+.ent-val{flex:0 0 62px; text-align:right; white-space:nowrap}
+.ent-val small{color:var(--doux)}
+/* La perte la plus coûteuse est signalée, pas noyée dans le tableau. */
+.ent-alerte{margin:8px 0 4px; font-size:13px; background:#fff5e6; color:#9a6a12;
+  border:1px solid #ffe0b0; border-radius:10px; padding:8px 10px}
+
 /* ---- Le tableau d'honneur (mur de mercis, jamais un podium) ---- */
 .hon-onglets{display:flex; gap:6px; margin:4px 0 10px}
 .hon-onglet{flex:1 1 auto; border:1px solid #dbe4ee; background:#fff; border-radius:10px;

@@ -1229,6 +1229,69 @@ begin
     order by f.created_at;
 end; $$;
 
+-- ---------- Entonnoir d'activation (chantier « Activation & rétention ») ------
+-- admin_activation() mesure J+1, et c'est insuffisant : mesuré sur la base
+-- réelle, 10 familles sur 10 avaient créé un enfant et modifié leur état au
+-- moins une fois, mais 2 seulement l'avaient fait trois fois. La friction n'est
+-- donc PAS l'accueil : c'est le retour du deuxième et du troisième jour, et
+-- aucun indicateur ne le montrait.
+-- Cette fonction expose l'entonnoir complet, en comptages seulement — le nombre
+-- d'enfants est compté, jamais lu.
+create or replace function public.admin_entonnoir()
+returns json language plpgsql security definer set search_path = public as $$
+declare resultat json;
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  select json_build_object(
+    'familles',        count(*),
+    'avec_enfant',     count(*) filter (where e.nb_enfants > 0),
+    'un_usage',        count(*) filter (where e.touches >= 1),
+    'trois_usages',    count(*) filter (where e.touches >= 3),
+    'dix_usages',      count(*) filter (where e.touches >= 10),
+    'actives_7j',      count(*) filter (where e.dernier >= current_date - 6),
+    'actives_30j',     count(*) filter (where e.dernier >= current_date - 29),
+    'endormies_30j',   count(*) filter (where e.dernier < current_date - 29),
+    -- Le décrochage le plus coûteux : elles ont essayé, puis renoncé.
+    'essaye_puis_parti', count(*) filter (where e.touches >= 1 and e.touches < 3)
+  ) into resultat
+  from (
+    select f.id,
+      (select count(*) from jsonb_object_keys(coalesce(s.data -> 'enfants', '{}'::jsonb))) as nb_enfants,
+      greatest(
+        (select count(*) from family_state_history h where h.family_id = f.id),
+        (select count(distinct u.day) from usage_events u where u.family_id = f.id)
+      ) as touches,
+      coalesce(s.updated_at::date, f.created_at::date) as dernier
+    from families f left join family_state s on s.family_id = f.id
+  ) e;
+  return resultat;
+end; $$;
+
+-- Familles endormies à réveiller : sans activité depuis 30 jours, mais pas
+-- au-delà de six mois — passé ce délai, insister devient du harcèlement, et le
+-- silence est une réponse. Un envoi par trimestre au maximum : la clé
+-- d'idempotence porte le trimestre, et elle est calculée ici pour que les deux
+-- côtés (base et client) ne puissent pas diverger dans leur définition.
+create or replace function public.admin_familles_endormies()
+returns table(famille_id uuid, famille text, email text, jours_sommeil integer, cle_trimestre text)
+language plpgsql security definer set search_path = public as $$
+declare trimestre text := to_char(now(), 'YYYY') || 'T' || to_char(now(), 'Q');
+begin
+  if not is_admin() then raise exception 'Accès refusé'; end if;
+  return query
+    select f.id, f.name::text,
+           (select u.email::text from auth.users u where u.id = f.owner_id),
+           (current_date - coalesce(s.updated_at::date, f.created_at::date))::int,
+           (f.id::text || ':' || trimestre)
+    from families f left join family_state s on s.family_id = f.id
+    where coalesce(s.updated_at::date, f.created_at::date) between
+            current_date - 180 and current_date - 30
+      and not exists (
+        select 1 from mails_auto m
+        where m.type = 'reactivation' and m.cle = f.id::text || ':' || trimestre)
+    order by coalesce(s.updated_at, f.created_at) desc;
+end; $$;
+
 -- ---------- Journal des changements automatiques ----------
 -- Tout ce qui s'applique tout seul (plafond franchi, vague partie, décision
 -- nouvellement ouverte) est consigné ici, et l'administrateur en est averti
@@ -1348,6 +1411,8 @@ grant execute on function public.classement_parrainages(text)   to authenticated
 grant execute on function public.join_waitlist(text, text)            to anon, authenticated;
 grant execute on function public.admin_list_waitlist()          to authenticated;
 grant execute on function public.admin_activation()             to authenticated;
+grant execute on function public.admin_entonnoir()              to authenticated;
+grant execute on function public.admin_familles_endormies()     to authenticated;
 grant execute on function public.admin_sources()                to authenticated;
 grant execute on function public.mail_auto_marquer(text, text)  to authenticated;
 grant execute on function public.mail_auto_deja(text, text)     to authenticated;
