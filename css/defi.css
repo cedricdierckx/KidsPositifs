@@ -83,10 +83,34 @@ body{margin:0; background:var(--fond); color:var(--texte);
 .defi-attente{margin:12px 0 0; padding:10px 12px; font-size:13px; line-height:1.45;
   background:rgba(255,196,71,.12); border:1px solid rgba(255,196,71,.4); border-radius:10px}
 
+/* L'écart avec l'équipe devant : le chiffre qui fait revenir le lendemain. */
+.defi-ecart{margin:12px 0 0; padding:10px 12px; font-size:14px; line-height:1.45;
+  background:rgba(79,209,197,.12); border:1px solid rgba(79,209,197,.45); border-radius:10px}
+.defi-ecart-tete{background:rgba(255,196,71,.12); border-color:rgba(255,196,71,.45)}
+/* Compte à rebours : sous 48 h, il change de couleur et pulse doucement. */
+.defi-urgent{color:var(--or); animation:defi-pulse 1.6s ease-in-out infinite}
+@keyframes defi-pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+/* ---- Hauts faits ---- */
+.defi-faits{display:flex; flex-wrap:wrap; gap:8px}
+.defi-fait{display:flex; align-items:center; gap:6px; padding:7px 10px;
+  background:#0f151d; border:1px solid var(--bord); border-radius:10px;
+  font-size:12px; font-weight:800; color:var(--doux); opacity:.5}
+.defi-fait-emoji{font-size:15px; filter:grayscale(1)}
+.defi-fait.acquis{opacity:1; color:var(--texte); border-color:var(--or);
+  background:linear-gradient(135deg,rgba(255,196,71,.14),#0f151d)}
+.defi-fait.acquis .defi-fait-emoji{filter:none}
+
 /* ---- Podium ---- */
 .defi-podium{display:flex; flex-direction:column; gap:8px}
-.defi-marche{display:flex; align-items:center; gap:10px; padding:12px 14px;
-  background:#0f151d; border:1px solid var(--bord); border-radius:12px}
+.defi-marche{position:relative; display:flex; align-items:center; gap:10px;
+  padding:12px 14px; background:#0f151d; border:1px solid var(--bord);
+  border-radius:12px; overflow:hidden}
+/* Part du total de l'arène, en fond : la domination se voit sans lire. */
+.defi-part{position:absolute; left:0; top:0; bottom:0; z-index:0;
+  background:rgba(79,209,197,.10); pointer-events:none}
+.defi-marche > *:not(.defi-part){position:relative; z-index:1}
+.defi-sang{font-size:13px}
 .defi-marche-1{border-color:var(--or); background:linear-gradient(90deg,rgba(255,196,71,.14),#0f151d)}
 .defi-marche-2{border-color:#b9c6d8}
 .defi-marche-3{border-color:#c98b5a}

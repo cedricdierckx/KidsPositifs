@@ -2305,12 +2305,12 @@ function apiDefi() {
   const src = fs.readFileSync(path.join(__dirname, "..", "js/defi.js"), "utf8");
   // On charge la table de traductions, le moteur tD() et les rangs.
   const debut = src.indexOf("const DEFI_LANGUES");
-  const fin = src.indexOf("/* Les liens d'arène");
+  const fin = src.indexOf("/* ---------- Démarrage");
   const bloc = src.slice(debut, fin)
     .replace(/localStorage/g, "({ getItem: () => null, setItem: () => {} })")
     .replace(/document\.documentElement/g, "null");
   return new Function("navigator",
-    bloc + "; return { DEFI_RANGS, rangDe, rangSuivant, DEFI_I18N, DEFI_LANGUES, tD, definirLangueDefi, langueInitiale };"
+    bloc + "; return { DEFI_RANGS, rangDe, rangSuivant, DEFI_I18N, DEFI_LANGUES, tD, definirLangueDefi, langueInitiale, DEFI_HAUTS_FAITS, DEFI_HOTE_APP, lienFamille, resteDetail };"
   )({ language: "fr" });
 }
 
@@ -2374,6 +2374,80 @@ test("défi : le moteur de traduction bascule et retombe proprement", () => {
   // Une clé inconnue ne doit jamais casser l'écran : elle se rend telle quelle.
   assert.strictEqual(d.tD("cle_qui_nexiste_pas"), "cle_qui_nexiste_pas");
   d.definirLangueDefi("fr");
+});
+
+test("défi : un seul lien d'invitation, celui de la famille dans l'application", () => {
+  const d = apiDefi();
+  const { api } = construireContexte();
+  // Le lien de recrutement N'EST PAS un lien de la page secrète : c'est celui
+  // de la famille dans l'app. Une seule adresse à connaître, et chaque
+  // inscription qu'elle produit compte dans toutes les arènes en cours.
+  const lien = d.lienFamille("RY94M38");
+  assert.ok(/^https:\/\/(fami\.team|famiteam\.com)\/\?p=RY94M38$/.test(lien),
+    "le lien de recrutement doit être celui de l'application : " + lien);
+  assert.ok(!/defi/.test(lien), "le lien de recrutement ne doit pas mener à la page secrète");
+  assert.ok(lien.length <= api.QR_CAPACITE, "le lien doit tenir dans le QR");
+  assert.ok(api.qrSvg(lien), "le QR doit être produit");
+  // Et le code applicatif ne doit plus fabriquer de lien de recrutement hybride.
+  const fs = require("fs");
+  const src = fs.readFileSync(require("path").join(__dirname, "..", "js/defi.js"), "utf8");
+  const f = src.slice(src.indexOf("async function chargerLienRecrutement"));
+  assert.ok(/lienFamille\(/.test(f.slice(0, 900)), "le bloc d'invitation n'utilise pas le lien de la famille");
+  assert.ok(!/"\?a=" \+ encodeURIComponent\(codeArene\)/.test(f), "un lien hybride subsiste");
+});
+
+test("défi : les hauts faits découlent des compteurs réels", () => {
+  const d = apiDefi();
+  assert.ok(d.DEFI_HAUTS_FAITS.length >= 5, "trop peu de hauts faits");
+  d.DEFI_HAUTS_FAITS.forEach(f => {
+    assert.ok(f.cle && f.emoji && typeof f.test === "function", "haut fait incomplet : " + f.cle);
+    // Chaque haut fait doit avoir son libellé ET son explication, en 4 langues.
+    Object.keys(d.DEFI_LANGUES).forEach(lg => {
+      assert.ok(d.DEFI_I18N[lg][f.cle], "manque " + lg + " → " + f.cle);
+      assert.ok(d.DEFI_I18N[lg][f.cle + "_d"], "manque " + lg + " → " + f.cle + "_d");
+    });
+  });
+  const par = (c) => d.DEFI_HAUTS_FAITS.find(f => f.cle === c);
+  const vide = { points: 0, vivantes: 0, en_route: 0, jours: 0, meilleur_jour: 0 };
+  // Une équipe qui n'a rien fait ne décroche rien.
+  d.DEFI_HAUTS_FAITS.forEach(f => assert.strictEqual(!!f.test(vide, 3, []), false,
+    "haut fait décroché sans rien faire : " + f.cle));
+  assert.strictEqual(!!par("hf_double").test({ meilleur_jour: 2 }), true);
+  assert.strictEqual(!!par("hf_double").test({ meilleur_jour: 1 }), false);
+  assert.strictEqual(!!par("hf_triple").test({ meilleur_jour: 3 }), true);
+  assert.strictEqual(!!par("hf_regulier").test({ jours: 3 }), true);
+  assert.strictEqual(!!par("hf_sansfaute").test({ vivantes: 3, en_route: 0 }), true);
+  assert.strictEqual(!!par("hf_sansfaute").test({ vivantes: 3, en_route: 1 }), false,
+    "« sans faute » ne doit pas s'obtenir avec des familles en attente");
+  assert.strictEqual(!!par("hf_leader").test({ points: 10 }, 0), true);
+  assert.strictEqual(!!par("hf_leader").test({ points: 0 }, 0), false,
+    "on n'est pas « en tête » avec zéro point");
+});
+
+test("défi : le compte à rebours passe en urgence sous 48 heures", () => {
+  const d = apiDefi();
+  const dans = (h) => new Date(Date.now() + h * 3600 * 1000).toISOString();
+  assert.strictEqual(d.resteDetail(dans(-1)), null, "une arène finie n'a plus de compte à rebours");
+  const large = d.resteDetail(dans(100));
+  assert.strictEqual(large.jours, 4);
+  assert.strictEqual(large.urgent, false);
+  const court = d.resteDetail(dans(40));
+  assert.strictEqual(court.jours, 1);
+  assert.strictEqual(court.heures, 16);
+  assert.strictEqual(court.urgent, true, "sous 48 h, l'urgence doit s'allumer");
+});
+
+test("défi : l'écart et le compte à rebours gardent leurs paramètres (4 langues)", () => {
+  const d = apiDefi();
+  const attendus = {
+    "ecart_devant": ["{n}", "{pseudo}"], "ecart_tete": ["{n}", "{pseudo}"],
+    "reste_jh": ["{j}", "{h}"], "amene_d2": ["{app}"]
+  };
+  Object.keys(d.DEFI_LANGUES).forEach(lg => Object.keys(attendus).forEach(k => {
+    assert.ok(d.DEFI_I18N[lg][k], "manque " + lg + " → " + k);
+    attendus[k].forEach(v => assert.ok(d.DEFI_I18N[lg][k].includes(v),
+      lg + " → " + k + " : paramètre " + v + " perdu"));
+  }));
 });
 
 test("défi : la page reste secrète — noindex, robots, absente du plan du site", () => {

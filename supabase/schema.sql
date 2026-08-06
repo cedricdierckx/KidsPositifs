@@ -365,11 +365,6 @@ end; $$;
 -- récompense les familles bien choisies plutôt que le volume de liens envoyés.
 -- Aucune donnée d'enfant n'est lue : seuls usage_events (jours d'ouverture) et
 -- referrals interviennent. Aucune identité de filleul n'est renvoyée au parrain.
-create or replace function public.arbre_jours_actifs(p_family uuid)
-returns integer language sql stable security definer set search_path = public as $$
-  select coalesce(count(distinct day), 0)::integer from usage_events where family_id = p_family;
-$$;
-
 create or replace function public.parrainage_bilan(p_family uuid)
 returns json language plpgsql security definer set search_path = public as $$
 declare invitees integer; installees integer; palier integer; suivant integer; resultat json;
@@ -641,16 +636,29 @@ begin
         -- On ne renvoie PAS family_id : le drapeau « moi » suffit à se
         -- reconnaître, et l'identifiant interne des autres familles n'a rien
         -- à faire dans la réponse.
+        -- Les trois compteurs supplémentaires (jours de chasse, meilleur jour,
+        -- première prise) servent aux hauts faits affichés dans l'arène. Ce
+        -- sont des agrégats de dates d'arrivée : aucune identité de filleul.
         select m.pseudo::text as pseudo,
                v.vivantes, v.en_route,
                (v.vivantes * 100 + v.en_route * 25) as points,
+               v.jours, v.meilleur_jour, v.premiere_le,
                (m.family_id = p_family) as moi
         from arene_membres m
         cross join lateral (
           select
             count(*) filter (where arbre_jours_actifs(r.accepted_family) >= 3) as vivantes,
-            count(*) filter (where arbre_jours_actifs(r.accepted_family) < 3)  as en_route
+            count(*) filter (where arbre_jours_actifs(r.accepted_family) < 3)  as en_route,
+            count(distinct r.accepted_at::date) as jours,
+            coalesce(max(j.n), 0) as meilleur_jour,
+            min(r.accepted_at) as premiere_le
           from referrals r
+          left join lateral (
+            select count(*) as n from referrals r2
+            where r2.family_id = r.family_id and r2.accepted_family is not null
+              and r2.accepted_at::date = r.accepted_at::date
+              and r2.accepted_at between a.created_at and a.fin_le
+          ) j on true
           where r.family_id = m.family_id
             and r.accepted_family is not null
             and r.accepted_at between a.created_at and a.fin_le
@@ -938,6 +946,16 @@ begin
     values (current_date, p_family, coalesce(nullif(trim(p_kind), ''), 'open'), 1)
   on conflict (day, family_id, kind) do update set count = usage_events.count + 1;
 end; $$;
+
+-- Jours d'ouverture distincts d'une famille. Défini ICI, et non avec le reste
+-- de « L'Arbre des familles », parce que cette fonction est en langage SQL :
+-- son corps est validé à la création, et elle doit donc suivre la table
+-- usage_events dont elle dépend. Placée plus haut, elle faisait échouer tout le
+-- script sur une base neuve — invisible en production, où la table préexistait.
+create or replace function public.arbre_jours_actifs(p_family uuid)
+returns integer language sql stable security definer set search_path = public as $$
+  select coalesce(count(distinct day), 0)::integer from usage_events where family_id = p_family;
+$$;
 
 -- RPC admin : agrégats d'usage (familles actives jour / 7 j / 30 j + ouvertures).
 create or replace function public.admin_usage_stats()

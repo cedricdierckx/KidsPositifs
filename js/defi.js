@@ -91,6 +91,17 @@ const DEFI_I18N = {
     "quitter": "Quitter cette arène",
     "quitter_conf": "Tu quittes l'arène et ton nom d'équipe est effacé. Continuer ?",
     "quitte": "Tu as quitté l'arène.",
+    "reste_jh": "{j} j {h} h restantes", "urgence": "DERNIÈRE LIGNE DROITE",
+    "ecart_devant": "🎯 À <strong>{n}</strong> points de <strong>{pseudo}</strong>. Une famille vivante suffit parfois.",
+    "ecart_tete": "👑 Tu mènes de <strong>{n}</strong> points sur <strong>{pseudo}</strong>. Ne lâche rien.",
+    "hf_titre": "Hauts faits",
+    "hf_premier_sang": "Premier sang", "hf_premier_sang_d": "Première équipe à marquer dans cette arène",
+    "hf_double": "Doublé", "hf_double_d": "Deux familles amenées le même jour",
+    "hf_triple": "Triplé", "hf_triple_d": "Trois familles amenées le même jour",
+    "hf_regulier": "Régulier", "hf_regulier_d": "Des arrivées sur trois jours différents",
+    "hf_sansfaute": "Sans faute", "hf_sansfaute_d": "Trois familles amenées, toutes installées",
+    "hf_leader": "En tête", "hf_leader_d": "Première place de l'arène",
+    "amene_d2": "C'est <strong>exactement le lien de ta famille dans {app}</strong> — le même que dans l'application. Chaque famille qui s'inscrit avec compte dans <strong>toutes tes arènes en cours</strong>.",
     "r1": "Recrue", "r2": "Éclaireur", "r3": "Ambassadeur", "r4": "Champion", "r5": "Légende"
   },
   en: {
@@ -151,6 +162,17 @@ const DEFI_I18N = {
     "quitter": "Leave this arena",
     "quitter_conf": "You'll leave the arena and your team name will be erased. Continue?",
     "quitte": "You left the arena.",
+    "reste_jh": "{j}d {h}h left", "urgence": "FINAL STRETCH",
+    "ecart_devant": "🎯 <strong>{n}</strong> points behind <strong>{pseudo}</strong>. Sometimes one settled family is enough.",
+    "ecart_tete": "👑 You lead <strong>{pseudo}</strong> by <strong>{n}</strong> points. Don't ease off.",
+    "hf_titre": "Feats",
+    "hf_premier_sang": "First blood", "hf_premier_sang_d": "First team to score in this arena",
+    "hf_double": "Double", "hf_double_d": "Two families brought on the same day",
+    "hf_triple": "Triple", "hf_triple_d": "Three families brought on the same day",
+    "hf_regulier": "Steady", "hf_regulier_d": "Arrivals on three different days",
+    "hf_sansfaute": "Flawless", "hf_sansfaute_d": "Three families brought, all settled in",
+    "hf_leader": "In the lead", "hf_leader_d": "First place in the arena",
+    "amene_d2": "This is <strong>exactly your family's link in {app}</strong> — the same one as in the app. Every family signing up with it counts in <strong>all your running arenas</strong>.",
     "r1": "Rookie", "r2": "Scout", "r3": "Ambassador", "r4": "Champion", "r5": "Legend"
   },
   nl: {
@@ -211,6 +233,17 @@ const DEFI_I18N = {
     "quitter": "Deze arena verlaten",
     "quitter_conf": "Je verlaat de arena en je teamnaam wordt gewist. Doorgaan?",
     "quitte": "Je hebt de arena verlaten.",
+    "reste_jh": "nog {j}d {h}u", "urgence": "LAATSTE RECHTE LIJN",
+    "ecart_devant": "🎯 <strong>{n}</strong> punten achter <strong>{pseudo}</strong>. Soms volstaat één blijvende familie.",
+    "ecart_tete": "👑 Je leidt met <strong>{n}</strong> punten op <strong>{pseudo}</strong>. Niet lossen.",
+    "hf_titre": "Wapenfeiten",
+    "hf_premier_sang": "Eerste bloed", "hf_premier_sang_d": "Eerste team dat scoorde in deze arena",
+    "hf_double": "Dubbelslag", "hf_double_d": "Twee families op dezelfde dag aangebracht",
+    "hf_triple": "Drieklapper", "hf_triple_d": "Drie families op dezelfde dag aangebracht",
+    "hf_regulier": "Constant", "hf_regulier_d": "Aankomsten op drie verschillende dagen",
+    "hf_sansfaute": "Foutloos", "hf_sansfaute_d": "Drie families aangebracht, allemaal gebleven",
+    "hf_leader": "Aan kop", "hf_leader_d": "Eerste plaats in de arena",
+    "amene_d2": "Dit is <strong>precies de link van je familie in {app}</strong> — dezelfde als in de app. Elke familie die zich ermee inschrijft telt in <strong>al je lopende arena's</strong>.",
     "r1": "Rekruut", "r2": "Verkenner", "r3": "Ambassadeur", "r4": "Kampioen", "r5": "Legende"
   },
   de: {
@@ -271,6 +304,17 @@ const DEFI_I18N = {
     "quitter": "Diese Arena verlassen",
     "quitter_conf": "Du verlässt die Arena und dein Teamname wird gelöscht. Fortfahren?",
     "quitte": "Du hast die Arena verlassen.",
+    "reste_jh": "noch {j} T {h} Std", "urgence": "ZIELGERADE",
+    "ecart_devant": "🎯 <strong>{n}</strong> Punkte hinter <strong>{pseudo}</strong>. Manchmal genügt eine Familie, die bleibt.",
+    "ecart_tete": "👑 Du führst mit <strong>{n}</strong> Punkten vor <strong>{pseudo}</strong>. Nicht nachlassen.",
+    "hf_titre": "Glanzstücke",
+    "hf_premier_sang": "Erstes Blut", "hf_premier_sang_d": "Erstes Team, das in dieser Arena punktete",
+    "hf_double": "Doppelschlag", "hf_double_d": "Zwei Familien am selben Tag gebracht",
+    "hf_triple": "Dreierpack", "hf_triple_d": "Drei Familien am selben Tag gebracht",
+    "hf_regulier": "Beständig", "hf_regulier_d": "Ankünfte an drei verschiedenen Tagen",
+    "hf_sansfaute": "Fehlerfrei", "hf_sansfaute_d": "Drei Familien gebracht, alle geblieben",
+    "hf_leader": "In Führung", "hf_leader_d": "Erster Platz der Arena",
+    "amene_d2": "Das ist <strong>genau der Link deiner Familie in {app}</strong> — derselbe wie in der App. Jede Familie, die sich damit anmeldet, zählt in <strong>allen deinen laufenden Arenen</strong>.",
     "r1": "Rekrut", "r2": "Späher", "r3": "Botschafter", "r4": "Champion", "r5": "Legende"
   }
 };
@@ -320,6 +364,18 @@ function rangSuivant(points) {
   return DEFI_RANGS.find(x => (points || 0) < x.seuil) || null;
 }
 
+/* Hauts faits : calculés à partir des compteurs renvoyés par la base, donc
+ * toujours vrais. Aucun n'ouvre de droit — ils existent pour donner du relief à
+ * ce qui se passe réellement dans l'arène. */
+const DEFI_HAUTS_FAITS = [
+  { cle: "hf_premier_sang", emoji: "🩸", test: (e, i, t) => !!e.premier_sang },
+  { cle: "hf_double",       emoji: "⚡", test: (e) => (e.meilleur_jour || 0) >= 2 },
+  { cle: "hf_triple",       emoji: "🔥", test: (e) => (e.meilleur_jour || 0) >= 3 },
+  { cle: "hf_regulier",     emoji: "📅", test: (e) => (e.jours || 0) >= 3 },
+  { cle: "hf_sansfaute",    emoji: "💎", test: (e) => (e.vivantes || 0) >= 3 && !(e.en_route || 0) },
+  { cle: "hf_leader",       emoji: "👑", test: (e, i) => i === 0 && (e.points || 0) > 0 }
+];
+
 /* Les liens d'arène sont faits pour être ENVOYÉS à quelqu'un : ils ne doivent
  * donc jamais dépendre de l'origine courante. Depuis un aperçu de déploiement,
  * ils porteraient une URL d'aperçu, et dépasseraient au passage la capacité du
@@ -341,6 +397,21 @@ function toast(msg) {
 }
 function param(n) { return new URLSearchParams(location.search).get(n); }
 function lienArene(code) { return DEFI_BASE + "?a=" + encodeURIComponent(code); }
+/* Le lien de recrutement est EXACTEMENT celui de la famille dans l'application :
+ * il n'y en a qu'un à connaître, et chaque famille qui s'inscrit avec compte
+ * dans toutes les arènes en cours. Le classement compte les filleuls de la
+ * famille sur la période de l'arène, sans se soucier du lien emprunté. */
+const DEFI_HOTE_APP = "https://fami.team/";
+function lienFamille(code) { return DEFI_HOTE_APP + "?p=" + encodeURIComponent(code); }
+
+// Temps restant en jours + heures : un compte à rebours qui bouge chaque heure
+// presse plus qu'un nombre de jours qui stagne.
+function resteDetail(fin) {
+  const ms = new Date(fin).getTime() - Date.now();
+  if (!(ms > 0)) return null;
+  const h = Math.floor(ms / 3600000);
+  return { jours: Math.floor(h / 24), heures: h % 24, urgent: h <= 48 };
+}
 
 /* ---------- Démarrage ---------- */
 document.addEventListener("DOMContentLoaded", demarrer);
@@ -561,11 +632,43 @@ function dessinerArene(cls) {
     ? Math.round(((moi.points - rang.seuil) / (suivant.seuil - rang.seuil)) * 100) : 100;
   const medaille = (i) => ["🥇", "🥈", "🥉"][i] || String(i + 1);
 
+  // Le premier sang revient à l'équipe qui a marqué la première dans l'arène.
+  const avecDate = equipes.filter(e => e.premiere_le);
+  const premier = avecDate.length
+    ? avecDate.reduce((a, b) => (new Date(a.premiere_le) <= new Date(b.premiere_le) ? a : b)) : null;
+  equipes.forEach(e => { e.premier_sang = !!(premier && e === premier); });
+
+  // L'écart avec l'équipe DEVANT : c'est le chiffre qui fait revenir. Quand on
+  // mène, on affiche l'avance sur le second — même ressort, sens inverse.
+  const iMoi = equipes.findIndex(e => e.moi);
+  let ecart = "";
+  if (iMoi === 0 && equipes.length > 1) {
+    ecart = `<p class="defi-ecart defi-ecart-tete">${tD("ecart_tete", { n: moi.points - equipes[1].points, pseudo: echapper(equipes[1].pseudo) })}</p>`;
+  } else if (iMoi > 0) {
+    const devant = equipes[iMoi - 1];
+    ecart = `<p class="defi-ecart">${tD("ecart_devant", { n: devant.points - moi.points, pseudo: echapper(devant.pseudo) })}</p>`;
+  }
+
+  // Hauts faits : verrouillés tant qu'ils ne sont pas obtenus, pour qu'on voie
+  // ce qu'il reste à décrocher.
+  const faits = DEFI_HAUTS_FAITS.map(f => {
+    const acquis = f.test(moi, iMoi, equipes);
+    return `<span class="defi-fait${acquis ? " acquis" : ""}" title="${tD(f.cle + "_d")}">
+      <span class="defi-fait-emoji">${f.emoji}</span>
+      <span class="defi-fait-nom">${tD(f.cle)}</span></span>`;
+  }).join("");
+
+  // Part du total de l'arène : la domination se voit d'un coup d'œil.
+  const total = equipes.reduce((n, e) => n + (e.points || 0), 0);
+  const part = (e) => (total > 0 ? Math.round((e.points / total) * 100) : 0);
+  const chrono = resteDetail(cls.fin);
+
   const podium = equipes.slice(0, 3).map((e, i) => `
     <div class="defi-marche defi-marche-${i + 1}${e.moi ? " defi-moi" : ""}">
       <span class="defi-medaille">${medaille(i)}</span>
-      <span class="defi-pseudo">${echapper(e.pseudo)}</span>
+      <span class="defi-pseudo">${echapper(e.pseudo)}${e.premier_sang ? ' <span class="defi-sang" title="' + tD("hf_premier_sang_d") + '">🩸</span>' : ""}</span>
       <span class="defi-points">${e.points}</span>
+      <span class="defi-part" style="width:${part(e)}%"></span>
     </div>`).join("");
 
   const reste = equipes.slice(3).map((e, i) => `
@@ -578,7 +681,10 @@ function dessinerArene(cls) {
 
   ecran(`
     <div class="defi-hero defi-hero-serre">
-      <p class="defi-kicker">${cls.terminee ? tD("arene_close") : cls.jours_restants + " " + tD("jours")}</p>
+      <p class="defi-kicker${chrono && chrono.urgent ? " defi-urgent" : ""}">${
+        cls.terminee ? tD("arene_close")
+        : (chrono ? tD("reste_jh", { j: chrono.jours, h: chrono.heures }) + (chrono.urgent ? " · " + tD("urgence") : "")
+                  : tD("arene_close"))}</p>
       <h1 class="defi-titre">${echapper(cls.nom)}</h1>
     </div>
 
@@ -595,7 +701,11 @@ function dessinerArene(cls) {
         <p class="defi-note">${tD("encore", { n: suivant.seuil - moi.points, emoji: suivant.emoji, nom: tD(suivant.cle) })}</p>`
       : `<p class="defi-note">${tD("rang_max")}</p>`}
       ${moi.en_route ? `<p class="defi-attente">${tD("attente", { n: moi.en_route * 75, f: moi.en_route })}</p>` : ""}
+      ${ecart}
     </section>
+
+    ${faits ? `<section class="defi-bloc"><h2>${tD("hf_titre")}</h2>
+      <div class="defi-faits">${faits}</div></section>` : ""}
 
     ${equipes.length ? `<section class="defi-bloc">
       <h2>${tD("podium")}</h2>
@@ -605,6 +715,7 @@ function dessinerArene(cls) {
 
     <section class="defi-bloc">
       <h2>${tD("amene_t")}</h2>
+      <p class="defi-note">${tD("amene_d2")}</p>
       <p class="defi-note">${tD("amene_d")}</p>
       <div id="defi-invit" class="defi-invit"><p class="defi-note">${tD("lien_prep")}</p></div>
     </section>
@@ -634,7 +745,7 @@ function dessinerArene(cls) {
 
   // Le lien de recrutement : code de parrainage de la famille + code d'arène,
   // pour que l'ami inscrit soit rattaché ET atterrisse dans la bonne arène.
-  chargerLienRecrutement(cls.code);
+  chargerLienRecrutement();
 }
 
 async function copier(champ) {
@@ -642,12 +753,15 @@ async function copier(champ) {
   catch (e) { champ.select(); toast(tD("copie_ko")); }
 }
 
-async function chargerLienRecrutement(codeArene) {
+async function chargerLienRecrutement() {
   const zone = document.getElementById("defi-invit");
   if (!zone) return;
   const { data: code, error } = await sb.rpc("referral_code_famille", { p_family: familleId });
   if (error || !code) { zone.innerHTML = `<p class="defi-note">${tD("lien_ko")}</p>`; return; }
-  const lien = DEFI_BASE + "?a=" + encodeURIComponent(codeArene) + "&p=" + encodeURIComponent(code);
+  // EXACTEMENT le lien de la famille dans l'application : un seul lien à
+  // connaître, et chaque inscription qu'il produit compte dans toutes les
+  // arènes en cours.
+  const lien = lienFamille(code);
   const qr = (typeof qrSvg === "function") ? qrSvg(lien, { classe: "defi-qr" }) : null;
   // Si le QR ne peut pas être produit, on le DIT : un carré qui disparaît sans
   // explication est pire que pas de carré du tout.
