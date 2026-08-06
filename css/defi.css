@@ -1,0 +1,112 @@
+/* =====================================================================
+ * « Le Défi » — feuille de style propre à la page secrète.
+ * Volontairement très différente de l'application : fond sombre, accents
+ * vifs, chiffres énormes. On doit sentir en une seconde qu'on est ailleurs,
+ * dans quelque chose de fermé et d'intense — et ne jamais confondre cette
+ * page avec FamiTeam, qui reste calme et sans classement.
+ * ===================================================================== */
+:root{
+  --fond:#141a24; --fond2:#1c2431; --bord:#2b3648;
+  --texte:#eef3fa; --doux:#93a3ba;
+  --or:#ffc447; --feu:#ff6b4a; --vif:#4fd1c5; --danger:#ff7a7a;
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--fond); color:var(--texte);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased}
+.defi-hote{max-width:520px; margin:0 auto; padding:20px 16px 48px}
+.defi-chargement{color:var(--doux); text-align:center; padding:40px 0}
+
+/* ---- En-tête ---- */
+.defi-hero{text-align:center; padding:22px 8px 18px}
+.defi-hero-serre{padding:14px 8px 10px}
+.defi-kicker{margin:0 0 6px; font-size:12px; font-weight:800; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--feu)}
+.defi-titre{margin:0 0 8px; font-size:30px; line-height:1.15; font-weight:900}
+.defi-hote-nom{margin:0 0 12px; color:var(--doux); font-size:14px}
+.defi-regle{margin:12px 0 0; font-size:15px; line-height:1.5; color:var(--texte)}
+.defi-note{margin:8px 0 0; font-size:13px; line-height:1.45; color:var(--doux)}
+.defi-note strong{color:var(--texte)}
+
+.defi-compteurs{display:flex; gap:12px; justify-content:center; margin:16px 0 4px}
+.defi-compteur{flex:0 0 120px; background:var(--fond2); border:1px solid var(--bord);
+  border-radius:14px; padding:12px 8px}
+.defi-chiffre{display:block; font-size:30px; font-weight:900; line-height:1}
+.defi-libelle{display:block; margin-top:4px; font-size:11px; text-transform:uppercase;
+  letter-spacing:.08em; color:var(--doux)}
+
+/* ---- Blocs ---- */
+.defi-bloc{background:var(--fond2); border:1px solid var(--bord); border-radius:16px;
+  padding:16px; margin:14px 0}
+.defi-bloc h2{margin:0 0 10px; font-size:16px; font-weight:800}
+
+.defi-champ{width:100%; margin:6px 0; padding:12px 14px; font-size:15px;
+  background:#0f151d; color:var(--texte); border:1px solid var(--bord); border-radius:12px}
+.defi-champ:focus{outline:2px solid var(--vif); outline-offset:1px}
+.defi-btn{display:block; width:100%; margin:10px 0 0; padding:13px 16px; font-size:15px;
+  font-weight:800; color:#101720; background:var(--vif); border:none; border-radius:12px;
+  cursor:pointer; text-align:center; text-decoration:none}
+.defi-btn:hover{filter:brightness(1.08)}
+.defi-btn-xl{padding:16px; font-size:17px; background:linear-gradient(135deg,var(--or),var(--feu))}
+.defi-lien{display:block; width:100%; margin:14px 0 0; padding:10px; background:none;
+  border:none; color:var(--doux); font-size:14px; cursor:pointer; text-decoration:underline}
+.defi-lien-danger{color:var(--danger)}
+
+.defi-arenes{display:flex; flex-direction:column; gap:8px}
+.defi-arene-l{display:flex; flex-direction:column; align-items:flex-start; gap:2px;
+  width:100%; padding:12px 14px; background:#0f151d; border:1px solid var(--bord);
+  border-radius:12px; color:var(--texte); cursor:pointer; text-align:left}
+.defi-arene-nom{font-weight:800; font-size:15px}
+.defi-arene-meta{font-size:12px; color:var(--doux)}
+
+/* ---- Mon score ---- */
+.defi-moi-bloc{border-color:var(--or)}
+.defi-moi-haut{display:flex; align-items:center; gap:12px}
+.defi-rang-emoji{font-size:34px; line-height:1}
+.defi-rang-nom{margin:0; font-size:18px; font-weight:900}
+.defi-moi-haut > div{flex:1 1 auto; min-width:0}
+.defi-score{font-size:38px; font-weight:900; color:var(--or); line-height:1}
+.defi-jauge{height:10px; margin:12px 0 0; background:#0f151d; border:1px solid var(--bord);
+  border-radius:6px; overflow:hidden}
+.defi-jauge-r{height:100%; background:linear-gradient(90deg,var(--or),var(--feu));
+  border-radius:6px; transition:width .5s ease}
+/* Les points « en attente » sont la vraie mécanique du jeu : une inscription
+   ne vaut que 25 tant que la famille n'a pas pris le pli. */
+.defi-attente{margin:12px 0 0; padding:10px 12px; font-size:13px; line-height:1.45;
+  background:rgba(255,196,71,.12); border:1px solid rgba(255,196,71,.4); border-radius:10px}
+
+/* ---- Podium ---- */
+.defi-podium{display:flex; flex-direction:column; gap:8px}
+.defi-marche{display:flex; align-items:center; gap:10px; padding:12px 14px;
+  background:#0f151d; border:1px solid var(--bord); border-radius:12px}
+.defi-marche-1{border-color:var(--or); background:linear-gradient(90deg,rgba(255,196,71,.14),#0f151d)}
+.defi-marche-2{border-color:#b9c6d8}
+.defi-marche-3{border-color:#c98b5a}
+.defi-medaille{font-size:22px; flex:0 0 26px; text-align:center}
+.defi-pseudo{flex:1 1 auto; font-weight:800; overflow-wrap:anywhere}
+.defi-points{font-weight:900; font-size:19px; color:var(--or)}
+.defi-moi{outline:2px solid var(--vif); outline-offset:-2px}
+
+.defi-liste{list-style:none; margin:10px 0 0; padding:0}
+.defi-rangee{display:flex; align-items:center; gap:10px; padding:9px 12px;
+  border-bottom:1px solid var(--bord); font-size:14px}
+.defi-rangee:last-child{border-bottom:none}
+.defi-place{flex:0 0 22px; text-align:center; color:var(--doux); font-weight:800}
+.defi-detail{flex:0 0 auto; font-size:11px; color:var(--doux)}
+
+/* ---- Invitation ---- */
+.defi-copie{display:flex; gap:8px; align-items:stretch; flex-wrap:wrap}
+.defi-copie .defi-champ{flex:1 1 180px; min-width:0}
+.defi-copie .defi-btn{flex:0 0 auto; width:auto; margin:6px 0}
+.defi-code{letter-spacing:.14em; color:var(--or)}
+.defi-qr-cadre{display:flex; justify-content:center; margin:12px 0 0}
+.defi-qr{width:160px; height:160px; background:#fff; border-radius:10px; padding:6px}
+
+.defi-toast{position:fixed; left:50%; bottom:22px; transform:translateX(-50%);
+  background:#0f151d; color:var(--texte); border:1px solid var(--bord);
+  border-radius:12px; padding:11px 16px; font-size:14px; z-index:50;
+  box-shadow:0 8px 30px rgba(0,0,0,.45); max-width:90vw}
+
+@media (prefers-reduced-motion: reduce){
+  .defi-jauge-r{transition:none}
+}

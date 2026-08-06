@@ -2151,7 +2151,9 @@ test("base : toute fonction de l'Arbre fixe son search_path", () => {
   const fonctions = ["referral_code_famille", "regenerer_referral_code", "referral_info_par_code",
     "claim_referral_code", "gen_referral_code", "arbre_jours_actifs", "parrainage_bilan",
     "parrainage_jauge", "definir_classement_optin", "classement_parrainages",
-    "admin_parrainages_actifs_a_relancer", "admin_entonnoir", "admin_familles_endormies"];
+    "admin_parrainages_actifs_a_relancer", "admin_entonnoir", "admin_familles_endormies",
+    "arene_creer", "arene_apercu", "arene_rejoindre", "arene_quitter", "arene_classement",
+    "arene_mes_arenes"];
   fonctions.forEach(nom => {
     const i = sql.indexOf("function public." + nom + "(");
     assert.ok(i > -1, "fonction absente du schéma : " + nom);
@@ -2179,7 +2181,12 @@ test("base : chaque fonction de l'Arbre porte sa propre garde d'accès", () => {
     classement_parrainages: /auth\.uid\(\) is null/,
     admin_parrainages_actifs_a_relancer: /is_admin/,
     admin_entonnoir: /is_admin/,
-    admin_familles_endormies: /is_admin/
+    admin_familles_endormies: /is_admin/,
+    arene_creer: /is_family_member/,
+    arene_rejoindre: /is_family_member/,
+    arene_quitter: /is_family_member/,
+    arene_classement: /is_family_member/,
+    arene_mes_arenes: /is_family_member/
   };
   Object.keys(gardes).forEach(nom => {
     const i = sql.indexOf("function public." + nom + "(");
@@ -2289,6 +2296,108 @@ test("dépliant : le nom d'école est assaini et borné à la capacité du QR", 
   const corps = ui2.slice(ui2.indexOf("function lienDepliant"), ui2.indexOf("function modaleDepliant"));
   assert.ok(!/location/.test(corps),
     "lienDepliant dépend de location : imprimé depuis un aperçu, le dépliant porterait une URL d'aperçu");
+});
+
+/* ---------- « Le Défi » : arènes privées (page secrète) ---------- */
+function apiDefi() {
+  const fs = require("fs");
+  const path = require("path");
+  const src = fs.readFileSync(path.join(__dirname, "..", "js/defi.js"), "utf8");
+  const debut = src.indexOf("const DEFI_RANGS");
+  const fin = src.indexOf("/* Les liens d'arène");
+  return new Function(src.slice(debut, fin) + "; return { DEFI_RANGS, rangDe, rangSuivant };")();
+}
+
+test("défi : les rangs sont croissants, jamais perdus, et bornés", () => {
+  const d = apiDefi();
+  let s = -1;
+  d.DEFI_RANGS.forEach(r => {
+    assert.ok(r.seuil > s, "seuils non croissants"); s = r.seuil;
+    assert.ok(r.nom && r.emoji, "rang incomplet");
+  });
+  assert.strictEqual(d.rangDe(0).nom, "Recrue");
+  assert.strictEqual(d.rangDe(99).nom, "Recrue");
+  assert.strictEqual(d.rangDe(100).nom, "Éclaireur");
+  assert.strictEqual(d.rangDe(999).nom, "Champion");
+  assert.strictEqual(d.rangDe(1000).nom, "Légende");
+  assert.strictEqual(d.rangSuivant(1000), null, "au dernier rang, plus rien à viser");
+  // Monotonie : un score qui monte ne fait jamais reculer le rang.
+  let precedent = 0;
+  for (let n = 0; n <= 1200; n += 7) {
+    const r = d.DEFI_RANGS.indexOf(d.rangDe(n));
+    assert.ok(r >= precedent, "recul de rang en " + n); precedent = r;
+  }
+});
+
+test("défi : la page reste secrète — noindex, robots, absente du plan du site", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const R = (f) => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
+  const page = R("defi.html");
+  assert.ok(/name="robots"\s+content="noindex, nofollow"/.test(page), "la page n'est pas en noindex");
+  const robots = R("robots.txt");
+  assert.ok(/Disallow:\s*\/defi\b/.test(robots) && /Disallow:\s*\/defi\.html/.test(robots),
+    "defi.html n'est pas exclu de robots.txt");
+  assert.ok(!/defi/.test(R("sitemap.xml")), "defi.html apparaît dans le plan du site");
+  // Et surtout : aucune page publique ne doit y renvoyer.
+  ["index.html", "faq.html", "confidentialite.html", "mentions-legales.html"].forEach(f => {
+    assert.ok(!/defi\.html/.test(R(f)), f + " contient un lien vers la page secrète");
+  });
+  assert.ok(!/defi\.html/.test(R("js/ui.js")), "l'application renvoie vers la page secrète");
+});
+
+test("défi : le classement ne divulgue ni nom de famille ni identifiant interne", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const sql = fs.readFileSync(path.join(__dirname, "..", "supabase/schema.sql"), "utf8");
+  const i = sql.indexOf("function public.arene_classement");
+  const fn = sql.slice(i, sql.indexOf("$$;", i));
+  assert.ok(i > -1 && fn.length > 400, "arene_classement introuvable");
+  assert.ok(/m\.pseudo/.test(fn), "le pseudonyme n'est pas utilisé");
+  assert.ok(!/f\.name|families\.name/.test(fn), "un nom de famille apparaît dans le classement");
+  // family_id ne doit pas figurer dans l'objet renvoyé (le drapeau « moi » suffit).
+  const projection = fn.slice(fn.indexOf("select m.pseudo"), fn.indexOf("from arene_membres"));
+  assert.ok(!/as family_id|m\.family_id,/.test(projection),
+    "l'identifiant interne des autres familles est renvoyé");
+  // Le stock antérieur ne compte pas : la fenêtre de l'arène est appliquée.
+  assert.ok(/accepted_at between a\.created_at and a\.fin_le/.test(fn),
+    "les parrainages antérieurs à l'arène compteraient");
+  // Aucun enfant n'entre dans le calcul.
+  assert.ok(!/enfants|family_state/.test(fn), "des données d'enfant entrent dans le score");
+});
+
+test("défi : l'aperçu public ne montre que le strict nécessaire", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const sql = fs.readFileSync(path.join(__dirname, "..", "supabase/schema.sql"), "utf8");
+  const i = sql.indexOf("function public.arene_apercu");
+  const fn = sql.slice(i, sql.indexOf("$$;", i));
+  assert.ok(i > -1, "arene_apercu introuvable");
+  // Ouvert à anon : c'est ce que voit l'ami avant d'avoir un compte.
+  assert.ok(/grant execute on function public\.arene_apercu\(text\)\s+to anon/.test(sql),
+    "l'aperçu doit être lisible sans compte");
+  assert.ok(!/f\.name|families\.name|auth\.users|email/.test(fn),
+    "l'aperçu expose un nom de famille ou une adresse");
+  assert.ok(/m\.pseudo/.test(fn), "l'hôte doit être désigné par son pseudonyme");
+});
+
+test("défi : le lien envoyé aux amis tient dans le QR et ne dépend pas de l'origine", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const src = fs.readFileSync(path.join(__dirname, "..", "js/defi.js"), "utf8");
+  const base = /const DEFI_BASE = "([^"]+)"/.exec(src);
+  assert.ok(base, "DEFI_BASE introuvable");
+  assert.ok(/^https:\/\/(fami\.team|famiteam\.com)\//.test(base[1]),
+    "les liens du défi doivent pointer vers un domaine officiel : " + base[1]);
+  // Codes d'arène et de parrainage : 7 caractères chacun.
+  const lienMax = base[1] + "?a=" + "X".repeat(7) + "&p=" + "Y".repeat(7);
+  const { api } = construireContexte();
+  assert.ok(lienMax.length <= api.QR_CAPACITE,
+    `lien de ${lienMax.length} caractères pour une capacité de ${api.QR_CAPACITE}`);
+  assert.ok(api.qrSvg(lienMax), "le QR du défi doit être produit");
+  // lienArene ne doit pas lire location : un lien envoyé doit rester valable.
+  const f = src.slice(src.indexOf("function lienArene"), src.indexOf("function lienArene") + 160);
+  assert.ok(!/location/.test(f), "lienArene dépend de location");
 });
 
 /* ---------- Exécution ---------- */

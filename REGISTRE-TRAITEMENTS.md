@@ -118,6 +118,24 @@ jamais l'identité de la famille qu'il a amenée, seulement un compteur.
 
 ---
 
+### T7 — Défis privés entre familles amies (« Les Arènes »)
+
+| | |
+|---|---|
+| Finalité | Permettre à un cercle d'amis de se lancer un défi amical, à durée limitée, sur le nombre de familles qu'ils font découvrir |
+| Base légale | **Consentement — art. 6.1.a.** On n'entre dans une arène qu'en saisissant son code **et** en choisissant un nom d'équipe : ce geste est le consentement |
+| Personnes concernées | Familles ayant volontairement rejoint une arène |
+| Catégories de données | **Un nom d'équipe choisi** (24 caractères), le nombre de familles amenées pendant l'arène, et le score qui en découle |
+| Données **non** traitées | Le nom de la famille, l'adresse e-mail, l'identifiant interne des autres familles, et **toute donnée d'enfant — aucune n'entre dans le calcul** |
+| Destinataires | Les **seuls autres membres de la même arène**. Une famille extérieure ne peut pas lire le classement |
+| Conservation | Le temps de l'arène. Quitter l'arène **efface le nom d'équipe** immédiatement (art. 7.3) |
+| Mesures | Dispositif hébergé sur une page **non référencée** (noindex, exclue de robots.txt et du plan du site), à laquelle aucune page publique ne renvoie ; aperçu public limité au nom de l'arène, au nombre d'équipes et au temps restant |
+
+Ce dispositif est **délibérément séparé** de l'application : celle-ci ne
+comporte aucun classement, et rien de ce qui précède n'y apparaît.
+
+---
+
 ## 3. Sous-traitants
 
 | Sous-traitant | Rôle | Localisation | Encadrement |

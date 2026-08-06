@@ -505,6 +505,177 @@ begin
   return resultat;
 end; $$;
 
+-- ---------- Les Arènes : défi privé entre familles amies ----------------------
+-- Dispositif VOLONTAIREMENT séparé du reste de l'application, et accessible par
+-- une page qui n'est liée nulle part (defi.html, noindex). L'application
+-- publique garde sa doctrine — pas de classement, pas de perdants ; ici, des
+-- adultes qui se connaissent CHOISISSENT de se défier, dans une arène privée,
+-- pour une durée limitée.
+-- Trois règles tenues en base :
+--   * on n'entre dans une arène qu'avec son code ET en choisissant un nom
+--     d'équipe : ce choix vaut consentement à figurer au classement de CETTE
+--     arène (RGPD art. 6.1.a) ; families.name n'y apparaît jamais ;
+--   * seuls les parrainages obtenus PENDANT l'arène comptent : personne
+--     n'arrive avec un stock d'avance ;
+--   * aucun enfant n'entre dans le calcul, à aucun titre.
+create table if not exists public.arenes (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  nom text not null,
+  family_id uuid not null references public.families(id) on delete cascade,   -- créatrice
+  created_at timestamptz not null default now(),
+  fin_le timestamptz not null
+);
+create index if not exists idx_arenes_code on public.arenes(code);
+
+create table if not exists public.arene_membres (
+  arene_id uuid not null references public.arenes(id) on delete cascade,
+  family_id uuid not null references public.families(id) on delete cascade,
+  pseudo text not null,
+  rejoint_le timestamptz not null default now(),
+  primary key (arene_id, family_id)
+);
+alter table public.arenes enable row level security;
+alter table public.arene_membres enable row level security;
+-- Aucune politique de lecture directe : tout passe par les RPC ci-dessous, qui
+-- ne renvoient que des pseudonymes et des points.
+
+-- Création d'une arène. Durée bornée entre 7 et 90 jours : en dessous, personne
+-- n'a le temps de jouer ; au-delà, le défi s'éteint de lui-même.
+create or replace function public.arene_creer(p_family uuid, p_nom text, p_jours integer, p_pseudo text)
+returns json language plpgsql security definer set search_path = public as $$
+declare c text; essai integer := 0; nom text; pseudo text; jours integer; a_id uuid;
+begin
+  if not is_family_member(p_family) then raise exception 'Accès refusé'; end if;
+  nom := left(nullif(btrim(coalesce(p_nom, '')), ''), 40);
+  pseudo := left(nullif(btrim(coalesce(p_pseudo, '')), ''), 24);
+  if nom is null then raise exception 'Donne un nom à ton arène'; end if;
+  if pseudo is null then raise exception 'Choisis le nom de ton équipe'; end if;
+  jours := least(greatest(coalesce(p_jours, 30), 7), 90);
+  loop
+    essai := essai + 1;
+    c := gen_referral_code();
+    begin
+      insert into arenes(code, nom, family_id, fin_le)
+        values (c, nom, p_family, now() + (jours || ' days')::interval)
+        returning id into a_id;
+      exit;
+    exception when unique_violation then
+      if essai >= 10 then raise exception 'Génération du code impossible'; end if;
+    end;
+  end loop;
+  insert into arene_membres(arene_id, family_id, pseudo) values (a_id, p_family, pseudo)
+    on conflict (arene_id, family_id) do update set pseudo = excluded.pseudo;
+  return json_build_object('code', c, 'nom', nom, 'jours', jours);
+end; $$;
+
+-- Aperçu d'une arène AVANT d'avoir un compte : c'est ce que voit l'ami qui
+-- reçoit le lien. Rien d'autre que le nom de l'arène, le nombre d'équipes et le
+-- temps restant — aucun nom de famille, aucune adresse.
+create or replace function public.arene_apercu(p_code text)
+returns json language plpgsql security definer set search_path = public as $$
+declare a arenes; resultat json;
+begin
+  select * into a from arenes where code = upper(btrim(coalesce(p_code, '')));
+  if not found then return null; end if;
+  select json_build_object(
+    'nom', a.nom,
+    'equipes', (select count(*) from arene_membres m where m.arene_id = a.id),
+    'jours_restants', greatest(0, extract(day from a.fin_le - now())::int),
+    'terminee', (a.fin_le <= now()),
+    'hote', (select m.pseudo from arene_membres m where m.arene_id = a.id and m.family_id = a.family_id)
+  ) into resultat;
+  return resultat;
+end; $$;
+
+-- Rejoindre une arène : le code + un nom d'équipe. Choisir ce nom vaut
+-- consentement à figurer au classement de cette arène, et de nulle part ailleurs.
+create or replace function public.arene_rejoindre(p_code text, p_family uuid, p_pseudo text)
+returns json language plpgsql security definer set search_path = public as $$
+declare a arenes; pseudo text;
+begin
+  if not is_family_member(p_family) then raise exception 'Accès refusé'; end if;
+  select * into a from arenes where code = upper(btrim(coalesce(p_code, '')));
+  if not found then raise exception 'Cette arène n''existe pas'; end if;
+  if a.fin_le <= now() then raise exception 'Cette arène est terminée'; end if;
+  pseudo := left(nullif(btrim(coalesce(p_pseudo, '')), ''), 24);
+  if pseudo is null then raise exception 'Choisis le nom de ton équipe'; end if;
+  insert into arene_membres(arene_id, family_id, pseudo) values (a.id, p_family, pseudo)
+    on conflict (arene_id, family_id) do update set pseudo = excluded.pseudo;
+  return json_build_object('code', a.code, 'nom', a.nom);
+end; $$;
+
+-- Quitter une arène : on efface le nom d'équipe avec l'inscription. Le retrait
+-- doit être aussi simple que l'entrée (RGPD art. 7.3).
+create or replace function public.arene_quitter(p_code text, p_family uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not is_family_member(p_family) then raise exception 'Accès refusé'; end if;
+  delete from arene_membres m using arenes a
+    where m.arene_id = a.id and a.code = upper(btrim(coalesce(p_code, ''))) and m.family_id = p_family;
+end; $$;
+
+-- Classement d'une arène, réservé à ses membres.
+-- Barème : 100 points par famille VIVANTE amenée pendant l'arène (trois jours
+-- d'usage de sa part), 25 points par famille arrivée mais pas encore vivante.
+-- Les 25 deviennent 100 quand elle prend le pli : le score monte tout seul si
+-- l'on a bien choisi qui inviter, et un compte jetable ne rapporte que 25.
+create or replace function public.arene_classement(p_code text, p_family uuid)
+returns json language plpgsql security definer set search_path = public as $$
+declare a arenes; resultat json;
+begin
+  if not is_family_member(p_family) then raise exception 'Accès refusé'; end if;
+  select * into a from arenes where code = upper(btrim(coalesce(p_code, '')));
+  if not found then raise exception 'Cette arène n''existe pas'; end if;
+  if not exists (select 1 from arene_membres m where m.arene_id = a.id and m.family_id = p_family)
+    then raise exception 'Tu n''es pas dans cette arène'; end if;
+
+  select json_build_object(
+    'code', a.code, 'nom', a.nom,
+    'debut', a.created_at, 'fin', a.fin_le,
+    'jours_restants', greatest(0, extract(day from a.fin_le - now())::int),
+    'terminee', (a.fin_le <= now()),
+    'equipes', coalesce((
+      select json_agg(x order by x.points desc, x.vivantes desc, x.pseudo)
+      from (
+        -- On ne renvoie PAS family_id : le drapeau « moi » suffit à se
+        -- reconnaître, et l'identifiant interne des autres familles n'a rien
+        -- à faire dans la réponse.
+        select m.pseudo::text as pseudo,
+               v.vivantes, v.en_route,
+               (v.vivantes * 100 + v.en_route * 25) as points,
+               (m.family_id = p_family) as moi
+        from arene_membres m
+        cross join lateral (
+          select
+            count(*) filter (where arbre_jours_actifs(r.accepted_family) >= 3) as vivantes,
+            count(*) filter (where arbre_jours_actifs(r.accepted_family) < 3)  as en_route
+          from referrals r
+          where r.family_id = m.family_id
+            and r.accepted_family is not null
+            and r.accepted_at between a.created_at and a.fin_le
+        ) v
+        where m.arene_id = a.id
+      ) x), '[]'::json)
+  ) into resultat;
+  return resultat;
+end; $$;
+
+-- Les arènes de la famille : pour retrouver un défi en cours.
+create or replace function public.arene_mes_arenes(p_family uuid)
+returns json language plpgsql security definer set search_path = public as $$
+declare resultat json;
+begin
+  if not is_family_member(p_family) then raise exception 'Accès refusé'; end if;
+  select coalesce(json_agg(x order by x.fin_le desc), '[]'::json) into resultat from (
+    select a.code, a.nom, a.fin_le, (a.fin_le <= now()) as terminee,
+           (select count(*) from arene_membres m2 where m2.arene_id = a.id) as equipes
+    from arene_membres m join arenes a on a.id = m.arene_id
+    where m.family_id = p_family
+  ) x;
+  return resultat;
+end; $$;
+
 -- ---------- Liste d'attente (inscriptions sur invitation uniquement) ----------
 create table if not exists public.waitlist (
   email text primary key,
@@ -1406,6 +1577,15 @@ grant execute on function public.claim_referral_code(text, uuid) to authenticate
 grant execute on function public.arbre_jours_actifs(uuid)       to authenticated;
 grant execute on function public.parrainage_bilan(uuid)         to authenticated;
 grant execute on function public.parrainage_jauge()             to authenticated;
+-- Les Arènes (page defi.html). L'aperçu est ouvert à anon : c'est ce que voit
+-- l'ami qui reçoit le lien avant d'avoir un compte. Il ne renvoie ni nom de
+-- famille, ni adresse — seulement le nom de l'arène et le temps restant.
+grant execute on function public.arene_creer(uuid, text, integer, text) to authenticated;
+grant execute on function public.arene_apercu(text)             to anon, authenticated;
+grant execute on function public.arene_rejoindre(text, uuid, text) to authenticated;
+grant execute on function public.arene_quitter(text, uuid)      to authenticated;
+grant execute on function public.arene_classement(text, uuid)   to authenticated;
+grant execute on function public.arene_mes_arenes(uuid)         to authenticated;
 grant execute on function public.definir_classement_optin(uuid, boolean, text) to authenticated;
 grant execute on function public.classement_parrainages(text)   to authenticated;
 grant execute on function public.join_waitlist(text, text)            to anon, authenticated;

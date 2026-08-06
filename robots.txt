@@ -4,5 +4,9 @@ User-agent: *
 Allow: /
 Disallow: /croissance
 Disallow: /croissance.html
+# Page confidentielle, liée depuis nulle part : on n'y arrive que par un lien
+# reçu d'un ami. Elle porte aussi une balise noindex.
+Disallow: /defi
+Disallow: /defi.html
 
 Sitemap: https://famiteam.com/sitemap.xml
