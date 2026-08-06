@@ -2303,9 +2303,15 @@ function apiDefi() {
   const fs = require("fs");
   const path = require("path");
   const src = fs.readFileSync(path.join(__dirname, "..", "js/defi.js"), "utf8");
-  const debut = src.indexOf("const DEFI_RANGS");
+  // On charge la table de traductions, le moteur tD() et les rangs.
+  const debut = src.indexOf("const DEFI_LANGUES");
   const fin = src.indexOf("/* Les liens d'arène");
-  return new Function(src.slice(debut, fin) + "; return { DEFI_RANGS, rangDe, rangSuivant };")();
+  const bloc = src.slice(debut, fin)
+    .replace(/localStorage/g, "({ getItem: () => null, setItem: () => {} })")
+    .replace(/document\.documentElement/g, "null");
+  return new Function("navigator",
+    bloc + "; return { DEFI_RANGS, rangDe, rangSuivant, DEFI_I18N, DEFI_LANGUES, tD, definirLangueDefi, langueInitiale };"
+  )({ language: "fr" });
 }
 
 test("défi : les rangs sont croissants, jamais perdus, et bornés", () => {
@@ -2313,13 +2319,13 @@ test("défi : les rangs sont croissants, jamais perdus, et bornés", () => {
   let s = -1;
   d.DEFI_RANGS.forEach(r => {
     assert.ok(r.seuil > s, "seuils non croissants"); s = r.seuil;
-    assert.ok(r.nom && r.emoji, "rang incomplet");
+    assert.ok(r.cle && r.emoji, "rang incomplet");
   });
-  assert.strictEqual(d.rangDe(0).nom, "Recrue");
-  assert.strictEqual(d.rangDe(99).nom, "Recrue");
-  assert.strictEqual(d.rangDe(100).nom, "Éclaireur");
-  assert.strictEqual(d.rangDe(999).nom, "Champion");
-  assert.strictEqual(d.rangDe(1000).nom, "Légende");
+  assert.strictEqual(d.rangDe(0).cle, "r1");
+  assert.strictEqual(d.rangDe(99).cle, "r1");
+  assert.strictEqual(d.rangDe(100).cle, "r2");
+  assert.strictEqual(d.rangDe(999).cle, "r4");
+  assert.strictEqual(d.rangDe(1000).cle, "r5");
   assert.strictEqual(d.rangSuivant(1000), null, "au dernier rang, plus rien à viser");
   // Monotonie : un score qui monte ne fait jamais reculer le rang.
   let precedent = 0;
@@ -2327,6 +2333,47 @@ test("défi : les rangs sont croissants, jamais perdus, et bornés", () => {
     const r = d.DEFI_RANGS.indexOf(d.rangDe(n));
     assert.ok(r >= precedent, "recul de rang en " + n); precedent = r;
   }
+});
+
+test("défi : les quatre langues sont complètes et gardent leurs paramètres", () => {
+  const d = apiDefi();
+  const langues = Object.keys(d.DEFI_LANGUES);
+  assert.deepStrictEqual(langues.sort(), ["de", "en", "fr", "nl"], "les 4 langues de l'app sont attendues");
+  const clesFr = Object.keys(d.DEFI_I18N.fr);
+  assert.ok(clesFr.length > 40, "table de traduction anormalement courte");
+  langues.forEach(lg => {
+    assert.ok(d.DEFI_I18N[lg], "langue absente : " + lg);
+    clesFr.forEach(k => {
+      const v = d.DEFI_I18N[lg][k];
+      assert.ok(typeof v === "string" && v.length, "manque " + lg + " → " + k);
+    });
+    // Aucune clé en trop : une clé orpheline est une traduction jamais affichée.
+    Object.keys(d.DEFI_I18N[lg]).forEach(k =>
+      assert.ok(clesFr.includes(k), lg + " → " + k + " n'existe pas en français"));
+  });
+  // Les paramètres doivent survivre à la traduction, sinon le texte ment.
+  const attendus = {
+    "ouverte_par": ["{hote}"], "regle": ["{app}"], "intro": ["{app}"],
+    "relever_note": ["{app}"], "classe": ["{rang}", "{total}"],
+    "encore": ["{n}", "{emoji}", "{nom}"], "attente": ["{n}", "{f}"]
+  };
+  langues.forEach(lg => Object.keys(attendus).forEach(k =>
+    attendus[k].forEach(v => assert.ok(d.DEFI_I18N[lg][k].includes(v),
+      lg + " → " + k + " : paramètre " + v + " perdu"))));
+});
+
+test("défi : le moteur de traduction bascule et retombe proprement", () => {
+  const d = apiDefi();
+  d.definirLangueDefi("nl");
+  assert.ok(/wint/.test(d.tD("regle")), "la bascule en néerlandais n'a pas pris");
+  assert.ok(d.tD("regle").includes("FamiTeam"), "{app} n'est pas substitué");
+  assert.ok(!/\{app\}|\{hote\}|\{n\}/.test(d.tD("attente", { n: 75, f: 1 })),
+    "des accolades subsistent dans le texte rendu");
+  d.definirLangueDefi("de");
+  assert.strictEqual(d.tD("r5"), "Legende");
+  // Une clé inconnue ne doit jamais casser l'écran : elle se rend telle quelle.
+  assert.strictEqual(d.tD("cle_qui_nexiste_pas"), "cle_qui_nexiste_pas");
+  d.definirLangueDefi("fr");
 });
 
 test("défi : la page reste secrète — noindex, robots, absente du plan du site", () => {
