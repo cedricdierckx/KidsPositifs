@@ -2521,6 +2521,99 @@ test("défi : le lien envoyé aux amis tient dans le QR et ne dépend pas de l'o
   assert.ok(!/location/.test(f), "lienArene dépend de location");
 });
 
+/* ---------- Bandeau dodo : synchronisation avec l'horloge système ---------- */
+
+// Fige l'horloge du contexte à une heure locale donnée, puis appelle `fn`.
+function aLHeure(contexte, hh, mm, ss, fn) {
+  const VraieDate = contexte.Date;
+  const fige = new VraieDate(2026, 0, 15, hh, mm, ss === undefined ? 0 : ss, 0);
+  class DateFigee extends VraieDate {
+    constructor(...a) { if (a.length === 0) super(fige.getTime()); else super(...a); }
+    static now() { return fige.getTime(); }
+  }
+  contexte.Date = DateFigee;
+  try { return fn(); } finally { contexte.Date = VraieDate; }
+}
+
+test("dodo : une heure de coucher en :00 n'est plus décalée d'une demi-heure", () => {
+  const { api } = construireContexte();
+  // Le raccourci `parseInt(x) || defaut` lisait 0 comme « absent » : "20:00"
+  // devenait 20:30 et "00:30" devenait 19:30.
+  assert.strictEqual(api.minutesCoucher("20:00"), 20 * 60);
+  assert.strictEqual(api.minutesCoucher("19:00"), 19 * 60);
+  assert.strictEqual(api.minutesCoucher("00:30"), 30);
+  assert.strictEqual(api.minutesCoucher("21:15"), 21 * 60 + 15);
+  assert.strictEqual(api.minutesCoucher("07:05"), 7 * 60 + 5);
+});
+
+test("dodo : une heure de coucher illisible retombe sur 19:30", () => {
+  const { api } = construireContexte();
+  [undefined, null, "", "abc", "25:00", "19:70", "19h30", "19:3"].forEach(v => {
+    assert.strictEqual(api.minutesCoucher(v), api.DODO_DEFAUT, "valeur refusée : " + v);
+  });
+});
+
+test("dodo : la bascule orange → nuit tombe à l'heure pile", () => {
+  const { api, contexte } = construireContexte();
+  const enf = { heureCoucher: "20:00" };
+  // Une minute avant : encore le soir.
+  aLHeure(contexte, 19, 59, 0, () => {
+    assert.strictEqual(api.momentDodo(enf).classe, "dodo-soir");
+  });
+  // Une seconde avant : toujours le soir — mais tout juste.
+  aLHeure(contexte, 19, 59, 59, () => {
+    assert.strictEqual(api.momentDodo(enf).classe, "dodo-soir");
+  });
+  // À la seconde pile, et après : la nuit.
+  aLHeure(contexte, 20, 0, 0, () => {
+    const m = api.momentDodo(enf);
+    assert.strictEqual(m.classe, "dodo-nuit");
+    assert.strictEqual(m.progress, 100);
+  });
+  aLHeure(contexte, 20, 3, 0, () => {
+    assert.strictEqual(api.momentDodo(enf).classe, "dodo-nuit", "orange 3 minutes après le coucher");
+  });
+});
+
+test("dodo : les trois ambiances suivent la fenêtre de deux heures", () => {
+  const { api, contexte } = construireContexte();
+  const enf = { heureCoucher: "20:00" };
+  aLHeure(contexte, 17, 0, 0, () => {   // 3 h avant : plein jour
+    const m = api.momentDodo(enf);
+    assert.strictEqual(m.classe, "dodo-jour");
+    assert.strictEqual(m.progress, 0);
+  });
+  aLHeure(contexte, 17, 59, 59, () => { // juste avant la fenêtre : encore le jour
+    assert.strictEqual(api.momentDodo(enf).classe, "dodo-jour");
+  });
+  aLHeure(contexte, 18, 0, 0, () => {   // pile 2 h avant : la fenêtre s'ouvre à zéro
+    const m = api.momentDodo(enf);
+    assert.strictEqual(m.classe, "dodo-soir");
+    assert.strictEqual(m.progress, 0);
+  });
+  aLHeure(contexte, 19, 0, 0, () => {   // 1 h avant : mi-parcours
+    const m = api.momentDodo(enf);
+    assert.strictEqual(m.classe, "dodo-soir");
+    assert.strictEqual(m.progress, 50);
+  });
+});
+
+test("dodo : le rafraîchissement est calé sur l'horloge, pas sur un intervalle libre", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const src = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  assert.ok(!/setInterval\(\s*majDodo/.test(src),
+    "majDodo ne doit plus tourner sur un setInterval libre (dérive + gel en arrière-plan)");
+  assert.ok(/function planifierDodo\(\)/.test(src), "planifierDodo introuvable");
+  assert.ok(/60000 - \(now\.getSeconds\(\) \* 1000 \+ now\.getMilliseconds\(\)\)/.test(src),
+    "le prochain tick doit viser la minute pleine suivante");
+  // Un téléphone en veille suspend les minuteurs : il faut recalculer au retour.
+  ["visibilitychange", "focus", "pageshow"].forEach(ev => {
+    assert.ok(new RegExp('addEventListener\\("' + ev + '"').test(src),
+      "reprise non gérée : " + ev);
+  });
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

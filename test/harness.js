@@ -145,6 +145,8 @@ function construireContexte() {
       // Arbre des familles : paliers d'effort et détection de la famille convaincue
       ARBRE_PALIERS, arbrePalier, arbrePalierSuivant,
       joursActifsFamille, familleConvaincue, ARBRE_J7_JOURS_ACTIFS, ARBRE_J7_ANCIENNETE,
+      // bandeau dodo : lecture de l'heure de coucher et ambiance courante
+      momentDodo, minutesCoucher, DODO_FENETRE, DODO_DEFAUT,
     };
   `;
   const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/croissance.js"), lire("js/qr.js"), lire("js/app.js"), lire("js/store.js"), epilogue].join("\n;\n");

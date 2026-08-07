@@ -561,11 +561,27 @@ function vueAccueilAine() {
 // FENETRE = durée (minutes) avant le coucher pendant laquelle le décompte
 // visuel progresse (le jeton avance vers la lune).
 const DODO_FENETRE = 120;
+const DODO_DEFAUT = 19 * 60 + 30;               // 19:30 si le réglage est illisible
+
+// Convertit "HH:MM" en minutes depuis minuit. Écrit à la main plutôt qu'avec
+// `parseInt(x) || defaut` : ce raccourci traitait 0 comme une valeur absente,
+// si bien que "20:00" était compris comme 20:30 et "00:30" comme 19:30 — le
+// bandeau restait alors orange une demi-heure APRÈS l'heure du coucher.
+function minutesCoucher(txt) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(txt == null ? "" : txt).trim());
+  if (!m) return DODO_DEFAUT;
+  const h = parseInt(m[1], 10), mi = parseInt(m[2], 10);
+  if (!(h >= 0 && h <= 23) || !(mi >= 0 && mi <= 59)) return DODO_DEFAUT;
+  return h * 60 + mi;
+}
+
 function momentDodo(enf) {
-  const parts = (enf.heureCoucher || "19:30").split(":");
-  const coucher = (parseInt(parts[0], 10) || 19) * 60 + (parseInt(parts[1], 10) || 30);
+  const coucher = minutesCoucher(enf.heureCoucher);
   const now = new Date();                       // heure locale de l'appareil
-  const maintenant = now.getHours() * 60 + now.getMinutes();
+  // Précision à la seconde : la bascule doit tomber à l'heure pile, pas à la
+  // minute la plus proche du dernier rafraîchissement.
+  const maintenant = now.getHours() * 60 + now.getMinutes()
+    + now.getSeconds() / 60 + now.getMilliseconds() / 60000;
   const reste = coucher - maintenant;           // minutes avant le coucher
   let classe, emoji, titre, progress;
   if (reste > DODO_FENETRE)      { classe = "dodo-jour"; emoji = "☀️"; titre = t("dodo.jour"); progress = 0; }

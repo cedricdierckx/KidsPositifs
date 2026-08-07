@@ -543,8 +543,17 @@ function initSquelette() {
   };
   majBoutonTimer();
 
-  // Minuteur : le bandeau dodo suit l'heure en continu (toutes les 20 s).
-  if (!window.__dodoTimer) window.__dodoTimer = setInterval(majDodo, 20000);
+  // Le bandeau dodo suit l'horloge système (voir planifierDodo).
+  planifierDodo();
+  if (!window.__dodoHooks) {
+    window.__dodoHooks = true;
+    // Les minuteurs sont ralentis en arrière-plan, et purement suspendus quand
+    // l'écran du téléphone s'éteint : au retour, on recalcule tout de suite au
+    // lieu d'attendre le prochain tick.
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) planifierDodo(); });
+    window.addEventListener("focus", planifierDodo);
+    window.addEventListener("pageshow", planifierDodo);   // retour depuis le cache navigateur
+  }
 
   // Swipe horizontal : change d'enfant (onglets enfants) ou de sous-onglet
   // dans l'espace parents.
@@ -3466,11 +3475,31 @@ function blocEval(enf, mode) {
   return sec;
 }
 
-// Rafraîchit en continu le bandeau dodo (l'ambiance suit l'heure réelle).
+// Rafraîchit le bandeau dodo (l'ambiance suit l'heure réelle). On ne remplace
+// le nœud que si l'affichage change vraiment : inutile de reconstruire le
+// bouton « aller au lit » soixante fois par heure en pleine journée.
 function majDodo() {
   if (etat.vue !== "accueil") return;
   const ancien = document.getElementById("dodo-bandeau");
-  if (ancien) ancien.replaceWith(bandeauDodo(enfantActif()));
+  if (!ancien) return;
+  const enf = enfantActif();
+  if (!enf) return;
+  const m = momentDodo(enf);
+  const signature = m.classe + "|" + m.progress + "|" + m.heure;
+  if (ancien.dataset.dodo === signature) return;
+  ancien.replaceWith(bandeauDodo(enf));
+}
+
+// Cale le rafraîchissement sur la prochaine minute pleine de l'horloge système
+// plutôt que sur un intervalle libre : la bascule orange → nuit tombe ainsi à
+// la seconde près sur l'heure du coucher, quelle que soit l'heure de démarrage
+// de l'application ou la dérive accumulée par le navigateur.
+function planifierDodo() {
+  clearTimeout(window.__dodoTimer);
+  majDodo();
+  const now = new Date();
+  const versLaMinute = 60000 - (now.getSeconds() * 1000 + now.getMilliseconds());
+  window.__dodoTimer = setTimeout(planifierDodo, versLaMinute + 30);
 }
 
 // Bandeau "dodo" : change d'ambiance selon l'heure et permet de valider
@@ -3491,6 +3520,7 @@ function bandeauDodo(enf) {
 
   const sec = el("section", "dodo " + m.classe);
   sec.id = "dodo-bandeau";
+  sec.dataset.dodo = m.classe + "|" + m.progress + "|" + m.heure;
   sec.innerHTML = `
     <div class="dodo-etoiles">✦ ✧ ⭐ ✦ ✧ ✦ ✧</div>
     <div class="dodo-txt"><strong>${m.emoji} ${titreMission(m)}</strong><small>🛏️ ${m.heure}</small>${funDodo}</div>
