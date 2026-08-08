@@ -4139,7 +4139,10 @@ function blocStatistiques() {
 const DON_PONCTUELS = [["don_once_10", "10 €"], ["don_once_20", "20 €"], ["don_once_50", "50 €"]];
 const DON_MENSUELS  = [["don_sub_1", "1 €"], ["don_sub_3", "3 €"], ["don_sub_10", "10 €"]];
 
-// Soutien : don 100 % facultatif. L'app est et restera gratuite.
+// Soutien : don 100 % facultatif. On énonce ici un fait présent — gratuite,
+// sans publicité, donc financée par les dons — sans rien affirmer de l'avenir.
+// Les engagements de long terme relèvent des mentions légales, pas d'un bloc
+// d'appel au don, où une promesse ressemblerait à un argument de vente.
 function blocDon() {
   const cfg = (typeof configApp !== "undefined") ? configApp : {};
   const sec = el("section", "carte don-carte");

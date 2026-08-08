@@ -231,8 +231,11 @@ function compteBloque() {
 // créées il y a plus d'une semaine (fenêtre glissante).
 function donDisponible() {
   if (typeof modeDemo !== "undefined" && modeDemo) return true;   // aperçu en démo
-  if (estEarlyAdopter()) return false;                            // jamais aux early adopters
+  // L'éditeur doit pouvoir contrôler le module en conditions réelles. Ce test
+  // passe AVANT celui des early adopters : l'administrateur figure lui-même
+  // dans cette liste, et l'ordre inverse lui masquait le bloc en permanence.
   if (estAdmin) return true;
+  if (estEarlyAdopter()) return false;                            // jamais aux early adopters
   const cree = familleActive && familleActive.created_at;
   if (!cree) return false;
   return (Date.now() - new Date(cree).getTime()) > 7 * 24 * 60 * 60 * 1000;

@@ -2614,6 +2614,52 @@ test("dodo : le rafraîchissement est calé sur l'horloge, pas sur un intervalle
   });
 });
 
+/* ---------- Module de soutien (dons) ---------- */
+
+test("dons : le module reste visible pour l'administrateur, même early adopter", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const src = fs.readFileSync(path.join(__dirname, "..", "js/auth.js"), "utf8");
+  const f = src.slice(src.indexOf("function donDisponible()"));
+  const corps = f.slice(0, f.indexOf("\n}"));
+  const iAdmin = corps.indexOf("estAdmin");
+  const iEarly = corps.indexOf("estEarlyAdopter()");
+  assert.ok(iAdmin > -1 && iEarly > -1, "tests attendus absents de donDisponible");
+  assert.ok(iAdmin < iEarly,
+    "estAdmin doit être testé AVANT estEarlyAdopter : l'éditeur figure dans la liste " +
+    "des early adopters et le bloc lui resterait invisible");
+});
+
+test("dons : les 4 langues énoncent la gratuité ET l'absence de publicité", () => {
+  const { api } = construireContexte();
+  const pub = { fr: /publicité/i, en: /ad-free|advertis/i, nl: /reclame/i, de: /werbefrei|werbung/i };
+  const gratuit = { fr: /gratuite/i, en: /free/i, nl: /gratis/i, de: /kostenlos/i };
+  Object.keys(api.LANGUES).forEach(lg => {
+    const g = api.I18N[lg]["don.gratuit"];
+    assert.ok(g, "don.gratuit manquant en " + lg);
+    assert.ok(gratuit[lg].test(g), "gratuité non énoncée en " + lg + " : " + g);
+    assert.ok(pub[lg].test(g), "absence de publicité non énoncée en " + lg + " : " + g);
+  });
+});
+
+test("dons : le bloc d'appel au don ne se prononce pas sur l'avenir", () => {
+  const { api } = construireContexte();
+  // Une promesse de gratuité future a sa place dans les mentions légales, pas
+  // dans un bloc d'appel au don : elle y sonnerait comme un argument de vente.
+  const futur = {
+    fr: /restera|resteront|toujours gratuit/i,
+    en: /will stay|will remain|always be free/i,
+    nl: /blijft gratis|blijven gratis|altijd gratis/i,
+    de: /bleibt es|bleibt kostenlos|immer kostenlos/i,
+  };
+  Object.keys(api.LANGUES).forEach(lg => {
+    ["don.gratuit", "don.texte", "don.merci", "don.transparence"].forEach(cle => {
+      const v = api.I18N[lg][cle] || "";
+      assert.ok(!futur[lg].test(v), `${cle} (${lg}) se prononce sur l'avenir : ${v}`);
+    });
+  });
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

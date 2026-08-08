@@ -2329,29 +2329,29 @@ Object.assign(I18N.de, {
 /* ---- Soutien / don (facultatif) ---- */
 Object.assign(I18N.fr, {
   "don.titre": "💛 Soutenir l'aventure",
-  "don.gratuit": "✅ {app} est gratuite, et le restera.",
-  "don.texte": "Cette application est créée par des parents, pour des parents 🤍. L'héberger et la faire vivre a un petit coût. Si elle vous est utile et que vous en avez envie, un petit don nous aide à la garder gratuite et à l'améliorer — en toute liberté, sans aucune obligation.",
+  "don.gratuit": "✅ {app} est gratuite et sans publicité : elle ne vit que des dons.",
+  "don.texte": "Cette application est créée par des parents, pour des parents 🤍. Sans publicité et sans revente de données, elle n'a d'autre ressource que les dons : ils couvrent le nom de domaine, l'envoi des e-mails et l'hébergement. Si elle vous est utile et que vous en avez envie, un petit geste aide à payer ces frais — en toute liberté, sans aucune obligation.",
   "don.bouton": "☕ Offrir un petit coup de pouce",
   "don.merci": "Merci du fond du cœur, quoi que vous décidiez ! 🙏"
 });
 Object.assign(I18N.en, {
   "don.titre": "💛 Support the adventure",
-  "don.gratuit": "✅ {app} is free, and will stay free.",
-  "don.texte": "This app is made by parents, for parents 🤍. Hosting and maintaining it has a small cost. If it's useful to you and you feel like it, a small donation helps us keep it free and improve it — entirely your choice, no obligation.",
+  "don.gratuit": "✅ {app} is free and ad-free: it runs on donations alone.",
+  "don.texte": "This app is made by parents, for parents 🤍. With no advertising and no data selling, donations are its only resource: they cover the domain name, service emails and hosting. If it's useful to you and you feel like it, a small gift helps pay those costs — entirely your choice, no obligation.",
   "don.bouton": "☕ Chip in a little",
   "don.merci": "Thank you from the bottom of our hearts, whatever you decide! 🙏"
 });
 Object.assign(I18N.nl, {
   "don.titre": "💛 Steun het avontuur",
-  "don.gratuit": "✅ {app} is gratis en blijft gratis.",
-  "don.texte": "Deze app is gemaakt door ouders, voor ouders 🤍. Hosting en onderhoud kosten een beetje. Als ze nuttig voor je is en je het wil, helpt een kleine gift ons om ze gratis te houden en te verbeteren — helemaal vrij, zonder enige verplichting.",
+  "don.gratuit": "✅ {app} is gratis en zonder reclame: ze draait enkel op giften.",
+  "don.texte": "Deze app is gemaakt door ouders, voor ouders 🤍. Zonder reclame en zonder verkoop van gegevens zijn giften de enige bron: ze dekken de domeinnaam, de service-e-mails en de hosting. Als ze nuttig voor je is en je het wil, helpt een klein gebaar die kosten te betalen — helemaal vrij, zonder enige verplichting.",
   "don.bouton": "☕ Geef een kleine boost",
   "don.merci": "Hartelijk dank, wat je ook beslist! 🙏"
 });
 Object.assign(I18N.de, {
   "don.titre": "💛 Das Abenteuer unterstützen",
-  "don.gratuit": "✅ {app} ist kostenlos und bleibt es.",
-  "don.texte": "Diese App wird von Eltern für Eltern gemacht 🤍. Hosting und Pflege kosten ein wenig. Wenn sie dir nützt und du magst, hilft uns eine kleine Spende, sie kostenlos zu halten und zu verbessern — ganz frei, ohne jede Verpflichtung.",
+  "don.gratuit": "✅ {app} ist kostenlos und werbefrei: sie lebt allein von Spenden.",
+  "don.texte": "Diese App wird von Eltern für Eltern gemacht 🤍. Ohne Werbung und ohne Datenverkauf sind Spenden die einzige Einnahmequelle: Sie decken Domainname, Service-E-Mails und Hosting. Wenn sie dir nützt und du magst, hilft eine kleine Spende, diese Kosten zu tragen — ganz frei, ohne jede Verpflichtung.",
   "don.bouton": "☕ Eine Kleinigkeit beisteuern",
   "don.merci": "Von Herzen danke, wie auch immer du dich entscheidest! 🙏"
 });
