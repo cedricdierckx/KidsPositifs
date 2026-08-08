@@ -2703,6 +2703,57 @@ test("dons : le soutien mensuel peut être arrêté depuis l'application", () =>
   assert.ok(faq.includes('id="arreter-don"'), "la FAQ doit expliquer comment arrêter un don mensuel");
 });
 
+/* ---------- Espace parents : onglet Soutien & cartes repliables ---------- */
+
+test("parents : le soutien a son onglet, et n'encombre plus « Aujourd'hui »", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  // L'onglet n'existe que si le don est proposé à cette famille.
+  assert.ok(/const soutien = \(typeof donDisponible/.test(ui),
+    "la présence de l'onglet doit dépendre de donDisponible");
+  assert.strictEqual((ui.match(/if \(soutien\) ids\.push\("soutien"\);/g) || []).length, 2,
+    "l'onglet doit exister dans les deux modes (simplifié et expert)");
+  assert.ok(/soutien: "grp\.soutien"/.test(ui), "libellé d'onglet non déclaré");
+  assert.ok(/sectionVisible\("soutien"\)/.test(ui), "le contenu de l'onglet n'est pas rendu");
+  // blocDon ne doit plus être appelé qu'à un seul endroit : son onglet.
+  assert.strictEqual((ui.match(/c\.appendChild\(blocDon\(\)\)/g) || []).length, 1,
+    "blocDon doit être rendu une seule fois, dans son propre onglet");
+  const { api } = construireContexte();
+  Object.keys(api.LANGUES).forEach(lg =>
+    assert.ok(api.I18N[lg]["grp.soutien"], "grp.soutien manquant en " + lg));
+});
+
+test("parents : les cartes longues sont repliables et retiennent leur état", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  assert.ok(/function carteRepliable\(sec, cle, ouvertParDefaut\)/.test(ui), "carteRepliable absente");
+  // <details>/<summary> : pliage natif, accessible au clavier sans script.
+  assert.ok(/el\("details", "carte-pli"\)/.test(ui) && /el\("summary", "carte-pli-t"\)/.test(ui),
+    "le pli doit reposer sur <details>/<summary>");
+  // rendre() reconstruit tout : sans mémoire, la carte se refermerait à chaque clic.
+  assert.ok(/plisParent\.set\(cle, det\.open\)/.test(ui),
+    "l'état d'ouverture doit être mémorisé");
+  assert.ok(/det\.open = plisParent\.has\(cle\)/.test(ui),
+    "l'état mémorisé doit être restitué au rendu suivant");
+  // Le <h2> est déplacé dans le <summary> : le titre reste un titre.
+  assert.ok(/som\.appendChild\(titre\)/.test(ui), "la sémantique de titre doit être conservée");
+  [["blocSelectionGroupee\\(\\)", "selection"], ["blocTournantes\\(\\)", "tournantes"],
+   ["blocMissionsDuJour\\(enfantActif\\(\\)\\)", "missions"],
+   ["blocCorrections\\(enfantActif\\(\\)\\)", "corrections"],
+   ["blocJournalActions\\(\\)", "journal"]].forEach(([bloc, cle]) => {
+    assert.ok(new RegExp(`carteRepliable\\(${bloc}, "${cle}"`).test(ui),
+      "carte longue non repliée : " + cle);
+  });
+  // Chaque clé de pli doit être unique, sinon deux cartes partagent leur état.
+  const cles = (ui.match(/carteRepliable\([^,]+, "([a-z]+)"/g) || [])
+    .map(m => /"([a-z]+)"$/.exec(m)[1]);
+  const doublons = cles.filter((c, i) => cles.indexOf(c) !== i && c !== "missions" && c !== "journal");
+  assert.strictEqual(doublons.length, 0, "clés de pli partagées : " + doublons.join(", "));
+  const css = fs.readFileSync(path.join(__dirname, "..", "css/style.css"), "utf8");
+  ["carte-pli", "carte-pli-t", "carte-pli-c"].forEach(c =>
+    assert.ok(css.includes("." + c), "style manquant : ." + c));
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

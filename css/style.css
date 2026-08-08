@@ -1667,3 +1667,18 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .don-gerer{font-size:12px; text-align:center; margin:6px 0 0}
 .don-gerer a{color:var(--doux); text-decoration:underline}
 .don-gerer a:hover{color:#3a7bd5}
+
+/* ---- Cartes repliables de l'espace parents ----
+   Le titre devient la poignée : on doit voir d'un coup d'œil ce que contient
+   la carte sans la déplier, et savoir si elle est ouverte. */
+.carte-pli{margin:0}
+.carte-pli-t{display:flex; align-items:center; gap:8px; cursor:pointer;
+  list-style:none; padding:2px 0; -webkit-tap-highlight-color:transparent}
+.carte-pli-t::-webkit-details-marker{display:none}
+.carte-pli-t::before{content:"▸"; flex:0 0 auto; font-size:13px; color:var(--doux);
+  transition:transform .18s ease}
+.carte-pli[open] > .carte-pli-t::before{transform:rotate(90deg)}
+.carte-pli-t h2{margin:0!important; flex:1 1 auto; min-width:0}
+.carte-pli-t:focus-visible{outline:2px solid #3a7bd5; outline-offset:3px; border-radius:8px}
+.carte-pli-c{padding-top:10px}
+@media (prefers-reduced-motion: reduce){ .carte-pli-t::before{transition:none} }

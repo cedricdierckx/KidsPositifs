@@ -5230,6 +5230,35 @@ function blocCartesSurprisesParents() {
 // Onglet actif de l'espace parents (session, non synchronisé).
 let ongletParent = "quotidien";
 
+// ---------- Cartes repliables (espace parents) ----------
+// L'espace parents empile des cartes très longues — la liste des missions, le
+// journal des annulations, les tournantes — au point qu'atteindre la suivante
+// demande plusieurs écrans de défilement. On les replie derrière leur propre
+// titre, avec <details>/<summary> : c'est natif, accessible au clavier et aux
+// lecteurs d'écran, et cela ne coûte pas une ligne de script au dépliage.
+//
+// L'état d'ouverture est mémorisé pour la durée de la session : rendre()
+// reconstruit tout le DOM à la moindre action, et une carte qui se refermerait
+// après chaque clic serait plus pénible que pas de pli du tout.
+const plisParent = new Map();          // clé de carte → ouverte (booléen)
+
+function carteRepliable(sec, cle, ouvertParDefaut) {
+  if (!sec) return sec;
+  const titre = sec.querySelector("h2");
+  if (!titre) return sec;              // sans titre, rien à quoi accrocher le pli
+  const det = el("details", "carte-pli");
+  det.open = plisParent.has(cle) ? plisParent.get(cle) : !!ouvertParDefaut;
+  const som = el("summary", "carte-pli-t");
+  som.appendChild(titre);              // le <h2> lui-même : on garde la sémantique de titre
+  const corps = el("div", "carte-pli-c");
+  while (sec.firstChild) corps.appendChild(sec.firstChild);
+  det.appendChild(som);
+  det.appendChild(corps);
+  sec.appendChild(det);
+  det.addEventListener("toggle", () => plisParent.set(cle, det.open));
+  return sec;
+}
+
 // Mode parents : Standard (simple) ou Expert (outils avancés). Par défaut
 // Expert pour l'admin ; sinon Standard, sauf préférence enregistrée.
 function estModeExpert() {
@@ -5249,19 +5278,26 @@ function definirModeExpert(v) {
 //   Mode expert : un onglet par sujet, plus les statistiques.
 function ongletsParents() {
   const admin = (typeof estAdmin !== "undefined" && estAdmin);
+  // Le soutien a son propre onglet plutôt qu'une carte au milieu du quotidien :
+  // un appel au don n'a pas à s'intercaler entre deux gestes de la journée, et
+  // le parent qui le cherche sait où le trouver. L'onglet n'existe pas tant que
+  // le don n'est pas proposé à cette famille (early adopters, première semaine).
+  const soutien = (typeof donDisponible !== "function" || donDisponible());
   if (!estModeExpert()) {
     const ids = ["quotidien", "enfants", "activites", "compte"];
+    if (soutien) ids.push("soutien");
     if (admin) ids.push("admin");
     return ids;
   }
   const ids = ["quotidien", "papier", "activites", "enfants", "famille", "compte", "stats"];
+  if (soutien) ids.push("soutien");
   if (admin) ids.push("admin");
   return ids;
 }
 const LIBELLES_ONGLETS = {
   quotidien: "grp.quotidien", papier: "grp.papier", activites: "grp.activites",
   enfants: "grp.enfants", famille: "grp.famille", compte: "grp.compte",
-  stats: "grp.stats", admin: "grp.admin"
+  stats: "grp.stats", admin: "grp.admin", soutien: "grp.soutien"
 };
 // Libellé d'un onglet : en mode simplifié, « Mon compte & données » devient
 // « Réglages » puisqu'il regroupe aussi le programme, la famille et le mode.
@@ -5695,12 +5731,11 @@ function vueReglages(c) {
     if (bm) c.appendChild(bm);
     const j7 = blocArbreSeptiemeJour();
     if (j7) c.appendChild(j7);
-    c.appendChild(blocMissionsDuJour(enfantActif()));
+    c.appendChild(carteRepliable(blocMissionsDuJour(enfantActif()), "missions", false));
     c.appendChild(blocEval(enfantActif(), "parent"));
     c.appendChild(blocReparation());
     c.appendChild(blocComplimentDuJour(enfantActif()));
-    if (typeof donDisponible !== "function" || donDisponible()) c.appendChild(blocDon());
-    c.appendChild(blocJournalActions());
+    c.appendChild(carteRepliable(blocJournalActions(), "journal", false));
   } else {
     // ----- Compliment du jour : un mot d'encouragement concret à dire à
     // l'enfant, basé sur sa régularité/progression réelle (parentalité
@@ -5713,9 +5748,6 @@ function vueReglages(c) {
     // ----- Défis réparation ("Oups, ça arrive…") : accès rapide -----
     c.appendChild(blocReparation());
 
-    // ----- Soutien (don facultatif) : admins + familles de plus d'une semaine -----
-    if (typeof donDisponible !== "function" || donDisponible()) c.appendChild(blocDon());
-
     // ----- Le bon moment pour parler de l'app (après une carte débloquée) -----
     const bmExp = blocBonMoment();
     if (bmExp) c.appendChild(bmExp);
@@ -5726,17 +5758,19 @@ function vueReglages(c) {
     if (totalAttente) c.appendChild(blocAttente(totalAttente));
 
     // ----- Sélection groupée & tournantes : outils avancés -----
-    c.appendChild(blocSelectionGroupee());
-    c.appendChild(blocTournantes());
+    // Repliées : ce sont les plus longues de l'espace parents, et elles ne
+    // servent qu'au réglage, pas au geste quotidien.
+    c.appendChild(carteRepliable(blocSelectionGroupee(), "selection", false));
+    c.appendChild(carteRepliable(blocTournantes(), "tournantes", false));
 
     // ----- Missions du jour (sélection par les parents) -----
-    c.appendChild(blocMissionsDuJour(enfantActif()));
+    c.appendChild(carteRepliable(blocMissionsDuJour(enfantActif()), "missions", false));
 
     // ----- Corrections fines (ajustements/badges) -----
-    c.appendChild(blocCorrections(enfantActif()));
+    c.appendChild(carteRepliable(blocCorrections(enfantActif()), "corrections", false));
 
     // ----- Journal des actions récentes (annulation) -----
-    c.appendChild(blocJournalActions());
+    c.appendChild(carteRepliable(blocJournalActions(), "journal", false));
   }
 
   } /* fin onglet quotidien */
@@ -5744,6 +5778,12 @@ function vueReglages(c) {
   /* ===== ONGLET : Statistiques (expert) ===== */
   if (sectionVisible("stats")) {
     c.appendChild(blocStatistiques());
+  }
+
+  /* ===== ONGLET : Soutien ===== */
+  // Un seul sujet, entièrement facultatif, hors du chemin quotidien.
+  if (sectionVisible("soutien")) {
+    c.appendChild(blocDon());
   }
 
   /* ===== ONGLET : Activités & récompenses ===== */
