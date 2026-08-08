@@ -1720,3 +1720,7 @@ body.impression .carte-ami-actions{display:none}
   display:flex; flex-direction:column; gap:1px}
 .cs-rdv small{font-weight:600; font-size:12px; color:#6b7c8d}
 .cs-rdv.proche{color:#d2691e}
+
+/* Explication de l'Arbre côté enfant : une phrase, sous celle du compte. */
+.arbre-enfant-expli{margin:6px 0 0; font-size:13.5px; line-height:1.45; color:#6b7c8d}
+.carte-ami-sansqr{text-align:center}

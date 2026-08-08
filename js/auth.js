@@ -16,6 +16,14 @@ let session = null, utilisateur = null;
 let mesFamilles = [];          // familles de l'utilisateur
 let familleActive = null;      // { id, name, plan, plan_status, role }
 let estAdmin = false;          // l'utilisateur est-il administrateur de l'app ?
+
+// Adresse publique de l'application. Tout ce qui SORT — liens d'invitation, QR,
+// e-mails aux familles — doit s'y référer, et surtout pas à location.origin :
+// sur un déploiement de préaperçu celui-ci vaut une URL Vercel de 60 caractères,
+// éphémère, et au-delà de la capacité du QR (53) — qui cessait alors d'être
+// produit, sans le dire. Les redirections d'authentification, elles, gardent
+// location.origin : elles doivent revenir sur le déploiement en cours.
+const HOTE_PUBLIC = "https://fami.team";
 // (anti-rebond sauvegarde et abonnement temps réel : gérés par Store, Phase D)
 
 const FAMILLE_KEY = "kp_famille_active";
@@ -593,7 +601,7 @@ async function envoyerBienvenue(familleId) {
   if (!u || !u.email) return false;
   const prenom = (u.email.split("@")[0] || "").replace(/[._-]+/g, " ");
   return envoyerMailAuto("bienvenue", familleId, u.email, "m_bienvenue",
-    { prenom, lien: location.origin || "https://famiteam.com" });
+    { prenom, lien: HOTE_PUBLIC });
 }
 
 // Relances d'activation en attente (administrateur uniquement).
@@ -614,7 +622,7 @@ async function envoyerPropositionsParrainageActifs(liste) {
     if (!f.email) continue;
     const prenom = (f.email.split("@")[0] || "").replace(/[._-]+/g, " ");
     const ok = await envoyerMailAuto("parrainage_actif", f.famille_id, f.email, "m_parrainage_actif",
-      { prenom, lien: location.origin || "https://famiteam.com" });
+      { prenom, lien: HOTE_PUBLIC });
     if (ok) n++;
   }
   return n;
@@ -629,7 +637,7 @@ async function envoyerPropositionsParrainage(liste) {
     if (!f.email) continue;
     const prenom = (f.email.split("@")[0] || "").replace(/[._-]+/g, " ");
     const ok = await envoyerMailAuto("parrainage", f.famille_id, f.email, "m_parrainage",
-      { prenom, lien: location.origin || "https://famiteam.com" });
+      { prenom, lien: HOTE_PUBLIC });
     if (ok) n++;
   }
   return n;
@@ -643,7 +651,7 @@ async function envoyerRelancesActivation(liste) {
     if (!f.email) continue;
     const prenom = (f.email.split("@")[0] || "").replace(/[._-]+/g, " ");
     const ok = await envoyerMailAuto("activation", f.famille_id, f.email, "m_activation",
-      { prenom, lien: location.origin || "https://famiteam.com" });
+      { prenom, lien: HOTE_PUBLIC });
     if (ok) n++;
   }
   return n;
@@ -796,7 +804,7 @@ async function codeParrainage() {
   return data;
 }
 function lienDepuisCode(code) {
-  return location.origin + location.pathname + "?p=" + encodeURIComponent(code);
+  return HOTE_PUBLIC + "/?p=" + encodeURIComponent(code);
 }
 async function lienParrainagePermanent() {
   const code = await codeParrainage();
@@ -857,7 +865,7 @@ async function infoParrainageCode(code) {
 async function creerParrainage() {
   const { data, error } = await sb.rpc("create_referral", { p_family: familleId });
   if (error) { toast("Erreur : " + error.message, "info"); return null; }
-  return location.origin + location.pathname + "?parrain=" + data;
+  return HOTE_PUBLIC + "/?parrain=" + data;
 }
 async function parrainageRestant() {
   if (INVITATIONS_ILLIMITEES || estAdmin) return 999;   // illimité
@@ -932,7 +940,7 @@ async function envoyerReveils(liste) {
     if (!f.email || !f.cle_trimestre) continue;
     const prenom = (f.email.split("@")[0] || "").replace(/[._-]+/g, " ");
     const ok = await envoyerMailAuto("reactivation", f.cle_trimestre, f.email, "m_reactivation",
-      { prenom, lien: location.origin || "https://famiteam.com" });
+      { prenom, lien: HOTE_PUBLIC });
     if (ok) n++;
   }
   return n;
@@ -974,7 +982,7 @@ async function adminRetirerAttente(email) {
 /* ---------- Vagues d'invitation (chantier « Liste d'attente ») ---------- */
 // Lien personnel d'un candidat : autorise la création de SA famille.
 function lienVague(token) {
-  return (location.origin || "https://famiteam.com") + "/?vague=" + token;
+  return HOTE_PUBLIC + "/?vague=" + token;
 }
 // Le jeton existe-t-il, et la vague a-t-elle bien été envoyée ? La fonction
 // ne renvoie qu'un booléen : elle ne divulgue jamais l'e-mail du candidat.
@@ -1048,7 +1056,7 @@ async function envoyerRelancesVague(liste) {
 async function creerInvitation() {
   const { data, error } = await sb.rpc("create_invite", { p_family: familleId, p_email: null });
   if (error) { toast("Erreur : " + error.message, "info"); return null; }
-  return location.origin + location.pathname + "?invite=" + data;
+  return HOTE_PUBLIC + "/?invite=" + data;
 }
 
 async function accepterInvitation(token) {

@@ -207,7 +207,9 @@ function blocArbreEnfant() {
     const phrase = n === 0 ? t("arbre.enfant_zero")
                  : (n === 1 ? t("arbre.enfant_une") : t("arbre.enfant_n", { n }));
     sec.querySelector(".arbre-enfant-corps").innerHTML =
-      arbreSvgFamilles(n, { alt: phrase }) + `<p class="arbre-enfant-phrase">${phrase}</p>`;
+      arbreSvgFamilles(n, { alt: phrase })
+      + `<div><p class="arbre-enfant-phrase">${phrase}</p>
+         <p class="arbre-enfant-expli">${t("arbre.enfant_expli", { app: APP_NOM })}</p></div>`;
   }).catch(() => sec.remove());
   return sec;
 }
@@ -358,7 +360,7 @@ function modaleDepliant() {
   const champ = ov.querySelector("#dep-src");
   const dessiner = () => {
     const lien = lienDepliant(champ.value);
-    const qr = (typeof qrSvg === "function") ? qrSvg(lien, { classe: "depliant-qr" }) : "";
+    const qr = (typeof qrSvg === "function" && qrSvg(lien, { classe: "depliant-qr" })) || "";
     // L'URL affichée en clair sous le QR : tous les parents ne scannent pas.
     const visible = lien.replace(/^https?:\/\//, "");
     zone.innerHTML = `<div class="depliant-page impression-cible">
@@ -447,7 +449,10 @@ function modaleCarteAmi(enf) {
     lienCarte = lien;
     codeCarte = code;
     bPartager.disabled = false;
-    const qr = (typeof qrSvg === "function") ? qrSvg(lien, { classe: "carte-ami-qr", titre: code }) : "";
+    // Si le QR ne peut pas être produit, on l'écrit. Interpoler un null donnait
+    // littéralement « null » au milieu de la carte, sous les yeux de l'enfant.
+    const qr = (typeof qrSvg === "function" && qrSvg(lien, { classe: "carte-ami-qr", titre: code }))
+      || `<p class="note carte-ami-sansqr">${t("cami.sans_qr")}</p>`;
     bas.innerHTML = `${qr}<div class="carte-ami-parents">
         <p class="carte-ami-parents-titre">${t("cami.parents_titre")}</p>
         <p class="carte-ami-parents-texte">${t("cami.parents_texte", { app: APP_NOM })}</p>
@@ -467,18 +472,21 @@ function modaleCarteAmi(enf) {
  * CSS chargées, et échouent silencieusement. Ici, ce qui est dessiné est ce
  * qui part.
  */
-const CARTE_IMG_L = 1080, CARTE_IMG_H = 1350;   // format portrait, lisible en messagerie
+const CARTE_IMG_L = 1080;                       // format portrait, lisible en messagerie
 
-function carteAmiTexteCentre(ctx, texte, y, largeurMax, interligne) {
-  const mots = String(texte).split(" ");
+function carteAmiLignes(ctx, texte, largeurMax) {
   const lignes = [];
   let courante = "";
-  mots.forEach(mot => {
+  String(texte).split(" ").forEach(mot => {
     const essai = courante ? courante + " " + mot : mot;
     if (ctx.measureText(essai).width > largeurMax && courante) { lignes.push(courante); courante = mot; }
     else courante = essai;
   });
   if (courante) lignes.push(courante);
+  return lignes;
+}
+function carteAmiTexteCentre(ctx, texte, y, largeurMax, interligne) {
+  const lignes = carteAmiLignes(ctx, texte, largeurMax);
   lignes.forEach((l, i) => ctx.fillText(l, CARTE_IMG_L / 2, y + i * interligne));
   return y + lignes.length * interligne;
 }
@@ -493,64 +501,106 @@ function carteAmiRectArrondi(ctx, x, y, l, h, r) {
   ctx.closePath();
 }
 
-// Dessine la carte et renvoie un Blob PNG (null si le canevas est indisponible).
-function imageCarteAmi(enf, code, lien) {
+// L'avatar de l'enfant est un SVG : on le passe par une data-URI pour le
+// dessiner sur le canevas. S'il n'arrive pas — SVG mal formé, navigateur
+// récalcitrant — on renvoie null et la carte se dessine sans lui.
+function carteAmiAvatar(enf) {
   return new Promise((resolve) => {
     try {
-      const cv = document.createElement("canvas");
-      cv.width = CARTE_IMG_L; cv.height = CARTE_IMG_H;
-      const ctx = cv.getContext("2d");
-      if (!ctx) return resolve(null);
-      const police = '"Segoe UI", system-ui, -apple-system, Roboto, sans-serif';
-      const prenom = (enf && enf.prenom) ? enf.prenom : "";
-
-      ctx.fillStyle = "#fdf8ef";
-      ctx.fillRect(0, 0, CARTE_IMG_L, CARTE_IMG_H);
-      ctx.strokeStyle = "#c9b79a"; ctx.lineWidth = 6; ctx.setLineDash([18, 14]);
-      carteAmiRectArrondi(ctx, 34, 34, CARTE_IMG_L - 68, CARTE_IMG_H - 68, 44);
-      ctx.stroke(); ctx.setLineDash([]);
-
-      ctx.textAlign = "center"; ctx.textBaseline = "top";
-      ctx.fillStyle = "#27384a";
-      ctx.font = "800 76px " + police;
-      let y = carteAmiTexteCentre(ctx, t("cami.moi", { prenom }), 120, CARTE_IMG_L - 200, 88);
-      ctx.fillStyle = "#2f7d5e";
-      ctx.font = "800 52px " + police;
-      y = carteAmiTexteCentre(ctx, t("cami.invite", { app: APP_NOM }), y + 26, CARTE_IMG_L - 220, 66);
-
-      // QR : dessiné module par module depuis notre propre encodeur, donc
-      // toujours net, quelle que soit la taille demandée.
-      const m = (typeof qrMatrice === "function") ? qrMatrice(lien) : null;
-      if (m) {
-        const marge = 4, cote = m.length + marge * 2;
-        const px = Math.floor(560 / cote), taille = px * cote;
-        const x0 = Math.round((CARTE_IMG_L - taille) / 2), y0 = y + 50;
-        ctx.fillStyle = "#ffffff";
-        carteAmiRectArrondi(ctx, x0 - 18, y0 - 18, taille + 36, taille + 36, 20);
-        ctx.fill();
-        ctx.fillStyle = "#101720";
-        for (let i = 0; i < m.length; i++) for (let j = 0; j < m.length; j++) {
-          if (m[i][j] === 1) ctx.fillRect(x0 + (j + marge) * px, y0 + (i + marge) * px, px, px);
-        }
-        y = y0 + taille + 30;
-      }
-
-      ctx.fillStyle = "#27384a";
-      ctx.font = "800 58px ui-monospace, SFMono-Regular, Menlo, monospace";
-      ctx.fillText(String(code || ""), CARTE_IMG_L / 2, y);
-      y += 78;
-      ctx.fillStyle = "#6b7c8d";
-      ctx.font = "600 32px " + police;
-      y = carteAmiTexteCentre(ctx, t("cami.parents_texte", { app: APP_NOM }).replace(/<[^>]+>/g, ""),
-        y, CARTE_IMG_L - 220, 42);
-      ctx.font = "800 34px " + police;
-      ctx.fillStyle = "#2f7d5e";
-      ctx.fillText("fami.team", CARTE_IMG_L / 2, CARTE_IMG_H - 96);
-
-      if (cv.toBlob) cv.toBlob((b) => resolve(b), "image/png");
-      else resolve(null);
+      if (typeof buildAvatar !== "function" || !enf || !enf.avatar) return resolve(null);
+      const svg = buildAvatar(enf.avatar);
+      if (!svg || svg.indexOf("<svg") === -1) return resolve(null);
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+      setTimeout(() => resolve(null), 2000);       // ne jamais bloquer le partage
     } catch (e) { resolve(null); }
   });
+}
+
+/* Dessine la carte et renvoie un Blob PNG (null si le canevas est indisponible).
+ * La hauteur s'ajuste au contenu : un QR absent ou un prénom long ne doit ni
+ * laisser un grand vide, ni déborder. */
+async function imageCarteAmi(enf, code, lien) {
+  try {
+    const avatar = await carteAmiAvatar(enf);
+    const mesure = document.createElement("canvas").getContext("2d");
+    if (!mesure) return null;
+    const police = '"Segoe UI", system-ui, -apple-system, Roboto, sans-serif';
+    const prenom = (enf && enf.prenom) ? enf.prenom : "";
+    const largeurTexte = CARTE_IMG_L - 200;
+
+    // --- 1ʳᵉ passe : on mesure pour connaître la hauteur exacte ---
+    const m = (typeof qrMatrice === "function") ? qrMatrice(lien) : null;
+    const qrCote = m ? Math.floor(560 / (m.length + 8)) * (m.length + 8) : 0;
+    mesure.font = "800 76px " + police;
+    const lMoi = carteAmiLignes(mesure, t("cami.moi", { prenom }), largeurTexte);
+    mesure.font = "800 52px " + police;
+    const lInvite = carteAmiLignes(mesure, t("cami.invite", { app: APP_NOM }), CARTE_IMG_L - 220);
+    mesure.font = "600 32px " + police;
+    const lParents = carteAmiLignes(mesure,
+      t("cami.parents_texte", { app: APP_NOM }).replace(/<[^>]+>/g, ""), CARTE_IMG_L - 220);
+
+    const hAvatar = avatar ? 200 : 0;
+    const hauteur = 110 + hAvatar + lMoi.length * 88 + 26 + lInvite.length * 66
+      + (m ? 50 + qrCote + 36 : 40) + 40 + 78 + lParents.length * 42 + 150;
+
+    const cv = document.createElement("canvas");
+    cv.width = CARTE_IMG_L; cv.height = Math.round(hauteur);
+    const ctx = cv.getContext("2d");
+    if (!ctx) return null;
+
+    ctx.fillStyle = "#fdf8ef";
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.strokeStyle = "#c9b79a"; ctx.lineWidth = 6; ctx.setLineDash([18, 14]);
+    carteAmiRectArrondi(ctx, 34, 34, cv.width - 68, cv.height - 68, 44);
+    ctx.stroke(); ctx.setLineDash([]);
+
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    let y = 96;
+    if (avatar) {
+      const cote = 170, x0 = (CARTE_IMG_L - cote) / 2;
+      ctx.fillStyle = "#cfe6fb";
+      carteAmiRectArrondi(ctx, x0, y, cote, cote, 32);
+      ctx.fill();
+      try { ctx.drawImage(avatar, x0, y, cote, cote); } catch (e) { /* avatar ignoré */ }
+      y += cote + 30;
+    }
+    ctx.fillStyle = "#27384a"; ctx.font = "800 76px " + police;
+    y = carteAmiTexteCentre(ctx, t("cami.moi", { prenom }), y, largeurTexte, 88);
+    ctx.fillStyle = "#2f7d5e"; ctx.font = "800 52px " + police;
+    y = carteAmiTexteCentre(ctx, t("cami.invite", { app: APP_NOM }), y + 26, CARTE_IMG_L - 220, 66);
+
+    if (m) {
+      const marge = 4, cote = m.length + marge * 2;
+      const px = Math.floor(560 / cote), taille = px * cote;
+      const x0 = Math.round((CARTE_IMG_L - taille) / 2), y0 = y + 50;
+      ctx.fillStyle = "#ffffff";
+      carteAmiRectArrondi(ctx, x0 - 18, y0 - 18, taille + 36, taille + 36, 20);
+      ctx.fill();
+      ctx.fillStyle = "#101720";
+      for (let i = 0; i < m.length; i++) for (let j = 0; j < m.length; j++) {
+        if (m[i][j] === 1) ctx.fillRect(x0 + (j + marge) * px, y0 + (i + marge) * px, px, px);
+      }
+      y = y0 + taille + 36;
+    } else {
+      y += 40;   // pas de QR : le code écrit suffit, mais on ne laisse pas de trou
+    }
+
+    ctx.fillStyle = "#27384a";
+    ctx.font = "800 58px ui-monospace, SFMono-Regular, Menlo, monospace";
+    ctx.fillText(String(code || ""), CARTE_IMG_L / 2, y);
+    y += 78;
+    ctx.fillStyle = "#6b7c8d"; ctx.font = "600 32px " + police;
+    y = carteAmiTexteCentre(ctx, t("cami.parents_texte", { app: APP_NOM }).replace(/<[^>]+>/g, ""),
+      y, CARTE_IMG_L - 220, 42);
+    ctx.font = "800 34px " + police; ctx.fillStyle = "#2f7d5e";
+    ctx.fillText("fami.team", CARTE_IMG_L / 2, cv.height - 96);
+
+    if (!cv.toBlob) return null;
+    return await new Promise((resolve) => cv.toBlob(resolve, "image/png"));
+  } catch (e) { return null; }
 }
 
 /* Partage de la carte : une IMAGE accompagnée du lien. Le destinataire est le
@@ -3816,7 +3866,12 @@ function blocCartesSurprises(enf) {
         html += `<p class="cs-afaire">${t("cs.a_faire")}</p>`;
       }
       if (c.faite) html += `<p class="cs-faite-tag">${t("cs.faite")}</p>`;
-      else html += `<button class="btn-secondaire cs-faite-btn" data-faite="${c.id}">${t("cs.faite_btn")}</button>`;
+      else {
+        // Fixer la date se fait ici, là où la carte se regarde — mais derrière
+        // le code PIN : c'est un engagement de parent, pas un vœu d'enfant.
+        html += `<button class="btn-secondaire cs-plan-btn" data-plan="${c.id}">📅 ${t(c.prevueLe ? "cs.rdv_modifier" : "cs.rdv_planifier")}</button>
+          <button class="btn-secondaire cs-faite-btn" data-faite="${c.id}">${t("cs.faite_btn")}</button>`;
+      }
     } else {
       // Carte EN COURS : soit visible (objectif montré), soit mystère (caché).
       if (visible) {
@@ -3851,7 +3906,63 @@ function blocCartesSurprises(enf) {
   });
   sec.querySelectorAll(".cs-faite-btn").forEach(b =>
     b.onclick = () => marquerCarteFaite(b.dataset.faite));
+  sec.querySelectorAll(".cs-plan-btn").forEach(b =>
+    b.onclick = () => planifierCarteSurprise(b.dataset.plan));
   return sec;
+}
+
+// Fixer la date d'une carte gagnée : réservé aux parents. Même porte que le
+// mode rétroactif — code PIN s'il en existe un, accès direct sinon.
+function planifierCarteSurprise(id) {
+  const lancer = () => modaleRendezVousCarte(id);
+  if (modeParents || !(etat.reglages && etat.reglages.codeParent)) { lancer(); return; }
+  demanderPin({
+    titre: t("cs.rdv_pin"),
+    permettreOubli: true,
+    onReset: () => lancer(),
+    onOk: (saisi) => { if (saisi.trim() !== etat.reglages.codeParent) return false; lancer(); }
+  });
+}
+
+function modaleRendezVousCarte(id) {
+  const c = trouverCarteSurprise(id);
+  if (!c || !c.debloquee) return;
+  const ov = el("div", "pin-modal");
+  ov.innerHTML = `
+    <div class="pin-carte">
+      <button class="modale-fermer" aria-label="${t("common.fermer")}">✕</button>
+      <div class="pin-titre">${t("cs.rdv_titre")}</div>
+      <p class="note">${c.emoji} ${echapper(trData("carte", c.id, c.titre))}</p>
+      <div class="csp-ligne">
+        <input class="csp-rdv-date" id="rdv-date" type="date" value="${c.prevueLe || ""}">
+        <input class="csp-rdv-heure" id="rdv-heure" type="time" value="${c.prevueHeure || ""}">
+      </div>
+      <p id="rdv-decompte" class="csp-rdv-decompte"></p>
+      <button id="rdv-ics" class="btn-secondaire">📅 ${t("cs.rdv_agenda")}</button>
+      <p class="note">${t("cs.rdv_note")}</p>
+    </div>`;
+  document.body.appendChild(ov);
+  const fermer = () => ov.remove();
+  ov.querySelector(".modale-fermer").onclick = fermer;
+  ov.addEventListener("click", e => { if (e.target === ov) fermer(); });
+
+  const iDate = ov.querySelector("#rdv-date");
+  const iHeure = ov.querySelector("#rdv-heure");
+  const zone = ov.querySelector("#rdv-decompte");
+  const bIcs = ov.querySelector("#rdv-ics");
+  const rafraichir = () => {
+    const j = joursAvantCarte(c);
+    zone.textContent = j === null ? "" : texteDecompteCarte(j);
+    zone.className = "csp-rdv-decompte" + (j !== null && j < 0 ? " passe" : "");
+    bIcs.disabled = !c.prevueLe;
+  };
+  // Date et heure s'enregistrent ensemble : saisir l'heure d'abord effacerait
+  // sinon la date à peine posée.
+  const enregistrer = () => { definirDateCarte(id, iDate.value, iHeure.value); rafraichir(); };
+  iDate.onchange = enregistrer;
+  iHeure.onchange = enregistrer;
+  bIcs.onclick = () => exporterCarteAgenda(id);
+  rafraichir();
 }
 
 /* ---------- Rendez-vous d'une carte gagnée ----------

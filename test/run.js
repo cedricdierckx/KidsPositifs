@@ -2984,7 +2984,11 @@ test("carte d'ami : le partage produit une image, avec le lien en légende", () 
   // aucune dépendance à une image externe qui échouerait en silence.
   assert.ok(/qrMatrice\(lien\)/.test(corpsImg), "le QR doit être dessiné depuis qrMatrice");
   assert.ok(/cv\.toBlob/.test(corpsImg), "l'image doit être produite en PNG");
-  assert.ok(/resolve\(null\)/.test(corpsImg), "un échec de dessin doit se solder par null, pas par une exception");
+  assert.ok(/catch \(e\) \{ return null; \}/.test(corpsImg),
+    "un échec de dessin doit se solder par null, pas par une exception");
+  // La hauteur suit le contenu : sans QR ou avec un prénom long, ni trou ni débordement.
+  assert.ok(/cv\.height = Math\.round\(hauteur\)/.test(corpsImg),
+    "la hauteur de l'image doit s'ajuster au contenu");
 
   const par = ui.slice(ui.indexOf("async function partagerCarteAmi"));
   const corpsPar = par.slice(0, par.indexOf("\n}\n"));
@@ -3002,6 +3006,95 @@ test("carte d'ami : le partage produit une image, avec le lien en légende", () 
     "l'export .ics doit réutiliser telechargerBlob");
   assert.strictEqual((ui.match(/function telechargerBlob\(/g) || []).length, 1,
     "telechargerBlob ne doit être défini qu'une fois");
+});
+
+/* ---------- Liens sortants : jamais l'adresse du déploiement courant ---------- */
+
+test("liens : tout ce qui part vers l'extérieur vise le domaine public", () => {
+  const fs = require("fs"), path = require("path");
+  const auth = fs.readFileSync(path.join(__dirname, "..", "js/auth.js"), "utf8");
+  const { api } = construireContexte();
+
+  const hote = /const HOTE_PUBLIC = "(https:\/\/[^"]+)"/.exec(auth);
+  assert.ok(hote, "HOTE_PUBLIC introuvable");
+  assert.ok(!/\/$/.test(hote[1]), "HOTE_PUBLIC ne doit pas finir par une barre oblique");
+
+  // Le lien d'invitation doit tenir dans un QR : sur un déploiement de
+  // préaperçu, location.origin faisait 75 caractères et le QR n'était plus
+  // produit du tout — la carte affichait « null » à sa place.
+  const lien = hote[1] + "/?p=" + "X".repeat(7);
+  assert.ok(lien.length <= api.QR_CAPACITE,
+    `lien de ${lien.length} caractères pour une capacité de ${api.QR_CAPACITE}`);
+  assert.ok(api.qrSvg(lien), "le QR du lien d'invitation doit être produit");
+
+  // Aucune fonction produisant un lien destiné à un tiers ne lit location.
+  [["lienDepuisCode", "?p="], ["creerInvitation", "?invite="],
+   ["creerParrainage", "?parrain="], ["lienVague", "?vague="]].forEach(([nom, motif]) => {
+    const i = auth.indexOf("function " + nom);
+    assert.ok(i > -1, nom + " introuvable");
+    const corps = auth.slice(i, auth.indexOf("\n}", i));
+    assert.ok(corps.includes(motif), nom + " ne produit plus " + motif);
+    assert.ok(!/location\.(origin|pathname)/.test(corps),
+      nom + " ne doit pas dépendre du déploiement courant");
+  });
+  // Les e-mails aux familles non plus.
+  assert.ok(!/lien: location\.origin/.test(auth),
+    "les e-mails aux familles ne doivent pas porter l'adresse du déploiement courant");
+  // Les redirections d'authentification, elles, DOIVENT y rester.
+  assert.ok(/emailRedirectTo: location\.origin/.test(auth),
+    "la redirection d'authentification doit revenir sur le déploiement en cours");
+});
+
+test("QR : un carré impossible à produire ne s'écrit jamais « null »", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const { api } = construireContexte();
+  assert.strictEqual(api.qrSvg("x".repeat(api.QR_CAPACITE + 1)), null,
+    "au-delà de la capacité, qrSvg doit renvoyer null");
+  // Chaque interpolation de qrSvg doit passer par un repli, sans quoi le mot
+  // « null » s'affiche au milieu de la carte, sous les yeux de l'enfant.
+  const appels = ui.match(/const qr = \(typeof qrSvg === "function"[^;]+;/g) || [];
+  assert.ok(appels.length >= 3, "appels à qrSvg introuvables");
+  // Deux formes acceptables : un repli immédiat (« || … ») ou un null explicite,
+  // qui oblige alors l'appelant à tester la variable avant de l'interpoler.
+  appels.forEach(a => assert.ok(/\|\|/.test(a) || /: null;$/.test(a.trim()),
+    "appel à qrSvg sans repli : " + a.slice(0, 90)));
+  // Et le null explicite doit effectivement être testé à l'usage.
+  const nbNull = (ui.match(/\$\{qr \? /g) || []).length;
+  assert.ok(nbNull >= 2, "les qrSvg pouvant valoir null doivent être testés avant interpolation");
+  Object.keys(api.LANGUES).forEach(lg =>
+    assert.ok(api.I18N[lg]["cami.sans_qr"], "cami.sans_qr manquant en " + lg));
+});
+
+test("carte surprise : la date se fixe depuis la vue famille, derrière le code parent", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const { api } = construireContexte();
+  Object.keys(api.LANGUES).forEach(lg =>
+    ["cs.rdv_planifier", "cs.rdv_modifier", "cs.rdv_pin"].forEach(k =>
+      assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`)));
+  assert.ok(/data-plan="\$\{c\.id\}"/.test(ui), "le bouton de planification doit être sur la carte");
+  const f = ui.slice(ui.indexOf("function planifierCarteSurprise"));
+  const corps = f.slice(0, f.indexOf("\n}\n"));
+  assert.ok(/etat\.reglages\.codeParent/.test(corps) && /demanderPin\(/.test(corps),
+    "la planification doit passer par le code parent quand il existe");
+  assert.ok(/modeParents \|\| !\(etat\.reglages && etat\.reglages\.codeParent\)/.test(corps),
+    "un parent déjà identifié, ou une famille sans code, ne doit pas être bloqué");
+});
+
+test("arbre : les enfants aussi savent ce qu'est cet arbre", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const { api } = construireContexte();
+  assert.ok(/t\("arbre\.enfant_expli", \{ app: APP_NOM \}\)/.test(ui),
+    "l'explication enfant doit être affichée");
+  Object.keys(api.LANGUES).forEach(lg => {
+    const v = api.I18N[lg]["arbre.enfant_expli"];
+    assert.ok(v, "arbre.enfant_expli manquante en " + lg);
+    assert.ok(v.includes("{app}"), "le nom de l'app doit être interpolé (" + lg + ")");
+    assert.ok(!/classement|rang|gagn|win|rank|klassement|rangliste/i.test(v),
+      "l'explication enfant ne doit rien promettre à gagner (" + lg + ") : " + v);
+  });
 });
 
 /* ---------- Exécution ---------- */

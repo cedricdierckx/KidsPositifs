@@ -4024,3 +4024,43 @@ Object.assign(I18N.nl, {
 Object.assign(I18N.de, {
   "cami.partage_ordi": "🖼️ Bild gespeichert und Link kopiert!"
 });
+
+/* Arbre des familles expliqué aux enfants, et repli si le QR manque. */
+Object.assign(I18N.fr, {
+  "arbre.enfant_expli": "Quand tu montres {app} à un copain et que sa famille l'essaie, une nouvelle feuille pousse sur ton arbre. 🌱",
+  "cami.sans_qr": "Le code se recopie à la main — le carré à scanner n'a pas pu être créé."
+});
+Object.assign(I18N.en, {
+  "arbre.enfant_expli": "When you show {app} to a friend and their family tries it, a new leaf grows on your tree. 🌱",
+  "cami.sans_qr": "Type the code by hand — the square to scan could not be created."
+});
+Object.assign(I18N.nl, {
+  "arbre.enfant_expli": "Als je {app} aan een vriendje laat zien en hun gezin probeert het, groeit er een nieuw blad aan je boom. 🌱",
+  "cami.sans_qr": "Typ de code met de hand — het vierkantje om te scannen kon niet worden gemaakt."
+});
+Object.assign(I18N.de, {
+  "arbre.enfant_expli": "Wenn du {app} einem Freund zeigst und seine Familie es ausprobiert, wächst ein neues Blatt an deinem Baum. 🌱",
+  "cami.sans_qr": "Den Code von Hand abtippen — das Quadrat zum Scannen konnte nicht erstellt werden."
+});
+
+/* Planifier une carte gagnee depuis la vue famille, sous code PIN. */
+Object.assign(I18N.fr, {
+  "cs.rdv_planifier": "Choisir la date",
+  "cs.rdv_modifier": "Changer la date",
+  "cs.rdv_pin": "🔒 Code parent pour fixer la date"
+});
+Object.assign(I18N.en, {
+  "cs.rdv_planifier": "Pick the date",
+  "cs.rdv_modifier": "Change the date",
+  "cs.rdv_pin": "🔒 Parent code to set the date"
+});
+Object.assign(I18N.nl, {
+  "cs.rdv_planifier": "Datum kiezen",
+  "cs.rdv_modifier": "Datum wijzigen",
+  "cs.rdv_pin": "🔒 Oudercode om de datum te kiezen"
+});
+Object.assign(I18N.de, {
+  "cs.rdv_planifier": "Datum wählen",
+  "cs.rdv_modifier": "Datum ändern",
+  "cs.rdv_pin": "🔒 Elterncode, um das Datum zu setzen"
+});
