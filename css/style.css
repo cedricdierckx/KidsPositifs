@@ -1661,3 +1661,9 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .bandeau-apercu{border-top:6px solid #b26a00; background:linear-gradient(180deg,#fffdf6,#fff4e2)}
 .apercu-t{margin:0 0 4px; font-size:16px; font-weight:800; color:#8a4f00}
 .apercu-d{margin:0; font-size:13px; line-height:1.5; color:#7a5a30}
+
+/* Arrêter un soutien mensuel : discret mais toujours trouvable. Un don
+   récurrent qu'on ne peut pas résilier depuis l'app n'est pas acceptable. */
+.don-gerer{font-size:12px; text-align:center; margin:6px 0 0}
+.don-gerer a{color:var(--doux); text-decoration:underline}
+.don-gerer a:hover{color:#3a7bd5}

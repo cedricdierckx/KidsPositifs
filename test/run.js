@@ -2685,6 +2685,24 @@ test("modèle : aucun e-mail sortant ne promet la gratuité future", () => {
   assert.strictEqual(fautifs.length, 0, "promesse d'avenir dans : " + fautifs.join(" ; "));
 });
 
+// Un don récurrent qui ne peut pas être résilié depuis l'app n'est pas
+// acceptable : le chemin d'arrêt doit exister, être traduit, et être documenté.
+test("dons : le soutien mensuel peut être arrêté depuis l'application", () => {
+  const fs = require("fs"), path = require("path");
+  const racine = path.join(__dirname, "..");
+  const { api } = construireContexte();
+  Object.keys(api.LANGUES).forEach(lg => {
+    ["don.gerer", "admin.don_portail", "admin.don_portail_aide"].forEach(k =>
+      assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`));
+  });
+  const ui = fs.readFileSync(path.join(racine, "js/ui.js"), "utf8");
+  assert.ok(/cfg\.don_portail_url/.test(ui), "le bloc de don doit exposer le portail client");
+  assert.ok(/\["don_portail_url", t\("admin\.don_portail"\)\]/.test(ui),
+    "le portail doit être réglable depuis l'espace admin");
+  const faq = fs.readFileSync(path.join(racine, "faq.html"), "utf8");
+  assert.ok(faq.includes('id="arreter-don"'), "la FAQ doit expliquer comment arrêter un don mensuel");
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

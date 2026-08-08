@@ -1423,6 +1423,10 @@ function blocAdminConfig() {
   const aide = el("a", "btn-secondaire don-aide", t("admin.don_aide"));
   aide.href = "https://dashboard.stripe.com/payment-links"; aide.target = "_blank"; aide.rel = "noopener";
   sec.appendChild(aide);
+  const aideP = el("a", "btn-secondaire don-aide", t("admin.don_portail_aide"));
+  aideP.href = "https://dashboard.stripe.com/settings/billing/portal";
+  aideP.target = "_blank"; aideP.rel = "noopener";
+  sec.appendChild(aideP);
   const cfg = (typeof configApp !== "undefined") ? configApp : {};
   const champsDon = [
     ["support_email", t("admin.support_email")],
@@ -1432,13 +1436,15 @@ function blocAdminConfig() {
     ["don_sub_1",  t("don.mensuel") + " — 1 €/" + t("don.mois")],
     ["don_sub_3",  t("don.mensuel") + " — 3 €/" + t("don.mois")],
     ["don_sub_10", t("don.mensuel") + " — 10 €/" + t("don.mois")],
-    ["don_stripe_url", t("admin.don_libre")]
+    ["don_stripe_url", t("admin.don_libre")],
+    ["don_portail_url", t("admin.don_portail")]
   ];
   const inputsDon = {};
   champsDon.forEach(([key, label]) => {
     const l = el("label", "champ", label);
     const inp = el("input");
     if (key === "support_email") { inp.type = "email"; inp.placeholder = "hello@fami.team"; }
+    else if (key === "don_portail_url") { inp.type = "url"; inp.placeholder = "https://billing.stripe.com/p/login/…"; }
     else { inp.type = "url"; inp.placeholder = "https://buy.stripe.com/…"; }
     inp.value = cfg[key] || "";
     l.appendChild(inp); sec.appendChild(l);
@@ -4168,6 +4174,13 @@ function blocDon() {
   }
   if (ponct.length || mens.length || libre) {
     html += `<p class="don-merci">${t("don.merci")}</p>`;
+    // Arrêter un soutien mensuel doit être aussi simple que le commencer, et
+    // se faire depuis l'app — pas en cherchant un vieil e-mail de reçu. Le
+    // portail client Stripe s'en charge : le parent y entre son adresse et
+    // reçoit un lien de connexion. Rien de sensible ne transite par le site.
+    if (cfg.don_portail_url) {
+      html += `<p class="don-gerer"><a href="${cfg.don_portail_url}" target="_blank" rel="noopener">${t("don.gerer")}</a></p>`;
+    }
     // Transparence : ce que les dons financent, et ce qu'ils ne donnent pas.
     html += `<p class="don-transparence">${t("don.transparence")}
       <a href="faq.html#dons" target="_blank" rel="noopener">${t("don.en_savoir")}</a></p>`;

@@ -2616,6 +2616,28 @@ Object.assign(I18N.en, { "admin.don_aide": "↗ Create a payment link on Stripe"
 Object.assign(I18N.nl, { "admin.don_aide": "↗ Maak een betaallink op Stripe" });
 Object.assign(I18N.de, { "admin.don_aide": "↗ Zahlungslink auf Stripe erstellen" });
 
+/* Portail client Stripe : arrêter ou modifier un soutien mensuel depuis l'app. */
+Object.assign(I18N.fr, {
+  "don.gerer": "Gérer ou arrêter mon soutien mensuel",
+  "admin.don_portail": "Portail client Stripe (gérer / arrêter un abonnement)",
+  "admin.don_portail_aide": "↗ Activer le portail client sur Stripe"
+});
+Object.assign(I18N.en, {
+  "don.gerer": "Manage or stop my monthly support",
+  "admin.don_portail": "Stripe customer portal (manage / cancel a subscription)",
+  "admin.don_portail_aide": "↗ Enable the customer portal on Stripe"
+});
+Object.assign(I18N.nl, {
+  "don.gerer": "Mijn maandelijkse steun beheren of stopzetten",
+  "admin.don_portail": "Stripe-klantenportaal (abonnement beheren / stopzetten)",
+  "admin.don_portail_aide": "↗ Klantenportaal activeren op Stripe"
+});
+Object.assign(I18N.de, {
+  "don.gerer": "Meine monatliche Unterstützung verwalten oder beenden",
+  "admin.don_portail": "Stripe-Kundenportal (Abo verwalten / beenden)",
+  "admin.don_portail_aide": "↗ Kundenportal bei Stripe aktivieren"
+});
+
 /* ---- Réglage : seuil d'affichage imagé ---- */
 Object.assign(I18N.fr, { "par.prog.seuil_visuel": "Affichage imagé (sans chiffres) jusqu'à l'âge de" });
 Object.assign(I18N.en, { "par.prog.seuil_visuel": "Picture display (no numbers) up to age" });
