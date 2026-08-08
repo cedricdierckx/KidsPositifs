@@ -142,3 +142,50 @@ body{margin:0; background:var(--fond); color:var(--texte);
 @media (prefers-reduced-motion: reduce){
   .defi-jauge-r{transition:none}
 }
+
+/* ---- Ce qui a changé depuis la dernière visite ----
+   Le bloc le plus important de la page : c'est lui qui donne une raison de
+   rouvrir. Il se lit avant le score, donc il est placé avant. */
+.defi-depuis{margin:0 0 12px; padding:11px 14px; font-size:14px; line-height:1.5;
+  border-radius:12px; border:1px solid var(--bord); background:var(--fond2)}
+.defi-depuis-gain{border-color:rgba(79,209,197,.55); background:rgba(79,209,197,.12)}
+.defi-depuis-perte{border-color:rgba(255,122,122,.55); background:rgba(255,122,122,.12)}
+.defi-depuis-calme{color:var(--doux)}
+
+/* ---- Série et grille des quatorze jours ----
+   Un trou dans la ligne se voit d'un coup d'œil ; c'est tout le ressort. */
+.defi-serie{margin:12px 0 0}
+.defi-serie-t{margin:0 0 6px; font-size:13px; color:var(--doux)}
+.defi-serie-t strong{color:var(--feu)}
+.defi-jours{display:flex; gap:4px}
+.defi-jour{flex:1 1 0; height:16px; border-radius:4px; background:#0f151d;
+  border:1px solid var(--bord)}
+.defi-jour.on{background:linear-gradient(180deg,var(--or),var(--feu)); border-color:transparent}
+.defi-jour.auj{outline:1px solid var(--vif); outline-offset:1px}
+
+/* ---- Objectif collectif ---- */
+.defi-collectif{border-color:rgba(79,209,197,.4)}
+.defi-col-haut{display:flex; align-items:center; gap:10px; margin:10px 0 0}
+.defi-col-emoji{font-size:28px; line-height:1}
+.defi-col-nom{flex:1 1 auto; font-weight:800}
+.defi-col-n{font-size:26px; font-weight:900; color:var(--vif)}
+.defi-jauge-col{background:linear-gradient(90deg,var(--vif),#7ee8c0)}
+
+/* ---- Dernier jour : plus fort que « urgent » ---- */
+.defi-final{color:var(--feu); font-size:13px; letter-spacing:.12em;
+  animation:defi-pulse 1s ease-in-out infinite}
+
+/* ---- Fanfare de montée de rang ---- */
+.defi-fanfare{position:fixed; left:50%; top:18%; transform:translateX(-50%);
+  display:flex; align-items:center; gap:10px; padding:14px 20px; z-index:60;
+  font-weight:900; color:#101720; border-radius:16px;
+  background:linear-gradient(135deg,var(--or),var(--feu));
+  box-shadow:0 12px 40px rgba(0,0,0,.5); animation:defi-entree .45s ease}
+.defi-fanfare-emoji{font-size:30px; line-height:1}
+.defi-fanfare.partir{opacity:0; transition:opacity .8s ease}
+@keyframes defi-entree{from{opacity:0; transform:translate(-50%,-14px) scale(.9)}
+  to{opacity:1; transform:translate(-50%,0) scale(1)}}
+
+@media (prefers-reduced-motion: reduce){
+  .defi-final, .defi-fanfare{animation:none}
+}

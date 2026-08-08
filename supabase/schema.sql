@@ -636,13 +636,14 @@ begin
         -- On ne renvoie PAS family_id : le drapeau « moi » suffit à se
         -- reconnaître, et l'identifiant interne des autres familles n'a rien
         -- à faire dans la réponse.
-        -- Les trois compteurs supplémentaires (jours de chasse, meilleur jour,
-        -- première prise) servent aux hauts faits affichés dans l'arène. Ce
-        -- sont des agrégats de dates d'arrivée : aucune identité de filleul.
+        -- Les compteurs supplémentaires (jours de chasse, meilleur jour,
+        -- première prise, liste des jours) servent aux hauts faits, à la série
+        -- en cours et au petit graphe de l'arène. Ce sont des agrégats de dates
+        -- d'arrivée : aucune identité de filleul n'en sort.
         select m.pseudo::text as pseudo,
                v.vivantes, v.en_route,
                (v.vivantes * 100 + v.en_route * 25) as points,
-               v.jours, v.meilleur_jour, v.premiere_le,
+               v.jours, v.meilleur_jour, v.premiere_le, v.jours_liste,
                (m.family_id = p_family) as moi
         from arene_membres m
         cross join lateral (
@@ -651,7 +652,9 @@ begin
             count(*) filter (where arbre_jours_actifs(r.accepted_family) < 3)  as en_route,
             count(distinct r.accepted_at::date) as jours,
             coalesce(max(j.n), 0) as meilleur_jour,
-            min(r.accepted_at) as premiere_le
+            min(r.accepted_at) as premiere_le,
+            coalesce(array_agg(distinct r.accepted_at::date::text
+                     order by r.accepted_at::date::text), '{}') as jours_liste
           from referrals r
           left join lateral (
             select count(*) as n from referrals r2

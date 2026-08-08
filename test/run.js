@@ -2319,7 +2319,8 @@ function apiDefi() {
     .replace(/localStorage/g, "({ getItem: () => null, setItem: () => {} })")
     .replace(/document\.documentElement/g, "null");
   return new Function("navigator",
-    bloc + "; return { DEFI_RANGS, rangDe, rangSuivant, DEFI_I18N, DEFI_LANGUES, tD, definirLangueDefi, langueInitiale, DEFI_HAUTS_FAITS, DEFI_HOTE_APP, lienFamille, resteDetail };"
+    bloc + "; return { DEFI_RANGS, rangDe, rangSuivant, DEFI_I18N, DEFI_LANGUES, tD, definirLangueDefi, langueInitiale, DEFI_HAUTS_FAITS, DEFI_HOTE_APP, lienFamille, resteDetail,"
+         + " DEFI_PALIERS_ARENE, palierArene, palierAreneSuivant, serieEnCours, grilleJours, jourCle };"
   )({ language: "fr" });
 }
 
@@ -2335,13 +2336,92 @@ test("défi : les rangs sont croissants, jamais perdus, et bornés", () => {
   assert.strictEqual(d.rangDe(100).cle, "r2");
   assert.strictEqual(d.rangDe(999).cle, "r4");
   assert.strictEqual(d.rangDe(1000).cle, "r5");
-  assert.strictEqual(d.rangSuivant(1000), null, "au dernier rang, plus rien à viser");
+  assert.strictEqual(d.rangDe(2000).cle, "r6");
+  assert.strictEqual(d.rangDe(4000).cle, "r7");
+  const dernier = d.DEFI_RANGS[d.DEFI_RANGS.length - 1];
+  assert.strictEqual(d.rangSuivant(dernier.seuil), null, "au dernier rang, plus rien à viser");
+  // L'échelle doit dépasser ce qu'une saison permet : un plafond atteignable en
+  // quelques semaines cesse de tirer dès qu'il est touché.
+  assert.ok(dernier.seuil >= 2000, "l'échelle des rangs s'arrête trop tôt");
   // Monotonie : un score qui monte ne fait jamais reculer le rang.
   let precedent = 0;
-  for (let n = 0; n <= 1200; n += 7) {
+  for (let n = 0; n <= 5000; n += 7) {
     const r = d.DEFI_RANGS.indexOf(d.rangDe(n));
     assert.ok(r >= precedent, "recul de rang en " + n); precedent = r;
   }
+});
+
+test("défi : la série en cours se rompt sur un jour manqué, pas sur l'heure", () => {
+  const d = apiDefi();
+  // Aucune prise : aucune série.
+  assert.strictEqual(d.serieEnCours([], "2026-08-08"), 0);
+  assert.strictEqual(d.serieEnCours(null, "2026-08-08"), 0);
+  // Trois jours consécutifs jusqu'à aujourd'hui.
+  assert.strictEqual(d.serieEnCours(["2026-08-06", "2026-08-07", "2026-08-08"], "2026-08-08"), 3);
+  // La série court encore si le dernier jour marqué est hier : on ne casse pas
+  // une série parce qu'il n'est que dix heures du matin.
+  assert.strictEqual(d.serieEnCours(["2026-08-06", "2026-08-07"], "2026-08-08"), 2);
+  // Deux jours de silence : rompue.
+  assert.strictEqual(d.serieEnCours(["2026-08-05", "2026-08-06"], "2026-08-08"), 0);
+  // Un trou au milieu ne compte que la partie récente.
+  assert.strictEqual(d.serieEnCours(["2026-08-01", "2026-08-02", "2026-08-07", "2026-08-08"], "2026-08-08"), 2);
+  // Les doublons et le désordre ne faussent rien.
+  assert.strictEqual(d.serieEnCours(["2026-08-08", "2026-08-07", "2026-08-08"], "2026-08-08"), 2);
+  // Franchissement de mois.
+  assert.strictEqual(d.serieEnCours(["2026-07-31", "2026-08-01"], "2026-08-01"), 2);
+});
+
+test("défi : la grille des jours couvre la bonne fenêtre", () => {
+  const d = apiDefi();
+  const g = d.grilleJours(["2026-08-08", "2026-08-02"], 14, "2026-08-08");
+  assert.strictEqual(g.length, 14);
+  assert.strictEqual(g[13].cle, "2026-08-08", "la dernière case doit être aujourd'hui");
+  assert.strictEqual(g[0].cle, "2026-07-26", "la fenêtre doit remonter de 13 jours");
+  assert.strictEqual(g.filter(c => c.marque).length, 2);
+  assert.strictEqual(g[13].aujourdhui, true);
+  assert.strictEqual(g.filter(c => c.aujourdhui).length, 1);
+});
+
+test("défi : l'objectif collectif progresse par paliers croissants", () => {
+  const d = apiDefi();
+  let s = -1;
+  d.DEFI_PALIERS_ARENE.forEach(p => {
+    assert.ok(p.seuil > s, "paliers non croissants"); s = p.seuil;
+    assert.ok(p.cle && p.emoji, "palier incomplet");
+  });
+  assert.strictEqual(d.palierArene(0), null, "sans famille, aucun palier");
+  assert.strictEqual(d.palierArene(4), null);
+  assert.strictEqual(d.palierArene(5).cle, "pa1");
+  assert.strictEqual(d.palierArene(999).cle, "pa5");
+  assert.strictEqual(d.palierAreneSuivant(0).cle, "pa1");
+  assert.strictEqual(d.palierAreneSuivant(999), null, "au dernier palier, plus rien à viser");
+  // Chaque palier et chaque rang doit être traduit dans les quatre langues.
+  Object.keys(d.DEFI_LANGUES).forEach(lg => {
+    d.DEFI_PALIERS_ARENE.forEach(p =>
+      assert.ok(d.DEFI_I18N[lg][p.cle], `${p.cle} manquant en ${lg}`));
+    d.DEFI_RANGS.forEach(r =>
+      assert.ok(d.DEFI_I18N[lg][r.cle], `${r.cle} manquant en ${lg}`));
+  });
+});
+
+test("défi : chaque haut fait a un nom, une description et une condition", () => {
+  const d = apiDefi();
+  const vide = { points: 0, vivantes: 0, en_route: 0, jours: 0, meilleur_jour: 0 };
+  d.DEFI_HAUTS_FAITS.forEach(f => {
+    Object.keys(d.DEFI_LANGUES).forEach(lg => {
+      assert.ok(d.DEFI_I18N[lg][f.cle], `${f.cle} manquant en ${lg}`);
+      assert.ok(d.DEFI_I18N[lg][f.cle + "_d"], `${f.cle}_d manquant en ${lg}`);
+    });
+    // Une équipe qui n'a rien fait ne doit décrocher aucun haut fait.
+    assert.strictEqual(!!f.test(vide, -1, [vide], { serie: 0, part: 0 }), false,
+      "haut fait acquis sans rien avoir fait : " + f.cle);
+  });
+  // Et une équipe exemplaire doit tous les décrocher : sinon l'un d'eux est
+  // inatteignable, ce qui décourage au lieu de tirer.
+  const parfaite = { points: 900, vivantes: 9, en_route: 0, jours: 6, meilleur_jour: 3, premier_sang: true };
+  d.DEFI_HAUTS_FAITS.forEach(f =>
+    assert.ok(f.test(parfaite, 0, [parfaite], { serie: 4, part: 80 }),
+      "haut fait inatteignable : " + f.cle));
 });
 
 test("défi : les quatre langues sont complètes et gardent leurs paramètres", () => {
