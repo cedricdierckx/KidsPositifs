@@ -422,17 +422,29 @@ function modaleCarteAmi(enf) {
         <p class="carte-ami-colorier-note">${t("cami.colorier")}</p>
         <div class="carte-ami-bas" id="carte-ami-bas"><p class="note">${t("arbre.attente")}</p></div>
       </div>
-      <button id="carte-imprimer" class="gros-bouton planete">🖨️ ${t("cami.imprimer")}</button>
+      <div class="carte-ami-actions">
+        <button id="carte-imprimer" class="gros-bouton planete">🖨️ ${t("cami.imprimer")}</button>
+        <button id="carte-partager" class="gros-bouton">📤 ${t("cami.partager")}</button>
+      </div>
     </div>`;
   document.body.appendChild(ov);
   const fermer = () => { document.body.classList.remove("impression"); ov.remove(); };
   ov.querySelector(".modale-fermer").onclick = fermer;
   ov.addEventListener("click", e => { if (e.target === ov) fermer(); });
 
+  // Le partage attend le code : proposer un bouton qui n'enverrait rien serait pire
+  // que ne rien proposer du tout.
+  const bPartager = ov.querySelector("#carte-partager");
+  let lienCarte = "";
+  bPartager.disabled = true;
+  bPartager.onclick = () => partagerCarteAmi(enf, lienCarte);
+
   codeParrainage().then(code => {
     const bas = ov.querySelector("#carte-ami-bas");
     if (!code) { bas.innerHTML = `<p class="note">${t("arbre.indispo")}</p>`; return; }
     const lien = lienDepuisCode(code);
+    lienCarte = lien;
+    bPartager.disabled = false;
     const qr = (typeof qrSvg === "function") ? qrSvg(lien, { classe: "carte-ami-qr", titre: code }) : "";
     bas.innerHTML = `${qr}<div class="carte-ami-parents">
         <p class="carte-ami-parents-titre">${t("cami.parents_titre")}</p>
@@ -443,6 +455,28 @@ function modaleCarteAmi(enf) {
   ov.querySelector("#carte-imprimer").onclick = () => {
     imprimerCible();
   };
+}
+
+// Partage de la carte : on envoie le LIEN, pas une image de la carte. Le
+// destinataire est le parent de l'ami, et ce dont il a besoin est cliquable,
+// pas décoratif — la carte imprimée, elle, sert à la cour de récréation.
+// navigator.share ouvre le sélecteur natif du téléphone (messages, WhatsApp,
+// mail) ; là où il n'existe pas, on retombe sur le presse-papiers.
+async function partagerCarteAmi(enf, lien) {
+  if (!lien) return;
+  const prenom = (enf && enf.prenom) ? enf.prenom : "";
+  const texte = t("cami.partage_texte", { prenom, app: APP_NOM });
+  if (navigator.share) {
+    try { await navigator.share({ title: t("cami.partage_titre", { prenom }), text: texte, url: lien }); return; }
+    catch (e) { if (e && e.name === "AbortError") return; }   // partage annulé : ce n'est pas une erreur
+  }
+  try {
+    if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error("presse-papiers indisponible");
+    await navigator.clipboard.writeText(texte + " " + lien);
+    toast(t("lien.copie"), "succes");
+  } catch (e) {
+    toast(lien, "info");   // dernier recours : le lien reste au moins lisible
+  }
 }
 
 /* Modale de partage : le code permanent de la famille, son QR code et le lien.
@@ -5529,6 +5563,7 @@ function sectionsFamille(c) {
   // renouveler. C'est le geste le plus court possible pour offrir l'app.
   const par = el("section", "carte");
   par.innerHTML = `<h2>${t("arbre.titre")}</h2>
+    <p class="arbre-explication">${t("arbre.explication", { app: APP_NOM })}</p>
     <div id="par-bilan" class="arbre-bilan"></div>
     <p class="note">${t("arbre.modale_note")}</p>
     <div id="par-code" class="arbre-code-bloc"><p class="note">${t("arbre.attente")}</p></div>

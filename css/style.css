@@ -1688,3 +1688,15 @@ main{max-width:680px; margin:0 auto; padding:14px}
 details.csp-idees > .pliable-tete{padding:10px 0}
 details.csp-idees > .pliable-tete:hover{background:transparent}
 details.csp-idees > .pliable-tete h3{margin:0}
+
+/* Carte de l'enfant : imprimer et partager côte à côte. Deux gestes de même
+   rang — l'un pour la cour de récréation, l'autre pour le téléphone. */
+.carte-ami-actions{display:flex; gap:8px; margin-top:10px}
+.carte-ami-actions .gros-bouton{flex:1 1 0; min-width:0; margin:0}
+.carte-ami-actions .gros-bouton[disabled]{opacity:.5; cursor:not-allowed}
+@media (max-width:360px){ .carte-ami-actions{flex-direction:column} }
+/* Les boutons ne doivent pas partir à l'imprimante avec la carte. */
+body.impression .carte-ami-actions{display:none}
+
+/* L'Arbre des familles : une phrase pour dire ce que c'est, avant les chiffres. */
+.arbre-explication{font-size:13.5px; line-height:1.5; color:#4a5a6b; margin:0 0 10px}

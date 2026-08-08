@@ -3937,3 +3937,30 @@ Object.assign(I18N.de, {
   "apercu.titre": "🧪 Vorschau — es geht keine E-Mail raus",
   "apercu.detail": "Du bist auf {hote}, nicht auf der Produktion. E-Mails an Familien, Einladungswellen und die automatische Umschaltung der Obergrenze sind ausgesetzt, obwohl die Datenbank die der Produktion ist. Sendetest und PIN-Code funktionieren weiter.",
 });
+
+/* Arbre des familles : ce que c'est, en une phrase. Et le partage de la
+   carte de l'enfant, quand l'impression n'est pas le bon geste. */
+Object.assign(I18N.fr, {
+  "arbre.explication": "Chaque famille à qui vous faites découvrir {app} devient une feuille de votre arbre. Il n'y a rien à gagner et personne à dépasser : l'arbre montre seulement ce que votre famille a semé autour d'elle.",
+  "cami.partager": 'Partager',
+  "cami.partage_titre": 'Une invitation de {prenom}',
+  "cami.partage_texte": '{prenom} vous invite à essayer {app} en famille. Ouvrez ce lien pour créer la vôtre :'
+});
+Object.assign(I18N.en, {
+  "arbre.explication": 'Every family you introduce to {app} becomes a leaf on your tree. There is nothing to win and no one to overtake: the tree simply shows what your family has sown around it.',
+  "cami.partager": 'Share',
+  "cami.partage_titre": 'An invitation from {prenom}',
+  "cami.partage_texte": '{prenom} invites you to try {app} as a family. Open this link to create your own:'
+});
+Object.assign(I18N.nl, {
+  "arbre.explication": 'Elk gezin dat je {app} laat ontdekken wordt een blad aan je boom. Er valt niets te winnen en niemand voorbij te steken: de boom toont enkel wat jouw gezin rondom zich heeft gezaaid.',
+  "cami.partager": 'Delen',
+  "cami.partage_titre": 'Een uitnodiging van {prenom}',
+  "cami.partage_texte": '{prenom} nodigt je uit om {app} met je gezin te proberen. Open deze link om je eigen gezin aan te maken:'
+});
+Object.assign(I18N.de, {
+  "arbre.explication": 'Jede Familie, der ihr {app} zeigt, wird zu einem Blatt an eurem Baum. Es gibt nichts zu gewinnen und niemanden zu überholen: Der Baum zeigt nur, was eure Familie um sich herum gesät hat.',
+  "cami.partager": 'Teilen',
+  "cami.partage_titre": 'Eine Einladung von {prenom}',
+  "cami.partage_texte": '{prenom} lädt dich ein, {app} mit deiner Familie auszuprobieren. Öffne diesen Link, um eure eigene zu erstellen:'
+});

@@ -2789,6 +2789,45 @@ test("parents : sous-plis et découpe des cartes de l'espace parents", () => {
     "blocPliable doit réutiliser memoriserPli plutôt que dupliquer la logique");
 });
 
+test("arbre : la carte explique ce qu'est l'Arbre, sans rang ni comparaison", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  assert.ok(/t\("arbre\.explication", \{ app: APP_NOM \}\)/.test(ui),
+    "l'explication doit être affichée dans la carte de l'Arbre");
+  const { api } = construireContexte();
+  Object.keys(api.LANGUES).forEach(lg => {
+    const v = api.I18N[lg]["arbre.explication"];
+    assert.ok(v, "arbre.explication manquante en " + lg);
+    assert.ok(v.includes("{app}"), "le nom de l'app doit être interpolé (" + lg + ")");
+    // Doctrine PLAN-PARRAINAGE § 1.1 : jamais un rang, jamais un écart entre familles.
+    assert.ok(!/classement|rang|podium|ranking|leaderboard|klassement|rangliste/i.test(v),
+      "l'explication ne doit évoquer aucun classement (" + lg + ") : " + v);
+  });
+});
+
+test("carte d'ami : elle peut être imprimée ou partagée", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const { api } = construireContexte();
+  Object.keys(api.LANGUES).forEach(lg =>
+    ["cami.partager", "cami.partage_titre", "cami.partage_texte", "cami.imprimer"].forEach(k =>
+      assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`)));
+  assert.ok(/id="carte-partager"/.test(ui) && /id="carte-imprimer"/.test(ui),
+    "les deux boutons doivent exister");
+  // Le partage ne doit pas être proposé avant que le code ne soit connu.
+  assert.ok(/bPartager\.disabled = true;/.test(ui) && /bPartager\.disabled = false;/.test(ui),
+    "le bouton de partage doit attendre le code");
+  const f = ui.slice(ui.indexOf("async function partagerCarteAmi"));
+  const corps = f.slice(0, f.indexOf("\n}\n"));
+  assert.ok(/navigator\.share/.test(corps), "le sélecteur natif doit être utilisé quand il existe");
+  assert.ok(/AbortError/.test(corps), "un partage annulé ne doit pas être traité comme une erreur");
+  assert.ok(/navigator\.clipboard/.test(corps), "un repli presse-papiers est nécessaire sur ordinateur");
+  // Les boutons ne doivent pas finir sur la feuille imprimée.
+  const css = fs.readFileSync(path.join(__dirname, "..", "css/style.css"), "utf8");
+  assert.ok(/body\.impression \.carte-ami-actions\{display:none\}/.test(css),
+    "les boutons doivent être masqués à l'impression");
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {
