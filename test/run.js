@@ -2954,6 +2954,56 @@ test("carte surprise : l'interface propose date, agenda et décompte", () => {
     "le décompte doit apparaître sur la carte de l'enfant");
 });
 
+test("parents : la famille n'a plus de cadre, la boîte à idées descend", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  // Mode simplifié : plus de dépliant englobant autour des trois cartes.
+  assert.ok(!/dep\(t\("regl\.famille"\)/.test(ui),
+    "le cadre « Famille et invitations » ne doit plus envelopper les trois cartes");
+  assert.ok(/^\s+sectionsFamille\(c\);$/m.test(ui),
+    "sectionsFamille doit être appelée directement en mode simplifié");
+  // La boîte à idées n'ouvre plus l'onglet « Mon compte ».
+  const sc = ui.slice(ui.indexOf("function sectionsCompte"));
+  const corps = sc.slice(0, sc.indexOf("\n}\n"));
+  const iRecup = corps.indexOf("blocRecuperation()");
+  const iFeed = corps.lastIndexOf("blocFeedback()");
+  assert.ok(iRecup > -1 && iFeed > iRecup,
+    "la boîte à idées doit venir après la récupération de données, pas en tête d'onglet");
+});
+
+test("carte d'ami : le partage produit une image, avec le lien en légende", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const { api } = construireContexte();
+  Object.keys(api.LANGUES).forEach(lg =>
+    assert.ok(api.I18N[lg]["cami.partage_ordi"], "cami.partage_ordi manquant en " + lg));
+
+  const img = ui.slice(ui.indexOf("function imageCarteAmi"));
+  const corpsImg = img.slice(0, img.indexOf("\n}\n"));
+  // Le QR vient de notre propre encodeur : net à n'importe quelle taille, et
+  // aucune dépendance à une image externe qui échouerait en silence.
+  assert.ok(/qrMatrice\(lien\)/.test(corpsImg), "le QR doit être dessiné depuis qrMatrice");
+  assert.ok(/cv\.toBlob/.test(corpsImg), "l'image doit être produite en PNG");
+  assert.ok(/resolve\(null\)/.test(corpsImg), "un échec de dessin doit se solder par null, pas par une exception");
+
+  const par = ui.slice(ui.indexOf("async function partagerCarteAmi"));
+  const corpsPar = par.slice(0, par.indexOf("\n}\n"));
+  assert.ok(/navigator\.canShare\(\{ files: \[fichier\] \}\)/.test(corpsPar),
+    "le partage de fichier doit être testé avant d'être tenté");
+  // Beaucoup d'applications ignorent « url » quand un fichier est joint :
+  // le lien doit donc figurer dans le texte, sinon l'invitation part sans lui.
+  assert.ok(/files: \[fichier\][^}]*text: texte \+ " " \+ lien/.test(corpsPar),
+    "le lien doit accompagner l'image dans le texte du partage");
+  assert.ok(/telechargerBlob\(blob/.test(corpsPar), "sur ordinateur, l'image doit être téléchargée");
+  assert.strictEqual((corpsPar.match(/AbortError/g) || []).length, 2,
+    "chaque tentative de partage doit traiter l'annulation");
+  // Une seule mécanique de téléchargement, partagée avec l'export agenda.
+  assert.ok(/telechargerBlob\(blob, "famiteam-" \+ c\.id \+ "\.ics"\)/.test(ui),
+    "l'export .ics doit réutiliser telechargerBlob");
+  assert.strictEqual((ui.match(/function telechargerBlob\(/g) || []).length, 1,
+    "telechargerBlob ne doit être défini qu'une fois");
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

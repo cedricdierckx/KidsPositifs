@@ -4010,3 +4010,17 @@ Object.assign(I18N.de, {
   "cs.rdv_sans_date": "Wähle zuerst ein Datum.",
   "cs.rdv_echec": "Kalenderdatei konnte nicht erstellt werden."
 });
+
+/* Partage de la carte d'ami sur ordinateur : image + lien. */
+Object.assign(I18N.fr, {
+  "cami.partage_ordi": "🖼️ Image enregistrée et lien copié !"
+});
+Object.assign(I18N.en, {
+  "cami.partage_ordi": "🖼️ Image saved and link copied!"
+});
+Object.assign(I18N.nl, {
+  "cami.partage_ordi": "🖼️ Afbeelding opgeslagen en link gekopieerd!"
+});
+Object.assign(I18N.de, {
+  "cami.partage_ordi": "🖼️ Bild gespeichert und Link kopiert!"
+});

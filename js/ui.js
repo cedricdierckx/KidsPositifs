@@ -437,13 +437,15 @@ function modaleCarteAmi(enf) {
   const bPartager = ov.querySelector("#carte-partager");
   let lienCarte = "";
   bPartager.disabled = true;
-  bPartager.onclick = () => partagerCarteAmi(enf, lienCarte);
+  let codeCarte = "";
+  bPartager.onclick = () => partagerCarteAmi(enf, lienCarte, codeCarte);
 
   codeParrainage().then(code => {
     const bas = ov.querySelector("#carte-ami-bas");
     if (!code) { bas.innerHTML = `<p class="note">${t("arbre.indispo")}</p>`; return; }
     const lien = lienDepuisCode(code);
     lienCarte = lien;
+    codeCarte = code;
     bPartager.disabled = false;
     const qr = (typeof qrSvg === "function") ? qrSvg(lien, { classe: "carte-ami-qr", titre: code }) : "";
     bas.innerHTML = `${qr}<div class="carte-ami-parents">
@@ -457,27 +459,149 @@ function modaleCarteAmi(enf) {
   };
 }
 
-// Partage de la carte : on envoie le LIEN, pas une image de la carte. Le
-// destinataire est le parent de l'ami, et ce dont il a besoin est cliquable,
-// pas décoratif — la carte imprimée, elle, sert à la cour de récréation.
-// navigator.share ouvre le sélecteur natif du téléphone (messages, WhatsApp,
-// mail) ; là où il n'existe pas, on retombe sur le presse-papiers.
-async function partagerCarteAmi(enf, lien) {
+/* ---------- Image partageable de la carte d'ami ----------
+ * Un lien nu dans une conversation n'a rien d'une invitation. On dessine donc
+ * la carte sur un canevas et on la partage comme IMAGE, le lien accompagnant
+ * en légende. Le dessin est fait à la main plutôt que capturé depuis le DOM :
+ * html2canvas ou un SVG en foreignObject dépendent des polices et des règles
+ * CSS chargées, et échouent silencieusement. Ici, ce qui est dessiné est ce
+ * qui part.
+ */
+const CARTE_IMG_L = 1080, CARTE_IMG_H = 1350;   // format portrait, lisible en messagerie
+
+function carteAmiTexteCentre(ctx, texte, y, largeurMax, interligne) {
+  const mots = String(texte).split(" ");
+  const lignes = [];
+  let courante = "";
+  mots.forEach(mot => {
+    const essai = courante ? courante + " " + mot : mot;
+    if (ctx.measureText(essai).width > largeurMax && courante) { lignes.push(courante); courante = mot; }
+    else courante = essai;
+  });
+  if (courante) lignes.push(courante);
+  lignes.forEach((l, i) => ctx.fillText(l, CARTE_IMG_L / 2, y + i * interligne));
+  return y + lignes.length * interligne;
+}
+
+function carteAmiRectArrondi(ctx, x, y, l, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + l, y, x + l, y + h, r);
+  ctx.arcTo(x + l, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + l, y, r);
+  ctx.closePath();
+}
+
+// Dessine la carte et renvoie un Blob PNG (null si le canevas est indisponible).
+function imageCarteAmi(enf, code, lien) {
+  return new Promise((resolve) => {
+    try {
+      const cv = document.createElement("canvas");
+      cv.width = CARTE_IMG_L; cv.height = CARTE_IMG_H;
+      const ctx = cv.getContext("2d");
+      if (!ctx) return resolve(null);
+      const police = '"Segoe UI", system-ui, -apple-system, Roboto, sans-serif';
+      const prenom = (enf && enf.prenom) ? enf.prenom : "";
+
+      ctx.fillStyle = "#fdf8ef";
+      ctx.fillRect(0, 0, CARTE_IMG_L, CARTE_IMG_H);
+      ctx.strokeStyle = "#c9b79a"; ctx.lineWidth = 6; ctx.setLineDash([18, 14]);
+      carteAmiRectArrondi(ctx, 34, 34, CARTE_IMG_L - 68, CARTE_IMG_H - 68, 44);
+      ctx.stroke(); ctx.setLineDash([]);
+
+      ctx.textAlign = "center"; ctx.textBaseline = "top";
+      ctx.fillStyle = "#27384a";
+      ctx.font = "800 76px " + police;
+      let y = carteAmiTexteCentre(ctx, t("cami.moi", { prenom }), 120, CARTE_IMG_L - 200, 88);
+      ctx.fillStyle = "#2f7d5e";
+      ctx.font = "800 52px " + police;
+      y = carteAmiTexteCentre(ctx, t("cami.invite", { app: APP_NOM }), y + 26, CARTE_IMG_L - 220, 66);
+
+      // QR : dessiné module par module depuis notre propre encodeur, donc
+      // toujours net, quelle que soit la taille demandée.
+      const m = (typeof qrMatrice === "function") ? qrMatrice(lien) : null;
+      if (m) {
+        const marge = 4, cote = m.length + marge * 2;
+        const px = Math.floor(560 / cote), taille = px * cote;
+        const x0 = Math.round((CARTE_IMG_L - taille) / 2), y0 = y + 50;
+        ctx.fillStyle = "#ffffff";
+        carteAmiRectArrondi(ctx, x0 - 18, y0 - 18, taille + 36, taille + 36, 20);
+        ctx.fill();
+        ctx.fillStyle = "#101720";
+        for (let i = 0; i < m.length; i++) for (let j = 0; j < m.length; j++) {
+          if (m[i][j] === 1) ctx.fillRect(x0 + (j + marge) * px, y0 + (i + marge) * px, px, px);
+        }
+        y = y0 + taille + 30;
+      }
+
+      ctx.fillStyle = "#27384a";
+      ctx.font = "800 58px ui-monospace, SFMono-Regular, Menlo, monospace";
+      ctx.fillText(String(code || ""), CARTE_IMG_L / 2, y);
+      y += 78;
+      ctx.fillStyle = "#6b7c8d";
+      ctx.font = "600 32px " + police;
+      y = carteAmiTexteCentre(ctx, t("cami.parents_texte", { app: APP_NOM }).replace(/<[^>]+>/g, ""),
+        y, CARTE_IMG_L - 220, 42);
+      ctx.font = "800 34px " + police;
+      ctx.fillStyle = "#2f7d5e";
+      ctx.fillText("fami.team", CARTE_IMG_L / 2, CARTE_IMG_H - 96);
+
+      if (cv.toBlob) cv.toBlob((b) => resolve(b), "image/png");
+      else resolve(null);
+    } catch (e) { resolve(null); }
+  });
+}
+
+/* Partage de la carte : une IMAGE accompagnée du lien. Le destinataire est le
+ * parent de l'ami — il doit voir de quoi il s'agit avant de cliquer. Trois
+ * niveaux de repli, du meilleur au plus modeste :
+ *   1. image + lien par le sélecteur natif (téléphones récents) ;
+ *   2. lien seul par le sélecteur natif (partage de fichiers non permis) ;
+ *   3. image téléchargée et lien copié (ordinateurs).
+ */
+async function partagerCarteAmi(enf, lien, code) {
   if (!lien) return;
   const prenom = (enf && enf.prenom) ? enf.prenom : "";
   const texte = t("cami.partage_texte", { prenom, app: APP_NOM });
-  if (navigator.share) {
-    try { await navigator.share({ title: t("cami.partage_titre", { prenom }), text: texte, url: lien }); return; }
-    catch (e) { if (e && e.name === "AbortError") return; }   // partage annulé : ce n'est pas une erreur
+  const titre = t("cami.partage_titre", { prenom });
+  const blob = await imageCarteAmi(enf, code, lien);
+
+  if (blob && navigator.canShare && typeof File === "function") {
+    const fichier = new File([blob], "famiteam-" + (prenom || "carte") + ".png", { type: "image/png" });
+    if (navigator.canShare({ files: [fichier] })) {
+      // Le lien va dans le texte : beaucoup d'applications ignorent « url »
+      // quand un fichier est joint, et l'invitation partirait sans son lien.
+      try { await navigator.share({ files: [fichier], title: titre, text: texte + " " + lien }); return; }
+      catch (e) { if (e && e.name === "AbortError") return; }
+    }
   }
+  if (navigator.share) {
+    try { await navigator.share({ title: titre, text: texte, url: lien }); return; }
+    catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  if (blob) telechargerBlob(blob, "famiteam-" + (prenom || "carte") + ".png");
   try {
     if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error("presse-papiers indisponible");
     await navigator.clipboard.writeText(texte + " " + lien);
-    toast(t("lien.copie"), "succes");
+    toast(t(blob ? "cami.partage_ordi" : "lien.copie"), "succes");
   } catch (e) {
     toast(lien, "info");   // dernier recours : le lien reste au moins lisible
   }
 }
+
+// Téléchargement d'un blob : utilisé par l'image de la carte et par le .ics.
+function telechargerBlob(blob, nom) {
+  try {
+    const url = URL.createObjectURL(blob);
+    const a = el("a");
+    a.href = url; a.download = nom;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    return true;
+  } catch (e) { return false; }
+}
+
 
 /* Modale de partage : le code permanent de la famille, son QR code et le lien.
  * Un seul code, réutilisable indéfiniment — c'est tout l'intérêt : il se colle
@@ -3765,19 +3889,8 @@ function exporterCarteAgenda(id) {
   if (!c) return;
   const ics = icsCarteSurprise(c, trData("carte", c.id, c.titre), trData("carteAct", c.id, c.activite));
   if (!ics) { toast(t("cs.rdv_sans_date"), "info"); return; }
-  try {
-    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = el("a");
-    a.href = url;
-    a.download = "famiteam-" + c.id + ".ics";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 30000);
-  } catch (e) {
-    toast(t("cs.rdv_echec"), "info");
-  }
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  if (!telechargerBlob(blob, "famiteam-" + c.id + ".ics")) toast(t("cs.rdv_echec"), "info");
 }
 
 // Date en toutes lettres, courte et lisible par un enfant : « dimanche 2 août ».
@@ -5737,10 +5850,11 @@ function sectionsFamille(c) {
 
 // ----- Compte, données, récupération, suppression -----
 function sectionsCompte(c) {
-  // Module bug/suggestion : ouvert à toutes les familles. Un retour qu'on ne
-  // peut pas donner est un retour perdu.
-  c.appendChild(blocFeedback());
-  if (typeof modeDemo !== "undefined" && modeDemo) { c.appendChild(bandeauDemo()); return; }
+  if (typeof modeDemo !== "undefined" && modeDemo) {
+    c.appendChild(bandeauDemo());
+    c.appendChild(blocFeedback());
+    return;
+  }
 
   const cpt = el("section", "carte");
   const u = typeof utilisateurCourant === "function" ? utilisateurCourant() : null;
@@ -5768,6 +5882,12 @@ function sectionsCompte(c) {
 
   // ----- 🛟 Récupération de données -----
   c.appendChild(blocRecuperation());
+
+  // ----- 💡 Boîte à idées : ouverte à toutes les familles. Un retour qu'on ne
+  // peut pas donner est un retour perdu. Placée ici, et non plus en tête de
+  // l'onglet : personne n'ouvre « Mon compte » pour signaler un bug, et un
+  // formulaire de retour au-dessus de son propre e-mail n'a pas de sens. -----
+  c.appendChild(blocFeedback());
 
   // ----- ⚠️ Zone de danger : suppression du compte famille (propriétaire) -----
   if (familleActive && familleActive.role === "owner") {
@@ -6040,7 +6160,10 @@ function vueReglages(c) {
       c.appendChild(details);
     };
     dep(t("regl.programme"), "std-prog", (x) => x.appendChild(blocProgramme()), true);
-    dep(t("regl.famille"), "std-fam", (x) => sectionsFamille(x));
+    // Famille : pas de dépliant englobant. Ses trois cartes se présentent
+    // elles-mêmes, et deux d'entre elles se replient déjà — un pli dans un pli
+    // demandait deux gestes pour arriver au premier bouton.
+    sectionsFamille(c);
     dep(t("regl.compte"), "std-cpt", (x) => sectionsCompte(x));
     const modeCarte = el("section", "carte");
     modeCarte.appendChild(blocModeParents());
