@@ -2839,6 +2839,121 @@ test("carte d'ami : elle peut être imprimée ou partagée", () => {
     "les boutons doivent être masqués à l'impression");
 });
 
+/* ---------- Rendez-vous d'une carte surprise gagnée ---------- */
+
+// Prépare une carte débloquée dans l'état courant et la renvoie.
+function carteGagnee(api, id) {
+  api.lierEtat(api.etatVierge());
+  const c = api.cartesSurprises()[0];
+  c.debloquee = true; c.recolte = c.cout;
+  if (id) c.id = id;
+  return c;
+}
+
+test("carte surprise : on ne planifie que ce qui est gagné, et la date est validée", () => {
+  const { api } = construireContexte();
+  api.lierEtat(api.etatVierge());
+  const enCours = api.cartesSurprises()[0];
+  assert.strictEqual(api.definirDateCarte(enCours.id, "2026-09-12"), false,
+    "une carte non débloquée ne se planifie pas");
+  const c = carteGagnee(api);
+  ["12/09/2026", "2026-9-12", "hier", "2026-09-12T10:00"].forEach(mauvaise =>
+    assert.strictEqual(api.definirDateCarte(c.id, mauvaise), false, "date acceptée à tort : " + mauvaise));
+  assert.strictEqual(api.definirDateCarte(c.id, "2026-09-12", "16h30"), false, "heure acceptée à tort");
+  assert.strictEqual(api.definirDateCarte(c.id, "2026-09-12", "16:30"), true);
+  assert.strictEqual(c.prevueLe, "2026-09-12");
+  assert.strictEqual(c.prevueHeure, "16:30");
+  // Effacer la date efface l'heure : une heure sans jour ne veut rien dire.
+  assert.strictEqual(api.definirDateCarte(c.id, "", "16:30"), true);
+  assert.strictEqual(c.prevueLe, null);
+  assert.strictEqual(c.prevueHeure, null);
+});
+
+test("carte surprise : le décompte compte en jours, pas en heures", () => {
+  const { api } = construireContexte();
+  const c = carteGagnee(api);
+  assert.strictEqual(api.joursAvantCarte(c), null, "sans date, pas de décompte");
+  api.definirDateCarte(c.id, "2026-09-12");
+  assert.strictEqual(api.joursAvantCarte(c, "2026-09-12"), 0, "le jour même");
+  assert.strictEqual(api.joursAvantCarte(c, "2026-09-11"), 1, "la veille");
+  assert.strictEqual(api.joursAvantCarte(c, "2026-09-09"), 3);
+  assert.strictEqual(api.joursAvantCarte(c, "2026-09-15"), -3, "après coup");
+  // Le passage à l'heure d'hiver ne doit pas décaler le compte d'un jour.
+  const h = carteGagnee(api, "cs_hiver");
+  api.definirDateCarte(h.id, "2026-11-02");
+  assert.strictEqual(api.joursAvantCarte(h, "2026-10-24"), 9, "changement d'heure : décompte faussé");
+});
+
+test("carte surprise : le fichier d'agenda est un iCalendar valide", () => {
+  const { api } = construireContexte();
+  const c = carteGagnee(api);
+  assert.strictEqual(api.icsCarteSurprise(c, "Ciné", "Un film"), null, "sans date, pas d'événement");
+
+  // Journée entière : DTEND est exclusif, donc le lendemain.
+  api.definirDateCarte(c.id, "2026-09-12");
+  const jour = api.icsCarteSurprise(c, "Soirée ciné", "On choisit un film", new Date(Date.UTC(2026, 7, 8, 6, 0, 0)));
+  assert.ok(jour.startsWith("BEGIN:VCALENDAR\r\n"), "en-tête absent");
+  assert.ok(jour.endsWith("END:VCALENDAR\r\n"), "fin de fichier absente");
+  assert.ok(jour.includes("DTSTART;VALUE=DATE:20260912"), "DTSTART journée entière incorrect");
+  assert.ok(jour.includes("DTEND;VALUE=DATE:20260913"), "DTEND doit être le lendemain (borne exclusive)");
+  assert.ok(jour.includes("DTSTAMP:20260808T060000Z"), "DTSTAMP doit être en UTC");
+  assert.ok(/\r\n/.test(jour) && !/[^\r]\n/.test(jour), "les fins de ligne doivent toutes être CRLF");
+
+  // Avec une heure : événement local flottant de deux heures, sans « Z ».
+  api.definirDateCarte(c.id, "2026-09-12", "16:30");
+  const heure = api.icsCarteSurprise(c, "Soirée ciné", "On choisit un film");
+  assert.ok(heure.includes("DTSTART:20260912T163000"), "DTSTART horaire incorrect");
+  assert.ok(heure.includes("DTEND:20260912T183000"), "l'événement doit durer deux heures");
+  assert.ok(!/DTSTART:[0-9T]+Z/.test(heure), "l'heure locale ne doit pas être marquée UTC");
+
+  // Séparateurs iCalendar échappés (RFC 5545 § 3.3.11).
+  const e = api.icsEchapper("Ciné, pop-corn; couverture\nchaude \\o/");
+  assert.strictEqual(e, "Ciné\\, pop-corn\\; couverture\\nchaude \\\\o/");
+
+  // Repli des lignes longues à 75 octets, emojis compris.
+  const pliee = api.icsPlier("SUMMARY:🎬 " + "a".repeat(120));
+  pliee.split("\r\n").forEach(l =>
+    assert.ok(Buffer.byteLength(l, "utf8") <= 75, "ligne trop longue : " + Buffer.byteLength(l, "utf8")));
+  pliee.split("\r\n").slice(1).forEach(l =>
+    assert.ok(l.startsWith(" "), "une ligne repliée doit commencer par une espace"));
+});
+
+test("carte surprise : les familles existantes reçoivent les champs de rendez-vous", () => {
+  const { api } = construireContexte();
+  const ancien = api.etatVierge();
+  // Une carte d'avant la fonctionnalité : ni prevueLe, ni prevueHeure.
+  ancien.cartesSurprises = [{ id: "cs_vieux", emoji: "🎁", titre: "X", activite: "Y",
+    cout: 100, recolte: 100, dons: {}, debloquee: true, faite: false, revele: true }];
+  const n = api.normaliser(ancien);
+  assert.strictEqual(n.cartesSurprises[0].prevueLe, null);
+  assert.strictEqual(n.cartesSurprises[0].prevueHeure, null);
+  assert.strictEqual(n.cartesSurprises[0].recolte, 100, "la progression ne doit pas être perdue");
+  // Une valeur corrompue est ramenée à « pas de rendez-vous », jamais conservée.
+  ancien.cartesSurprises[0].prevueLe = "n'importe quoi";
+  assert.strictEqual(api.normaliser(ancien).cartesSurprises[0].prevueLe, null);
+});
+
+test("carte surprise : l'interface propose date, agenda et décompte", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const { api } = construireContexte();
+  Object.keys(api.LANGUES).forEach(lg =>
+    ["cs.rdv_titre", "cs.rdv_agenda", "cs.rdv_dans", "cs.rdv_demain",
+     "cs.rdv_aujourdhui", "cs.rdv_passe", "cs.rdv_note"].forEach(k =>
+      assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`)));
+  assert.ok(/\{n\}/.test(api.I18N.fr["cs.rdv_dans"]), "le nombre de dodos doit être interpolé");
+  // Le rendez-vous ne s'affiche que sur une carte gagnée et pas encore faite.
+  assert.ok(/c\.debloquee && !c\.faite \? blocRendezVousCarte\(c\) : ""/.test(ui),
+    "le bloc rendez-vous doit être réservé aux cartes gagnées non faites");
+  assert.ok(/data-ics="\$\{c\.id\}"\$\{c\.prevueLe \? "" : " disabled"\}/.test(ui),
+    "l'export agenda doit être désactivé tant qu'aucune date n'est fixée");
+  assert.ok(/text\/calendar;charset=utf-8/.test(ui), "le type MIME iCalendar est requis");
+  assert.ok(/URL\.revokeObjectURL/.test(ui), "l'URL temporaire doit être libérée");
+  // Côté enfant : le décompte remplace l'invitation générique.
+  assert.ok(/joursAvantCarte\(c\)/.test(ui) && /texteDecompteCarte\(jRdv\)/.test(ui),
+    "le décompte doit apparaître sur la carte de l'enfant");
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

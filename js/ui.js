@@ -3679,8 +3679,18 @@ function blocCartesSurprises(enf) {
           <span class="cs-titre">${echapper(titre)}</span>
           <span class="cs-prix">${t("cs.debloquee")}</span></div>
         ${jauge}
-        <p class="cs-activite">${echapper(activite)}</p>
-        <p class="cs-afaire">${t("cs.a_faire")}</p>`;
+        <p class="cs-activite">${echapper(activite)}</p>`;
+      // Décompte : pour un enfant de 2 à 7 ans, « dans 3 dodos » veut dire
+      // quelque chose ; une date, non. Tant qu'aucun jour n'est fixé, on garde
+      // l'invitation à le faire — mais sans jamais l'annoncer à l'enfant.
+      const jRdv = joursAvantCarte(c);
+      if (jRdv !== null && !c.faite) {
+        html += `<p class="cs-rdv${jRdv <= 1 && jRdv >= 0 ? " proche" : ""}">
+          ${jRdv < 0 ? "🎈" : "📅"} ${texteDecompteCarte(jRdv)}
+          <small>${jourLisible(c.prevueLe, true)}${c.prevueHeure ? " · " + echapper(c.prevueHeure) : ""}</small></p>`;
+      } else if (!c.faite) {
+        html += `<p class="cs-afaire">${t("cs.a_faire")}</p>`;
+      }
       if (c.faite) html += `<p class="cs-faite-tag">${t("cs.faite")}</p>`;
       else html += `<button class="btn-secondaire cs-faite-btn" data-faite="${c.id}">${t("cs.faite_btn")}</button>`;
     } else {
@@ -3718,6 +3728,56 @@ function blocCartesSurprises(enf) {
   sec.querySelectorAll(".cs-faite-btn").forEach(b =>
     b.onclick = () => marquerCarteFaite(b.dataset.faite));
   return sec;
+}
+
+/* ---------- Rendez-vous d'une carte gagnée ----------
+ * Une carte débloquée qui ne devient pas une date reste une promesse en l'air.
+ * Les parents fixent le jour ; l'enfant, lui, ne voit qu'un décompte.
+ */
+function blocRendezVousCarte(c) {
+  const j = joursAvantCarte(c);
+  const decompte = j === null ? "" :
+    `<p class="csp-rdv-decompte${j < 0 ? " passe" : ""}">${texteDecompteCarte(j)}</p>`;
+  return `<div class="csp-rdv">
+    <p class="csp-rdv-titre">${t("cs.rdv_titre")}</p>
+    <div class="csp-ligne">
+      <input class="csp-rdv-date" type="date" data-rdv-date="${c.id}" value="${c.prevueLe || ""}">
+      <input class="csp-rdv-heure" type="time" data-rdv-heure="${c.id}" value="${c.prevueHeure || ""}">
+    </div>
+    ${decompte}
+    <button class="btn-secondaire csp-rdv-ics" data-ics="${c.id}"${c.prevueLe ? "" : " disabled"}>📅 ${t("cs.rdv_agenda")}</button>
+    <p class="note csp-rdv-note">${t("cs.rdv_note")}</p>
+  </div>`;
+}
+
+// Décompte en « dodos » : c'est l'unité de temps d'un enfant de 2 à 7 ans.
+function texteDecompteCarte(j) {
+  if (j < 0) return t("cs.rdv_passe");
+  if (j === 0) return t("cs.rdv_aujourdhui");
+  if (j === 1) return t("cs.rdv_demain");
+  return t("cs.rdv_dans", { n: j });
+}
+
+// Envoi vers l'agenda : un fichier .ics, que tous les agendas savent ouvrir —
+// iOS, Android, Outlook, Google. Pas de compte à connecter, rien à autoriser.
+function exporterCarteAgenda(id) {
+  const c = trouverCarteSurprise(id);
+  if (!c) return;
+  const ics = icsCarteSurprise(c, trData("carte", c.id, c.titre), trData("carteAct", c.id, c.activite));
+  if (!ics) { toast(t("cs.rdv_sans_date"), "info"); return; }
+  try {
+    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = el("a");
+    a.href = url;
+    a.download = "famiteam-" + c.id + ".ics";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  } catch (e) {
+    toast(t("cs.rdv_echec"), "info");
+  }
 }
 
 // Date en toutes lettres, courte et lisible par un enfant : « dimanche 2 août ».
@@ -5194,6 +5254,7 @@ function blocCartesSurprisesParents() {
         <input type="checkbox" data-revele="${c.id}"${c.revele ? " checked" : ""}>
         <span>${t("cs.revele_label")}</span>
       </label>
+      ${c.debloquee && !c.faite ? blocRendezVousCarte(c) : ""}
       <div class="csp-actions">
         <button class="mini-btn" data-monter="${c.id}" title="${t("cs.monter")}"${idx === 0 ? " disabled" : ""}>▲</button>
         <button class="mini-btn" data-descendre="${c.id}" title="${t("cs.descendre")}"${idx === cartes.length - 1 ? " disabled" : ""}>▼</button>
@@ -5256,6 +5317,22 @@ function blocCartesSurprisesParents() {
     inp.onchange = () => modifierCarteSurprise(inp.dataset.id, inp.dataset.champ, inp.value));
   sec.querySelectorAll("[data-revele]").forEach(cb =>
     cb.onchange = () => majSansSaut(() => modifierCarteSurprise(cb.dataset.revele, "revele", cb.checked)));
+  // Rendez-vous : la date et l'heure s'enregistrent ensemble, sans quoi saisir
+  // l'heure en premier effacerait la date à peine posée.
+  const litRdv = (id) => ({
+    date: (sec.querySelector(`[data-rdv-date="${id}"]`) || {}).value || "",
+    heure: (sec.querySelector(`[data-rdv-heure="${id}"]`) || {}).value || ""
+  });
+  sec.querySelectorAll("[data-rdv-date]").forEach(inp => inp.onchange = () => {
+    const { date, heure } = litRdv(inp.dataset.rdvDate);
+    majSansSaut(() => definirDateCarte(inp.dataset.rdvDate, date, heure));
+  });
+  sec.querySelectorAll("[data-rdv-heure]").forEach(inp => inp.onchange = () => {
+    const { date, heure } = litRdv(inp.dataset.rdvHeure);
+    majSansSaut(() => definirDateCarte(inp.dataset.rdvHeure, date, heure));
+  });
+  sec.querySelectorAll("[data-ics]").forEach(b =>
+    b.onclick = () => exporterCarteAgenda(b.dataset.ics));
   sec.querySelectorAll("[data-monter]").forEach(b =>
     b.onclick = () => deplacerCarteSurprise(b.dataset.monter, -1));
   sec.querySelectorAll("[data-descendre]").forEach(b =>

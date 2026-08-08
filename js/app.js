@@ -375,7 +375,8 @@ function cartesSurprisesNeuves(nbEnfants) {
     id: c.id, emoji: c.emoji, titre: c.titre, activite: c.activite,
     cout: c.coutParEnfant * n,
     revele: false,   // mystère par défaut (révélé seulement jauge pleine)
-    recolte: 0, dons: {}, debloquee: false, debloqueeLe: null, faite: false, faiteLe: null
+    recolte: 0, dons: {}, debloquee: false, debloqueeLe: null, faite: false, faiteLe: null,
+    prevueLe: null, prevueHeure: null   // rendez-vous fixé par les parents
   }));
 }
 
@@ -479,6 +480,9 @@ function normaliser(e) {
       c.faite = !!c.faite;
       if (c.revele === undefined) c.revele = false;
       else c.revele = !!c.revele;
+      // Rendez-vous : ajouté après coup, donc absent des familles existantes.
+      if (!DATE_ISO.test(c.prevueLe || "")) c.prevueLe = null;
+      if (!HEURE_ISO.test(c.prevueHeure || "")) c.prevueHeure = null;
       if (!c.emoji) c.emoji = "🎁";
       // Migration douce : si une carte par défaut a encore son ancien prix et
       // n'a jamais été utilisée, on applique le nouveau calcul (× nb d'enfants).
@@ -1237,7 +1241,8 @@ function ajouterCarteSurprise(emoji, titre, activite, cout, revele) {
     titre, activite: (activite || "").trim(),
     cout: Math.max(1, parseInt(cout, 10) || 10),
     revele: !!revele,
-    recolte: 0, dons: {}, debloquee: false, debloqueeLe: null, faite: false, faiteLe: null
+    recolte: 0, dons: {}, debloquee: false, debloqueeLe: null, faite: false, faiteLe: null,
+    prevueLe: null, prevueHeure: null
   });
   sauver();
   toast(t("toast.carte_ajoutee"), "succes");
@@ -1280,6 +1285,107 @@ function reinitCarteSurprise(id) {
   rendre();
 }
 // Marque l'activité d'une carte débloquée comme réalisée en famille.
+/* ---------- Rendez-vous d'une carte débloquée ----------
+ * Une carte gagnée qui ne se transforme pas en date reste une promesse. Les
+ * parents fixent un jour (et facultativement une heure) ; l'enfant voit un
+ * décompte, et l'événement peut partir dans l'agenda du téléphone.
+ */
+const DATE_ISO = /^\d{4}-\d{2}-\d{2}$/;
+const HEURE_ISO = /^\d{2}:\d{2}$/;
+
+function definirDateCarte(id, date, heure) {
+  const c = trouverCarteSurprise(id);
+  if (!c || !c.debloquee) return false;      // rien à planifier tant que ce n'est pas gagné
+  const d = String(date || "").trim();
+  const h = String(heure || "").trim();
+  if (d && !DATE_ISO.test(d)) return false;
+  if (h && !HEURE_ISO.test(h)) return false;
+  // Une date effacée efface aussi l'heure : une heure sans jour ne veut rien dire.
+  c.prevueLe = d || null;
+  c.prevueHeure = c.prevueLe ? (h || null) : null;
+  sauver();
+  rendre();
+  return true;
+}
+
+// Nombre de dodos avant le rendez-vous. 0 = c'est aujourd'hui ; négatif = passé.
+// null si aucune date n'est fixée ou si elle est illisible.
+function joursAvantCarte(carte, jourRef) {
+  if (!carte || !DATE_ISO.test(carte.prevueLe || "")) return null;
+  const ref = new Date((jourRef || aujourdHui()) + "T00:00:00");
+  const cible = new Date(carte.prevueLe + "T00:00:00");
+  if (isNaN(cible.getTime())) return null;
+  return Math.round((cible - ref) / 86400000);
+}
+
+// Échappement iCalendar (RFC 5545 § 3.3.11) : la virgule, le point-virgule et
+// la contre-oblique sont des séparateurs, le saut de ligne s'écrit \n.
+function icsEchapper(txt) {
+  return String(txt == null ? "" : txt)
+    .replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,")
+    .replace(/\r?\n/g, "\\n");
+}
+function icsHorodatage(d) {
+  const p = (n) => String(n).padStart(2, "0");
+  return d.getUTCFullYear() + p(d.getUTCMonth() + 1) + p(d.getUTCDate()) + "T"
+    + p(d.getUTCHours()) + p(d.getUTCMinutes()) + p(d.getUTCSeconds()) + "Z";
+}
+// Repli les lignes à 75 octets, comme l'exige la norme : un titre long suivi
+// d'emojis dépasse vite, et certains agendas tronquent au lieu de replier.
+// Poids UTF-8 d'un caractère, calculé plutôt que mesuré : TextEncoder n'existe
+// pas partout (et pas dans le banc d'essai), et la règle tient en trois seuils.
+function octetsUtf8(car) {
+  const cp = car.codePointAt(0);
+  if (cp < 0x80) return 1;
+  if (cp < 0x800) return 2;
+  if (cp < 0x10000) return 3;
+  return 4;                       // emojis : 4 octets, et un seul caractère itéré
+}
+function icsPlier(ligne) {
+  const octets = [];
+  let courant = "", taille = 0;
+  for (const car of ligne) {
+    const n = octetsUtf8(car);
+    if (taille + n > 73) { octets.push(courant); courant = " "; taille = 1; }
+    courant += car; taille += n;
+  }
+  octets.push(courant);
+  return octets.join("\r\n");
+}
+
+// Événement iCalendar d'une carte planifiée. Sans heure : journée entière
+// (DTEND exclusif, donc le lendemain). Avec heure : deux heures, en heure
+// LOCALE flottante — pas de fuseau, donc pas de décalage à la lecture.
+function icsCarteSurprise(carte, titreLisible, activiteLisible, maintenant) {
+  if (!carte || !DATE_ISO.test(carte.prevueLe || "")) return null;
+  const jour = carte.prevueLe.replace(/-/g, "");
+  let debut, fin;
+  if (HEURE_ISO.test(carte.prevueHeure || "")) {
+    const hm = carte.prevueHeure.replace(":", "");
+    debut = "DTSTART:" + jour + "T" + hm + "00";
+    const d = new Date(carte.prevueLe + "T" + carte.prevueHeure + ":00");
+    d.setHours(d.getHours() + 2);
+    const p = (n) => String(n).padStart(2, "0");
+    fin = "DTEND:" + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate())
+      + "T" + p(d.getHours()) + p(d.getMinutes()) + "00";
+  } else {
+    const lendemain = demain(carte.prevueLe).replace(/-/g, "");
+    debut = "DTSTART;VALUE=DATE:" + jour;
+    fin = "DTEND;VALUE=DATE:" + lendemain;
+  }
+  const lignes = [
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//FamiTeam//Cartes surprises//FR",
+    "CALSCALE:GREGORIAN", "BEGIN:VEVENT",
+    "UID:" + carte.id + "-" + carte.prevueLe + "@fami.team",
+    "DTSTAMP:" + icsHorodatage(maintenant || new Date()),
+    debut, fin,
+    icsPlier("SUMMARY:" + icsEchapper((carte.emoji || "🎁") + " " + (titreLisible || carte.titre))),
+    icsPlier("DESCRIPTION:" + icsEchapper(activiteLisible || carte.activite || "")),
+    "END:VEVENT", "END:VCALENDAR"
+  ];
+  return lignes.filter(l => l !== "DESCRIPTION:").join("\r\n") + "\r\n";
+}
+
 function marquerCarteFaite(id) {
   const c = trouverCarteSurprise(id);
   if (!c || !c.debloquee) return;

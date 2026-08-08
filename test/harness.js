@@ -118,6 +118,8 @@ function construireContexte() {
       nbTier, nbTotalEspeces, spInfo, nbEspece, prereqManquants, especeDebloquee, creerEspece,
       // cartes surprises (objectifs d'équipe)
       cartesSurprises, trouverCarteSurprise, donnerCarte,
+      // rendez-vous d'une carte gagnée (date, décompte, export agenda)
+      definirDateCarte, joursAvantCarte, icsCarteSurprise, icsEchapper, icsPlier,
       ajouterCarteSurprise, modifierCarteSurprise, supprimerCarteSurprise,
       reinitCarteSurprise, marquerCarteFaite, deplacerCarteSurprise,
       // badges & divers
