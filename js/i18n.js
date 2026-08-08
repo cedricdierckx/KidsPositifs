@@ -380,7 +380,7 @@ Object.assign(I18N.fr, {
   "demo.creer": "Créer un compte / se connecter",
   "fam.titre": "👪 Famille", "fam.label": "Famille : <strong>{nom}</strong>",
   "fam.note": "Invite l'autre parent : partage-lui ce lien, il rejoindra cette famille après connexion.",
-  "fam.creer_invitation": "🔗 Créer un lien d'invitation", "fam.changer": "🔁 Changer / créer une famille",
+  "fam.creer_invitation": "🔗 Créer un lien d'invitation", "fam.changer": "🔁 Changer / créer une famille", "fam.inv_titre": "🔗 Invitations",
   // L'Arbre des familles : code de parrainage permanent (+ QR)
   "common.fermer": "Fermer",
   // La carte d'ami (préfixe cami.*, distinct de carte.* réservé aux cartes surprises)
@@ -594,7 +594,7 @@ Object.assign(I18N.en, {
   "demo.creer": "Create an account / sign in",
   "fam.titre": "👪 Family", "fam.label": "Family: <strong>{nom}</strong>",
   "fam.note": "Invite the other parent: share this link with them, they'll join this family after signing in.",
-  "fam.creer_invitation": "🔗 Create an invite link", "fam.changer": "🔁 Switch / create a family",
+  "fam.creer_invitation": "🔗 Create an invite link", "fam.changer": "🔁 Switch / create a family", "fam.inv_titre": "🔗 Invitations",
   // The Family Tree: permanent referral code (+ QR)
   "common.fermer": "Close",
   // The friend card (cami.* prefix, distinct from carte.* used by surprise cards)
@@ -808,7 +808,7 @@ Object.assign(I18N.nl, {
   "demo.creer": "Account aanmaken / inloggen",
   "fam.titre": "👪 Familie", "fam.label": "Familie: <strong>{nom}</strong>",
   "fam.note": "Nodig de andere ouder uit: deel deze link, die persoon sluit zich na het inloggen aan bij deze familie.",
-  "fam.creer_invitation": "🔗 Uitnodigingslink maken", "fam.changer": "🔁 Familie wisselen / aanmaken",
+  "fam.creer_invitation": "🔗 Uitnodigingslink maken", "fam.changer": "🔁 Familie wisselen / aanmaken", "fam.inv_titre": "🔗 Uitnodigingen",
   // De Familieboom: permanente verwijzingscode (+ QR)
   "common.fermer": "Sluiten",
   // De vriendjeskaart (cami.*-prefix, los van carte.* voor verrassingskaarten)
@@ -1022,7 +1022,7 @@ Object.assign(I18N.de, {
   "demo.creer": "Konto erstellen / anmelden",
   "fam.titre": "👪 Familie", "fam.label": "Familie: <strong>{nom}</strong>",
   "fam.note": "Lade den anderen Elternteil ein: teile diesen Link, er/sie tritt nach der Anmeldung dieser Familie bei.",
-  "fam.creer_invitation": "🔗 Einladungslink erstellen", "fam.changer": "🔁 Familie wechseln / erstellen",
+  "fam.creer_invitation": "🔗 Einladungslink erstellen", "fam.changer": "🔁 Familie wechseln / erstellen", "fam.inv_titre": "🔗 Einladungen",
   // Der Familienbaum: dauerhafter Empfehlungscode (+ QR)
   "common.fermer": "Schließen",
   // Die Freundeskarte (Präfix cami.*, getrennt von carte.* für Überraschungskarten)

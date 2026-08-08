@@ -2754,6 +2754,41 @@ test("parents : les cartes longues sont repliables et retiennent leur état", ()
     assert.ok(css.includes("." + c), "style manquant : ." + c));
 });
 
+test("parents : sous-plis et découpe des cartes de l'espace parents", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const { api } = construireContexte();
+
+  // 1. Famille / Planète ouvertes d'emblée : « Missions proposées » étant déjà
+  //    repliée, un second pli fermé imposait deux gestes avant la 1ʳᵉ case.
+  assert.ok(/blocPliable\(`\$\{cat\.emoji\}[^`]*`, true, "mdj-"/.test(ui),
+    "les catégories de missions doivent être dépliées par défaut");
+
+  // 2. « Famille » et « Invitations » : deux cartes, deux titres.
+  Object.keys(api.LANGUES).forEach(lg =>
+    assert.ok(api.I18N[lg]["fam.inv_titre"], "fam.inv_titre manquant en " + lg));
+  const sf = ui.slice(ui.indexOf("function sectionsFamille"));
+  const corps = sf.slice(0, sf.indexOf("// ----- L'Arbre"));
+  assert.ok(/t\("fam\.inv_titre"\)/.test(corps), "la carte Invitations n'a pas de titre");
+  assert.strictEqual((corps.match(/el\("section", "carte"\)/g) || []).length, 2,
+    "il doit y avoir exactement deux cartes avant l'Arbre");
+  // Le lien créé doit s'afficher dans SA carte, pas dans celle du nom de famille.
+  assert.ok(/montrerLienInvitation\(inv, lien\)/.test(corps),
+    "le lien d'invitation doit s'afficher dans la carte Invitations");
+
+  // 3. Bibliothèque d'idées : repliée par défaut, mémoire partagée.
+  assert.ok(/<details class="csp-idees pliable">/.test(ui), "les idées doivent être un dépliant");
+  assert.ok(/<h3 class="csp-idees-titre">/.test(ui), "le titre des idées doit rester un <h3>");
+  assert.ok(/memoriserPli\(sec\.querySelector\("details\.csp-idees"\), "cs-idees", false\)/.test(ui),
+    "les idées doivent être repliées par défaut et retenir leur état");
+
+  // 4. Mémoire de pli : une seule implémentation, tolérante à un sélecteur vide.
+  assert.ok(/function memoriserPli\(det, cle, ouvertParDefaut\) \{\s*if \(!det\) return det;/.test(ui),
+    "memoriserPli doit se garder d'un élément absent");
+  assert.ok(/memoriserPli\(d, cle, ouvert\);/.test(ui),
+    "blocPliable doit réutiliser memoriserPli plutôt que dupliquer la logique");
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

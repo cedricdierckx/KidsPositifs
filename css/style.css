@@ -1682,3 +1682,9 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .carte-pli-t:focus-visible{outline:2px solid #3a7bd5; outline-offset:3px; border-radius:8px}
 .carte-pli-c{padding-top:10px}
 @media (prefers-reduced-motion: reduce){ .carte-pli-t::before{transition:none} }
+
+/* La bibliothèque d'idées devient un dépliant : le trait de séparation et le
+   titre restent, mais le chevron doit s'aligner sur le titre, pas flotter. */
+details.csp-idees > .pliable-tete{padding:10px 0}
+details.csp-idees > .pliable-tete:hover{background:transparent}
+details.csp-idees > .pliable-tete h3{margin:0}

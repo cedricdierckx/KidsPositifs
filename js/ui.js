@@ -648,18 +648,26 @@ function brancherSwipeEnfant(zone) {
 // titre : texte du résumé ; ouvert : déplié par défaut ; cle : identifiant
 // stable pour mémoriser l'état ouvert/fermé à travers les re-rendus.
 const pliablesOuverts = new Set();
+// Mémoire d'ouverture d'un <details>, partagée par blocPliable et par les
+// dépliants écrits directement en HTML. Un défaut « ouvert » ne s'impose
+// jamais à un utilisateur qui a explicitement refermé le bloc.
+function memoriserPli(det, cle, ouvertParDefaut) {
+  if (!det) return det;
+  if (!cle) { det.open = !!ouvertParDefaut; return det; }
+  det.open = pliablesOuverts.has(cle) || (!!ouvertParDefaut && !pliablesFermes.has(cle));
+  det.addEventListener("toggle", () => {
+    if (det.open) { pliablesOuverts.add(cle); pliablesFermes.delete(cle); }
+    else { pliablesOuverts.delete(cle); pliablesFermes.add(cle); }
+  });
+  return det;
+}
 function blocPliable(titre, ouvert, cle) {
   const d = el("details", "pliable");
-  const estOuvert = cle ? (pliablesOuverts.has(cle) || (ouvert && !pliablesFermes.has(cle))) : !!ouvert;
-  if (estOuvert) d.open = true;
   const s = el("summary", "pliable-tete", titre);
   const corps = el("div", "pliable-corps");
   d.appendChild(s);
   d.appendChild(corps);
-  if (cle) d.addEventListener("toggle", () => {
-    if (d.open) { pliablesOuverts.add(cle); pliablesFermes.delete(cle); }
-    else { pliablesOuverts.delete(cle); pliablesFermes.add(cle); }
-  });
+  memoriserPli(d, cle, ouvert);
   return { details: d, corps };
 }
 const pliablesFermes = new Set();   // clés explicitement refermées par l'utilisateur
@@ -4812,8 +4820,10 @@ function blocMissionsDuJour(enf) {
     const dispo = toutesMissions().filter(m => m.cat === catId);   // toutes proposées
     if (!dispo.length) return;
     const choisis = dispo.filter(m => plan ? plan.includes(m.id) : defauts.includes(m.id)).length;
-    // Liste déroulante par catégorie (évite une page interminable).
-    const { details, corps } = blocPliable(`${cat.emoji} ${trData("cat", catId + ".nom", cat.nom)} · ${choisis}/${dispo.length}`, false, "mdj-" + enf.id + "-" + catId);
+    // Liste déroulante par catégorie. Ouverte d'emblée : la carte « Missions
+    // proposées » étant elle-même repliée, ouvrir puis rouvrir deux fois de
+    // suite pour atteindre une case à cocher faisait un geste de trop.
+    const { details, corps } = blocPliable(`${cat.emoji} ${trData("cat", catId + ".nom", cat.nom)} · ${choisis}/${dispo.length}`, true, "mdj-" + enf.id + "-" + catId);
     dispo.forEach(m => {
       const inclus = plan ? plan.includes(m.id) : defauts.includes(m.id);
       const ligne = el("label", "switch-ligne");
@@ -4837,7 +4847,6 @@ function blocMissionsDuJour(enf) {
       if (m.perso) {
         const sup = el("button", "mini-btn danger", "🗑️");
         sup.setAttribute("aria-label", t("a11y.supprimer"));
-  sup.setAttribute("aria-label", t("a11y.supprimer"));
         sup.title = t("mdj.suppr_perso");
         sup.onclick = (e) => { e.preventDefault(); if (confirm(t("mdj.confirm_suppr", { nom: m.titre }))) supprimerMissionPerso(m.id); };
         ligne.appendChild(sup);
@@ -5175,7 +5184,9 @@ function blocCartesSurprisesParents() {
   </div>`;
   // Bibliothèque d'idées (parentalité positive) groupées par taille.
   const nbEnf = Object.keys(etat.enfants).length || 1;
-  html += `<div class="csp-idees"><h3 class="csp-idees-titre">${t("cs.idees_titre")}</h3>
+  // Bibliothèque repliée : c'est la plus longue partie de l'onglet, et elle ne
+  // sert qu'au moment où l'on cherche une idée — pas à chaque passage.
+  html += `<details class="csp-idees pliable"><summary class="pliable-tete"><h3 class="csp-idees-titre">${t("cs.idees_titre")}</h3></summary>
     <p class="note">${t("cs.idees_sous")}</p>`;
   ["petite", "moyenne", "grande"].forEach(taille => {
     const lot = IDEES_CARTES.filter(i => i.taille === taille);
@@ -5193,9 +5204,10 @@ function blocCartesSurprisesParents() {
     });
     html += `</div></div>`;
   });
-  html += `</div>`;
+  html += `</details>`;
 
   sec.innerHTML = html;
+  memoriserPli(sec.querySelector("details.csp-idees"), "cs-idees", false);
 
   // Ajout en un clic depuis une idée proposée.
   sec.querySelectorAll("[data-idee]").forEach(b =>
@@ -5488,22 +5500,29 @@ function blocModeParents() {
 function sectionsFamille(c) {
   if (typeof modeDemo !== "undefined" && modeDemo) { c.appendChild(bandeauDemo()); return; }
 
+  // Deux cartes distinctes : « quelle est ma famille » et « inviter l'autre
+  // parent » sont deux gestes sans rapport, l'un identitaire et rare, l'autre
+  // ponctuel. Les mêler faisait une carte au titre trompeur.
   const fam = el("section", "carte");
   fam.innerHTML = `<h2>${t("fam.titre")}</h2>
-    <p>${t("fam.label", { nom: familleActive ? echapper(familleActive.name) : "—" })}</p>
+    <p>${t("fam.label", { nom: familleActive ? echapper(familleActive.name) : "—" })}</p>`;
+  const bSwitch = el("button", "btn-secondaire", t("fam.changer"));
+  bSwitch.onclick = changerFamille;
+  fam.appendChild(bSwitch);
+  c.appendChild(fam);
+
+  const inv = el("section", "carte");
+  inv.innerHTML = `<h2>${t("fam.inv_titre")}</h2>
     <p class="note">${t("fam.note")}</p>`;
   const bInvite = el("button", "btn-secondaire", t("fam.creer_invitation"));
   bInvite.onclick = async () => {
     bInvite.disabled = true; bInvite.textContent = t("common.creation");
     const lien = await creerInvitation();
     bInvite.disabled = false; bInvite.textContent = t("fam.creer_invitation");
-    if (lien) montrerLienInvitation(fam, lien);
+    if (lien) montrerLienInvitation(inv, lien);   // le lien s'affiche dans SA carte
   };
-  fam.appendChild(bInvite);
-  const bSwitch = el("button", "btn-secondaire", t("fam.changer"));
-  bSwitch.onclick = changerFamille;
-  fam.appendChild(bSwitch);
-  c.appendChild(fam);
+  inv.appendChild(bInvite);
+  c.appendChild(inv);
 
   // ----- L'Arbre des familles : le code permanent de la famille -----
   // Un seul code, affiché en clair, avec son QR : rien à créer, rien à
