@@ -1474,13 +1474,22 @@ test("coût : le total annuel est cohérent avec le détail affiché", () => {
     "le total doit valoir 27 € (1500 + 1200 + 0 + 0 centimes)");
 });
 
-test("modèle : promesse de gratuité et cadre des dons sont publiés", () => {
+test("modèle : gratuité présente, cadre des dons et préavis sont publiés", () => {
   const fs = require("fs"), path = require("path");
   const racine = path.join(__dirname, "..");
   const legal = fs.readFileSync(path.join(racine, "mentions-legales.html"), "utf8");
-  ["Promesse de gratuité", "sans contrepartie", "Plafond d'utilisateurs",
+  ["Gratuité", "sans contrepartie", "Plafond d'utilisateurs",
    "Continuité et fin du service", "deux mois"].forEach(k =>
     assert.ok(legal.includes(k), "les mentions légales doivent couvrir « " + k + " »"));
+  // Doctrine : on décrit l'état présent, on ne promet pas l'avenir. Ce qui
+  // protège vraiment les familles n'est pas une promesse — c'est le préavis
+  // et l'export permanent, qui eux doivent rester écrits.
+  assert.ok(/aucun engagement/i.test(legal),
+    "les mentions légales doivent dire qu'aucun engagement n'est pris sur l'avenir");
+  const faqTxt = fs.readFileSync(path.join(racine, "faq.html"), "utf8");
+  [["mentions légales", legal], ["FAQ", faqTxt]].forEach(([nom, txt]) =>
+    assert.ok(!/gratuit[^.]{0,40}le restera|promesse de gratuité/i.test(txt),
+      "promesse de gratuité future résiduelle dans : " + nom));
   const faq = fs.readFileSync(path.join(racine, "faq.html"), "utf8");
   ["À quoi servent les dons", "liste d'attente", 'id="dons"'].forEach(k =>
     assert.ok(faq.includes(k), "la FAQ doit couvrir « " + k + " »"));

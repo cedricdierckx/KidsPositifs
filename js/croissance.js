@@ -251,7 +251,7 @@ const CROISSANCE_CHANTIERS = [
     kpi: "Frais couverts par les dons · zéro recette commerciale",
     etapes: [
       { id: "c_modele_1", titre: "Chiffrer le coût réel annuel", min: 20, detail: "Fait : 27 €/an aujourd'hui (domaine 15 €, e-mails 12 € ; base et site sur les paliers gratuits). Le détail et les dons reçus s'affichent dans « Coût, dons et plafond ». Mesuré : 410 Ko par famille, soit environ 1 000 familles avant que la base gratuite ne suffise plus (≈ 280 €/an de plus).", fait: true },
-      { id: "c_modele_2", titre: "Écrire la promesse de gratuité", min: 20, detail: "Fait : « tout ce qui est gratuit aujourd'hui le restera, pour toutes les familles » — publié dans les mentions légales et la FAQ, avec l'engagement de ne jamais déplacer une fonction existante derrière un paiement.", fait: true },
+      { id: "c_modele_2", titre: "Dire l'état du modèle, sans le promettre", min: 20, detail: "Fait, puis révisé. La « promesse de gratuité » (tout ce qui est gratuit le restera) a été retirée des mentions légales et de la FAQ : un projet mené sur du temps libre n'a pas à engager dix ans d'avance, et une promesse qu'on pourrait devoir reprendre coûte plus de confiance qu'elle n'en apporte. À la place, un constat présent — gratuite pour toutes les familles, sans publicité ni revente de données — assorti d'un préavis de deux mois si les conditions changeaient, et de l'export permanent des données.", fait: true },
       { id: "c_modele_3", titre: "Dons : cadre et transparence", min: 45, detail: "Fait : le don est un cadeau sans contrepartie (aucune fonction, aucune limite levée), sans reçu fiscal, et le surplus reste en réserve. Publié dans les mentions légales et la FAQ, rappelé sous le bouton de don.", fait: true },
       { id: "c_modele_4", titre: "Décider du plafond de familles", min: 25, detail: "Fait : 800 familles, réglable dans l'admin. Surtout, le plafond s'applique tout seul — au-delà, les inscriptions basculent en liste d'attente sans intervention, et le basculement ne se fait jamais dans l'autre sens par accident.", fait: true },
       { id: "c_modele_5", titre: "Prévoir la sortie", min: 30, detail: "Fait : reprise, ouverture du code, ou fermeture ordonnée — dans cet ordre. En cas de fermeture, deux mois de préavis par e-mail, export disponible pendant toute la période, puis suppression. Publié dans les mentions légales.", fait: true }
@@ -367,7 +367,7 @@ Comptez deux minutes par jour, pas plus. Rien n'est à installer, tout se synchr
 
 Un principe, si vous n'en retenez qu'un : ici, on ne retire jamais de points. Quand quelque chose se passe mal, on répare — et c'est le geste de réparation qui est récompensé.
 
-FamiTeam est gratuit, sans publicité, et le restera. C'est un projet personnel, mené sur du temps libre et sans équipe : il n'y a donc pas de service d'assistance. Les réponses aux questions courantes sont rassemblées ici : {lien}/faq.html
+FamiTeam est gratuit et sans publicité : le projet ne vit que des dons. C'est un projet personnel, mené sur du temps libre et sans équipe : il n'y a donc pas de service d'assistance. Les réponses aux questions courantes sont rassemblées ici : {lien}/faq.html
 
 L'équipe est réduite à une personne, et l'app est faite pour tourner sans elle : tout se règle depuis l'espace parents, y compris l'export et la suppression de vos données.
 
@@ -544,7 +544,7 @@ J'écoute {podcast} et l'épisode sur {episode} m'a marqué.
 
 Je vous propose un sujet d'épisode, pas une promotion : « pourquoi retirer des points à un enfant lui apprend surtout à cacher ses erreurs — et ce qu'on peut faire à la place ». Je peux parler concrètement de la réparation, du budget d'attention selon l'âge (quelques minutes par jour suffisent), et de ce que j'ai vu échouer en construisant une app pour mes propres enfants.
 
-Je suis papa de {nb_enfants} enfants et je ne vends rien : FamiTeam est gratuite et le restera. Je suis disponible en visioconférence ou à {ville}.
+Je suis papa de {nb_enfants} enfants et je ne vends rien : FamiTeam est gratuite, sans publicité ni revente de données. Je suis disponible en visioconférence ou à {ville}.
 
 {qui}
 FamiTeam — {lien}`
@@ -579,7 +579,7 @@ Je reste à votre disposition pour un appel de dix minutes.
 
 Je suis {qui}, papa. J'ai développé sur mon temps libre FamiTeam, une application familiale gratuite pour les enfants de 2 à 7 ans, fondée sur le renforcement positif : on encourage, on répare, on ne punit pas.
 
-Je vous propose simplement de la faire connaître aux parents de votre structure : une affiche avec un QR code en salle d'attente, ou un dépliant. Aucune contrepartie, aucune publicité, aucune revente de données — l'app est gratuite et le restera.
+Je vous propose simplement de la faire connaître aux parents de votre structure : une affiche avec un QR code en salle d'attente, ou un dépliant. Aucune contrepartie, aucune publicité, aucune revente de données — l'app est gratuite pour toutes les familles.
 
 Si un atelier parents de 45 minutes vous intéresse (« encourager sans punir : que faire quand ça dérape »), je peux aussi le proposer, en soirée de préférence.
 
