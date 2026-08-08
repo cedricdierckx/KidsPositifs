@@ -2768,13 +2768,24 @@ test("parents : sous-plis et découpe des cartes de l'espace parents", () => {
   Object.keys(api.LANGUES).forEach(lg =>
     assert.ok(api.I18N[lg]["fam.inv_titre"], "fam.inv_titre manquant en " + lg));
   const sf = ui.slice(ui.indexOf("function sectionsFamille"));
-  const corps = sf.slice(0, sf.indexOf("// ----- L'Arbre"));
+  const corps = sf.slice(0, sf.indexOf("// Bilan : ce que la famille"));
   assert.ok(/t\("fam\.inv_titre"\)/.test(corps), "la carte Invitations n'a pas de titre");
-  assert.strictEqual((corps.match(/el\("section", "carte"\)/g) || []).length, 2,
-    "il doit y avoir exactement deux cartes avant l'Arbre");
-  // Le lien créé doit s'afficher dans SA carte, pas dans celle du nom de famille.
-  assert.ok(/montrerLienInvitation\(inv, lien\)/.test(corps),
-    "le lien d'invitation doit s'afficher dans la carte Invitations");
+  assert.strictEqual((corps.match(/el\("section", "carte"\)/g) || []).length, 3,
+    "l'onglet Famille doit porter trois cartes : Arbre, Invitations, nom de famille");
+  // Le lien créé doit s'afficher dans SA carte — et, celle-ci étant repliable,
+  // à l'intérieur du pli plutôt que sous un titre fermé.
+  assert.ok(/montrerLienInvitation\(invit\.querySelector\("\.carte-pli-c"\) \|\| invit, lien\)/.test(corps),
+    "le lien d'invitation doit s'afficher dans le corps déplié de la carte Invitations");
+  // Ordre d'affichage : l'Arbre d'abord, puis Invitations, puis le nom de famille.
+  const ordre = ["c.appendChild(par);",
+                 'c.appendChild(carteRepliable(invit, "fam-invitations", false));',
+                 'c.appendChild(carteRepliable(fam, "fam-nom", false));'];
+  let pos = -1;
+  ordre.forEach(frag => {
+    const i = ui.indexOf(frag);
+    assert.ok(i > pos, "ordre des cartes de l'onglet Famille rompu : " + frag);
+    pos = i;
+  });
 
   // 3. Bibliothèque d'idées : repliée par défaut, mémoire partagée.
   assert.ok(/<details class="csp-idees pliable">/.test(ui), "les idées doivent être un dépliant");

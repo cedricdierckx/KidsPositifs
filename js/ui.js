@@ -5534,29 +5534,30 @@ function blocModeParents() {
 function sectionsFamille(c) {
   if (typeof modeDemo !== "undefined" && modeDemo) { c.appendChild(bandeauDemo()); return; }
 
-  // Deux cartes distinctes : « quelle est ma famille » et « inviter l'autre
-  // parent » sont deux gestes sans rapport, l'un identitaire et rare, l'autre
-  // ponctuel. Les mêler faisait une carte au titre trompeur.
+  // Trois cartes distinctes, dans l'ordre où on s'en sert : faire connaître
+  // l'app à d'autres familles (l'Arbre) vient en premier, puis inviter l'autre
+  // parent, puis le nom de la famille — geste identitaire et rare. Les deux
+  // dernières sont repliées : on ne les ouvre qu'en de rares occasions.
   const fam = el("section", "carte");
   fam.innerHTML = `<h2>${t("fam.titre")}</h2>
     <p>${t("fam.label", { nom: familleActive ? echapper(familleActive.name) : "—" })}</p>`;
   const bSwitch = el("button", "btn-secondaire", t("fam.changer"));
   bSwitch.onclick = changerFamille;
   fam.appendChild(bSwitch);
-  c.appendChild(fam);
 
-  const inv = el("section", "carte");
-  inv.innerHTML = `<h2>${t("fam.inv_titre")}</h2>
+  const invit = el("section", "carte");
+  invit.innerHTML = `<h2>${t("fam.inv_titre")}</h2>
     <p class="note">${t("fam.note")}</p>`;
   const bInvite = el("button", "btn-secondaire", t("fam.creer_invitation"));
   bInvite.onclick = async () => {
     bInvite.disabled = true; bInvite.textContent = t("common.creation");
     const lien = await creerInvitation();
     bInvite.disabled = false; bInvite.textContent = t("fam.creer_invitation");
-    if (lien) montrerLienInvitation(inv, lien);   // le lien s'affiche dans SA carte
+    // La carte étant repliable, le lien doit atterrir DANS le pli — sinon il
+    // s'afficherait sous un titre fermé, donc nulle part de compréhensible.
+    if (lien) montrerLienInvitation(invit.querySelector(".carte-pli-c") || invit, lien);
   };
-  inv.appendChild(bInvite);
-  c.appendChild(inv);
+  invit.appendChild(bInvite);
 
   // ----- L'Arbre des familles : le code permanent de la famille -----
   // Un seul code, affiché en clair, avec son QR : rien à créer, rien à
@@ -5569,6 +5570,8 @@ function sectionsFamille(c) {
     <div id="par-code" class="arbre-code-bloc"><p class="note">${t("arbre.attente")}</p></div>
     <div id="par-jauge" class="arbre-jauge-bloc"></div>`;
   c.appendChild(par);
+  c.appendChild(carteRepliable(invit, "fam-invitations", false));
+  c.appendChild(carteRepliable(fam, "fam-nom", false));
 
   // Bilan : ce que la famille a semé, et son palier. Jamais un rang, jamais un
   // écart avec les autres familles — seulement l'écart avec son PROPRE palier
