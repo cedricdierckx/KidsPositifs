@@ -2669,6 +2669,22 @@ test("dons : le bloc d'appel au don ne se prononce pas sur l'avenir", () => {
   });
 });
 
+// Les e-mails sortants engagent autant que les mentions légales — davantage,
+// même : une fois envoyés, ils ne se corrigent plus. Deux promesses d'avenir
+// s'y étaient maintenues après le nettoyage des pages publiques.
+test("modèle : aucun e-mail sortant ne promet la gratuité future", () => {
+  const { api } = construireContexte();
+  const futur = /le restera|resteront|toujours gratuit|à vie|sans modèle payant prévu|pas de version payante|jamais payant|la gratuité pour les familles/i;
+  const fautifs = [];
+  api.CROISSANCE_MAILS.forEach(m => {
+    [m.sujet, m.corps].forEach(txt => {
+      const f = futur.exec(txt || "");
+      if (f) fautifs.push(`${m.id} → « ${f[0]} »`);
+    });
+  });
+  assert.strictEqual(fautifs.length, 0, "promesse d'avenir dans : " + fautifs.join(" ; "));
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

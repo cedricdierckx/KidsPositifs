@@ -529,7 +529,7 @@ Deux angles qui peuvent vous intéresser :
 — La punition mesurée contre la réparation : ce que dit la recherche en parentalité positive, et à quoi cela ressemble dans une app utilisée deux minutes par jour.
 — Un logiciel familial fait en Belgique, gratuit, sans publicité, sans revente de données, hébergé en Europe, à contre-courant du modèle américain.
 
-Chiffres actuels : {familles} familles, {langues} langues, gratuit et sans modèle payant prévu. Je peux vous ouvrir un accès complet, fournir des captures en haute définition et mettre des familles utilisatrices en contact avec vous.
+Chiffres actuels : {familles} familles, {langues} langues, gratuit, sans publicité ni revente de données. Je peux vous ouvrir un accès complet, fournir des captures en haute définition et mettre des familles utilisatrices en contact avec vous.
 
 {qui}
 {telephone} — {lien}`
@@ -683,7 +683,7 @@ FamiTeam est une application familiale gratuite pour les enfants de 2 à 7 ans, 
 
 Je ne peux pas — et ne souhaite pas — en faire une activité professionnelle. Plutôt que de la laisser s'éteindre faute de temps, je préfère chercher qui pourrait la reprendre et lui donner la suite qu'elle mérite.
 
-Ce qui serait transmis : le code, la base, le nom de domaine, la documentation, et mon accompagnement pendant la transition. Ce à quoi je tiens : la gratuité pour les familles déjà inscrites, l'absence de publicité, et le respect des données des enfants.
+Ce qui serait transmis : le code, la base, le nom de domaine, la documentation, et mon accompagnement pendant la transition. Ce à quoi je tiens : le respect des données des enfants, l'absence de publicité, et la continuité du service pour les familles déjà inscrites.
 
 Si le sujet vous parle, en parlerions-nous ?
 
