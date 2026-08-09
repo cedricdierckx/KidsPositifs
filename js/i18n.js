@@ -386,7 +386,7 @@ Object.assign(I18N.fr, {
   // La carte d'ami (préfixe cami.*, distinct de carte.* réservé aux cartes surprises)
   // Le tableau d'honneur : un mur de mercis, jamais un podium
   "hon.titre": "💛 Merci à ces familles",
-  "hon.mois": "Ce mois-ci", "hon.tout": "Depuis le début",
+  "hon.annee": "Cette année", "hon.tout": "Depuis le début",
   "hon.pas_encore": "Le tableau apparaîtra dès que <strong>{n}</strong> familles auront accepté d'y figurer (elles sont {actuel} aujourd'hui).",
   "hon.vide": "Personne n'a encore semé ce mois-ci. La place est libre. 🌱",
   "hon.mien": "De votre côté : <strong>{n}</strong> famille(s) vivent l'aventure grâce à vous.",
@@ -600,7 +600,7 @@ Object.assign(I18N.en, {
   // The friend card (cami.* prefix, distinct from carte.* used by surprise cards)
   // The honour board: a wall of thanks, never a podium
   "hon.titre": "💛 Thanks to these families",
-  "hon.mois": "This month", "hon.tout": "All time",
+  "hon.annee": "This year", "hon.tout": "All time",
   "hon.pas_encore": "The board will appear once <strong>{n}</strong> families have agreed to be listed (there are {actuel} today).",
   "hon.vide": "Nobody has sown yet this month. The spot is open. 🌱",
   "hon.mien": "On your side: <strong>{n}</strong> family/families are living the adventure thanks to you.",
@@ -814,7 +814,7 @@ Object.assign(I18N.nl, {
   // De vriendjeskaart (cami.*-prefix, los van carte.* voor verrassingskaarten)
   // Het eerbord: een muur van dankjes, nooit een podium
   "hon.titre": "💛 Dank aan deze families",
-  "hon.mois": "Deze maand", "hon.tout": "Sinds het begin",
+  "hon.annee": "Dit jaar", "hon.tout": "Sinds het begin",
   "hon.pas_encore": "Het bord verschijnt zodra <strong>{n}</strong> families ermee instemmen erop te staan (vandaag zijn er {actuel}).",
   "hon.vide": "Deze maand heeft nog niemand gezaaid. De plek is vrij. 🌱",
   "hon.mien": "Bij jou: <strong>{n}</strong> familie(s) beleven het avontuur dankzij jou.",
@@ -1028,7 +1028,7 @@ Object.assign(I18N.de, {
   // Die Freundeskarte (Präfix cami.*, getrennt von carte.* für Überraschungskarten)
   // Die Ehrentafel: eine Wand voller Dankeschön, niemals ein Podium
   "hon.titre": "💛 Danke an diese Familien",
-  "hon.mois": "Diesen Monat", "hon.tout": "Seit dem Anfang",
+  "hon.annee": "Dieses Jahr", "hon.tout": "Seit dem Anfang",
   "hon.pas_encore": "Die Tafel erscheint, sobald <strong>{n}</strong> Familien zugestimmt haben, darauf zu stehen (heute sind es {actuel}).",
   "hon.vide": "Diesen Monat hat noch niemand gesät. Der Platz ist frei. 🌱",
   "hon.mien": "Bei dir: <strong>{n}</strong> Familie(n) erleben das Abenteuer dank dir.",

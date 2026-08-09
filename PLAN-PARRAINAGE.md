@@ -7,7 +7,7 @@
 > (`arbre_des_familles_code_permanent_paliers_tableau_honneur` puis
 > `arbre_des_familles_search_path_gen_referral_code`). Les trois décisions du § 9 ont été
 > tranchées : **« L'Arbre des familles »**, seuil du tableau d'honneur à
-> **10 familles consentantes**, **saison mensuelle**.
+> **10 familles consentantes**, **saison annuelle** (année civile).
 >
 > **Deux écarts au plan ont été assumés en chemin, et ils sont documentés
 > ici parce qu'ils corrigent le plan, pas parce qu'ils l'arrangent :**
@@ -411,12 +411,15 @@ aimé pour être offert. On retire alors le tableau plutôt que d'empiler
 2. **Le seuil du tableau d'honneur.** 20 familles consentantes serait un choix
    de prudence ; 10 le rend visible plus vite, au risque d'un tableau maigre.
    → **Retenu : 10.**
-3. **La saison.** Mensuelle (proposé) ou trimestrielle — une saison courte
+3. **La saison.** Mensuelle (proposé à l'origine) ou trimestrielle — une saison courte
    relance souvent, une saison longue laisse le temps d'y arriver.
-   → **Retenu : mensuelle.**
+   → **Retenu d'abord : mensuelle. Révisé ensuite : annuelle (année civile).**
+   Un mois s'est avéré trop court pour qu'une famille ait le temps d'en amener
+   plusieurs : le tableau repartait de zéro avant d'avoir pris. L'année laisse
+   le temps de construire, sans qu'une première place se gagne à vie.
 
 **Réponses données :** *L'Arbre des familles*, **seuil 10**, **saison
-mensuelle**. Le seuil est réglable sans migration
+annuelle**. Le seuil est réglable sans migration
 (`app_config.classement_seuil`) ; la saison est calculée à la volée.
 
 ---

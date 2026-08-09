@@ -861,10 +861,10 @@ function memoriserPseudo(v) {
   try { localStorage.setItem(CLE_PSEUDO, String(v || "").slice(0, 24)); } catch (e) { /* stockage plein */ }
 }
 
-// Saison courante, au format que la base attend pour le classement mensuel.
+// Saison courante : l'année civile. Un mois ne laisse pas le temps d'amener
+// plusieurs familles, et remettre les compteurs à zéro si tôt décourage.
 function saisonCourante() {
-  const d = new Date();
-  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+  return String(new Date().getFullYear());
 }
 
 // Temps restant en jours + heures : un compte à rebours qui bouge chaque heure

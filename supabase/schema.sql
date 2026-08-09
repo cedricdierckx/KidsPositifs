@@ -440,7 +440,9 @@ begin
   end if;
 end; $$;
 
--- Tableau d'honneur. p_saison = 'AAAA-MM' pour le mois, null pour tous les temps.
+-- Tableau d'honneur. p_saison = 'AAAA' pour l'année (saison en cours), null pour
+-- tous les temps. Le filtre compare un PRÉFIXE : 'AAAA-MM' reste donc accepté
+-- si l'on veut un jour revenir au mois, sans nouvelle migration.
 -- Sans saison, la première famille arrivée gagnerait à vie et démotiverait
 -- toutes les suivantes : la saison mensuelle est structurelle, pas cosmétique.
 -- Renvoie le seuil d'apparition, le nombre de familles consentantes, le top 10
@@ -470,7 +472,10 @@ begin
     where r.accepted_family is not null
       and r.accepted_at is not null
       and arbre_jours_actifs(r.accepted_family) >= 3
-      and (p_saison is null or to_char(r.accepted_at, 'YYYY-MM') = p_saison)
+      -- left(...) plutôt que LIKE : p_saison vient du client, et un motif
+      -- « % » y ferait sauter le filtre sans qu'on s'en aperçoive.
+      and (p_saison is null
+           or left(to_char(r.accepted_at, 'YYYY-MM'), length(p_saison)) = p_saison)
     group by r.family_id;
 
   select coalesce(json_agg(x order by x.n desc, x.pseudo), '[]'::json) into top from (

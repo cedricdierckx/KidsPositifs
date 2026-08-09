@@ -223,13 +223,14 @@ function blocArbreEnfant() {
  *   3. le tableau n'apparaît qu'au-delà d'un seuil de familles consentantes,
  *      réglable sans redéploiement (app_config.classement_seuil) : sur trois
  *      lignes, un classement humilie au lieu de motiver.
- * Saison mensuelle, plus « tous les temps » : sans saison, la première famille
- * arrivée gagne à vie et démotive toutes les suivantes. */
+ * Saison annuelle, plus « tous les temps » : sans saison, la première famille
+ * arrivée gagne à vie et démotive toutes les suivantes ; avec un mois, le
+ * tableau repart de zéro avant que quiconque ait eu le temps de le remplir. */
 function blocTableauHonneur() {
   const sec = el("section", "carte tableau-honneur");
   sec.innerHTML = `<h2>${t("hon.titre")}</h2>
     <div class="hon-onglets" role="tablist">
-      <button class="hon-onglet actif" data-saison="mois">${t("hon.mois")}</button>
+      <button class="hon-onglet actif" data-saison="annee">${t("hon.annee")}</button>
       <button class="hon-onglet" data-saison="tout">${t("hon.tout")}</button>
     </div>
     <div id="hon-corps"><p class="note">${t("arbre.attente")}</p></div>
@@ -237,7 +238,7 @@ function blocTableauHonneur() {
 
   const corps = sec.querySelector("#hon-corps");
   const zoneOptin = sec.querySelector("#hon-optin");
-  let saisonAffichee = "mois";
+  let saisonAffichee = "annee";
 
   const dessinerOptin = (etatCls) => {
     const inscrite = !!(etatCls && etatCls.moi_inscrite);
@@ -291,7 +292,7 @@ function blocTableauHonneur() {
 
   function charger() {
     corps.innerHTML = `<p class="note">${t("arbre.attente")}</p>`;
-    classementParrainages(saisonAffichee === "mois" ? saisonCourante() : null)
+    classementParrainages(saisonAffichee === "annee" ? saisonCourante() : null)
       .then(dessiner).catch(() => sec.remove());
   }
 

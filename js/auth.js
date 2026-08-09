@@ -846,11 +846,12 @@ async function definirClassementOptin(optin, pseudo) {
   if (error) { toast(error.message, "info"); return false; }
   return true;
 }
-// Saison en cours, au format AAAA-MM (mensuelle : sans saison, la première
-// famille arrivée gagnerait à vie).
+// Saison en cours, au format AAAA. Annuelle : un mois est trop court pour
+// qu'une famille ait le temps d'en amener plusieurs, et le tableau repartait
+// de zéro avant même d'avoir pris. Sans saison du tout, à l'inverse, la
+// première famille arrivée gagnerait à vie.
 function saisonCourante() {
-  const d = new Date();
-  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+  return String(new Date().getFullYear());
 }
 
 async function infoParrainageCode(code) {

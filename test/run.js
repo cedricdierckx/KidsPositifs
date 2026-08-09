@@ -2051,7 +2051,7 @@ test("impression : seuls les documents destinés au papier s'impriment", () => {
 /* ---------- Le tableau d'honneur ---------- */
 test("tableau d'honneur : libellés complets et paramètres préservés (4 langues)", () => {
   const { api } = construireContexte();
-  const cles = ["hon.titre", "hon.mois", "hon.tout", "hon.pas_encore", "hon.vide", "hon.mien",
+  const cles = ["hon.titre", "hon.annee", "hon.tout", "hon.pas_encore", "hon.vide", "hon.mien",
     "hon.ma_place", "hon.inscrite", "hon.non_inscrite", "hon.consentement", "hon.pseudo_ph",
     "hon.pseudo_requis", "hon.rejoindre", "hon.retirer", "hon.retirer_conf", "hon.retiree", "hon.inscrite_ok"];
   Object.keys(api.LANGUES).forEach(lg => {
@@ -3243,8 +3243,22 @@ test("défi : le tableau mondial respecte le consentement et le seuil", () => {
   const src = fs.readFileSync(path.join(__dirname, "..", "js/defi.js"), "utf8");
   const d = apiDefi();
 
-  // La saison est le mois courant, au format attendu par la base.
-  assert.ok(/^\d{4}-\d{2}$/.test(d.saisonCourante()), "saison mal formée : " + d.saisonCourante());
+  // La saison est l'année civile : un mois ne laisse pas le temps d'amener
+  // plusieurs familles, et le tableau repartait de zéro avant d'avoir pris.
+  assert.strictEqual(d.saisonCourante(), String(new Date().getFullYear()),
+    "la saison doit être l'année en cours : " + d.saisonCourante());
+  const auth = fs.readFileSync(path.join(__dirname, "..", "js/auth.js"), "utf8");
+  const f = auth.slice(auth.indexOf("function saisonCourante"));
+  assert.ok(/getFullYear\(\)/.test(f.slice(0, f.indexOf("\n}"))) &&
+            !/getMonth\(\)/.test(f.slice(0, f.indexOf("\n}"))),
+    "le tableau d'honneur de l'application doit suivre la même saison");
+  // Le filtre de la base compare un PRÉFIXE : une saison de 4 caractères
+  // couvre l'année entière. Un LIKE aurait laissé passer un « % » du client.
+  const sql = fs.readFileSync(path.join(__dirname, "..", "supabase/schema.sql"), "utf8");
+  assert.ok(/left\(to_char\(r\.accepted_at, 'YYYY-MM'\), length\(p_saison\)\) = p_saison/.test(sql),
+    "le filtre de saison doit comparer un préfixe");
+  assert.ok(!/to_char\(r\.accepted_at, 'YYYY-MM'\) = p_saison/.test(sql),
+    "l'ancien filtre mensuel strict subsiste");
 
   // Il réutilise le classement déjà tenu en base — pas un second classement.
   assert.ok(/sb\.rpc\("classement_parrainages", \{ p_saison: saison \}\)/.test(src),
