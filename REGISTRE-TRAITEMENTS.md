@@ -111,6 +111,14 @@ et le présent registre est tenu.
 | Conservation | Tant que le consentement dure. Le retrait **efface le nom d'équipe** ; il n'en reste aucune trace |
 | Mesures | Inscription refusée sans nom d'équipe (accepter sans pseudonyme reviendrait à publier le vrai nom) ; aucun rang attribué à une famille non consentante ; tableau masqué sous un seuil de familles consentantes ; retrait accessible depuis le tableau lui-même, en un clic, et effaçant le pseudonyme |
 
+**Tableau de bord de transparence** (page du mode Défi, `stats_transparence`) :
+il ne publie que des **nombres agrégés** — total de familles, arrivées de la
+saison, familles actives sur un jour / 7 jours / 30 jours. Aucune identité,
+aucun nom, aucune date individuelle n'en sort ; le détail par famille reste
+réservé à l'administrateur. Ces agrégats ne constituent pas des données à
+caractère personnel, mais ils sont mentionnés ici pour que le registre décrive
+tout ce que l'application montre d'elle-même.
+
 Le **code de parrainage** (`families.referral_code`) et le rattachement d'une
 famille à son parrain (`referrals`) relèvent de **T4 — Liste d'attente et
 invitations** : ce sont les mêmes finalité et base légale. Le parrain ne reçoit

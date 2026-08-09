@@ -689,6 +689,56 @@ Object.assign(DEFI_I18N.de, {
   "top_premiere_d": "Diese Saison hat noch niemand gepunktet. Die allererste Familie, die du bringst, setzt dich an die Spitze der Tafel."
 });
 
+/* Tableau de bord de transparence. */
+Object.assign(DEFI_I18N.fr, { "top_accroche": "Toutes les familles du monde qui ont choisi d'y figurer, cette saison." });
+Object.assign(DEFI_I18N.en, { "top_accroche": "Every family in the world who chose to appear, this season." });
+Object.assign(DEFI_I18N.nl, { "top_accroche": "Alle gezinnen ter wereld die ervoor kozen te verschijnen, dit seizoen." });
+Object.assign(DEFI_I18N.de, { "top_accroche": "Alle Familien weltweit, die sich dafür entschieden haben, diese Saison." });
+Object.assign(DEFI_I18N.fr, {
+  "tr_titre": "📊 Où en est le projet",
+  "tr_sous": "Les chiffres réels, mis à jour en direct. On vous demande de faire connaître {app} — le moins qu'on vous doive est de dire ce que ça donne.",
+  "tr_familles": "familles",
+  "tr_nouvelles": "cette saison",
+  "tr_actives": "actives (7 j)",
+  "tr_detail": "Aujourd'hui : <strong>{j}</strong> famille(s) ont ouvert l'app. Sur 30 jours : <strong>{m}</strong>. Arrivées cette semaine : <strong>{s7}</strong>.",
+  "tr_jalon": "Prochain palier : {n} familles",
+  "tr_fidele": "Familles encore actives ce mois-ci",
+  "tr_note": "Une inscription ne vaut rien si personne ne revient : c'est pour cela que le second chiffre est là, même quand il est bas."
+});
+Object.assign(DEFI_I18N.en, {
+  "tr_titre": "📊 Where the project stands",
+  "tr_sous": "The real numbers, live. We ask you to spread {app} — the least we owe you is to say what it yields.",
+  "tr_familles": "families",
+  "tr_nouvelles": "this season",
+  "tr_actives": "active (7 d)",
+  "tr_detail": "Today: <strong>{j}</strong> family/families opened the app. Over 30 days: <strong>{m}</strong>. Joined this week: <strong>{s7}</strong>.",
+  "tr_jalon": "Next milestone: {n} families",
+  "tr_fidele": "Families still active this month",
+  "tr_note": "A sign-up is worth nothing if nobody comes back: that's why the second number is here, even when it's low."
+});
+Object.assign(DEFI_I18N.nl, {
+  "tr_titre": "📊 Hoe het project ervoor staat",
+  "tr_sous": "De echte cijfers, live. We vragen je om {app} bekend te maken — het minste wat we je verschuldigd zijn is zeggen wat het oplevert.",
+  "tr_familles": "gezinnen",
+  "tr_nouvelles": "dit seizoen",
+  "tr_actives": "actief (7 d)",
+  "tr_detail": "Vandaag: <strong>{j}</strong> gezin(nen) openden de app. Over 30 dagen: <strong>{m}</strong>. Deze week erbij: <strong>{s7}</strong>.",
+  "tr_jalon": "Volgende mijlpaal: {n} gezinnen",
+  "tr_fidele": "Gezinnen die deze maand nog actief zijn",
+  "tr_note": "Een inschrijving is niets waard als niemand terugkomt: daarom staat het tweede cijfer er, ook als het laag is."
+});
+Object.assign(DEFI_I18N.de, {
+  "tr_titre": "📊 Wo das Projekt steht",
+  "tr_sous": "Die echten Zahlen, live. Wir bitten dich, {app} bekannt zu machen — das Mindeste ist, dir zu sagen, was dabei herauskommt.",
+  "tr_familles": "Familien",
+  "tr_nouvelles": "diese Saison",
+  "tr_actives": "aktiv (7 T.)",
+  "tr_detail": "Heute: <strong>{j}</strong> Familie(n) haben die App geöffnet. In 30 Tagen: <strong>{m}</strong>. Diese Woche dazugekommen: <strong>{s7}</strong>.",
+  "tr_jalon": "Nächste Marke: {n} Familien",
+  "tr_fidele": "Familien, die diesen Monat noch aktiv sind",
+  "tr_note": "Eine Anmeldung ist nichts wert, wenn niemand wiederkommt: deshalb steht die zweite Zahl hier, auch wenn sie niedrig ist."
+});
+
 function langueInitiale() {
   try {
     const stocke = localStorage.getItem(CLE_LANGUE);
@@ -1154,14 +1204,59 @@ function dessinerTop(d, saison) {
   };
 }
 
+/* ---------- Tableau de bord de transparence ----------
+ * On demande aux contributeurs de faire connaître le projet ; le moins qu'on
+ * leur doive en retour est de dire où il en est. Rien que des nombres — aucune
+ * identité n'en sort — et surtout pas seulement les flatteurs : les familles
+ * ACTIVES figurent à côté des inscriptions, parce que c'est le seul chiffre qui
+ * dise si le travail a servi.
+ */
+function blocTransparence(st) {
+  if (!st) return "";
+  const total = st.familles || 0;
+  const jalon = st.jalon || Math.max(total, 1);
+  const bas = st.jalon_precedent || 0;
+  const part = Math.max(2, Math.min(100, Math.round(((total - bas) / (jalon - bas)) * 100)));
+  // Part des familles qui ouvrent encore l'app : le chiffre le moins flatteur,
+  // donc celui qu'un tableau de transparence doit montrer.
+  const fidele = total > 0 ? Math.round(((st.actives_30j || 0) / total) * 100) : 0;
+  return `<section class="defi-bloc defi-transp">
+    <h2>${tD("tr_titre")}</h2>
+    <p class="defi-note">${tD("tr_sous")}</p>
+    <div class="defi-compteurs defi-compteurs-3">
+      <div class="defi-compteur"><span class="defi-chiffre">${total}</span>
+        <span class="defi-libelle">${tD("tr_familles")}</span></div>
+      <div class="defi-compteur"><span class="defi-chiffre defi-chiffre-vif">+${st.nouvelles_saison || 0}</span>
+        <span class="defi-libelle">${tD("tr_nouvelles")}</span></div>
+      <div class="defi-compteur"><span class="defi-chiffre defi-chiffre-or">${st.actives_7j || 0}</span>
+        <span class="defi-libelle">${tD("tr_actives")}</span></div>
+    </div>
+    <p class="defi-note defi-transp-det">${tD("tr_detail", {
+      j: st.actives_jour || 0, m: st.actives_30j || 0, s7: st.nouvelles_7j || 0 })}</p>
+    <div class="defi-transp-l">
+      <span>${tD("tr_jalon", { n: jalon })}</span><span>${total} / ${jalon}</span>
+    </div>
+    <div class="defi-jauge"><div class="defi-jauge-r defi-jauge-col" style="width:${part}%"></div></div>
+    <div class="defi-transp-l">
+      <span>${tD("tr_fidele")}</span><span>${fidele} %</span>
+    </div>
+    <div class="defi-jauge"><div class="defi-jauge-r" style="width:${Math.max(2, fidele)}%"></div></div>
+    <p class="defi-note">${tD("tr_note")}</p>
+  </section>`;
+}
+
 /* ---------- L'accueil d'une famille connectée ---------- */
 async function ecranAccueil() {
   const { data: miennes } = await sb.rpc("arene_mes_arenes", { p_family: familleId });
   const liste = Array.isArray(miennes) ? miennes : [];
-  redessiner = () => dessinerAccueil(liste);
-  dessinerAccueil(liste);
+  // Les statistiques ne doivent jamais empêcher l'accueil de s'afficher : si
+  // l'appel échoue, le bloc disparaît, le reste tient.
+  let st = null;
+  try { const r = await sb.rpc("stats_transparence"); st = r.data || null; } catch (e) { st = null; }
+  redessiner = () => dessinerAccueil(liste, st);
+  dessinerAccueil(liste, st);
 }
-function dessinerAccueil(liste) {
+function dessinerAccueil(liste, st) {
   const cartes = liste.map(a => `
     <button class="defi-arene-l" data-code="${echapper(a.code)}">
       <span class="defi-arene-nom">${echapper(a.nom)}</span>
@@ -1192,6 +1287,7 @@ function dessinerAccueil(liste) {
       <button id="defi-creer" class="defi-btn defi-btn-xl">${tD("ouvrir_arene")}</button>
       <p class="defi-note">${tD("pseudo_note")}</p>
     </section>
+    ${blocTransparence(st)}
     <section class="defi-bloc defi-bloc-top">
       <h2>${tD("top_titre")}</h2>
       <p class="defi-note">${tD("top_accroche")}</p>

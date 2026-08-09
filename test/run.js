@@ -3342,6 +3342,53 @@ test("défi : l'adresse /challenge mène à la page, sans l'exposer", () => {
   assert.ok(!/challenge|defi/.test(sitemap), "la page ne doit pas entrer au plan du site");
 });
 
+test("défi : le tableau de bord dit aussi ce qui ne flatte pas", () => {
+  const fs = require("fs"), path = require("path");
+  const r = path.join(__dirname, "..");
+  const src = fs.readFileSync(path.join(r, "js/defi.js"), "utf8");
+  const sql = fs.readFileSync(path.join(r, "supabase/schema.sql"), "utf8");
+  const d = apiDefi();
+
+  // La fonction n'expose que des nombres, et reste fermée aux non-connectés.
+  const i = sql.indexOf("function public.stats_transparence");
+  assert.ok(i > -1, "stats_transparence absente du schéma");
+  const corps = sql.slice(i, sql.indexOf("end; $$;", i));
+  assert.ok(/auth\.uid\(\) is null then raise exception/.test(corps),
+    "le tableau de bord doit rester fermé aux non-connectés");
+  assert.ok(/set search_path = public/.test(corps), "search_path non fixé");
+  ["count(*)", "count(distinct family_id)"].forEach(x =>
+    assert.ok(corps.includes(x), "agrégat manquant : " + x));
+  // Aucune identité ne doit sortir : ni nom, ni e-mail, ni identifiant.
+  assert.ok(!/f\.name|families\.name|email|classement_pseudo/.test(corps),
+    "le tableau de bord ne doit renvoyer que des nombres");
+  assert.ok(/grant execute on function public\.stats_transparence\(\)\s+to authenticated/.test(sql),
+    "droit d'exécution non accordé aux familles connectées");
+
+  // Les inscriptions ET l'activité : un tableau qui ne montrerait que les
+  // arrivées flatterait sans rien dire de l'usage réel.
+  assert.ok(/tr_familles/.test(src) && /tr_nouvelles/.test(src) && /tr_actives/.test(src),
+    "les trois compteurs doivent être affichés");
+  assert.ok(/actives_30j[\s\S]{0,60}\/ total/.test(src),
+    "la part de familles encore actives doit être calculée");
+  // Un échec de l'appel ne doit pas emporter l'accueil.
+  assert.ok(/catch \(e\) \{ st = null; \}/.test(src),
+    "l'accueil doit survivre à un tableau de bord indisponible");
+  assert.ok(/if \(!st\) return "";/.test(src), "sans données, le bloc doit disparaître");
+
+  const cles = ["tr_titre", "tr_sous", "tr_familles", "tr_nouvelles", "tr_actives",
+                "tr_detail", "tr_jalon", "tr_fidele", "tr_note"];
+  Object.keys(d.DEFI_LANGUES).forEach(lg =>
+    cles.forEach(k => assert.ok(d.DEFI_I18N[lg][k], `${k} manquant en ${lg}`)));
+  Object.keys(d.DEFI_LANGUES).forEach(lg => {
+    ["{j}", "{m}", "{s7}"].forEach(v =>
+      assert.ok(d.DEFI_I18N[lg]["tr_detail"].includes(v), `${v} perdu en ${lg}`));
+    assert.ok(d.DEFI_I18N[lg]["tr_jalon"].includes("{n}"), "{n} perdu en " + lg);
+    // La saison étant annuelle, plus aucune accroche ne doit parler du mois.
+    assert.ok(!/ce mois-ci|this month|deze maand|diesen Monat/i.test(d.DEFI_I18N[lg]["top_accroche"]),
+      "l'accroche du tableau parle encore du mois (" + lg + ")");
+  });
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

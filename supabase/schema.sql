@@ -984,6 +984,35 @@ begin
   return resultat;
 end; $$;
 
+-- ---------- Tableau de bord de transparence (page defi.html) ------------------
+-- Les mêmes agrégats que l'admin, mais ouverts aux familles connectées : qui
+-- fait vivre le projet a le droit de savoir où il en est. Rien que des NOMBRES
+-- — aucune identité, aucun nom, aucune date individuelle n'en sort, et le
+-- détail par famille reste réservé à l'admin (admin_usage_stats).
+create or replace function public.stats_transparence()
+returns json language plpgsql security definer set search_path = public as $$
+declare resultat json; total integer;
+begin
+  if auth.uid() is null then raise exception 'Accès refusé'; end if;
+  select count(*) into total from families;
+  select json_build_object(
+    'familles',         total,
+    'nouvelles_7j',     (select count(*) from families where created_at >= now() - interval '7 days'),
+    'nouvelles_30j',    (select count(*) from families where created_at >= now() - interval '30 days'),
+    -- Saison = année civile, comme le tableau d'honneur.
+    'nouvelles_saison', (select count(*) from families
+                          where to_char(created_at, 'YYYY') = to_char(now(), 'YYYY')),
+    'actives_jour',     (select count(distinct family_id) from usage_events where day = current_date),
+    'actives_7j',       (select count(distinct family_id) from usage_events where day >= current_date - 6),
+    'actives_30j',      (select count(distinct family_id) from usage_events where day >= current_date - 29),
+    -- Prochain jalon collectif : le même que la jauge de l'Arbre, pour que les
+    -- deux surfaces ne racontent pas deux histoires différentes.
+    'jalon',            (select min(v) from (values (25),(50),(100),(250),(500),(1000)) as j(v) where v > total),
+    'jalon_precedent',  coalesce((select max(v) from (values (0),(25),(50),(100),(250),(500),(1000)) as j(v) where v <= total), 0)
+  ) into resultat;
+  return resultat;
+end; $$;
+
 -- RPC admin : familles actives par jour (30 derniers jours).
 create or replace function public.admin_series_usage()
 returns table(jour date, familles integer)
@@ -1649,6 +1678,7 @@ grant execute on function public.admin_series_inscriptions()    to authenticated
 grant execute on function public.admin_series_activite()        to authenticated;
 grant execute on function public.admin_list_families_recent(integer) to authenticated;
 grant execute on function public.track_usage(uuid, text)        to authenticated;
+grant execute on function public.stats_transparence()           to authenticated;
 grant execute on function public.admin_usage_stats()            to authenticated;
 grant execute on function public.admin_series_usage()           to authenticated;
 grant execute on function public.admin_db_stats()               to authenticated;

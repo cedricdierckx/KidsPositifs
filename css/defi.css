@@ -239,3 +239,17 @@ body{margin:0; background:var(--fond); color:var(--texte);
   border-left:3px solid var(--or); border-radius:0 10px 10px 0}
 .defi-merci-pied{margin:16px 0 0; padding:0 6px; font-size:13px; line-height:1.5;
   color:var(--doux); text-align:center}
+
+/* ---- Tableau de bord de transparence ----
+   Trois chiffres qui se lisent d'un coup, puis les jauges. On ne cache pas le
+   chiffre de fidélité derrière les inscriptions : c'est le seul qui dise si le
+   travail des contributeurs a servi. */
+.defi-transp{border-color:rgba(79,209,197,.4)}
+.defi-compteurs-3 .defi-compteur{flex:1 1 0; min-width:0}
+.defi-chiffre-vif{color:var(--vif)}
+.defi-chiffre-or{color:var(--or)}
+.defi-transp-det{margin:10px 0 4px}
+.defi-transp-l{display:flex; justify-content:space-between; gap:10px;
+  margin:12px 0 5px; font-size:12.5px; font-weight:800; color:var(--doux)}
+.defi-transp-l span:last-child{color:var(--texte)}
+.defi-transp .defi-jauge{margin:0}
