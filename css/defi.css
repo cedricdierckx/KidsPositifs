@@ -222,3 +222,15 @@ body{margin:0; background:var(--fond); color:var(--texte);
 .defi-scelle-emoji{margin:0 0 4px; font-size:34px; line-height:1}
 .defi-scelle h2{margin:0 0 6px}
 .defi-bloc-top{border-color:rgba(255,196,71,.35)}
+
+/* ---- « Cette page est pour vous » : à qui s'adresse le Défi, et le merci ----
+   Chaud là où le reste de la page est froid : c'est le seul endroit où l'on
+   parle aux gens plutôt qu'aux joueurs. */
+.defi-merci{border-color:rgba(255,196,71,.45);
+  background:linear-gradient(160deg, rgba(255,196,71,.10), var(--fond2))}
+.defi-merci-p{margin:0 0 10px; font-size:14px; line-height:1.55; color:var(--texte)}
+.defi-merci-forte{margin:0; padding:10px 12px; font-size:14px; line-height:1.55;
+  color:var(--texte); background:rgba(255,196,71,.10);
+  border-left:3px solid var(--or); border-radius:0 10px 10px 0}
+.defi-merci-pied{margin:16px 0 0; padding:0 6px; font-size:13px; line-height:1.5;
+  color:var(--doux); text-align:center}

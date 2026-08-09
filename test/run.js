@@ -3207,6 +3207,31 @@ test("défi : la porte explique, rassure, et demande un nom de code", () => {
   assert.ok(d.DEFI_I18N.fr["changer_pseudo"].includes("{pseudo}"), "{pseudo} perdu");
 });
 
+test("défi : la page dit à qui elle s'adresse, et remercie", () => {
+  const fs = require("fs"), path = require("path");
+  const src = fs.readFileSync(path.join(__dirname, "..", "js/defi.js"), "utf8");
+  const d = apiDefi();
+  // Le bloc est sur la porte — donc lu avant d'entrer — et le merci se répète
+  // au pied du tableau, où l'on vient précisément compter ce qu'on a apporté.
+  assert.ok(/tD\("contrib_t"\)[\s\S]{0,400}tD\("contrib_merci"/.test(src),
+    "le bloc « contributeurs » doit figurer sur la porte");
+  assert.ok(/defi-merci-pied[\s\S]{0,80}tD\("top_merci"/.test(src),
+    "le merci doit figurer au pied du tableau");
+  ["contrib_t", "contrib_d", "contrib_merci", "top_merci"].forEach(k =>
+    Object.keys(d.DEFI_LANGUES).forEach(lg =>
+      assert.ok(d.DEFI_I18N[lg][k], `${k} manquant en ${lg}`)));
+  Object.keys(d.DEFI_LANGUES).forEach(lg => {
+    ["contrib_d", "contrib_merci"].forEach(k =>
+      assert.ok(d.DEFI_I18N[lg][k].includes("{app}"),
+        `le nom de l'application doit être interpolé (${lg} → ${k})`));
+    // Un remerciement doit remercier : la formule ne doit pas se perdre en route.
+    assert.ok(/merci|thank|dank|danke/i.test(d.DEFI_I18N[lg]["contrib_merci"]),
+      "le remerciement a disparu en " + lg);
+    assert.ok(/contributeur|contributor|bijdrager|mitwirkend/i.test(d.DEFI_I18N[lg]["contrib_d"]),
+      "la mention des contributeurs a disparu en " + lg);
+  });
+});
+
 test("défi : le tableau mondial respecte le consentement et le seuil", () => {
   const fs = require("fs"), path = require("path");
   const src = fs.readFileSync(path.join(__dirname, "..", "js/defi.js"), "utf8");

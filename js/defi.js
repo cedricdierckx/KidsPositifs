@@ -452,6 +452,32 @@ Object.assign(DEFI_I18N.de, {
   "hf_dominant_d": "Die Hälfte der Punkte der Arena"
 });
 
+/* À qui s'adresse le Défi, et le merci qui va avec. */
+Object.assign(DEFI_I18N.fr, {
+  "contrib_t": "🤝 Cette page est pour vous",
+  "contrib_d": "Le Défi n'est pas ouvert à tout le monde : il s'adresse aux <strong>contributeurs</strong> de {app} — celles et ceux qui le font connaître autour d'eux, et celles et ceux qui le soutiennent. C'est pour cela que le lien se transmet de la main à la main.",
+  "contrib_merci": "{app} n'a ni budget, ni publicité, ni équipe. Il n'existe que parce que des parents en parlent à d'autres parents. Alors, simplement : <strong>merci</strong>. 💛",
+  "top_merci": "Merci à chaque famille de ce tableau — et à toutes celles qui n'y figurent pas et font pourtant le même travail. 💛"
+});
+Object.assign(DEFI_I18N.en, {
+  "contrib_t": "🤝 This page is for you",
+  "contrib_d": "The Challenge isn't open to everyone: it's for {app}'s <strong>contributors</strong> — those who spread the word around them, and those who support it. That's why the link is passed hand to hand.",
+  "contrib_merci": "{app} has no budget, no advertising, no team. It exists only because parents tell other parents about it. So, simply: <strong>thank you</strong>. 💛",
+  "top_merci": "Thank you to every family on this board — and to all those who aren't on it and do the same work anyway. 💛"
+});
+Object.assign(DEFI_I18N.nl, {
+  "contrib_t": "🤝 Deze pagina is voor jou",
+  "contrib_d": "De Uitdaging staat niet voor iedereen open: ze is bedoeld voor de <strong>bijdragers</strong> van {app} — wie het in zijn omgeving bekendmaakt, en wie het steunt. Daarom wordt de link van hand tot hand doorgegeven.",
+  "contrib_merci": "{app} heeft geen budget, geen reclame, geen team. Het bestaat alleen omdat ouders er met andere ouders over praten. Dus, eenvoudigweg: <strong>dank je</strong>. 💛",
+  "top_merci": "Dank aan elk gezin op dit bord — en aan alle gezinnen die er niet op staan en toch hetzelfde werk doen. 💛"
+});
+Object.assign(DEFI_I18N.de, {
+  "contrib_t": "🤝 Diese Seite ist für dich",
+  "contrib_d": "Die Herausforderung steht nicht allen offen: sie richtet sich an die <strong>Mitwirkenden</strong> von {app} — an alle, die es in ihrem Umfeld bekannt machen, und an alle, die es unterstützen. Deshalb wird der Link von Hand zu Hand weitergegeben.",
+  "contrib_merci": "{app} hat kein Budget, keine Werbung, kein Team. Es existiert nur, weil Eltern anderen Eltern davon erzählen. Also, ganz einfach: <strong>danke</strong>. 💛",
+  "top_merci": "Danke an jede Familie auf dieser Tafel — und an alle, die nicht darauf stehen und dieselbe Arbeit leisten. 💛"
+});
+
 /* La porte d'entrée et le tableau mondial. */
 Object.assign(DEFI_I18N.fr, {
   "porte_kicker": "Tu as trouvé une porte",
@@ -941,6 +967,12 @@ function ecranPorte(suite) {
         </ul>
       </section>
 
+      <section class="defi-bloc defi-merci">
+        <h2>${tD("contrib_t")}</h2>
+        <p class="defi-merci-p">${tD("contrib_d", { app: APP_DEFI })}</p>
+        <p class="defi-merci-forte">${tD("contrib_merci", { app: APP_DEFI })}</p>
+      </section>
+
       <section class="defi-bloc">
         <h2>${tD("porte_pseudo_t")}</h2>
         <p class="defi-note">${tD("porte_pseudo_d")}</p>
@@ -1043,6 +1075,7 @@ function dessinerTop(d, saison) {
 
     ${moi}
 
+    <p class="defi-merci-pied">${tD("top_merci")}</p>
     <button class="defi-lien" id="defi-top-retour">${tD("retour_arenes")}</button>`);
 
   $("#defi-top-retour").onclick = ecranAccueil;
