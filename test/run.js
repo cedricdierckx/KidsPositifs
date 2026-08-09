@@ -2320,7 +2320,7 @@ function apiDefi() {
     .replace(/document\.documentElement/g, "null");
   return new Function("navigator",
     bloc + "; return { DEFI_RANGS, rangDe, rangSuivant, DEFI_I18N, DEFI_LANGUES, tD, definirLangueDefi, langueInitiale, DEFI_HAUTS_FAITS, DEFI_HOTE_APP, lienFamille, resteDetail,"
-         + " DEFI_PALIERS_ARENE, palierArene, palierAreneSuivant, serieEnCours, grilleJours, jourCle };"
+         + " DEFI_PALIERS_ARENE, palierArene, palierAreneSuivant, serieEnCours, grilleJours, jourCle, saisonCourante };"
   )({ language: "fr" });
 }
 
@@ -3174,6 +3174,73 @@ test("arbre : les enfants aussi savent ce qu'est cet arbre", () => {
     assert.ok(v.includes("{app}"), "le nom de l'app doit être interpolé (" + lg + ")");
     assert.ok(!/classement|rang|gagn|win|rank|klassement|rangliste/i.test(v),
       "l'explication enfant ne doit rien promettre à gagner (" + lg + ") : " + v);
+  });
+});
+
+test("défi : la porte explique, rassure, et demande un nom de code", () => {
+  const fs = require("fs"), path = require("path");
+  const src = fs.readFileSync(path.join(__dirname, "..", "js/defi.js"), "utf8");
+  const d = apiDefi();
+
+  // Elle ne s'ouvre qu'une fois, et jamais devant un invité arrivé par un lien
+  // d'arène : on ne fait pas patienter quelqu'un sur un formulaire.
+  assert.ok(/if \(!pseudoMemorise\(\) && !enAttente\) return ecranPorte/.test(src),
+    "la porte doit être conditionnée au nom de code ET à l'absence d'arène en attente");
+  assert.ok(/const CLE_PSEUDO = "kp_defi_pseudo"/.test(src), "le nom de code doit être mémorisé");
+
+  const cles = ["porte_kicker", "porte_titre", "porte_intro", "porte_r1", "porte_r2", "porte_r3",
+                "cloison_t", "cloison_1", "cloison_2", "cloison_3",
+                "porte_pseudo_t", "porte_pseudo_d", "porte_pseudo_ph", "porte_entrer",
+                "porte_manque", "porte_bienvenue", "changer_pseudo"];
+  Object.keys(d.DEFI_LANGUES).forEach(lg =>
+    cles.forEach(k => assert.ok(d.DEFI_I18N[lg][k], `${k} manquant en ${lg}`)));
+
+  // La promesse de cloison doit nommer l'application et parler des enfants :
+  // c'est la seule inquiétude sérieuse d'un parent devant cette page.
+  Object.keys(d.DEFI_LANGUES).forEach(lg => {
+    assert.ok(d.DEFI_I18N[lg]["cloison_1"].includes("{app}"),
+      "la cloison doit nommer l'application (" + lg + ")");
+    assert.ok(/enfant|child|kind/i.test(d.DEFI_I18N[lg]["cloison_2"]),
+      "la cloison doit parler des enfants (" + lg + ")");
+  });
+  assert.ok(d.DEFI_I18N.fr["porte_bienvenue"].includes("{pseudo}"), "{pseudo} perdu");
+  assert.ok(d.DEFI_I18N.fr["changer_pseudo"].includes("{pseudo}"), "{pseudo} perdu");
+});
+
+test("défi : le tableau mondial respecte le consentement et le seuil", () => {
+  const fs = require("fs"), path = require("path");
+  const src = fs.readFileSync(path.join(__dirname, "..", "js/defi.js"), "utf8");
+  const d = apiDefi();
+
+  // La saison est le mois courant, au format attendu par la base.
+  assert.ok(/^\d{4}-\d{2}$/.test(d.saisonCourante()), "saison mal formée : " + d.saisonCourante());
+
+  // Il réutilise le classement déjà tenu en base — pas un second classement.
+  assert.ok(/sb\.rpc\("classement_parrainages", \{ p_saison: saison \}\)/.test(src),
+    "le tableau doit s'appuyer sur classement_parrainages");
+  // Le rang ne s'affiche que si la base en a renvoyé un : une famille non
+  // consentante voit le tableau sans recevoir de rang — « 47ᵉ sur 52 » ne se dit pas.
+  assert.ok(/d\.mon_rang \? tD\("top_mon_rang"/.test(src),
+    "le rang doit venir de la base, jamais être recalculé côté page");
+  assert.ok(/d\.visible[\s\S]{0,900}top_ferme_t/.test(src),
+    "sous le seuil, le tableau doit rester scellé");
+  // L'entrée au tableau est un acte explicite, jamais un effet de bord.
+  assert.ok(/definir_classement_optin[\s\S]{0,120}p_optin: true/.test(src),
+    "l'entrée au tableau doit passer par un consentement explicite");
+  assert.ok(/p_optin: false/.test(src), "on doit pouvoir en sortir");
+  assert.ok(/confirm\(tD\("top_sortir_conf"\)\)/.test(src), "la sortie doit être confirmée");
+
+  const cles = ["top_bouton", "top_accroche", "top_titre", "top_sous", "top_saison", "top_h",
+                "top_regle", "top_vide", "top_chargement", "top_indispo", "top_ferme_t",
+                "top_ferme_d", "top_mon_rang", "top_sans_rang", "top_mes_familles",
+                "top_inscrit_note", "top_hors_note", "top_entrer", "top_consentement",
+                "top_inscrit", "top_sortir", "top_sortir_conf", "top_sorti"];
+  Object.keys(d.DEFI_LANGUES).forEach(lg =>
+    cles.forEach(k => assert.ok(d.DEFI_I18N[lg][k], `${k} manquant en ${lg}`)));
+  Object.keys(d.DEFI_LANGUES).forEach(lg => {
+    assert.ok(d.DEFI_I18N[lg]["top_ferme_d"].includes("{seuil}")
+           && d.DEFI_I18N[lg]["top_ferme_d"].includes("{n}"), "paramètres perdus en " + lg);
+    assert.ok(d.DEFI_I18N[lg]["top_mon_rang"].includes("{n}"), "{n} perdu en " + lg);
   });
 });
 

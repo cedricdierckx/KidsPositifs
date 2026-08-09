@@ -452,6 +452,176 @@ Object.assign(DEFI_I18N.de, {
   "hf_dominant_d": "Die Hälfte der Punkte der Arena"
 });
 
+/* La porte d'entrée et le tableau mondial. */
+Object.assign(DEFI_I18N.fr, {
+  "porte_kicker": "Tu as trouvé une porte",
+  "porte_titre": "Le Défi",
+  "porte_intro": "Cette page n'est indiquée nulle part. Elle ne se trouve pas, elle se transmet — entre parents qui se connaissent. Ce qui s'y passe est un jeu d'adultes : faire découvrir {app} à d'autres familles, et compter les points.",
+  "porte_r1": "Tu ouvres une arène, ou tu rejoins celle d'un ami avec son code.",
+  "porte_r2": "Chaque famille que tu amènes rapporte des points. Une famille qui reste en vaut quatre fois plus.",
+  "porte_r3": "À la fin de la saison, un seul nom est en haut du tableau.",
+  "cloison_t": "🧱 Ce mur ne bouge pas",
+  "cloison_1": "Rien de tout ceci n'apparaît dans {app} : ni classement, ni points, ni rivalité.",
+  "cloison_2": "Tes enfants ne verront jamais cette page, ni son existence.",
+  "cloison_3": "Aucun nom de famille, aucun prénom d'enfant n'y figure — seulement le nom de code que tu choisis maintenant.",
+  "porte_pseudo_t": "Ton nom de code",
+  "porte_pseudo_d": "C'est lui qui s'affichera dans les arènes et au tableau. Choisis-le drôle plutôt que vrai.",
+  "porte_pseudo_ph": "ex. Les Loups du 3ᵉ",
+  "porte_entrer": "🚪 Entrer",
+  "porte_manque": "Il faut un nom de code pour entrer.",
+  "porte_bienvenue": "Bienvenue, {pseudo}.",
+  "changer_pseudo": "Nom de code : {pseudo} — le changer",
+  "top_bouton": "🏆 Voir le tableau",
+  "top_accroche": "Toutes les familles du monde qui ont choisi d'y figurer, ce mois-ci.",
+  "top_titre": "🏆 Le Top 10 mondial",
+  "top_sous": "Les dix familles qui ont fait découvrir l'app au plus grand nombre cette saison. Seules celles qui l'ont demandé y apparaissent.",
+  "top_saison": "Saison {s}",
+  "top_h": "Le tableau",
+  "top_regle": "Une famille compte quand elle a ouvert l'app trois jours différents. Les inscriptions sans lendemain ne comptent pas.",
+  "top_vide": "Personne n'a encore marqué cette saison. La place est libre.",
+  "top_chargement": "Ouverture du tableau…",
+  "top_indispo": "Tableau indisponible pour le moment.",
+  "top_ferme_t": "Le tableau est encore scellé",
+  "top_ferme_d": "Il s'ouvrira quand <strong>{seuil}</strong> familles auront demandé à y figurer. Elles sont <strong>{n}</strong>.",
+  "top_mon_rang": "{n}ᵉ mondiale",
+  "top_sans_rang": "Hors tableau",
+  "top_mes_familles": "{n} famille(s) installée(s) cette saison",
+  "top_inscrit_note": "Tu figures au tableau sous le nom <strong>{pseudo}</strong>.",
+  "top_hors_note": "Tu n'y figures pas. Tant que tu n'y es pas, aucun rang ne t'est attribué — ni bon, ni mauvais.",
+  "top_entrer": "Figurer au tableau",
+  "top_consentement": "En y entrant, tu acceptes que ce nom de code et ton nombre de familles soient visibles des autres familles. Rien d'autre. Tu peux en sortir quand tu veux.",
+  "top_inscrit": "Te voilà au tableau 🏆",
+  "top_sortir": "Me retirer du tableau",
+  "top_sortir_conf": "Tu n'apparaîtras plus au tableau et ton nom de code y sera effacé. Continuer ?",
+  "top_sorti": "Tu n'es plus au tableau."
+});
+Object.assign(DEFI_I18N.en, {
+  "porte_kicker": "You found a door",
+  "porte_titre": "The Challenge",
+  "porte_intro": "This page is linked from nowhere. It isn't found, it's passed on — between parents who know each other. What happens here is a grown-ups' game: getting other families to discover {app}, and keeping score.",
+  "porte_r1": "You open an arena, or join a friend's with their code.",
+  "porte_r2": "Every family you bring scores points. A family that stays is worth four times more.",
+  "porte_r3": "At the end of the season, one name sits at the top.",
+  "cloison_t": "🧱 This wall does not move",
+  "cloison_1": "None of this appears in {app}: no ranking, no points, no rivalry.",
+  "cloison_2": "Your children will never see this page, nor know it exists.",
+  "cloison_3": "No family name, no child's first name appears here — only the code name you pick now.",
+  "porte_pseudo_t": "Your code name",
+  "porte_pseudo_d": "It's what shows in arenas and on the board. Pick funny over true.",
+  "porte_pseudo_ph": "e.g. The Wolves of no. 3",
+  "porte_entrer": "🚪 Enter",
+  "porte_manque": "A code name is needed to enter.",
+  "porte_bienvenue": "Welcome, {pseudo}.",
+  "changer_pseudo": "Code name: {pseudo} — change it",
+  "top_bouton": "🏆 See the board",
+  "top_accroche": "Every family in the world who chose to appear, this month.",
+  "top_titre": "🏆 The world Top 10",
+  "top_sous": "The ten families who introduced the app to the most others this season. Only those who asked to appear are listed.",
+  "top_saison": "Season {s}",
+  "top_h": "The board",
+  "top_regle": "A family counts once it has opened the app on three different days. Sign-ups with no follow-through don't count.",
+  "top_vide": "Nobody has scored yet this season. The spot is open.",
+  "top_chargement": "Opening the board…",
+  "top_indispo": "Board unavailable right now.",
+  "top_ferme_t": "The board is still sealed",
+  "top_ferme_d": "It opens once <strong>{seuil}</strong> families have asked to appear. So far: <strong>{n}</strong>.",
+  "top_mon_rang": "{n}th worldwide",
+  "top_sans_rang": "Not on the board",
+  "top_mes_familles": "{n} settled family/families this season",
+  "top_inscrit_note": "You appear on the board as <strong>{pseudo}</strong>.",
+  "top_hors_note": "You're not on it. While you're not, no rank is assigned to you — good or bad.",
+  "top_entrer": "Appear on the board",
+  "top_consentement": "By joining, you agree that this code name and your family count are visible to other families. Nothing else. You can leave whenever you want.",
+  "top_inscrit": "You're on the board 🏆",
+  "top_sortir": "Remove me from the board",
+  "top_sortir_conf": "You will no longer appear on the board and your code name will be erased from it. Continue?",
+  "top_sorti": "You're off the board."
+});
+Object.assign(DEFI_I18N.nl, {
+  "porte_kicker": "Je hebt een deur gevonden",
+  "porte_titre": "De Uitdaging",
+  "porte_intro": "Naar deze pagina verwijst niets. Ze wordt niet gevonden, ze wordt doorgegeven — tussen ouders die elkaar kennen. Wat hier gebeurt is een spel voor volwassenen: andere gezinnen {app} laten ontdekken, en de punten tellen.",
+  "porte_r1": "Je opent een arena, of sluit je aan bij die van een vriend met zijn code.",
+  "porte_r2": "Elk gezin dat je meebrengt levert punten op. Een gezin dat blijft telt vier keer zo zwaar.",
+  "porte_r3": "Aan het einde van het seizoen staat er één naam bovenaan.",
+  "cloison_t": "🧱 Deze muur beweegt niet",
+  "cloison_1": "Niets hiervan verschijnt in {app}: geen klassement, geen punten, geen rivaliteit.",
+  "cloison_2": "Je kinderen zullen deze pagina nooit zien, en niet weten dat ze bestaat.",
+  "cloison_3": "Geen familienaam, geen voornaam van een kind komt hier voor — alleen de codenaam die je nu kiest.",
+  "porte_pseudo_t": "Je codenaam",
+  "porte_pseudo_d": "Die verschijnt in de arena's en op het bord. Kies liever grappig dan echt.",
+  "porte_pseudo_ph": "bv. De Wolven van nr. 3",
+  "porte_entrer": "🚪 Binnenkomen",
+  "porte_manque": "Er is een codenaam nodig om binnen te komen.",
+  "porte_bienvenue": "Welkom, {pseudo}.",
+  "changer_pseudo": "Codenaam: {pseudo} — wijzigen",
+  "top_bouton": "🏆 Bekijk het bord",
+  "top_accroche": "Alle gezinnen ter wereld die ervoor kozen te verschijnen, deze maand.",
+  "top_titre": "🏆 De wereld-top 10",
+  "top_sous": "De tien gezinnen die de app dit seizoen aan de meeste anderen lieten ontdekken. Alleen wie erom vroeg staat er.",
+  "top_saison": "Seizoen {s}",
+  "top_h": "Het bord",
+  "top_regle": "Een gezin telt zodra het de app op drie verschillende dagen heeft geopend. Inschrijvingen zonder vervolg tellen niet.",
+  "top_vide": "Niemand heeft dit seizoen al gescoord. De plaats is vrij.",
+  "top_chargement": "Het bord wordt geopend…",
+  "top_indispo": "Bord momenteel niet beschikbaar.",
+  "top_ferme_t": "Het bord is nog verzegeld",
+  "top_ferme_d": "Het gaat open zodra <strong>{seuil}</strong> gezinnen gevraagd hebben te verschijnen. Nu zijn het er <strong>{n}</strong>.",
+  "top_mon_rang": "{n}e wereldwijd",
+  "top_sans_rang": "Niet op het bord",
+  "top_mes_familles": "{n} blijvend(e) gezin(nen) dit seizoen",
+  "top_inscrit_note": "Je staat op het bord als <strong>{pseudo}</strong>.",
+  "top_hors_note": "Je staat er niet op. Zolang dat zo is, krijg je geen enkele rang — goed noch slecht.",
+  "top_entrer": "Op het bord verschijnen",
+  "top_consentement": "Door mee te doen ga je ermee akkoord dat deze codenaam en je aantal gezinnen zichtbaar zijn voor andere gezinnen. Niets anders. Je kunt er altijd uitstappen.",
+  "top_inscrit": "Je staat op het bord 🏆",
+  "top_sortir": "Haal me van het bord",
+  "top_sortir_conf": "Je verschijnt niet meer op het bord en je codenaam wordt er gewist. Doorgaan?",
+  "top_sorti": "Je staat niet meer op het bord."
+});
+Object.assign(DEFI_I18N.de, {
+  "porte_kicker": "Du hast eine Tür gefunden",
+  "porte_titre": "Die Herausforderung",
+  "porte_intro": "Auf diese Seite verweist nichts. Man findet sie nicht, man gibt sie weiter — unter Eltern, die sich kennen. Was hier geschieht, ist ein Spiel für Erwachsene: anderen Familien {app} zeigen und die Punkte zählen.",
+  "porte_r1": "Du eröffnest eine Arena oder trittst der eines Freundes mit seinem Code bei.",
+  "porte_r2": "Jede Familie, die du bringst, zählt Punkte. Eine Familie, die bleibt, zählt viermal mehr.",
+  "porte_r3": "Am Ende der Saison steht ein einziger Name ganz oben.",
+  "cloison_t": "🧱 Diese Mauer bewegt sich nicht",
+  "cloison_1": "Nichts davon erscheint in {app}: kein Ranking, keine Punkte, keine Rivalität.",
+  "cloison_2": "Deine Kinder werden diese Seite nie sehen und nichts von ihr wissen.",
+  "cloison_3": "Kein Familienname, kein Vorname eines Kindes steht hier — nur der Deckname, den du jetzt wählst.",
+  "porte_pseudo_t": "Dein Deckname",
+  "porte_pseudo_d": "Er erscheint in den Arenen und auf der Tafel. Wähle lieber witzig als echt.",
+  "porte_pseudo_ph": "z. B. Die Wölfe aus Nr. 3",
+  "porte_entrer": "🚪 Eintreten",
+  "porte_manque": "Zum Eintreten braucht es einen Decknamen.",
+  "porte_bienvenue": "Willkommen, {pseudo}.",
+  "changer_pseudo": "Deckname: {pseudo} — ändern",
+  "top_bouton": "🏆 Tafel ansehen",
+  "top_accroche": "Alle Familien weltweit, die sich diesen Monat dafür entschieden haben.",
+  "top_titre": "🏆 Die Welt-Top-10",
+  "top_sous": "Die zehn Familien, die die App diese Saison den meisten anderen gezeigt haben. Nur wer darum gebeten hat, steht darauf.",
+  "top_saison": "Saison {s}",
+  "top_h": "Die Tafel",
+  "top_regle": "Eine Familie zählt, sobald sie die App an drei verschiedenen Tagen geöffnet hat. Anmeldungen ohne Fortsetzung zählen nicht.",
+  "top_vide": "Diese Saison hat noch niemand gepunktet. Der Platz ist frei.",
+  "top_chargement": "Tafel wird geöffnet…",
+  "top_indispo": "Tafel derzeit nicht verfügbar.",
+  "top_ferme_t": "Die Tafel ist noch versiegelt",
+  "top_ferme_d": "Sie öffnet sich, sobald <strong>{seuil}</strong> Familien darum gebeten haben. Bisher sind es <strong>{n}</strong>.",
+  "top_mon_rang": "{n}. weltweit",
+  "top_sans_rang": "Nicht auf der Tafel",
+  "top_mes_familles": "{n} bleibende Familie(n) diese Saison",
+  "top_inscrit_note": "Du stehst als <strong>{pseudo}</strong> auf der Tafel.",
+  "top_hors_note": "Du stehst nicht darauf. Solange das so ist, wird dir kein Rang zugewiesen — weder gut noch schlecht.",
+  "top_entrer": "Auf der Tafel erscheinen",
+  "top_consentement": "Mit dem Beitritt stimmst du zu, dass dieser Deckname und deine Familienzahl für andere Familien sichtbar sind. Sonst nichts. Du kannst jederzeit wieder austreten.",
+  "top_inscrit": "Du stehst auf der Tafel 🏆",
+  "top_sortir": "Mich von der Tafel nehmen",
+  "top_sortir_conf": "Du erscheinst nicht mehr auf der Tafel und dein Deckname wird dort gelöscht. Fortfahren?",
+  "top_sorti": "Du bist nicht mehr auf der Tafel."
+});
+
 function langueInitiale() {
   try {
     const stocke = localStorage.getItem(CLE_LANGUE);
@@ -590,6 +760,7 @@ const DEFI_HAUTS_FAITS = [
  * ils porteraient une URL d'aperçu, et dépasseraient au passage la capacité du
  * QR — qui disparaîtrait sans bruit. On écrit le domaine officiel le plus
  * court, ce qui laisse de la marge à l'encodeur. */
+const APP_DEFI = "FamiTeam";          // nom de l'application, cité dans les textes
 const DEFI_BASE = "https://fami.team/defi.html";
 
 const $ = (s) => document.querySelector(s);
@@ -612,6 +783,22 @@ function lienArene(code) { return DEFI_BASE + "?a=" + encodeURIComponent(code); 
  * famille sur la période de l'arène, sans se soucier du lien emprunté. */
 const DEFI_HOTE_APP = "https://fami.team/";
 function lienFamille(code) { return DEFI_HOTE_APP + "?p=" + encodeURIComponent(code); }
+
+// Nom de code du parent, choisi à la porte. Local à ce navigateur : il sert de
+// pseudonyme par défaut dans les arènes et au tableau, jamais de consentement.
+const CLE_PSEUDO = "kp_defi_pseudo";
+function pseudoMemorise() {
+  try { return (localStorage.getItem(CLE_PSEUDO) || "").trim(); } catch (e) { return ""; }
+}
+function memoriserPseudo(v) {
+  try { localStorage.setItem(CLE_PSEUDO, String(v || "").slice(0, 24)); } catch (e) { /* stockage plein */ }
+}
+
+// Saison courante, au format que la base attend pour le classement mensuel.
+function saisonCourante() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+}
 
 // Temps restant en jours + heures : un compte à rebours qui bouge chaque heure
 // presse plus qu'un nombre de jours qui stagne.
@@ -656,6 +843,9 @@ async function demarrer() {
     return redessiner();
   }
   const enAttente = codeUrl || (localStorage.getItem(CLE_ARENE) || "");
+  // La porte ne s'ouvre qu'une fois, et jamais devant quelqu'un qui arrive par
+  // un lien d'arène : on ne fait pas patienter un invité sur un formulaire.
+  if (!pseudoMemorise() && !enAttente) return ecranPorte(() => ecranAccueil());
   if (enAttente) return ecranArene(enAttente);
   ecranAccueil();
 }
@@ -719,6 +909,165 @@ function dessinerVisiteur(data) {
     </div>`);
 }
 
+/* ---------- La porte ----------
+ * Premier écran, une seule fois. Il tient trois rôles : poser l'ambiance (on
+ * n'est plus dans FamiTeam), dire en trois lignes ce qu'est le Défi, et
+ * dissiper la seule inquiétude sérieuse d'un parent — que cela déteigne sur
+ * l'application de ses enfants. Le nom de code demandé n'est ni le nom de
+ * famille ni un prénom : il sert de pseudonyme par défaut dans les arènes.
+ */
+function ecranPorte(suite) {
+  const actuel = pseudoMemorise();
+  redessiner = () => ecranPorte(suite);
+  ecran(`
+    <div class="defi-porte">
+      <div class="defi-porte-halo" aria-hidden="true"></div>
+      <p class="defi-kicker">${tD("porte_kicker")}</p>
+      <h1 class="defi-porte-titre">${tD("porte_titre")}</h1>
+      <p class="defi-porte-intro">${tD("porte_intro", { app: APP_DEFI })}</p>
+
+      <ol class="defi-porte-regles">
+        <li><span>1</span>${tD("porte_r1")}</li>
+        <li><span>2</span>${tD("porte_r2")}</li>
+        <li><span>3</span>${tD("porte_r3")}</li>
+      </ol>
+
+      <section class="defi-bloc defi-cloison">
+        <h2>${tD("cloison_t")}</h2>
+        <ul class="defi-cloison-l">
+          <li>${tD("cloison_1", { app: APP_DEFI })}</li>
+          <li>${tD("cloison_2")}</li>
+          <li>${tD("cloison_3")}</li>
+        </ul>
+      </section>
+
+      <section class="defi-bloc">
+        <h2>${tD("porte_pseudo_t")}</h2>
+        <p class="defi-note">${tD("porte_pseudo_d")}</p>
+        <input id="defi-porte-pseudo" class="defi-champ" maxlength="24"
+               placeholder="${tD("porte_pseudo_ph")}" value="${echapper(actuel)}">
+        <button id="defi-porte-ok" class="defi-btn defi-btn-xl">${tD("porte_entrer")}</button>
+      </section>
+    </div>`);
+
+  $("#defi-porte-ok").onclick = () => {
+    const v = ($("#defi-porte-pseudo").value || "").trim();
+    if (!v) { $("#defi-porte-pseudo").focus(); return toast(tD("porte_manque")); }
+    memoriserPseudo(v);
+    toast(tD("porte_bienvenue", { pseudo: v }));
+    suite();
+  };
+  const champ = $("#defi-porte-pseudo");
+  if (champ) champ.onkeydown = (e) => { if (e.key === "Enter") $("#defi-porte-ok").click(); };
+}
+
+/* ---------- Le tableau mondial ----------
+ * Il ne s'invente rien : c'est le classement saisonnier déjà tenu en base pour
+ * le tableau d'honneur de l'application, avec sa règle de consentement. Deux
+ * points s'y jouent : une famille qui n'a pas consenti VOIT le tableau mais ne
+ * reçoit aucun rang — « 47ᵉ sur 52 » ne se dit pas — et le tableau reste fermé
+ * tant que trop peu de familles y figurent, faute de quoi le premier arrivé
+ * gagnerait par défaut. */
+async function ecranTop() {
+  ecran(`<p class="defi-chargement">${tD("top_chargement")}</p>`);
+  const saison = saisonCourante();
+  const { data, error } = await sb.rpc("classement_parrainages", { p_saison: saison });
+  if (error || !data) { toast(error ? error.message : tD("top_indispo")); return ecranAccueil(); }
+  redessiner = () => dessinerTop(data, saison);
+  dessinerTop(data, saison);
+}
+
+function dessinerTop(d, saison) {
+  const top = Array.isArray(d.top) ? d.top : [];
+  const medaille = (i) => ["🥇", "🥈", "🥉"][i] || String(i + 1);
+  const maxi = top.length ? Math.max(...top.map(x => x.n || 0)) : 0;
+  const aMoi = (x) => d.moi_inscrite && d.mon_pseudo && x.pseudo === d.mon_pseudo;
+
+  const podium = top.slice(0, 3).map((x, i) => `
+    <div class="defi-marche defi-marche-${i + 1}${aMoi(x) ? " defi-moi" : ""}">
+      <span class="defi-medaille">${medaille(i)}</span>
+      <span class="defi-pseudo">${echapper(x.pseudo)}</span>
+      <span class="defi-points">${x.n}</span>
+      <span class="defi-part" style="width:${maxi ? Math.round((x.n / maxi) * 100) : 0}%"></span>
+    </div>`).join("");
+
+  const reste = top.slice(3).map((x, i) => `
+    <li class="defi-rangee${aMoi(x) ? " defi-moi" : ""}">
+      <span class="defi-place">${i + 4}</span>
+      <span class="defi-pseudo">${echapper(x.pseudo)}</span>
+      <span class="defi-points">${x.n}</span>
+    </li>`).join("");
+
+  // Mon état : mon compte est toujours le mien ; mon rang, seulement si j'ai
+  // consenti à figurer.
+  const moi = `
+    <section class="defi-bloc defi-moi-bloc">
+      <div class="defi-moi-haut">
+        <span class="defi-rang-emoji">${d.mon_rang ? "🎖️" : "🫥"}</span>
+        <div>
+          <p class="defi-rang-nom">${d.mon_rang ? tD("top_mon_rang", { n: d.mon_rang }) : tD("top_sans_rang")}</p>
+          <p class="defi-note">${tD("top_mes_familles", { n: d.mien || 0 })}</p>
+        </div>
+        <span class="defi-score">${d.mien || 0}</span>
+      </div>
+      ${d.moi_inscrite
+        ? `<p class="defi-note">${tD("top_inscrit_note", { pseudo: echapper(d.mon_pseudo || "") })}</p>
+           <button id="defi-top-sortir" class="defi-lien defi-lien-danger">${tD("top_sortir")}</button>`
+        : `<p class="defi-note">${tD("top_hors_note")}</p>
+           <input id="defi-top-pseudo" class="defi-champ" maxlength="24"
+                  placeholder="${tD("porte_pseudo_ph")}" value="${echapper(pseudoMemorise())}">
+           <button id="defi-top-entrer" class="defi-btn">${tD("top_entrer")}</button>
+           <p class="defi-note">${tD("top_consentement")}</p>`}
+    </section>`;
+
+  ecran(`
+    <div class="defi-hero defi-hero-serre">
+      <p class="defi-kicker">${tD("top_saison", { s: saison })}</p>
+      <h1 class="defi-titre">${tD("top_titre")}</h1>
+      <p class="defi-note">${tD("top_sous")}</p>
+    </div>
+
+    ${d.visible
+      ? (top.length
+          ? `<section class="defi-bloc"><h2>${tD("top_h")}</h2>
+               <div class="defi-podium">${podium}</div>
+               ${reste ? `<ol class="defi-liste">${reste}</ol>` : ""}
+               <p class="defi-note">${tD("top_regle")}</p></section>`
+          : `<section class="defi-bloc"><p class="defi-note">${tD("top_vide")}</p></section>`)
+      : `<section class="defi-bloc defi-scelle">
+           <p class="defi-scelle-emoji">🔒</p>
+           <h2>${tD("top_ferme_t")}</h2>
+           <p class="defi-note">${tD("top_ferme_d", { n: d.consentantes || 0, seuil: d.seuil })}</p>
+           <div class="defi-jauge"><div class="defi-jauge-r" style="width:${Math.max(3, Math.min(100, Math.round(((d.consentantes || 0) / (d.seuil || 10)) * 100)))}%"></div></div>
+         </section>`}
+
+    ${moi}
+
+    <button class="defi-lien" id="defi-top-retour">${tD("retour_arenes")}</button>`);
+
+  $("#defi-top-retour").onclick = ecranAccueil;
+  const bEntrer = $("#defi-top-entrer");
+  if (bEntrer) bEntrer.onclick = async () => {
+    const v = ($("#defi-top-pseudo").value || "").trim();
+    if (!v) { $("#defi-top-pseudo").focus(); return toast(tD("manque_pseudo")); }
+    const { error } = await sb.rpc("definir_classement_optin",
+      { p_family: familleId, p_optin: true, p_pseudo: v });
+    if (error) return toast(error.message);
+    memoriserPseudo(v);
+    toast(tD("top_inscrit"));
+    ecranTop();
+  };
+  const bSortir = $("#defi-top-sortir");
+  if (bSortir) bSortir.onclick = async () => {
+    if (!confirm(tD("top_sortir_conf"))) return;
+    const { error } = await sb.rpc("definir_classement_optin",
+      { p_family: familleId, p_optin: false, p_pseudo: null });
+    if (error) return toast(error.message);
+    toast(tD("top_sorti"));
+    ecranTop();
+  };
+}
+
 /* ---------- L'accueil d'une famille connectée ---------- */
 async function ecranAccueil() {
   const { data: miennes } = await sb.rpc("arene_mes_arenes", { p_family: familleId });
@@ -748,7 +1097,7 @@ function dessinerAccueil(liste) {
     <section class="defi-bloc">
       <h2>${tD("creer_t")}</h2>
       <input id="defi-nom" class="defi-champ" placeholder="${tD("nom_ph")}" maxlength="40">
-      <input id="defi-pseudo" class="defi-champ" placeholder="${tD("pseudo_ph")}" maxlength="24">
+      <input id="defi-pseudo" class="defi-champ" placeholder="${tD("pseudo_ph")}" maxlength="24" value="${echapper(pseudoMemorise())}">
       <select id="defi-duree" class="defi-champ">
         <option value="14">${tD("d14")}</option>
         <option value="30" selected>${tD("d30")}</option>
@@ -756,10 +1105,19 @@ function dessinerAccueil(liste) {
       </select>
       <button id="defi-creer" class="defi-btn defi-btn-xl">${tD("ouvrir_arene")}</button>
       <p class="defi-note">${tD("pseudo_note")}</p>
-    </section>`);
+    </section>
+    <section class="defi-bloc defi-bloc-top">
+      <h2>${tD("top_titre")}</h2>
+      <p class="defi-note">${tD("top_accroche")}</p>
+      <button id="defi-vers-top" class="defi-btn">${tD("top_bouton")}</button>
+    </section>
+    <button class="defi-lien" id="defi-changer-pseudo">${tD("changer_pseudo", { pseudo: echapper(pseudoMemorise() || "—") })}</button>`);
 
   hote().querySelectorAll(".defi-arene-l").forEach(b =>
     b.onclick = () => ecranArene(b.dataset.code));
+
+  $("#defi-vers-top").onclick = ecranTop;
+  $("#defi-changer-pseudo").onclick = () => ecranPorte(() => ecranAccueil());
 
   $("#defi-rejoindre").onclick = () => {
     const c = ($("#defi-code").value || "").trim().toUpperCase();
@@ -771,6 +1129,7 @@ function dessinerAccueil(liste) {
     const pseudo = ($("#defi-pseudo").value || "").trim();
     if (!nom) { $("#defi-nom").focus(); return toast(tD("manque_nom")); }
     if (!pseudo) { $("#defi-pseudo").focus(); return toast(tD("manque_pseudo")); }
+    memoriserPseudo(pseudo);
     const { data, error } = await sb.rpc("arene_creer", {
       p_family: familleId, p_nom: nom, p_jours: parseInt($("#defi-duree").value, 10), p_pseudo: pseudo
     });
@@ -816,7 +1175,7 @@ function dessinerEntree(code, ap) {
     ${fini ? `<section class="defi-bloc"><p class="defi-note">${tD("terminee")}</p></section>` : `
     <section class="defi-bloc">
       <h2>${tD("choisis_pseudo")}</h2>
-      <input id="defi-pseudo2" class="defi-champ" placeholder="${tD("pseudo_ex")}" maxlength="24">
+      <input id="defi-pseudo2" class="defi-champ" placeholder="${tD("pseudo_ex")}" maxlength="24" value="${echapper(pseudoMemorise())}">
       <button id="defi-entrer" class="defi-btn defi-btn-xl">⚔️ ${tD("entrer")}</button>
       <p class="defi-note">${tD("entree_note")}</p>
     </section>`}
