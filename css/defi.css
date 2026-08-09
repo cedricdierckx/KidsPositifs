@@ -217,10 +217,15 @@ body{margin:0; background:var(--fond); color:var(--texte);
 .defi-cloison-l{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:6px}
 .defi-cloison-l li{font-size:14px; line-height:1.45; color:var(--texte)}
 
-/* ---- Tableau mondial encore scellé ---- */
-.defi-scelle{text-align:center; border-color:rgba(255,196,71,.45)}
-.defi-scelle-emoji{margin:0 0 4px; font-size:34px; line-height:1}
-.defi-scelle h2{margin:0 0 6px}
+/* ---- Tableau vide : la première place attend ----
+   On ne cache plus un tableau peu rempli, on l'ouvre : un Top 2 qui grandit
+   sous les yeux attire, un carré fermé non. */
+.defi-premiere{text-align:center; border-color:rgba(255,196,71,.45)}
+.defi-premiere-emoji{margin:0 0 4px; font-size:34px; line-height:1}
+.defi-premiere h2{margin:0 0 6px}
+.defi-grandit{margin:12px 0 0; padding:10px 12px; font-size:13.5px; line-height:1.5;
+  color:var(--texte); background:rgba(79,209,197,.12);
+  border:1px solid rgba(79,209,197,.45); border-radius:10px}
 .defi-bloc-top{border-color:rgba(255,196,71,.35)}
 
 /* ---- « Cette page est pour vous » : à qui s'adresse le Défi, et le merci ----

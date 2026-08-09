@@ -504,11 +504,8 @@ Object.assign(DEFI_I18N.fr, {
   "top_saison": "Saison {s}",
   "top_h": "Le tableau",
   "top_regle": "Une famille compte quand elle a ouvert l'app trois jours différents. Les inscriptions sans lendemain ne comptent pas.",
-  "top_vide": "Personne n'a encore marqué cette saison. La place est libre.",
   "top_chargement": "Ouverture du tableau…",
   "top_indispo": "Tableau indisponible pour le moment.",
-  "top_ferme_t": "Le tableau est encore scellé",
-  "top_ferme_d": "Il s'ouvrira quand <strong>{seuil}</strong> familles auront demandé à y figurer. Elles sont <strong>{n}</strong>.",
   "top_mon_rang": "{n}ᵉ mondiale",
   "top_sans_rang": "Hors tableau",
   "top_mes_familles": "{n} famille(s) installée(s) cette saison",
@@ -544,11 +541,8 @@ Object.assign(DEFI_I18N.en, {
   "top_saison": "Season {s}",
   "top_h": "The board",
   "top_regle": "A family counts once it has opened the app on three different days. Sign-ups with no follow-through don't count.",
-  "top_vide": "Nobody has scored yet this season. The spot is open.",
   "top_chargement": "Opening the board…",
   "top_indispo": "Board unavailable right now.",
-  "top_ferme_t": "The board is still sealed",
-  "top_ferme_d": "It opens once <strong>{seuil}</strong> families have asked to appear. So far: <strong>{n}</strong>.",
   "top_mon_rang": "{n}th worldwide",
   "top_sans_rang": "Not on the board",
   "top_mes_familles": "{n} settled family/families this season",
@@ -584,11 +578,8 @@ Object.assign(DEFI_I18N.nl, {
   "top_saison": "Seizoen {s}",
   "top_h": "Het bord",
   "top_regle": "Een gezin telt zodra het de app op drie verschillende dagen heeft geopend. Inschrijvingen zonder vervolg tellen niet.",
-  "top_vide": "Niemand heeft dit seizoen al gescoord. De plaats is vrij.",
   "top_chargement": "Het bord wordt geopend…",
   "top_indispo": "Bord momenteel niet beschikbaar.",
-  "top_ferme_t": "Het bord is nog verzegeld",
-  "top_ferme_d": "Het gaat open zodra <strong>{seuil}</strong> gezinnen gevraagd hebben te verschijnen. Nu zijn het er <strong>{n}</strong>.",
   "top_mon_rang": "{n}e wereldwijd",
   "top_sans_rang": "Niet op het bord",
   "top_mes_familles": "{n} blijvend(e) gezin(nen) dit seizoen",
@@ -624,11 +615,8 @@ Object.assign(DEFI_I18N.de, {
   "top_saison": "Saison {s}",
   "top_h": "Die Tafel",
   "top_regle": "Eine Familie zählt, sobald sie die App an drei verschiedenen Tagen geöffnet hat. Anmeldungen ohne Fortsetzung zählen nicht.",
-  "top_vide": "Diese Saison hat noch niemand gepunktet. Der Platz ist frei.",
   "top_chargement": "Tafel wird geöffnet…",
   "top_indispo": "Tafel derzeit nicht verfügbar.",
-  "top_ferme_t": "Die Tafel ist noch versiegelt",
-  "top_ferme_d": "Sie öffnet sich, sobald <strong>{seuil}</strong> Familien darum gebeten haben. Bisher sind es <strong>{n}</strong>.",
   "top_mon_rang": "{n}. weltweit",
   "top_sans_rang": "Nicht auf der Tafel",
   "top_mes_familles": "{n} bleibende Familie(n) diese Saison",
@@ -670,6 +658,36 @@ Object.assign(DEFI_I18N.de, {
   "top_revenir": "Wieder auf der Tafel erscheinen"
 });
 
+
+/* Le tableau porte le nombre de familles qu'il contient : Top 2, 3, … 10. */
+Object.assign(DEFI_I18N.fr, { "top_sous": "Les familles qui ont fait découvrir l'app au plus grand nombre cette saison, sous le nom de code qu'elles se sont donné." });
+Object.assign(DEFI_I18N.en, { "top_sous": "The families who introduced the app to the most others this season, under the code name they gave themselves." });
+Object.assign(DEFI_I18N.nl, { "top_sous": "De gezinnen die de app dit seizoen aan de meeste anderen lieten ontdekken, onder de codenaam die ze zichzelf gaven." });
+Object.assign(DEFI_I18N.de, { "top_sous": "Die Familien, die die App diese Saison den meisten anderen gezeigt haben, unter dem Decknamen, den sie sich gegeben haben." });
+Object.assign(DEFI_I18N.fr, {
+  "top_titre_n": "🏆 Le Top {n} mondial",
+  "top_grandit": "Ce tableau grandit avec vous : encore <strong>{reste}</strong> famille(s) inscrite(s) et il passera au <strong>Top 10</strong>.",
+  "top_premiere_t": "La première place est vide",
+  "top_premiere_d": "Personne n'a encore marqué cette saison. La toute première famille que vous amenez vous met en tête du tableau."
+});
+Object.assign(DEFI_I18N.en, {
+  "top_titre_n": "🏆 The world Top {n}",
+  "top_grandit": "This board grows with you: <strong>{reste}</strong> more registered family/families and it becomes a <strong>Top 10</strong>.",
+  "top_premiere_t": "First place is empty",
+  "top_premiere_d": "Nobody has scored yet this season. The very first family you bring puts you at the top of the board."
+});
+Object.assign(DEFI_I18N.nl, {
+  "top_titre_n": "🏆 De wereld-top {n}",
+  "top_grandit": "Dit bord groeit met jullie mee: nog <strong>{reste}</strong> ingeschreven gezin(nen) en het wordt een <strong>top 10</strong>.",
+  "top_premiere_t": "De eerste plaats is leeg",
+  "top_premiere_d": "Niemand heeft dit seizoen al gescoord. Het allereerste gezin dat je meebrengt zet je bovenaan het bord."
+});
+Object.assign(DEFI_I18N.de, {
+  "top_titre_n": "🏆 Die Welt-Top-{n}",
+  "top_grandit": "Diese Tafel wächst mit euch: noch <strong>{reste}</strong> eingetragene Familie(n) und sie wird zur <strong>Top-10</strong>.",
+  "top_premiere_t": "Der erste Platz ist frei",
+  "top_premiere_d": "Diese Saison hat noch niemand gepunktet. Die allererste Familie, die du bringst, setzt dich an die Spitze der Tafel."
+});
 
 function langueInitiale() {
   try {
@@ -1080,25 +1098,30 @@ function dessinerTop(d, saison) {
            <button id="defi-top-entrer" class="defi-btn">${tD("top_revenir")}</button>`}
     </section>`;
 
+  // Le tableau porte le nombre de familles qu'il contient : Top 2, Top 3, puis
+  // Top 10 quand il est plein. Un tableau vide qu'on cache n'attire personne ;
+  // un Top 2 qui grandit sous les yeux, si — et chaque nouvelle arrivante en
+  // change le titre.
+  const plein = Math.min(10, top.length);
+  const titre = plein > 0 ? tD("top_titre_n", { n: plein }) : tD("top_titre");
+
   ecran(`
     <div class="defi-hero defi-hero-serre">
       <p class="defi-kicker">${tD("top_saison", { s: saison })}</p>
-      <h1 class="defi-titre">${tD("top_titre")}</h1>
+      <h1 class="defi-titre">${titre}</h1>
       <p class="defi-note">${tD("top_sous")}</p>
     </div>
 
-    ${d.visible
-      ? (top.length
-          ? `<section class="defi-bloc"><h2>${tD("top_h")}</h2>
-               <div class="defi-podium">${podium}</div>
-               ${reste ? `<ol class="defi-liste">${reste}</ol>` : ""}
-               <p class="defi-note">${tD("top_regle")}</p></section>`
-          : `<section class="defi-bloc"><p class="defi-note">${tD("top_vide")}</p></section>`)
-      : `<section class="defi-bloc defi-scelle">
-           <p class="defi-scelle-emoji">🔒</p>
-           <h2>${tD("top_ferme_t")}</h2>
-           <p class="defi-note">${tD("top_ferme_d", { n: d.consentantes || 0, seuil: d.seuil })}</p>
-           <div class="defi-jauge"><div class="defi-jauge-r" style="width:${Math.max(3, Math.min(100, Math.round(((d.consentantes || 0) / (d.seuil || 10)) * 100)))}%"></div></div>
+    ${top.length
+      ? `<section class="defi-bloc"><h2>${tD("top_h")}</h2>
+           <div class="defi-podium">${podium}</div>
+           ${reste ? `<ol class="defi-liste">${reste}</ol>` : ""}
+           ${plein < 10 ? `<p class="defi-grandit">${tD("top_grandit", { n: plein, reste: 10 - plein })}</p>` : ""}
+           <p class="defi-note">${tD("top_regle")}</p></section>`
+      : `<section class="defi-bloc defi-premiere">
+           <p class="defi-premiere-emoji">🥇</p>
+           <h2>${tD("top_premiere_t")}</h2>
+           <p class="defi-note">${tD("top_premiere_d")}</p>
          </section>`}
 
     ${moi}

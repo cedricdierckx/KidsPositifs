@@ -3253,8 +3253,15 @@ test("défi : le tableau mondial respecte le consentement et le seuil", () => {
   // consentante voit le tableau sans recevoir de rang — « 47ᵉ sur 52 » ne se dit pas.
   assert.ok(/d\.mon_rang \? tD\("top_mon_rang"/.test(src),
     "le rang doit venir de la base, jamais être recalculé côté page");
-  assert.ok(/d\.visible[\s\S]{0,900}top_ferme_t/.test(src),
-    "sous le seuil, le tableau doit rester scellé");
+  // Le tableau ne se scelle plus : il porte le nombre de familles qu'il
+  // contient, et grandit jusqu'à dix. Un tableau caché n'attire personne.
+  assert.ok(/const plein = Math\.min\(10, top\.length\)/.test(src),
+    "le titre doit suivre le nombre de familles inscrites, plafonné à dix");
+  assert.ok(/plein > 0 \? tD\("top_titre_n", \{ n: plein \}\)/.test(src),
+    "le titre doit être le Top N");
+  assert.ok(/plein < 10 \? [\s\S]{0,80}top_grandit/.test(src),
+    "sous dix familles, le tableau doit dire qu'il grandit");
+  assert.ok(!/top_ferme_t|defi-scelle/.test(src), "il ne doit plus rester de tableau scellé");
   // L'inscription se fait par le choix du nom de code, à la porte, et nulle part
   // ailleurs : plus de case à cocher séparée. Mais elle reste un GESTE, et
   // l'écran doit le dire — sans quoi le consentement ne serait plus éclairé.
@@ -3271,16 +3278,16 @@ test("défi : le tableau mondial respecte le consentement et le seuil", () => {
   assert.ok(/p_optin: false/.test(src), "on doit pouvoir en sortir");
   assert.ok(/confirm\(tD\("top_sortir_conf"\)\)/.test(src), "la sortie doit être confirmée");
 
-  const cles = ["top_bouton", "top_accroche", "top_titre", "top_sous", "top_saison", "top_h",
-                "top_regle", "top_vide", "top_chargement", "top_indispo", "top_ferme_t",
-                "top_ferme_d", "top_mon_rang", "top_sans_rang", "top_mes_familles",
+  const cles = ["top_bouton", "top_accroche", "top_titre", "top_titre_n", "top_sous", "top_saison",
+                "top_h", "top_regle", "top_grandit", "top_premiere_t", "top_premiere_d",
+                "top_chargement", "top_indispo", "top_mon_rang", "top_sans_rang", "top_mes_familles",
                 "top_inscrit_note", "top_hors_note", "top_retire_note", "top_revenir",
                 "top_inscrit", "top_sortir", "top_sortir_conf", "top_sorti"];
   Object.keys(d.DEFI_LANGUES).forEach(lg =>
     cles.forEach(k => assert.ok(d.DEFI_I18N[lg][k], `${k} manquant en ${lg}`)));
   Object.keys(d.DEFI_LANGUES).forEach(lg => {
-    assert.ok(d.DEFI_I18N[lg]["top_ferme_d"].includes("{seuil}")
-           && d.DEFI_I18N[lg]["top_ferme_d"].includes("{n}"), "paramètres perdus en " + lg);
+    assert.ok(d.DEFI_I18N[lg]["top_titre_n"].includes("{n}"), "{n} perdu dans le titre (" + lg + ")");
+    assert.ok(d.DEFI_I18N[lg]["top_grandit"].includes("{reste}"), "{reste} perdu en " + lg);
     assert.ok(d.DEFI_I18N[lg]["top_mon_rang"].includes("{n}"), "{n} perdu en " + lg);
   });
 });
