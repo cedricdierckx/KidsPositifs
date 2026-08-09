@@ -4,9 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#141a24">
-  <!-- Page NON RÉFÉRENCÉE et liée depuis nulle part : on n'y arrive que par
-       l'URL directe ou par un lien d'arène reçu d'un ami. Elle est aussi
-       exclue dans robots.txt. -->
+  <!-- Seconde adresse de la même page : /challenge. C'est un FICHIER, non une
+       réécriture — avec cleanUrls, une réécriture vers /defi.html visait une
+       route qui n'existe plus et renvoyait 404. Le fichier, lui, est servi.
+       Toute la logique vit dans /js/defi.js : ces deux coquilles n'ont rien
+       d'autre à contenir, et un test vérifie qu'elles restent identiques.
+       Page NON RÉFÉRENCÉE, exclue dans robots.txt. -->
   <meta name="robots" content="noindex, nofollow">
   <!-- Chemins ABSOLUS : la même page existe sous deux adresses (/defi et
        /challenge). Des chemins relatifs se résoudraient différemment selon

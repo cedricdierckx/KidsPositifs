@@ -9,5 +9,6 @@ Disallow: /croissance.html
 Disallow: /defi
 Disallow: /defi.html
 Disallow: /challenge
+Disallow: /challenge.html
 
 Sitemap: https://famiteam.com/sitemap.xml

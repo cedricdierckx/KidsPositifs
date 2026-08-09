@@ -3295,26 +3295,33 @@ test("défi : le tableau mondial respecte le consentement et le seuil", () => {
 test("défi : l'adresse /challenge mène à la page, sans l'exposer", () => {
   const fs = require("fs"), path = require("path");
   const r = path.join(__dirname, "..");
+  // /challenge est un FICHIER, pas une réécriture. Avec cleanUrls, une
+  // réécriture vers /defi.html visait une route qui n'existe plus — Vercel
+  // renvoyait 404. Un fichier statique, lui, ne peut pas manquer.
+  assert.ok(fs.existsSync(path.join(r, "challenge.html")), "challenge.html absent");
   const vercel = JSON.parse(fs.readFileSync(path.join(r, "vercel.json"), "utf8"));
-  const rw = vercel.rewrites || [];
-  ["/challenge", "/challenge/"].forEach(src => {
-    const e = rw.find(x => x.source === src);
-    assert.ok(e, "réécriture manquante pour " + src);
-    assert.strictEqual(e.destination, "/defi.html", "mauvaise destination pour " + src);
-  });
+  assert.strictEqual(vercel.cleanUrls, true, "cleanUrls est ce qui sert challenge.html sous /challenge");
+  assert.ok(!(vercel.rewrites || []).some(x => /challenge/.test(x.source || "")),
+    "plus de réécriture pour /challenge : le fichier suffit");
 
-  // Servie sous /challenge/, la page doit charger ses scripts depuis la racine :
-  // des chemins relatifs iraient les chercher dans /challenge/js/.
-  const html = fs.readFileSync(path.join(r, "defi.html"), "utf8");
-  const refs = [...html.matchAll(/(?:src|href)="([^"]+)"/g)].map(m => m[1])
+  // Les deux coquilles doivent rester identiques — mêmes ressources, même
+  // version de cache — sinon l'une des deux adresses servira du code périmé.
+  const lire = (f) => fs.readFileSync(path.join(r, f), "utf8");
+  const ressources = (html) => [...html.matchAll(/(?:src|href)="([^"]+)"/g)].map(m => m[1])
     .filter(u => /\.(js|css)(\?|$)/.test(u));
-  assert.ok(refs.length >= 4, "ressources introuvables dans defi.html");
-  refs.forEach(u => assert.ok(/^(https?:)?\/\//.test(u) || u.startsWith("/"),
-    "chemin relatif : casserait sous /challenge/ — " + u));
+  const rDefi = ressources(lire("defi.html")), rChal = ressources(lire("challenge.html"));
+  assert.ok(rDefi.length >= 4, "ressources introuvables dans defi.html");
+  assert.deepStrictEqual(rChal, rDefi, "les deux adresses ne chargent pas les mêmes fichiers");
+  // Chemins absolus : servies sous deux adresses, elles ne peuvent pas être relatives.
+  rDefi.forEach(u => assert.ok(/^(https?:)?\/\//.test(u) || u.startsWith("/"),
+    "chemin relatif : se résoudrait différemment selon l'adresse — " + u));
+  // La seconde adresse doit être aussi discrète que la première.
+  assert.ok(/name="robots" content="noindex, nofollow"/.test(lire("challenge.html")),
+    "challenge.html doit porter noindex");
 
   // La nouvelle adresse doit être exclue de l'indexation comme l'ancienne.
   const robots = fs.readFileSync(path.join(r, "robots.txt"), "utf8");
-  ["/defi", "/defi.html", "/challenge"].forEach(u =>
+  ["/defi", "/defi.html", "/challenge", "/challenge.html"].forEach(u =>
     assert.ok(new RegExp("^Disallow: " + u + "$", "m").test(robots),
       "adresse non exclue de l'indexation : " + u));
   const sitemap = fs.readFileSync(path.join(r, "sitemap.xml"), "utf8");

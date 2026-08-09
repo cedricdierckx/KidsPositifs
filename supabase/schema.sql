@@ -459,7 +459,11 @@ begin
   select count(*) into consentantes from families where classement_optin;
 
   create temp table if not exists _cls (family_id uuid, n integer) on commit drop;
-  delete from _cls;
+  -- TRUNCATE et non DELETE : c'est la seule suppression du schéma qui n'avait
+  -- pas de clause WHERE, et certains garde-fous (pg_safeupdate, éditeurs SQL,
+  -- PostgREST) refusent une telle instruction. TRUNCATE dit exactement ce qu'on
+  -- veut — vider la table de travail — et ne tombe sous aucun de ces contrôles.
+  truncate _cls;
   insert into _cls
     select r.family_id, count(*)::integer
     from referrals r
