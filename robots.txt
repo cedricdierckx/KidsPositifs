@@ -8,5 +8,6 @@ Disallow: /croissance.html
 # reçu d'un ami. Elle porte aussi une balise noindex.
 Disallow: /defi
 Disallow: /defi.html
+Disallow: /challenge
 
 Sitemap: https://famiteam.com/sitemap.xml
