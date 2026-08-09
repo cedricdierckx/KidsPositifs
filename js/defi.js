@@ -630,28 +630,28 @@ Object.assign(DEFI_I18N.de, {
 
 /* Le nom de code vaut inscription : plus de case a cocher separee. */
 Object.assign(DEFI_I18N.fr, {
-  "porte_pseudo_d": "C'est lui qui s'affichera dans les arènes <strong>et au tableau mondial</strong> : en le choisissant, tu y entres. Choisis-le drôle plutôt que vrai — jamais ton nom de famille, jamais le prénom d'un enfant.",
+  "porte_pseudo_d": "C'est lui qui s'affichera dans les arènes et au tableau mondial : en le choisissant, tu y entres. Choisis-le drôle plutôt que vrai — jamais ton nom de famille, jamais le prénom d'un enfant.",
   "top_sous": "Les dix familles qui ont fait découvrir l'app au plus grand nombre cette saison, sous le nom de code qu'elles se sont donné.",
   "top_hors_note": "Tu n'y figures pas pour l'instant.",
   "top_retire_note": "Tu t'es retiré·e du tableau. Ton nom de code n'y apparaît plus, et aucun rang ne t'est attribué.",
   "top_revenir": "Réapparaître au tableau"
 });
 Object.assign(DEFI_I18N.en, {
-  "porte_pseudo_d": "It's what shows in arenas <strong>and on the world board</strong>: by choosing it, you enter. Pick funny over true — never your family name, never a child's first name.",
+  "porte_pseudo_d": "It's what shows in arenas and on the world board: by choosing it, you enter. Pick funny over true — never your family name, never a child's first name.",
   "top_sous": "The ten families who introduced the app to the most others this season, under the code name they gave themselves.",
   "top_hors_note": "You're not on it at the moment.",
   "top_retire_note": "You withdrew from the board. Your code name no longer appears there, and no rank is assigned to you.",
   "top_revenir": "Appear again on the board"
 });
 Object.assign(DEFI_I18N.nl, {
-  "porte_pseudo_d": "Die verschijnt in de arena's <strong>en op het wereldbord</strong>: door hem te kiezen, doe je mee. Kies liever grappig dan echt — nooit je familienaam, nooit de voornaam van een kind.",
+  "porte_pseudo_d": "Die verschijnt in de arena's en op het wereldbord: door hem te kiezen, doe je mee. Kies liever grappig dan echt — nooit je familienaam, nooit de voornaam van een kind.",
   "top_sous": "De tien gezinnen die de app dit seizoen aan de meeste anderen lieten ontdekken, onder de codenaam die ze zichzelf gaven.",
   "top_hors_note": "Je staat er momenteel niet op.",
   "top_retire_note": "Je hebt je van het bord teruggetrokken. Je codenaam staat er niet meer op en je krijgt geen enkele rang.",
   "top_revenir": "Weer op het bord verschijnen"
 });
 Object.assign(DEFI_I18N.de, {
-  "porte_pseudo_d": "Er erscheint in den Arenen <strong>und auf der Welttafel</strong>: mit der Wahl trittst du ein. Wähle lieber witzig als echt — nie deinen Familiennamen, nie den Vornamen eines Kindes.",
+  "porte_pseudo_d": "Er erscheint in den Arenen und auf der Welttafel: mit der Wahl trittst du ein. Wähle lieber witzig als echt — nie deinen Familiennamen, nie den Vornamen eines Kindes.",
   "top_sous": "Die zehn Familien, die die App diese Saison den meisten anderen gezeigt haben, unter dem Decknamen, den sie sich gegeben haben.",
   "top_hors_note": "Du stehst derzeit nicht darauf.",
   "top_retire_note": "Du hast dich von der Tafel zurückgezogen. Dein Deckname erscheint dort nicht mehr, und dir wird kein Rang zugewiesen.",
