@@ -103,13 +103,13 @@ et le présent registre est tenu.
 | | |
 |---|---|
 | Finalité | Remercier publiquement, à l'intérieur de l'application, les familles qui en ont fait connaître d'autres |
-| Base légale | **Consentement — art. 6.1.a**, recueilli par une case décochée par défaut, retirable en un clic (art. 7.3) |
-| Personnes concernées | Familles qui ont explicitement demandé à y figurer |
+| Base légale | **Consentement — art. 6.1.a**, retirable en un clic (art. 7.3). Recueilli par deux chemins : une case décochée par défaut dans l'application, **ou** le choix d'un nom de code à l'entrée du mode Défi — un geste libre, sans lequel on n'entre pas, et dont l'écran dit explicitement qu'il fait figurer au tableau |
+| Personnes concernées | Familles qui ont coché la case, ou qui se sont donné un nom de code en entrant dans le mode Défi |
 | Catégories de données | **Un nom d'équipe choisi par la famille** (24 caractères) et un nombre de familles amenées. Rien d'autre |
 | Données **non** publiées | Le nom de la famille (`families.name`), l'adresse e-mail, le prénom d'un enfant, l'identité des familles amenées |
 | Destinataires | Les autres familles **connectées** à l'application. Jamais le web public, jamais un tiers |
 | Conservation | Tant que le consentement dure. Le retrait **efface le nom d'équipe** ; il n'en reste aucune trace |
-| Mesures | Opt-in refusé sans nom d'équipe (accepter sans pseudonyme reviendrait à publier le vrai nom) ; aucun rang attribué à une famille non consentante ; tableau masqué sous un seuil de familles consentantes |
+| Mesures | Inscription refusée sans nom d'équipe (accepter sans pseudonyme reviendrait à publier le vrai nom) ; aucun rang attribué à une famille non consentante ; tableau masqué sous un seuil de familles consentantes ; retrait accessible depuis le tableau lui-même, en un clic, et effaçant le pseudonyme |
 
 Le **code de parrainage** (`families.referral_code`) et le rattachement d'une
 famille à son parrain (`referrals`) relèvent de **T4 — Liste d'attente et

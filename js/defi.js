@@ -514,8 +514,6 @@ Object.assign(DEFI_I18N.fr, {
   "top_mes_familles": "{n} famille(s) installée(s) cette saison",
   "top_inscrit_note": "Tu figures au tableau sous le nom <strong>{pseudo}</strong>.",
   "top_hors_note": "Tu n'y figures pas. Tant que tu n'y es pas, aucun rang ne t'est attribué — ni bon, ni mauvais.",
-  "top_entrer": "Figurer au tableau",
-  "top_consentement": "En y entrant, tu acceptes que ce nom de code et ton nombre de familles soient visibles des autres familles. Rien d'autre. Tu peux en sortir quand tu veux.",
   "top_inscrit": "Te voilà au tableau 🏆",
   "top_sortir": "Me retirer du tableau",
   "top_sortir_conf": "Tu n'apparaîtras plus au tableau et ton nom de code y sera effacé. Continuer ?",
@@ -556,8 +554,6 @@ Object.assign(DEFI_I18N.en, {
   "top_mes_familles": "{n} settled family/families this season",
   "top_inscrit_note": "You appear on the board as <strong>{pseudo}</strong>.",
   "top_hors_note": "You're not on it. While you're not, no rank is assigned to you — good or bad.",
-  "top_entrer": "Appear on the board",
-  "top_consentement": "By joining, you agree that this code name and your family count are visible to other families. Nothing else. You can leave whenever you want.",
   "top_inscrit": "You're on the board 🏆",
   "top_sortir": "Remove me from the board",
   "top_sortir_conf": "You will no longer appear on the board and your code name will be erased from it. Continue?",
@@ -598,8 +594,6 @@ Object.assign(DEFI_I18N.nl, {
   "top_mes_familles": "{n} blijvend(e) gezin(nen) dit seizoen",
   "top_inscrit_note": "Je staat op het bord als <strong>{pseudo}</strong>.",
   "top_hors_note": "Je staat er niet op. Zolang dat zo is, krijg je geen enkele rang — goed noch slecht.",
-  "top_entrer": "Op het bord verschijnen",
-  "top_consentement": "Door mee te doen ga je ermee akkoord dat deze codenaam en je aantal gezinnen zichtbaar zijn voor andere gezinnen. Niets anders. Je kunt er altijd uitstappen.",
   "top_inscrit": "Je staat op het bord 🏆",
   "top_sortir": "Haal me van het bord",
   "top_sortir_conf": "Je verschijnt niet meer op het bord en je codenaam wordt er gewist. Doorgaan?",
@@ -640,13 +634,42 @@ Object.assign(DEFI_I18N.de, {
   "top_mes_familles": "{n} bleibende Familie(n) diese Saison",
   "top_inscrit_note": "Du stehst als <strong>{pseudo}</strong> auf der Tafel.",
   "top_hors_note": "Du stehst nicht darauf. Solange das so ist, wird dir kein Rang zugewiesen — weder gut noch schlecht.",
-  "top_entrer": "Auf der Tafel erscheinen",
-  "top_consentement": "Mit dem Beitritt stimmst du zu, dass dieser Deckname und deine Familienzahl für andere Familien sichtbar sind. Sonst nichts. Du kannst jederzeit wieder austreten.",
   "top_inscrit": "Du stehst auf der Tafel 🏆",
   "top_sortir": "Mich von der Tafel nehmen",
   "top_sortir_conf": "Du erscheinst nicht mehr auf der Tafel und dein Deckname wird dort gelöscht. Fortfahren?",
   "top_sorti": "Du bist nicht mehr auf der Tafel."
 });
+
+/* Le nom de code vaut inscription : plus de case a cocher separee. */
+Object.assign(DEFI_I18N.fr, {
+  "porte_pseudo_d": "C'est lui qui s'affichera dans les arènes <strong>et au tableau mondial</strong> : en le choisissant, tu y entres. Choisis-le drôle plutôt que vrai — jamais ton nom de famille, jamais le prénom d'un enfant.",
+  "top_sous": "Les dix familles qui ont fait découvrir l'app au plus grand nombre cette saison, sous le nom de code qu'elles se sont donné.",
+  "top_hors_note": "Tu n'y figures pas pour l'instant.",
+  "top_retire_note": "Tu t'es retiré·e du tableau. Ton nom de code n'y apparaît plus, et aucun rang ne t'est attribué.",
+  "top_revenir": "Réapparaître au tableau"
+});
+Object.assign(DEFI_I18N.en, {
+  "porte_pseudo_d": "It's what shows in arenas <strong>and on the world board</strong>: by choosing it, you enter. Pick funny over true — never your family name, never a child's first name.",
+  "top_sous": "The ten families who introduced the app to the most others this season, under the code name they gave themselves.",
+  "top_hors_note": "You're not on it at the moment.",
+  "top_retire_note": "You withdrew from the board. Your code name no longer appears there, and no rank is assigned to you.",
+  "top_revenir": "Appear again on the board"
+});
+Object.assign(DEFI_I18N.nl, {
+  "porte_pseudo_d": "Die verschijnt in de arena's <strong>en op het wereldbord</strong>: door hem te kiezen, doe je mee. Kies liever grappig dan echt — nooit je familienaam, nooit de voornaam van een kind.",
+  "top_sous": "De tien gezinnen die de app dit seizoen aan de meeste anderen lieten ontdekken, onder de codenaam die ze zichzelf gaven.",
+  "top_hors_note": "Je staat er momenteel niet op.",
+  "top_retire_note": "Je hebt je van het bord teruggetrokken. Je codenaam staat er niet meer op en je krijgt geen enkele rang.",
+  "top_revenir": "Weer op het bord verschijnen"
+});
+Object.assign(DEFI_I18N.de, {
+  "porte_pseudo_d": "Er erscheint in den Arenen <strong>und auf der Welttafel</strong>: mit der Wahl trittst du ein. Wähle lieber witzig als echt — nie deinen Familiennamen, nie den Vornamen eines Kindes.",
+  "top_sous": "Die zehn Familien, die die App diese Saison den meisten anderen gezeigt haben, unter dem Decknamen, den sie sich gegeben haben.",
+  "top_hors_note": "Du stehst derzeit nicht darauf.",
+  "top_retire_note": "Du hast dich von der Tafel zurückgezogen. Dein Deckname erscheint dort nicht mehr, und dir wird kein Rang zugewiesen.",
+  "top_revenir": "Wieder auf der Tafel erscheinen"
+});
+
 
 function langueInitiale() {
   try {
@@ -982,10 +1005,18 @@ function ecranPorte(suite) {
       </section>
     </div>`);
 
-  $("#defi-porte-ok").onclick = () => {
+  $("#defi-porte-ok").onclick = async () => {
     const v = ($("#defi-porte-pseudo").value || "").trim();
     if (!v) { $("#defi-porte-pseudo").focus(); return toast(tD("porte_manque")); }
     memoriserPseudo(v);
+    // Le nom de code VAUT inscription au tableau : on ne repose pas la question
+    // ailleurs. C'est un consentement par l'acte, comme entrer dans une arène —
+    // d'où la phrase qui le dit juste au-dessus du champ. Best-effort : si la
+    // base refuse, le nom de code sert quand même aux arènes.
+    if (familleId) {
+      try { await sb.rpc("definir_classement_optin", { p_family: familleId, p_optin: true, p_pseudo: v }); }
+      catch (e) { /* le tableau attendra ; les arènes, non */ }
+    }
     toast(tD("porte_bienvenue", { pseudo: v }));
     suite();
   };
@@ -1045,11 +1076,8 @@ function dessinerTop(d, saison) {
       ${d.moi_inscrite
         ? `<p class="defi-note">${tD("top_inscrit_note", { pseudo: echapper(d.mon_pseudo || "") })}</p>
            <button id="defi-top-sortir" class="defi-lien defi-lien-danger">${tD("top_sortir")}</button>`
-        : `<p class="defi-note">${tD("top_hors_note")}</p>
-           <input id="defi-top-pseudo" class="defi-champ" maxlength="24"
-                  placeholder="${tD("porte_pseudo_ph")}" value="${echapper(pseudoMemorise())}">
-           <button id="defi-top-entrer" class="defi-btn">${tD("top_entrer")}</button>
-           <p class="defi-note">${tD("top_consentement")}</p>`}
+        : `<p class="defi-note">${tD("top_retire_note")}</p>
+           <button id="defi-top-entrer" class="defi-btn">${tD("top_revenir")}</button>`}
     </section>`;
 
   ecran(`
@@ -1080,9 +1108,11 @@ function dessinerTop(d, saison) {
 
   $("#defi-top-retour").onclick = ecranAccueil;
   const bEntrer = $("#defi-top-entrer");
+  // Ce bouton ne sert plus qu'à revenir après un retrait volontaire : on
+  // réutilise le nom de code déjà choisi à la porte, sans reposer la question.
   if (bEntrer) bEntrer.onclick = async () => {
-    const v = ($("#defi-top-pseudo").value || "").trim();
-    if (!v) { $("#defi-top-pseudo").focus(); return toast(tD("manque_pseudo")); }
+    const v = pseudoMemorise();
+    if (!v) return ecranPorte(() => ecranTop());
     const { error } = await sb.rpc("definir_classement_optin",
       { p_family: familleId, p_optin: true, p_pseudo: v });
     if (error) return toast(error.message);

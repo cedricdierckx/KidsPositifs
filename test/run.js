@@ -2133,7 +2133,13 @@ test("conformité : la politique de confidentialité décrit le tableau et le co
   const path = require("path");
   const c = fs.readFileSync(path.join(__dirname, "..", "confidentialite.html"), "utf8");
   assert.ok(/tableau d'honneur/i.test(c), "le tableau d'honneur n'est pas mentionné");
-  assert.ok(/consentement explicite/i.test(c), "le consentement explicite n'est pas annoncé");
+  // Le consentement se donne par deux chemins depuis que le nom de code du mode
+  // Défi vaut inscription. Ce qui doit rester écrit, c'est qu'il y a
+  // consentement, qu'il n'est jamais implicite, et par quels gestes il se donne.
+  assert.ok(/consentement/i.test(c), "le consentement n'est pas annoncé");
+  assert.ok(/jamais par défaut/i.test(c), "il faut dire que le tableau n'est jamais rempli par défaut");
+  assert.ok(/nom de code/i.test(c) && /mode Défi/i.test(c),
+    "le second chemin de consentement (le nom de code du mode Défi) doit être décrit");
   assert.ok(/code\s*<\/strong>|code permanent/i.test(c), "le code de parrainage n'est pas mentionné");
   assert.ok(/jamais le prénom d'un\s*\n?\s*<strong>enfant|jamais le prénom d'un\s+enfant|prénom d'un\s*\n?\s*enfant/i.test(c.replace(/<\/?strong>/g, "")),
     "l'exclusion des prénoms d'enfants n'est pas promise");
@@ -3249,16 +3255,26 @@ test("défi : le tableau mondial respecte le consentement et le seuil", () => {
     "le rang doit venir de la base, jamais être recalculé côté page");
   assert.ok(/d\.visible[\s\S]{0,900}top_ferme_t/.test(src),
     "sous le seuil, le tableau doit rester scellé");
-  // L'entrée au tableau est un acte explicite, jamais un effet de bord.
-  assert.ok(/definir_classement_optin[\s\S]{0,120}p_optin: true/.test(src),
-    "l'entrée au tableau doit passer par un consentement explicite");
+  // L'inscription se fait par le choix du nom de code, à la porte, et nulle part
+  // ailleurs : plus de case à cocher séparée. Mais elle reste un GESTE, et
+  // l'écran doit le dire — sans quoi le consentement ne serait plus éclairé.
+  assert.ok(/definir_classement_optin[\s\S]{0,140}p_optin: true/.test(src),
+    "le nom de code doit inscrire au tableau");
+  const porte = src.slice(src.indexOf("function ecranPorte"));
+  assert.ok(/definir_classement_optin/.test(porte.slice(0, porte.indexOf("\n}\n"))),
+    "l'inscription doit partir de la porte");
+  const d2 = apiDefi();
+  Object.keys(d2.DEFI_LANGUES).forEach(lg =>
+    assert.ok(/tableau|board|bord|tafel/i.test(d2.DEFI_I18N[lg]["porte_pseudo_d"]),
+      "la porte doit annoncer que le nom de code figure au tableau (" + lg + ")"));
+  // Et l'on doit pouvoir en sortir, en un clic, avec confirmation.
   assert.ok(/p_optin: false/.test(src), "on doit pouvoir en sortir");
   assert.ok(/confirm\(tD\("top_sortir_conf"\)\)/.test(src), "la sortie doit être confirmée");
 
   const cles = ["top_bouton", "top_accroche", "top_titre", "top_sous", "top_saison", "top_h",
                 "top_regle", "top_vide", "top_chargement", "top_indispo", "top_ferme_t",
                 "top_ferme_d", "top_mon_rang", "top_sans_rang", "top_mes_familles",
-                "top_inscrit_note", "top_hors_note", "top_entrer", "top_consentement",
+                "top_inscrit_note", "top_hors_note", "top_retire_note", "top_revenir",
                 "top_inscrit", "top_sortir", "top_sortir_conf", "top_sorti"];
   Object.keys(d.DEFI_LANGUES).forEach(lg =>
     cles.forEach(k => assert.ok(d.DEFI_I18N[lg][k], `${k} manquant en ${lg}`)));
