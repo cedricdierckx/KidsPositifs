@@ -3823,8 +3823,13 @@ function blocCartesSurprises(enf) {
     sec.innerHTML = html;
     return sec;
   }
+  // Une activité réalisée n'a plus rien à demander : elle quitte le fil principal
+  // et va s'empiler, repliée, tout en bas. On ne la supprime pas — les parents
+  // peuvent la réinitialiser, et l'enfant aime revoir ce qui a été fait.
+  const faites = [];
   html += `<div class="cs-liste">`;
   cartes.forEach((c, idx) => {
+    if (c.faite) { faites.push({ c, idx }); return; }
     const couleur = CS_COULEURS[idx % CS_COULEURS.length];   // couleur propre à chaque carte
     const titre = trData("carte", c.id, c.titre);
     const activite = trData("carteAct", c.id, c.activite);
@@ -3847,7 +3852,7 @@ function blocCartesSurprises(enf) {
       </div>`;
 
     const visible = c.debloquee || c.revele;   // carte montrée (sinon : mystère)
-    html += `<div class="cs-carte${c.debloquee ? " ouverte" : (visible ? " visible" : " mystere")}${c.faite ? " faite" : ""}" style="--cs-c:${couleur}">`;
+    html += `<div class="cs-carte${c.debloquee ? " ouverte" : (visible ? " visible" : " mystere")}" style="--cs-c:${couleur}">`;
     if (c.debloquee) {
       // Carte DÉBLOQUÉE (jauge pleine) : activité + invitation à la faire.
       html += `<div class="cs-tete"><span class="cs-emoji">${c.emoji}</span>
@@ -3859,20 +3864,17 @@ function blocCartesSurprises(enf) {
       // quelque chose ; une date, non. Tant qu'aucun jour n'est fixé, on garde
       // l'invitation à le faire — mais sans jamais l'annoncer à l'enfant.
       const jRdv = joursAvantCarte(c);
-      if (jRdv !== null && !c.faite) {
+      if (jRdv !== null) {
         html += `<p class="cs-rdv${jRdv <= 1 && jRdv >= 0 ? " proche" : ""}">
           ${jRdv < 0 ? "🎈" : "📅"} ${texteDecompteCarte(jRdv)}
           <small>${jourLisible(c.prevueLe, true)}${c.prevueHeure ? " · " + echapper(c.prevueHeure) : ""}</small></p>`;
-      } else if (!c.faite) {
+      } else {
         html += `<p class="cs-afaire">${t("cs.a_faire")}</p>`;
       }
-      if (c.faite) html += `<p class="cs-faite-tag">${t("cs.faite")}</p>`;
-      else {
-        // Fixer la date se fait ici, là où la carte se regarde — mais derrière
-        // le code PIN : c'est un engagement de parent, pas un vœu d'enfant.
-        html += `<button class="btn-secondaire cs-plan-btn" data-plan="${c.id}">📅 ${t(c.prevueLe ? "cs.rdv_modifier" : "cs.rdv_planifier")}</button>
-          <button class="btn-secondaire cs-faite-btn" data-faite="${c.id}">${t("cs.faite_btn")}</button>`;
-      }
+      // Fixer la date se fait ici, là où la carte se regarde — mais derrière le
+      // code PIN : c'est un engagement de parent, pas un vœu d'enfant.
+      html += `<button class="btn-secondaire cs-plan-btn" data-plan="${c.id}">📅 ${t(c.prevueLe ? "cs.rdv_modifier" : "cs.rdv_planifier")}</button>
+        <button class="btn-secondaire cs-faite-btn" data-faite="${c.id}">${t("cs.faite_btn")}</button>`;
     } else {
       // Carte EN COURS : soit visible (objectif montré), soit mystère (caché).
       if (visible) {
@@ -3898,7 +3900,26 @@ function blocCartesSurprises(enf) {
     html += `</div>`;
   });
   html += `</div>`;
+
+  // Le tiroir des activités faites : fermé par défaut, il ne prend qu'une ligne.
+  if (faites.length) {
+    html += `<details class="pliable cs-faites"><summary class="pliable-tete">${
+      t("cs.faites_titre", { n: faites.length })}</summary><div class="pliable-corps">`;
+    faites.forEach(({ c }) => {
+      const titre = trData("carte", c.id, c.titre);
+      const quand = c.faiteLe ? jourLisible(c.faiteLe, true) : "";
+      html += `<div class="cs-faite-l">
+        <span class="cs-faite-emoji">${c.emoji}</span>
+        <span class="cs-faite-nom">${echapper(titre)}</span>
+        ${quand ? `<span class="cs-faite-quand">${quand}</span>` : ""}
+        <span class="cs-faite-ok">✅</span>
+      </div>`;
+    });
+    html += `</div></details>`;
+  }
+
   sec.innerHTML = html;
+  memoriserPli(sec.querySelector("details.cs-faites"), "cs-faites", false);
   // Actions : dons (limités aux Cœurs disponibles de l'enfant actif) + "fait".
   sec.querySelectorAll(".cs-don").forEach(b => {
     const montant = parseInt(b.dataset.montant, 10);

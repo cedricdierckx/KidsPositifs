@@ -4064,3 +4064,9 @@ Object.assign(I18N.de, {
   "cs.rdv_modifier": "Datum ändern",
   "cs.rdv_pin": "🔒 Elterncode, um das Datum zu setzen"
 });
+
+/* Le tiroir des activites deja faites. */
+Object.assign(I18N.fr, { "cs.faites_titre": "✅ Déjà faites · {n}" });
+Object.assign(I18N.en, { "cs.faites_titre": "✅ Already done · {n}" });
+Object.assign(I18N.nl, { "cs.faites_titre": "✅ Al gedaan · {n}" });
+Object.assign(I18N.de, { "cs.faites_titre": "✅ Schon gemacht · {n}" });

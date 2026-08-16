@@ -3389,6 +3389,36 @@ test("défi : le tableau de bord dit aussi ce qui ne flatte pas", () => {
   });
 });
 
+test("carte surprise : une activité réalisée quitte le fil principal", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const { api } = construireContexte();
+
+  const f = ui.slice(ui.indexOf("function blocCartesSurprises(enf)"));
+  const corps = f.slice(0, f.indexOf("\n}\n"));
+  // Les cartes faites sortent de la boucle principale avant tout rendu.
+  assert.ok(/if \(c\.faite\) \{ faites\.push\(\{ c, idx \}\); return; \}/.test(corps),
+    "une carte faite doit quitter la liste principale");
+  // Elles reviennent dans un tiroir, replié par défaut.
+  assert.ok(/<details class="pliable cs-faites">/.test(corps), "le tiroir des faites est absent");
+  assert.ok(/memoriserPli\(sec\.querySelector\("details\.cs-faites"\), "cs-faites", false\)/.test(corps),
+    "le tiroir doit être fermé par défaut et retenir son état");
+  // Réduites à une ligne : ni jauge, ni bouton, ni description.
+  const deb = corps.indexOf('<details class="pliable cs-faites">');
+  const tiroir = corps.slice(deb, corps.indexOf("</div></details>", deb));
+  ["cs-jauge", "cs-faite-btn", "cs-plan-btn", "cs-activite"].forEach(x =>
+    assert.ok(!tiroir.includes(x), "le tiroir ne doit contenir que des lignes : " + x));
+  // Plus aucun test mort sur c.faite dans la carte principale.
+  const principale = corps.slice(0, corps.indexOf('<details class="pliable cs-faites">'));
+  assert.ok(!/!c\.faite/.test(principale),
+    "les tests sur c.faite de la carte principale sont devenus inutiles");
+  Object.keys(api.LANGUES).forEach(lg => {
+    const v = api.I18N[lg]["cs.faites_titre"];
+    assert.ok(v, "cs.faites_titre manquant en " + lg);
+    assert.ok(v.includes("{n}"), "le compte doit être interpolé (" + lg + ")");
+  });
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

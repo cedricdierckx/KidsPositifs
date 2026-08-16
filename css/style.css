@@ -1724,3 +1724,17 @@ body.impression .carte-ami-actions{display:none}
 /* Explication de l'Arbre côté enfant : une phrase, sous celle du compte. */
 .arbre-enfant-expli{margin:6px 0 0; font-size:13.5px; line-height:1.45; color:#6b7c8d}
 .carte-ami-sansqr{text-align:center}
+
+/* ---- Activités déjà faites : un tiroir, pas une pile ----
+   Une carte réalisée n'a plus rien à demander. Elle quitte le fil principal et
+   se réduit à une ligne, repliée par défaut : on la retrouve si on la cherche,
+   elle n'encombre plus si on ne la cherche pas. */
+.cs-faites{margin-top:14px}
+.cs-faites .pliable-tete{font-size:14px; color:var(--doux)}
+.cs-faite-l{display:flex; align-items:center; gap:9px; padding:8px 4px;
+  border-bottom:1px solid #eef2f7; font-size:14px}
+.cs-faite-l:last-child{border-bottom:none}
+.cs-faite-emoji{font-size:18px; line-height:1}
+.cs-faite-nom{flex:1 1 auto; font-weight:700; color:#27384a; overflow-wrap:anywhere}
+.cs-faite-quand{flex:0 0 auto; font-size:12px; color:var(--doux)}
+.cs-faite-ok{flex:0 0 auto}
