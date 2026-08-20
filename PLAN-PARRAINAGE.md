@@ -189,7 +189,7 @@ ils ont été retirés, voir l'encadré de statut en tête de document.)*
 
 Un palier ne se perd jamais (cohérent avec « aucun point n'est jamais
 retiré »). Rien ici ne dépend des autres familles : **c'est ce qui rend le
-dispositif papapositif malgré le classement.**
+dispositif positif malgré le classement.**
 
 ### C. Le tableau d'honneur (top 10) — saisonnier, sur consentement, sous seuil
 

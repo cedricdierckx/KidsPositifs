@@ -174,7 +174,10 @@ const CROISSANCE_CHANTIERS = [
     but: "Écrire soi-même, en son nom, à quelques voix que les parents lisent déjà. Un contact choisi n'expose pas : ce n'est ni une interview ni un portrait, et l'app reste signée « FamiTeam ».",
     kpi: "10 inscriptions/mois issues de ces contacts",
     etapes: [
-      { id: "c_communaute_1", titre: "Dresser la liste des cinq destinataires", min: 20, detail: "Blogs et comptes francophones de parentalité positive lus par des parents de 2-7 ans — Papa Positive, Les Supers Parents, Cool Parents Make Happy Kids, Apprendre à éduquer, Maman Louve… Prendre l'adresse de contact sur leur site : cinq suffisent, quinze diluent." },
+      // Aucun nom de marque tierce n'est cité ici, volontairement : le plan
+      // est un document interne, mais il reste un écrit. On décrit les
+      // critères, la liste nominative se tient à part.
+      { id: "c_communaute_1", titre: "Dresser la liste des cinq destinataires", min: 20, detail: "Critères : francophone ou néerlandophone, lu par des parents de 2-7 ans, entre 5 000 et 40 000 abonnés (au-delà, la boîte est saturée et le pitch devient payant), et qui écrit déjà sur les alternatives à la punition. Priorité aux voix belges : elles ont un intérêt local à parler d'un projet belge. Prendre l'adresse de contact sur leur site : cinq suffisent, quinze diluent." },
       { id: "c_communaute_2", titre: "Envoyer les cinq e-mails", min: 25, detail: "Le modèle est écrit : ne restent que le prénom et une phrase propre à chacun (ce qu'on a aimé chez lui). Un envoi groupé n'obtient jamais de réponse.", mail: "m_influence" },
       { id: "c_communaute_3", titre: "Relancer une seule fois, à quinze jours", min: 15, detail: "Une relance courte, puis on laisse tranquille. Le silence est une réponse.", mail: "m_influence_relance" },
       { id: "c_communaute_4", titre: "Repérer d'où viennent les familles", min: 5, detail: "Chaque destinataire reçoit un lien marqué (?src=). L'origine des inscriptions s'affiche dans les chiffres du moment : on voit qui a réellement amené des familles." },
