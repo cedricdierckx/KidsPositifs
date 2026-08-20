@@ -3703,6 +3703,36 @@ test("parents : l'action principale a partout la même taille", () => {
     "le sélecteur ci-dessus dépend de cet attribut : il doit continuer d'être posé");
 });
 
+test("parents : le bandeau d'en-tête tient sur deux lignes, pas sur quatre", () => {
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const css = fs.readFileSync(path.join(r, "css/style.css"), "utf8");
+
+  // Le titre et la sortie partagent une ligne.
+  assert.ok(/const entete = el\("div", "par-entete"\)/.test(ui));
+  assert.ok(/el\("section", "carte par-banniere"\)/.test(ui),
+    "la bannière a besoin de sa propre classe : voir la spécificité ci-dessous");
+  // La pastille « activé » est ce qui empêchait la ligne unique, et elle ne
+  // disait rien de neuf à côté d'un bouton « Quitter ».
+  assert.ok(!/par\.actif\.badge/.test(ui), "la pastille d'état ne doit pas revenir");
+
+  // Deux réglages que j'ai eu tort de croire acquis, tous deux invisibles à
+  // la lecture et mesurés dans un navigateur :
+  const h1 = /\.par-banniere \.par-entete h1\{([^}]*)\}/.exec(css);
+  assert.ok(h1, "le sélecteur doit porter .par-banniere : à spécificité égale, "
+    + "`.carte h1` (24px) est déclaré plus loin et l'emporte");
+  assert.ok(/flex:0 1 auto/.test(h1[1]),
+    "sans facteur de croissance : avec `flex:1 1 auto` le titre occupait toute "
+    + "la ligne (mesuré : 298px sur 298) et renvoyait la sortie à la ligne suivante");
+  assert.ok(/margin:0 0 0 auto/.test(
+    /\.par-banniere \.par-entete \.btn-secondaire\{([^}]*)\}/.exec(css)[1]),
+    "la sortie se pousse à droite d'elle-même");
+
+  // Le libellé de langue partage la ligne des drapeaux au lieu d'en prendre une.
+  assert.ok(/\.langue-choix\{display:contents\}/.test(css),
+    "sans cela le groupe de drapeaux est insécable et « Langue » garde sa ligne");
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

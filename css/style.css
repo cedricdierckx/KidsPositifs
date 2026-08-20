@@ -54,14 +54,38 @@ body{
   96%{transform:rotate(-6deg)}
 }
 /* Sélecteur de langue « fun » (boutons drapeaux) */
-.langue-bloc{margin-top:12px}
-.langue-titre{display:block; font-size:14px; font-weight:700; color:var(--doux); margin-bottom:6px}
-.langue-choix{display:flex; flex-wrap:wrap; gap:8px}
-.langue-btn{display:flex; align-items:center; gap:7px; padding:8px 12px; cursor:pointer;
-  border:2px solid #e3edf5; border-radius:999px; background:#fff; font-size:14px; font-weight:700;
+/* ----- Bandeau « Mode parents » -----
+   Il annonce un ETAT et offre deux gestes rares (sortir, changer de langue).
+   Il occupait pourtant quatre lignes empilees en haut de chaque ecran parent :
+   un titre de 24px, un bouton pleine largeur, un libelle de langue seul sur sa
+   ligne, puis les drapeaux. Tout se resserre : titre + etat + sortie sur une
+   ligne, libelle a cote des drapeaux. Le <h1> ne rapetit qu'ICI — sur les
+   ecrans enfants (« Salut Maria », « Ma planete ») il reste un vrai titre. */
+.par-banniere .par-entete{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+/* Le selecteur porte `.par-banniere` non par gout mais par necessite :
+   `.par-entete h1` et `.carte h1` ont la meme specificite, et `.carte h1`
+   (24px, 26px en grand ecran) est declare plus loin dans le fichier — il
+   gagnait, et la taille ci-dessous n'etait jamais appliquee.
+   `flex:0 1 auto` et non `1 1 auto` : avec un facteur de croissance, le titre
+   s'etalait sur toute la largeur disponible (mesure : 298px sur 298), ne
+   laissait aucune place a la sortie et la renvoyait a la ligne suivante. Il ne
+   prend donc que sa largeur de texte ; `margin-left:auto` pousse la sortie a
+   droite, et `min-width:0` lui permet de rendre du terrain avant de replier. */
+.par-banniere .par-entete h1{margin:0; font-size:18px; flex:0 1 auto; min-width:0}
+.par-banniere .par-entete .btn-secondaire{width:auto; flex:0 0 auto; margin:0 0 0 auto;
+  padding:9px 13px; font-size:13px}
+
+.langue-bloc{margin-top:10px; display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+.langue-titre{font-size:13px; font-weight:700; color:var(--doux); flex:0 0 auto}
+/* `display:contents` fait des quatre drapeaux des freres du libelle : sans
+   cela, le groupe formait UN bloc insecable, qui ne pouvait pas se replier
+   autour de « Langue » et lui laissait une ligne pour lui seul. */
+.langue-choix{display:contents}
+.langue-btn{display:flex; align-items:center; gap:6px; padding:6px 10px; cursor:pointer;
+  border:2px solid #e3edf5; border-radius:999px; background:#fff; font-size:13px; font-weight:700;
   color:#54616f; transition:transform .12s, border-color .15s, background .15s}
 .langue-btn .langue-drapeau{display:inline-flex; line-height:0}
-.langue-drapeau .dpx{width:24px; height:17px; border-radius:3px; display:block;
+.langue-drapeau .dpx{width:19px; height:13px; border-radius:3px; display:block;
   box-shadow:0 0 0 1px rgba(0,0,0,.08)}
 .langue-btn:hover{transform:translateY(-2px) scale(1.03); border-color:#bcdcf0}
 .langue-btn:active{transform:scale(.94)}

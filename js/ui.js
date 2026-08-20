@@ -6194,11 +6194,20 @@ function vueReglages(c) {
   }
 
   // ----- Bandeau mode parents actif -----
-  const banniere = el("section", "carte");
-  banniere.innerHTML = `<h1>${t("par.actif.titre")} <span class="badge">${t("par.actif.badge")}</span></h1>`;
+  // Ce bandeau annonce un ÉTAT et offre deux gestes rares : il n'a pas à
+  // occuper quatre lignes en haut de chaque écran parent. Le titre, l'état et
+  // la sortie tiennent sur une ligne ; le libellé de langue passe à côté des
+  // drapeaux au lieu de s'offrir la sienne.
+  const banniere = el("section", "carte par-banniere");
+  const entete = el("div", "par-entete");
+  // Plus de pastille « activé » : le parent est sur l'écran parent, avec un
+  // bouton « Quitter » juste à côté — elle ne disait rien de neuf, et c'est
+  // elle qui empêchait le titre et la sortie de tenir sur une seule ligne.
+  entete.innerHTML = `<h1>${t("par.actif.titre")}</h1>`;
   const bq = el("button", "btn-secondaire", t("par.actif.quitter"));
   bq.onclick = quitterModeParents;
-  banniere.appendChild(bq);
+  entete.appendChild(bq);
+  banniere.appendChild(entete);
   // Sélecteur de langue « fun » : boutons drapeaux (plutôt qu'une liste).
   const blocLang = el("div", "langue-bloc");
   blocLang.innerHTML = `<span class="langue-titre">🌐 ${t("langue")}</span>`;
