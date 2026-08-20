@@ -1221,6 +1221,8 @@ Object.assign(I18N.en, {
   "defi.rep_pardon": "I make it right: I say sorry",
   "defi.rep_calin": "I make it right: I do something kind",
   "defi.rep_aide": "I make it right: I help the person involved",
+  "defi.rep_nettoyer": "I make it right: I clean up the mess I made",
+  "defi.rep_redemander": "I make it right: I calm down, then I ask nicely",
   "badge.coeur10": "Heart of gold", "badge.coeur50": "Super helper",
   "badge.eco_p": "Budding gardener", "badge.eco_h": "Friend of herbivores",
   "badge.eco_c": "Protector of predators", "badge.eco_chaine": "Complete food chain",
@@ -1327,6 +1329,8 @@ Object.assign(I18N.nl, {
   "defi.rep_pardon": "Ik maak het goed: ik bied mijn excuses aan",
   "defi.rep_calin": "Ik maak het goed: ik doe iets liefs",
   "defi.rep_aide": "Ik maak het goed: ik help de betrokken persoon",
+  "defi.rep_nettoyer": "Ik maak het goed: ik maak schoon wat ik vuil maakte",
+  "defi.rep_redemander": "Ik maak het goed: ik word rustig en vraag het dan vriendelijk",
   "badge.coeur10": "Gouden hart", "badge.coeur50": "Superhelper",
   "badge.eco_p": "Beginnende tuinier", "badge.eco_h": "Vriend van de herbivoren",
   "badge.eco_c": "Beschermer van de roofdieren", "badge.eco_chaine": "Volledige voedselketen",
@@ -1433,6 +1437,8 @@ Object.assign(I18N.de, {
   "defi.rep_pardon": "Ich mache es wieder gut: ich entschuldige mich",
   "defi.rep_calin": "Ich mache es wieder gut: ich tue etwas Liebes",
   "defi.rep_aide": "Ich mache es wieder gut: ich helfe der betroffenen Person",
+  "defi.rep_nettoyer": "Ich mache es wieder gut: ich putze weg, was ich schmutzig gemacht habe",
+  "defi.rep_redemander": "Ich mache es wieder gut: ich beruhige mich und frage dann freundlich",
   "badge.coeur10": "Goldenes Herz", "badge.coeur50": "Super-Helfer",
   "badge.eco_p": "Angehende(r) Gärtner(in)", "badge.eco_h": "Freund der Pflanzenfresser",
   "badge.eco_c": "Beschützer der Raubtiere", "badge.eco_chaine": "Vollständige Nahrungskette",
@@ -4070,3 +4076,9 @@ Object.assign(I18N.fr, { "cs.faites_titre": "✅ Déjà faites · {n}" });
 Object.assign(I18N.en, { "cs.faites_titre": "✅ Already done · {n}" });
 Object.assign(I18N.nl, { "cs.faites_titre": "✅ Al gedaan · {n}" });
 Object.assign(I18N.de, { "cs.faites_titre": "✅ Schon gemacht · {n}" });
+
+/* Pastille d'acces direct aux gestes de reparation. */
+Object.assign(I18N.fr, { "rep.pastille": "Oups, ça arrive… — réparer", "rep.pin_titre": "🔒 Code parent pour créditer une réparation" });
+Object.assign(I18N.en, { "rep.pastille": "Oops, it happens… — make it right", "rep.pin_titre": "🔒 Parent code to credit a repair" });
+Object.assign(I18N.nl, { "rep.pastille": "Oeps, dat gebeurt… — goedmaken", "rep.pin_titre": "🔒 Oudercode om een herstel toe te kennen" });
+Object.assign(I18N.de, { "rep.pastille": "Ups, das passiert… — wiedergutmachen", "rep.pin_titre": "🔒 Elterncode, um eine Reparatur anzurechnen" });

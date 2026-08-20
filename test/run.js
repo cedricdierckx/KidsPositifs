@@ -3419,6 +3419,52 @@ test("carte surprise : une activité réalisée quitte le fil principal", () => 
   });
 });
 
+test("réparation : six gestes, tous traduits, et un accès direct sous code parent", () => {
+  const fs = require("fs"), path = require("path");
+  const r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const css = fs.readFileSync(path.join(r, "css/style.css"), "utf8");
+  const { api } = construireContexte();
+
+  // Six gestes, dont le nettoyage : les quatre premiers ne couvraient ni la
+  // saleté, ni la réparation par les mots.
+  assert.strictEqual(api.DEFIS_REPARATION.length, 6, "il doit y avoir six gestes de réparation");
+  ["rep_nettoyer", "rep_redemander"].forEach(id =>
+    assert.ok(api.DEFIS_REPARATION.some(d => d.id === id), "geste manquant : " + id));
+  api.DEFIS_REPARATION.forEach(d => {
+    assert.ok(d.emoji && d.titre && d.bonus >= 1, "geste incomplet : " + d.id);
+    ["en", "nl", "de"].forEach(lg =>
+      assert.ok(api.I18N[lg]["defi." + d.id], `defi.${d.id} manquant en ${lg}`));
+  });
+
+  // La pastille de l'en-tête, et la même porte que le mode rétroactif.
+  assert.ok(/id="pastille-reparer"/.test(ui), "la pastille doit être dans l'en-tête");
+  assert.ok(/bRep\.onclick = ouvrirReparationRapide/.test(ui), "la pastille n'est pas câblée");
+  const f = ui.slice(ui.indexOf("function ouvrirReparationRapide"));
+  const corps = f.slice(0, f.indexOf("\n}\n"));
+  assert.ok(/modeParents \|\| !\(etat\.reglages && etat\.reglages\.codeParent\)/.test(corps),
+    "un parent déjà identifié, ou une famille sans code, ne doit pas être bloqué");
+  assert.ok(/demanderPin\(/.test(corps) && /etat\.reglages\.codeParent/.test(corps),
+    "créditer une réparation doit passer par le code parent quand il existe");
+
+  // La modale lit la MÊME liste que la carte de l'espace parents : deux listes
+  // finiraient par diverger.
+  const m = ui.slice(ui.indexOf("function modaleReparation"));
+  assert.ok(/DEFIS_REPARATION\.forEach/.test(m.slice(0, m.indexOf("\n}\n"))),
+    "la modale doit parcourir DEFIS_REPARATION");
+
+  // Le logo réserve la place des pastilles : sans cela il les recouvrait dès
+  // 360 px. C'est le retrait qui garantit l'absence de recouvrement, pas la
+  // taille de police — donc c'est lui qu'on verrouille.
+  assert.ok(/padding-left:96px; padding-right:56px/.test(css),
+    "le logo doit réserver la place des pastilles et du minuteur");
+  assert.ok(/\.logo\{[^}]*overflow:hidden/.test(css.replace(/\s+/g, " ")),
+    "le logo doit être tronqué plutôt que de déborder");
+  Object.keys(api.LANGUES).forEach(lg =>
+    ["rep.pastille", "rep.pin_titre"].forEach(k =>
+      assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`)));
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

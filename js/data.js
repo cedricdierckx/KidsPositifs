@@ -196,7 +196,13 @@ const DEFIS_REPARATION = [
   { id: "rep_ranger",  emoji: "🧹", titre: "Je répare : je range ce que j'ai fait tomber", bonus: 1 },
   { id: "rep_pardon",  emoji: "💬", titre: "Je répare : je présente mes excuses",          bonus: 1 },
   { id: "rep_calin",   emoji: "🤗", titre: "Je répare : je fais un geste doux",            bonus: 1 },
-  { id: "rep_aide",    emoji: "🤝", titre: "Je répare : j'aide la personne concernée",     bonus: 2 }
+  { id: "rep_aide",    emoji: "🤝", titre: "Je répare : j'aide la personne concernée",     bonus: 2 },
+  // Deux gestes ajoutés après usage réel : nettoyer manquait — c'est le plus
+  // concret et le plus fréquent — et « se calmer puis redemander » est le seul
+  // qui répare avec des mots plutôt qu'avec les mains. D'où son bonus de 2 :
+  // revenir parler après une colère demande davantage que ranger.
+  { id: "rep_nettoyer", emoji: "🧽", titre: "Je répare : je nettoie ce que j'ai sali",       bonus: 1 },
+  { id: "rep_redemander", emoji: "🌬️", titre: "Je répare : je me calme, puis je redemande gentiment", bonus: 2 }
 ];
 
 /* =====================================================================

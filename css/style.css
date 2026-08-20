@@ -23,7 +23,17 @@ body{
   position:relative; background:#fff; box-shadow:var(--ombre);
   padding:10px 14px; display:flex; flex-direction:column; gap:10px;
 }
-.logo{font-size:22px; font-weight:800; text-align:center}
+/* Le logo est centré en absolu entre des pastilles positionnées, elles, en
+   absolu : sans réservation, il venait mordre sur la deuxième pastille dès
+   360 px (mesuré : 4 px de recouvrement). Le retrait à gauche couvre les deux
+   pastilles, celui de droite le minuteur ; le texte ne peut donc plus les
+   atteindre à aucune largeur, et il est tronqué avant de déborder — c'est le
+   retrait, non la taille de police, qui garantit l'absence de recouvrement.
+   Le clamp() ne sert qu'au confort de lecture sur les écrans très étroits
+   (320 px), où 22 px auraient été tronqués. */
+.logo{font-size:clamp(16px, 5.4vw, 22px); font-weight:800; text-align:center;
+  padding-left:96px; padding-right:56px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .pastille-inviter{position:absolute; top:9px; left:12px; width:36px; height:36px;
   border:none; border-radius:50%; background:linear-gradient(135deg,#ffe9b8,#ffd1e0);
   font-size:19px; cursor:pointer; box-shadow:var(--ombre); line-height:1;
@@ -1738,3 +1748,15 @@ body.impression .carte-ami-actions{display:none}
 .cs-faite-nom{flex:1 1 auto; font-weight:700; color:#27384a; overflow-wrap:anywhere}
 .cs-faite-quand{flex:0 0 auto; font-size:12px; color:var(--doux)}
 .cs-faite-ok{flex:0 0 auto}
+
+/* ---- Pastille « réparer » : l'écran qu'on cherche dans l'urgence ----
+   Placée dans l'en-tête, à droite de celle des invitations. Couleurs d'arc-en-
+   ciel plutôt qu'alarmistes : réparer n'est pas une punition. */
+.pastille-reparer{position:absolute; top:9px; left:56px; width:36px; height:36px;
+  border:none; border-radius:50%; background:linear-gradient(135deg,#d8f3e6,#cfe6fb);
+  font-size:19px; cursor:pointer; box-shadow:var(--ombre); line-height:1;
+  display:flex; align-items:center; justify-content:center; transition:transform .15s}
+.pastille-reparer:hover{transform:scale(1.08) rotate(6deg)}
+.pastille-reparer:active{transform:scale(.92)}
+.rep-modale{max-width:460px}
+.rep-modale .missions{margin-top:10px}

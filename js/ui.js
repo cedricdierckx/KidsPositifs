@@ -709,6 +709,7 @@ function initSquelette() {
     <div class="haut-fixe">
     <header class="topbar">
       <button id="pastille-inviter" class="pastille-inviter" title="Inviter une autre famille">🎁<span id="pastille-badge" class="pastille-badge"></span></button>
+      <button id="pastille-reparer" class="pastille-reparer" title="${t("rep.pastille")}">🌈</button>
       <button id="timer-btn" class="timer-btn" title="${t("timer.titre")}">⏱️</button>
       <div class="logo">🌟 ${APP_NOM} <span id="sync-etat" class="sync-etat" title="État de la synchronisation">…</span></div>
       <div id="selecteur-enfant" class="selecteur"></div>
@@ -751,6 +752,12 @@ function initSquelette() {
     else modaleTimer();
   };
   majBoutonTimer();
+
+  // Accès direct aux gestes de réparation. C'est le seul écran qu'on cherche
+  // dans l'urgence — juste après l'incident, l'enfant à côté de soi — et il
+  // était au fond de l'espace parents, à cinq gestes de là.
+  const bRep = document.getElementById("pastille-reparer");
+  if (bRep) bRep.onclick = ouvrirReparationRapide;
 
   // Le bandeau dodo suit l'horloge système (voir planifierDodo).
   planifierDodo();
@@ -4639,6 +4646,56 @@ function blocReparation() {
   });
   rep.appendChild(g);
   return rep;
+}
+
+/* ---------- Réparation en accès direct ----------
+ * Même porte que le mode rétroactif et la planification d'une carte : code PIN
+ * s'il en existe un, accès immédiat sinon. Créditer un geste de réparation
+ * reste une décision de parent — mais elle doit pouvoir se prendre en deux
+ * touches, l'enfant à côté, sans traverser l'espace parents.
+ */
+function ouvrirReparationRapide() {
+  if (typeof modeDemo !== "undefined" && modeDemo) { modaleReparation(); return; }
+  const lancer = () => modaleReparation();
+  if (modeParents || !(etat.reglages && etat.reglages.codeParent)) { lancer(); return; }
+  demanderPin({
+    titre: t("rep.pin_titre"),
+    permettreOubli: true,
+    onReset: () => lancer(),
+    onOk: (saisi) => { if (saisi.trim() !== etat.reglages.codeParent) return false; lancer(); }
+  });
+}
+
+function modaleReparation() {
+  const enf = enfantActif();
+  if (!enf) return;
+  const jeune = estJeune(enf);
+  const ov = el("div", "pin-modal");
+  ov.innerHTML = `
+    <div class="pin-carte rep-modale">
+      <button class="modale-fermer" aria-label="${t("common.fermer")}">✕</button>
+      <div class="pin-titre">${t("rep.titre")}</div>
+      <p class="note">${t("rep.quand", { prenom: echapper(enf.prenom) })}</p>
+      <div id="rep-grille" class="missions"></div>
+      <p class="note">${t("rep.aide.annuler")}</p>
+    </div>`;
+  document.body.appendChild(ov);
+  const fermer = () => ov.remove();
+  ov.querySelector(".modale-fermer").onclick = fermer;
+  ov.addEventListener("click", e => { if (e.target === ov) fermer(); });
+
+  // Une seule source pour les six gestes : la même liste que la carte de
+  // l'espace parents, donc aucun risque de les voir diverger.
+  const g = ov.querySelector("#rep-grille");
+  DEFIS_REPARATION.forEach(d => {
+    const actif = reparationActive(enf, d.id);
+    const b = el("button", "mission rep" + (actif ? " fait" : ""));
+    b.innerHTML = `<span class="m-emoji">${d.emoji}</span>
+      <span class="m-titre">${trData("defi", d.id, d.titre)}</span>
+      <span class="m-points">${actif ? "✅" : pointsVisuels(d.bonus, "💛", jeune)}</span>`;
+    b.onclick = () => { defiReparation(d); fermer(); };
+    g.appendChild(b);
+  });
 }
 
 /* ---------- Vue Famille : activités d'équipe (cartes surprises) ---------- */
