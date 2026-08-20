@@ -3484,6 +3484,50 @@ test("réparation : six gestes, tous traduits, et un accès direct sous code par
   });
 });
 
+test("cartes : le nom « surprise » a disparu de tout ce que voient les familles", () => {
+  const fs = require("fs"), path = require("path");
+  const r = path.join(__dirname, "..");
+  const { api } = construireContexte();
+
+  // Aucune chaîne AFFICHÉE ne doit plus porter l'ancien nom : une carte peut
+  // rester mystère, mais la fonctionnalité s'appelle « cartes FamiTeam ».
+  const motifs = { fr: /cartes? surprises?/i, en: /surprise cards?/i,
+                   nl: /verrassingskaart/i, de: /Überraschungskarte/i };
+  const fautifs = [];
+  Object.keys(api.LANGUES).forEach(lg => {
+    Object.keys(api.I18N[lg]).forEach(k => {
+      const v = api.I18N[lg][k];
+      if (typeof v === "string" && motifs[lg].test(v)) fautifs.push(lg + " → " + k);
+    });
+  });
+  assert.strictEqual(fautifs.length, 0, "ancien nom encore affiché : " + fautifs.join(", "));
+  Object.keys(api.LANGUES).forEach(lg =>
+    assert.ok(/FamiTeam/.test(api.I18N[lg]["cs.titre"]), "cs.titre non renommé en " + lg));
+
+  // Les titres de badges viennent des données, non de l'i18n : même exigence.
+  api.BADGES_CATALOGUE.forEach(b => assert.ok(!/carte surprise/i.test(b.comment || ""),
+    "badge encore libellé « carte surprise » : " + b.id));
+
+  // Le nom TECHNIQUE reste intact : c'est la clé du JSON d'état de chaque
+  // famille. La renommer aurait effacé la progression de tout le monde.
+  const app = fs.readFileSync(path.join(r, "js/app.js"), "utf8");
+  assert.ok(/etat\.cartesSurprises/.test(app),
+    "la clé de données cartesSurprises ne doit PAS être renommée");
+  const e = api.etatVierge();
+  assert.ok(Array.isArray(e.cartesSurprises), "l'état doit continuer de porter cartesSurprises");
+
+  // Et le tutoriel les présente désormais, avant l'avatar.
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const tuto = ui.slice(ui.indexOf("const etapes = ["), ui.indexOf("];", ui.indexOf("const etapes = [")));
+  assert.ok(/data-vue="famille"[^\n]*tuto\.cartes_t/.test(tuto),
+    "le tutoriel doit présenter les cartes FamiTeam");
+  assert.ok(tuto.indexOf('data-vue="famille"') < tuto.indexOf('data-vue="avatar"'),
+    "l'étape doit suivre l'ordre de la barre de navigation");
+  Object.keys(api.LANGUES).forEach(lg =>
+    ["tuto.cartes_t", "tuto.cartes_d"].forEach(k =>
+      assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`)));
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

@@ -665,7 +665,7 @@ Un pilote de trois mois sur un service volontaire vous permettrait de juger sur 
     sujet: "Votre sortie comme récompense familiale dans FamiTeam",
     corps: `Bonjour,
 
-FamiTeam est une application familiale belge gratuite où les enfants de 2 à 7 ans gagnent, par leurs efforts du quotidien, des « cartes surprises » : des sorties en famille que les parents débloquent avec eux.
+FamiTeam est une application familiale belge gratuite où les enfants de 2 à 7 ans gagnent, par leurs efforts du quotidien, des « cartes FamiTeam » : des sorties en famille que les parents débloquent avec eux.
 
 Je cherche des lieux comme {lieu} pour devenir ces récompenses. Le principe : votre sortie apparaît comme objectif d'équipe pour les familles de la région ; en échange, vous proposez un avantage famille (réduction, entrée offerte pour un enfant, atelier). Aucun flux financier entre nous, aucune commission.
 

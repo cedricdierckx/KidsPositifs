@@ -939,6 +939,10 @@ function lancerTuto() {
     // tutoriel n'en disait rien. Placée juste après le minuteur : les deux
     // pastilles de l'en-tête se présentent ainsi d'affilée.
     { sel: "#pastille-reparer", e: "🌈", t: t("tuto.rep_t"), d: t("tuto.rep_d") },
+    // Les cartes FamiTeam n'étaient présentées nulle part, alors qu'elles sont
+    // le seul objectif COLLECTIF de l'app. Placée avant l'avatar, dans l'ordre
+    // de la barre de navigation (Accueil, Famille, Planète, Avatar).
+    { sel: '.nav-btn[data-vue="famille"]', e: "🎁", t: t("tuto.cartes_t"), d: t("tuto.cartes_d") },
     { sel: '.nav-btn[data-vue="avatar"]', e: "🎨", t: t("tuto.s5_t"), d: t("tuto.s5_d") },
     { sel: '.nav-btn[data-vue="planete"]', e: "🌍", t: t("tuto.s6_t"), d: t("tuto.s6_d") },
     { sel: '.nav-btn[data-vue="reglages"]', e: "⚙️", t: t("tuto.s7_t"), d: t("tuto.s7_d") },

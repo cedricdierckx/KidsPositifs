@@ -681,8 +681,8 @@ const BADGES_CATALOGUE = [
   { id: "semaine",    emoji: "📅", nom: "Une semaine d'efforts",     comment: "Sois actif 7 jours différents" },
   { id: "mois",       emoji: "🗓️", nom: "Un mois d'efforts",         comment: "Sois actif 30 jours différents" },
   // Esprit d'équipe (cartes surprises)
-  { id: "don_coeur",  emoji: "🎁", nom: "Cœur partageur",            comment: "Donne des Cœurs à une carte surprise" },
-  { id: "equipe",     emoji: "🤝", nom: "Esprit d'équipe",          comment: "Aide à débloquer une carte surprise" }
+  { id: "don_coeur",  emoji: "🎁", nom: "Cœur partageur",            comment: "Donne des Cœurs à une carte FamiTeam" },
+  { id: "equipe",     emoji: "🤝", nom: "Esprit d'équipe",          comment: "Aide à débloquer une carte FamiTeam" }
 ];
 
 /* ---- L'Arbre des familles : paliers d'effort ----------------------

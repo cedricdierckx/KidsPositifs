@@ -1374,7 +1374,7 @@ function icsCarteSurprise(carte, titreLisible, activiteLisible, maintenant) {
     fin = "DTEND;VALUE=DATE:" + lendemain;
   }
   const lignes = [
-    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//FamiTeam//Cartes surprises//FR",
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//FamiTeam//Cartes FamiTeam//FR",
     "CALSCALE:GREGORIAN", "BEGIN:VEVENT",
     "UID:" + carte.id + "-" + carte.prevueLe + "@fami.team",
     "DTSTAMP:" + icsHorodatage(maintenant || new Date()),

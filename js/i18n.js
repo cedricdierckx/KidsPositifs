@@ -477,7 +477,7 @@ Object.assign(I18N.fr, {
   "donnees.reset": "🗑️ Tout réinitialiser",
   "donnees.confirm_reset": "Tout effacer et recommencer à zéro ? (Cœurs, gouttes, avatars, écosystèmes)",
   "suppr.zone_titre": "⚠️ Supprimer le compte famille",
-  "suppr.avert": "Cette action est DÉFINITIVE et IRRÉVERSIBLE. Tout sera perdu : enfants, missions, cœurs, gouttes, avatars, écosystèmes, cartes surprises, badges, historique et invitations. Les autres parents de la famille perdront aussi l'accès. Cette suppression ne peut pas être annulée.",
+  "suppr.avert": "Cette action est DÉFINITIVE et IRRÉVERSIBLE. Tout sera perdu : enfants, missions, cœurs, gouttes, avatars, écosystèmes, cartes FamiTeam, badges, historique et invitations. Les autres parents de la famille perdront aussi l'accès. Cette suppression ne peut pas être annulée.",
   "suppr.bouton": "🗑️ Supprimer définitivement le compte famille",
   "suppr.confirm1": "Supprimer définitivement la famille « {nom} » ? Tout sera perdu, sans retour possible.",
   "suppr.confirm2": "Pour confirmer, retape le nom exact de la famille : {nom}",
@@ -691,7 +691,7 @@ Object.assign(I18N.en, {
   "donnees.reset": "🗑️ Reset everything",
   "donnees.confirm_reset": "Erase everything and start over? (Hearts, drops, avatars, ecosystems)",
   "suppr.zone_titre": "⚠️ Delete family account",
-  "suppr.avert": "This action is PERMANENT and IRREVERSIBLE. Everything will be lost: children, missions, hearts, drops, avatars, ecosystems, surprise cards, badges, history and invitations. The other parents in the family will also lose access. This cannot be undone.",
+  "suppr.avert": "This action is PERMANENT and IRREVERSIBLE. Everything will be lost: children, missions, hearts, drops, avatars, ecosystems, FamiTeam cards, badges, history and invitations. The other parents in the family will also lose access. This cannot be undone.",
   "suppr.bouton": "🗑️ Permanently delete the family account",
   "suppr.confirm1": "Permanently delete the family \"{nom}\"? Everything will be lost, with no way back.",
   "suppr.confirm2": "To confirm, retype the exact family name: {nom}",
@@ -905,7 +905,7 @@ Object.assign(I18N.nl, {
   "donnees.reset": "🗑️ Alles resetten",
   "donnees.confirm_reset": "Alles wissen en opnieuw beginnen? (Hartjes, druppels, avatars, ecosystemen)",
   "suppr.zone_titre": "⚠️ Gezinsaccount verwijderen",
-  "suppr.avert": "Deze actie is DEFINITIEF en ONOMKEERBAAR. Alles gaat verloren: kinderen, missies, hartjes, druppels, avatars, ecosystemen, verrassingskaarten, badges, geschiedenis en uitnodigingen. De andere ouders verliezen ook de toegang. Dit kan niet ongedaan worden gemaakt.",
+  "suppr.avert": "Deze actie is DEFINITIEF en ONOMKEERBAAR. Alles gaat verloren: kinderen, missies, hartjes, druppels, avatars, ecosystemen, FamiTeam-kaarten, badges, geschiedenis en uitnodigingen. De andere ouders verliezen ook de toegang. Dit kan niet ongedaan worden gemaakt.",
   "suppr.bouton": "🗑️ Gezinsaccount definitief verwijderen",
   "suppr.confirm1": "Het gezin \"{nom}\" definitief verwijderen? Alles gaat verloren, zonder weg terug.",
   "suppr.confirm2": "Typ ter bevestiging de exacte gezinsnaam opnieuw: {nom}",
@@ -1119,7 +1119,7 @@ Object.assign(I18N.de, {
   "donnees.reset": "🗑️ Alles zurücksetzen",
   "donnees.confirm_reset": "Alles löschen und neu beginnen? (Herzen, Tropfen, Avatare, Ökosysteme)",
   "suppr.zone_titre": "⚠️ Familienkonto löschen",
-  "suppr.avert": "Diese Aktion ist ENDGÜLTIG und UNWIDERRUFLICH. Alles geht verloren: Kinder, Missionen, Herzen, Tropfen, Avatare, Ökosysteme, Überraschungskarten, Abzeichen, Verlauf und Einladungen. Die anderen Eltern verlieren ebenfalls den Zugriff. Dies kann nicht rückgängig gemacht werden.",
+  "suppr.avert": "Diese Aktion ist ENDGÜLTIG und UNWIDERRUFLICH. Alles geht verloren: Kinder, Missionen, Herzen, Tropfen, Avatare, Ökosysteme, FamiTeam-Karten, Abzeichen, Verlauf und Einladungen. Die anderen Eltern verlieren ebenfalls den Zugriff. Dies kann nicht rückgängig gemacht werden.",
   "suppr.bouton": "🗑️ Familienkonto endgültig löschen",
   "suppr.confirm1": "Die Familie \"{nom}\" endgültig löschen? Alles geht verloren, ohne Weg zurück.",
   "suppr.confirm2": "Gib zur Bestätigung den genauen Familiennamen erneut ein: {nom}",
@@ -1591,7 +1591,7 @@ Object.assign(I18N.de, {
  * Cartes surprises (objectifs d'équipe) — ajouts i18n
  * ===================================================================== */
 Object.assign(I18N.fr, {
-  "cs.titre": "🎁 Cartes surprises (en équipe)",
+  "cs.titre": "🎁 Cartes FamiTeam (en équipe)",
   "cs.sous": "Donnez vos Cœurs ensemble pour débloquer une activité en famille !",
   "cs.aucune": "Aucune carte pour l'instant. Les parents peuvent en ajouter dans l'espace parents.",
   "cs.recolte": "{recolte} / {cout} 💛",
@@ -1603,7 +1603,7 @@ Object.assign(I18N.fr, {
   "cs.faite": "Réalisée 🥳",
   "cs.contributions": "Merci à tous ! 💛",
   "cs.reste": "Encore {reste} 💛 ensemble",
-  "cs.gestion_titre": "🎁 Cartes surprises (activités famille)",
+  "cs.gestion_titre": "🎁 Cartes FamiTeam (activités famille)",
   "cs.gestion_sous": "Définis les activités à débloquer en équipe et leur prix en Cœurs 💛.",
   "cs.f_titre": "Titre de l'activité",
   "cs.f_activite": "Description (ce que vous ferez)",
@@ -1614,15 +1614,15 @@ Object.assign(I18N.fr, {
   "cs.reinit": "Réinitialiser",
   "cs.prix_label": "Prix",
   "toast.carte_debloquee": "{emoji} Carte débloquée : {titre} ! 🎉 À faire en famille !",
-  "mail.carte_sujet": "{emoji} Carte surprise débloquée : {titre} !",
-  "mail.carte_corps": "Bonne nouvelle ! Vos enfants viennent de débloquer ensemble la carte surprise « {titre} » ({cout} 💛). C'est le moment de la vivre en famille !",
+  "mail.carte_sujet": "{emoji} Carte FamiTeam débloquée : {titre} !",
+  "mail.carte_corps": "Bonne nouvelle ! Vos enfants viennent de débloquer ensemble la carte FamiTeam « {titre} » ({cout} 💛). C'est le moment de la vivre en famille !",
   "mail.carte_contrib": "Qui a contribué :",
   "toast.carte_don": "Merci ! +{montant} {emoji} pour l'équipe",
-  "toast.carte_ajoutee": "Carte surprise ajoutée 🎁"
+  "toast.carte_ajoutee": "Carte FamiTeam ajoutée 🎁"
 });
 
 Object.assign(I18N.en, {
-  "cs.titre": "🎁 Surprise cards (as a team)",
+  "cs.titre": "🎁 FamiTeam cards (as a team)",
   "cs.sous": "Give your Hearts together to unlock a family activity!",
   "cs.aucune": "No cards yet. Parents can add some in the parents' area.",
   "cs.recolte": "{recolte} / {cout} 💛",
@@ -1634,7 +1634,7 @@ Object.assign(I18N.en, {
   "cs.faite": "Done 🥳",
   "cs.contributions": "Thanks everyone! 💛",
   "cs.reste": "{reste} 💛 left together",
-  "cs.gestion_titre": "🎁 Surprise cards (family activities)",
+  "cs.gestion_titre": "🎁 FamiTeam cards (family activities)",
   "cs.gestion_sous": "Set the activities to unlock as a team and their price in Hearts 💛.",
   "cs.f_titre": "Activity title",
   "cs.f_activite": "Description (what you'll do)",
@@ -1645,11 +1645,11 @@ Object.assign(I18N.en, {
   "cs.reinit": "Reset",
   "cs.prix_label": "Price",
   "toast.carte_debloquee": "{emoji} Card unlocked: {titre}! 🎉 Time for a family activity!",
-  "mail.carte_sujet": "{emoji} Surprise card unlocked: {titre}!",
-  "mail.carte_corps": "Great news! Your children just unlocked the surprise card “{titre}” together ({cout} 💛). Time to enjoy it as a family!",
+  "mail.carte_sujet": "{emoji} FamiTeam card unlocked: {titre}!",
+  "mail.carte_corps": "Great news! Your children just unlocked the FamiTeam card “{titre}” together ({cout} 💛). Time to enjoy it as a family!",
   "mail.carte_contrib": "Who contributed:",
   "toast.carte_don": "Thanks! +{montant} {emoji} for the team",
-  "toast.carte_ajoutee": "Surprise card added 🎁",
+  "toast.carte_ajoutee": "FamiTeam card added 🎁",
   "carte.cs_cine": "Movie night at home",
   "carte.cs_picnic": "Picnic in the park",
   "carte.cs_sortie": "Big surprise outing",
@@ -1659,7 +1659,7 @@ Object.assign(I18N.en, {
 });
 
 Object.assign(I18N.nl, {
-  "cs.titre": "🎁 Verrassingskaarten (als team)",
+  "cs.titre": "🎁 FamiTeam-kaarten (als team)",
   "cs.sous": "Geef samen jullie Hartjes om een gezinsactiviteit vrij te spelen!",
   "cs.aucune": "Nog geen kaarten. Ouders kunnen ze toevoegen in de oudersectie.",
   "cs.recolte": "{recolte} / {cout} 💛",
@@ -1671,7 +1671,7 @@ Object.assign(I18N.nl, {
   "cs.faite": "Gedaan 🥳",
   "cs.contributions": "Bedankt allemaal! 💛",
   "cs.reste": "Nog {reste} 💛 samen",
-  "cs.gestion_titre": "🎁 Verrassingskaarten (gezinsactiviteiten)",
+  "cs.gestion_titre": "🎁 FamiTeam-kaarten (gezinsactiviteiten)",
   "cs.gestion_sous": "Stel de activiteiten in om als team vrij te spelen en hun prijs in Hartjes 💛.",
   "cs.f_titre": "Titel van de activiteit",
   "cs.f_activite": "Beschrijving (wat jullie gaan doen)",
@@ -1682,11 +1682,11 @@ Object.assign(I18N.nl, {
   "cs.reinit": "Opnieuw",
   "cs.prix_label": "Prijs",
   "toast.carte_debloquee": "{emoji} Kaart vrijgespeeld: {titre}! 🎉 Tijd voor een gezinsactiviteit!",
-  "mail.carte_sujet": "{emoji} Verrassingskaart vrijgespeeld: {titre}!",
-  "mail.carte_corps": "Goed nieuws! Jullie kinderen hebben samen de verrassingskaart “{titre}” vrijgespeeld ({cout} 💛). Tijd om er samen van te genieten!",
+  "mail.carte_sujet": "{emoji} FamiTeam-kaart vrijgespeeld: {titre}!",
+  "mail.carte_corps": "Goed nieuws! Jullie kinderen hebben samen de FamiTeam-kaart “{titre}” vrijgespeeld ({cout} 💛). Tijd om er samen van te genieten!",
   "mail.carte_contrib": "Wie heeft bijgedragen:",
   "toast.carte_don": "Bedankt! +{montant} {emoji} voor het team",
-  "toast.carte_ajoutee": "Verrassingskaart toegevoegd 🎁",
+  "toast.carte_ajoutee": "FamiTeam-kaart toegevoegd 🎁",
   "carte.cs_cine": "Filmavond thuis",
   "carte.cs_picnic": "Picknick in het park",
   "carte.cs_sortie": "Grote verrassingsuitstap",
@@ -1696,7 +1696,7 @@ Object.assign(I18N.nl, {
 });
 
 Object.assign(I18N.de, {
-  "cs.titre": "🎁 Überraschungskarten (im Team)",
+  "cs.titre": "🎁 FamiTeam-Karten (im Team)",
   "cs.sous": "Gebt zusammen eure Herzen, um eine Familienaktivität freizuschalten!",
   "cs.aucune": "Noch keine Karten. Eltern können welche im Elternbereich hinzufügen.",
   "cs.recolte": "{recolte} / {cout} 💛",
@@ -1708,7 +1708,7 @@ Object.assign(I18N.de, {
   "cs.faite": "Erledigt 🥳",
   "cs.contributions": "Danke euch allen! 💛",
   "cs.reste": "Noch {reste} 💛 zusammen",
-  "cs.gestion_titre": "🎁 Überraschungskarten (Familienaktivitäten)",
+  "cs.gestion_titre": "🎁 FamiTeam-Karten (Familienaktivitäten)",
   "cs.gestion_sous": "Lege die Aktivitäten zum gemeinsamen Freischalten und ihren Preis in Herzen 💛 fest.",
   "cs.f_titre": "Titel der Aktivität",
   "cs.f_activite": "Beschreibung (was ihr machen werdet)",
@@ -1719,11 +1719,11 @@ Object.assign(I18N.de, {
   "cs.reinit": "Zurücksetzen",
   "cs.prix_label": "Preis",
   "toast.carte_debloquee": "{emoji} Karte freigeschaltet: {titre}! 🎉 Zeit für eine Familienaktivität!",
-  "mail.carte_sujet": "{emoji} Überraschungskarte freigeschaltet: {titre}!",
-  "mail.carte_corps": "Gute Nachrichten! Eure Kinder haben gemeinsam die Überraschungskarte „{titre}“ freigeschaltet ({cout} 💛). Zeit, sie als Familie zu erleben!",
+  "mail.carte_sujet": "{emoji} FamiTeam-Karte freigeschaltet: {titre}!",
+  "mail.carte_corps": "Gute Nachrichten! Eure Kinder haben gemeinsam die FamiTeam-Karte „{titre}“ freigeschaltet ({cout} 💛). Zeit, sie als Familie zu erleben!",
   "mail.carte_contrib": "Wer beigetragen hat:",
   "toast.carte_don": "Danke! +{montant} {emoji} fürs Team",
-  "toast.carte_ajoutee": "Überraschungskarte hinzugefügt 🎁",
+  "toast.carte_ajoutee": "FamiTeam-Karte hinzugefügt 🎁",
   "carte.cs_cine": "Filmabend zu Hause",
   "carte.cs_picnic": "Picknick im Park",
   "carte.cs_sortie": "Großer Überraschungsausflug",
@@ -2046,7 +2046,7 @@ Object.assign(I18N.en, {
   "badgeC.coeur100": "Earn 100 Hearts in total", "badgeC.goutte10": "Earn 10 Drops in total",
   "badgeC.goutte50": "Earn 50 Drops in total", "badgeC.eco_10": "Create 10 living beings",
   "badgeC.eco_25": "Create 25 living beings", "badgeC.mois": "Be active on 30 different days",
-  "badgeC.don_coeur": "Give Hearts to a surprise card", "badgeC.equipe": "Help unlock a surprise card"
+  "badgeC.don_coeur": "Give Hearts to a FamiTeam card", "badgeC.equipe": "Help unlock a FamiTeam card"
 });
 Object.assign(I18N.nl, {
   "badge.coeur100": "Hartenschat", "badge.goutte10": "Klein bronnetje", "badge.goutte50": "Grote rivier",
@@ -2055,7 +2055,7 @@ Object.assign(I18N.nl, {
   "badgeC.coeur100": "Verdien 100 Hartjes in totaal", "badgeC.goutte10": "Verdien 10 Druppels in totaal",
   "badgeC.goutte50": "Verdien 50 Druppels in totaal", "badgeC.eco_10": "Maak 10 levende wezens",
   "badgeC.eco_25": "Maak 25 levende wezens", "badgeC.mois": "Wees 30 verschillende dagen actief",
-  "badgeC.don_coeur": "Geef Hartjes aan een verrassingskaart", "badgeC.equipe": "Help een verrassingskaart vrij te spelen"
+  "badgeC.don_coeur": "Geef Hartjes aan een FamiTeam-kaart", "badgeC.equipe": "Help een FamiTeam-kaart vrij te spelen"
 });
 Object.assign(I18N.de, {
   "badge.coeur100": "Herzschatz", "badge.goutte10": "Kleine Quelle", "badge.goutte50": "Großer Fluss",
@@ -2064,7 +2064,7 @@ Object.assign(I18N.de, {
   "badgeC.coeur100": "Verdiene 100 Herzen insgesamt", "badgeC.goutte10": "Verdiene 10 Tropfen insgesamt",
   "badgeC.goutte50": "Verdiene 50 Tropfen insgesamt", "badgeC.eco_10": "Erschaffe 10 Lebewesen",
   "badgeC.eco_25": "Erschaffe 25 Lebewesen", "badgeC.mois": "Sei an 30 verschiedenen Tagen aktiv",
-  "badgeC.don_coeur": "Gib Herzen für eine Überraschungskarte", "badgeC.equipe": "Hilf, eine Überraschungskarte freizuschalten"
+  "badgeC.don_coeur": "Gib Herzen für eine FamiTeam-Karte", "badgeC.equipe": "Hilf, eine FamiTeam-Karte freizuschalten"
 });
 
 /* ---- Module signalement bug / suggestion (early adopters) ---- */
@@ -2275,7 +2275,7 @@ Object.assign(I18N.fr, {
   "auth.hero_titre": "Toute la famille dans la même équipe 💛",
   "auth.hero_sous": "{app} transforme les tâches du quotidien et la protection de la planète en une aventure positive, douce et motivante pour vos enfants.",
   "auth.feat1_t": "Des missions rigolotes", "auth.feat1_d": "Chacun gagne des Cœurs 💛 en aidant à la maison et des Gouttes 💧 en protégeant la nature.",
-  "auth.feat2_t": "Des cartes surprises", "auth.feat2_d": "Les enfants coopèrent pour débloquer ensemble de vraies activités en famille.",
+  "auth.feat2_t": "Des cartes FamiTeam", "auth.feat2_d": "Les enfants coopèrent pour débloquer ensemble de vraies activités en famille.",
   "auth.feat3_t": "Un écosystème vivant", "auth.feat3_d": "Leurs efforts font grandir un petit monde, des plantes jusqu'aux animaux.",
   "auth.feat4_t": "Que du positif", "auth.feat4_d": "Badges, encouragements et « défis réparation » : jamais de punition, on valorise l'effort.",
   "auth.comment_titre": "Comment ça marche ?",
@@ -2291,7 +2291,7 @@ Object.assign(I18N.en, {
   "auth.hero_titre": "The whole family on the same team 💛",
   "auth.hero_sous": "{app} turns everyday chores and protecting the planet into a positive, gentle and motivating adventure for your children.",
   "auth.feat1_t": "Fun missions", "auth.feat1_d": "Everyone earns Hearts 💛 by helping at home and Drops 💧 by protecting nature.",
-  "auth.feat2_t": "Surprise cards", "auth.feat2_d": "Children cooperate to unlock real family activities together.",
+  "auth.feat2_t": "FamiTeam cards", "auth.feat2_d": "Children cooperate to unlock real family activities together.",
   "auth.feat3_t": "A living ecosystem", "auth.feat3_d": "Their efforts grow a little world, from plants to animals.",
   "auth.feat4_t": "All positive", "auth.feat4_d": "Badges, encouragement and 'repair challenges': no punishment, we value effort.",
   "auth.comment_titre": "How does it work?",
@@ -2307,7 +2307,7 @@ Object.assign(I18N.nl, {
   "auth.hero_titre": "Het hele gezin in hetzelfde team 💛",
   "auth.hero_sous": "{app} maakt van dagelijkse taken en het beschermen van de planeet een positief, zacht en motiverend avontuur voor je kinderen.",
   "auth.feat1_t": "Leuke missies", "auth.feat1_d": "Iedereen verdient Hartjes 💛 door thuis te helpen en Druppels 💧 door de natuur te beschermen.",
-  "auth.feat2_t": "Verrassingskaarten", "auth.feat2_d": "Kinderen werken samen om echte gezinsactiviteiten vrij te spelen.",
+  "auth.feat2_t": "FamiTeam-kaarten", "auth.feat2_d": "Kinderen werken samen om echte gezinsactiviteiten vrij te spelen.",
   "auth.feat3_t": "Een levend ecosysteem", "auth.feat3_d": "Hun inspanningen laten een kleine wereld groeien, van planten tot dieren.",
   "auth.feat4_t": "Alleen positief", "auth.feat4_d": "Badges, aanmoediging en 'herstel-uitdagingen': geen straf, we waarderen inzet.",
   "auth.comment_titre": "Hoe werkt het?",
@@ -2323,7 +2323,7 @@ Object.assign(I18N.de, {
   "auth.hero_titre": "Die ganze Familie in einem Team 💛",
   "auth.hero_sous": "{app} verwandelt Alltagsaufgaben und den Schutz des Planeten in ein positives, sanftes und motivierendes Abenteuer für deine Kinder.",
   "auth.feat1_t": "Lustige Missionen", "auth.feat1_d": "Jeder verdient Herzen 💛 durch Helfen zu Hause und Tropfen 💧 durch Naturschutz.",
-  "auth.feat2_t": "Überraschungskarten", "auth.feat2_d": "Kinder arbeiten zusammen, um echte Familienaktivitäten freizuschalten.",
+  "auth.feat2_t": "FamiTeam-Karten", "auth.feat2_d": "Kinder arbeiten zusammen, um echte Familienaktivitäten freizuschalten.",
   "auth.feat3_t": "Ein lebendiges Ökosystem", "auth.feat3_d": "Ihre Mühe lässt eine kleine Welt wachsen, von Pflanzen bis zu Tieren.",
   "auth.feat4_t": "Nur Positives", "auth.feat4_d": "Abzeichen, Ermutigung und 'Wiedergutmachungs-Challenges': keine Strafe, wir würdigen den Einsatz.",
   "auth.comment_titre": "Wie funktioniert es?",
@@ -2366,22 +2366,22 @@ Object.assign(I18N.de, {
 Object.assign(I18N.fr, {
   "stats.depenses": "Dépenses : collectif 🎁 / individuel 🎨",
   "stats.depenses_detail": "Collectif (cartes) : {col} 💛 · Individuel (avatar) : {ind} 💛",
-  "stats.cartes_choix": "Cartes surprises soutenues", "stats.avatar_choix": "Styles d'avatar préférés"
+  "stats.cartes_choix": "Cartes FamiTeam soutenues", "stats.avatar_choix": "Styles d'avatar préférés"
 });
 Object.assign(I18N.en, {
   "stats.depenses": "Spending: collective 🎁 / individual 🎨",
   "stats.depenses_detail": "Collective (cards): {col} 💛 · Individual (avatar): {ind} 💛",
-  "stats.cartes_choix": "Surprise cards supported", "stats.avatar_choix": "Favourite avatar styles"
+  "stats.cartes_choix": "FamiTeam cards supported", "stats.avatar_choix": "Favourite avatar styles"
 });
 Object.assign(I18N.nl, {
   "stats.depenses": "Uitgaven: collectief 🎁 / individueel 🎨",
   "stats.depenses_detail": "Collectief (kaarten): {col} 💛 · Individueel (avatar): {ind} 💛",
-  "stats.cartes_choix": "Gesteunde verrassingskaarten", "stats.avatar_choix": "Favoriete avatarstijlen"
+  "stats.cartes_choix": "Gesteunde FamiTeam-kaarten", "stats.avatar_choix": "Favoriete avatarstijlen"
 });
 Object.assign(I18N.de, {
   "stats.depenses": "Ausgaben: gemeinsam 🎁 / individuell 🎨",
   "stats.depenses_detail": "Gemeinsam (Karten): {col} 💛 · Individuell (Avatar): {ind} 💛",
-  "stats.cartes_choix": "Unterstützte Überraschungskarten", "stats.avatar_choix": "Lieblings-Avatarstile"
+  "stats.cartes_choix": "Unterstützte FamiTeam-Karten", "stats.avatar_choix": "Lieblings-Avatarstile"
 });
 
 /* ---- Statistiques : profil & lecture (comportement ↔ choix) ---- */
@@ -4099,4 +4099,22 @@ Object.assign(I18N.nl, {
 Object.assign(I18N.de, {
   "tuto.rep_t": "Ups, das passiert… 🌈",
   "tuto.rep_d": "Diese Taste öffnet die <strong>Wiedergutmachungen</strong>. Wenn etwas schiefgeht — etwas zerbrochen, ein verletzendes Wort — wählt das Kind, wie es das wieder gut macht, und genau diese Tat bringt Herzen. <strong>Es wird nie ein Punkt abgezogen.</strong>"
+});
+
+/* Tutoriel : les cartes FamiTeam, seul objectif collectif de l'app. */
+Object.assign(I18N.fr, {
+  "tuto.cartes_t": "Les cartes FamiTeam 🎁",
+  "tuto.cartes_d": "Ici, les enfants mettent leurs <strong>cœurs en commun</strong> pour débloquer une vraie activité en famille : cinéma maison, pique-nique, grande sortie. C'est le seul objectif qu'aucun d'eux n'atteint seul. Les parents décident des activités et fixent la date une fois la carte gagnée. <strong>Vous choisissez si l'activité reste une surprise ou non.</strong>"
+});
+Object.assign(I18N.en, {
+  "tuto.cartes_t": "FamiTeam cards 🎁",
+  "tuto.cartes_d": "Here the children <strong>pool their hearts</strong> to unlock a real family activity: movie night, picnic, a big outing. It's the one goal none of them reaches alone. Parents choose the activities and set the date once a card is earned. <strong>You decide whether the activity stays a surprise or not.</strong>"
+});
+Object.assign(I18N.nl, {
+  "tuto.cartes_t": "FamiTeam-kaarten 🎁",
+  "tuto.cartes_d": "Hier leggen de kinderen hun <strong>hartjes samen</strong> om een echte gezinsactiviteit vrij te spelen: filmavond, picknick, een grote uitstap. Het is het enige doel dat niemand alleen haalt. Ouders kiezen de activiteiten en bepalen de datum zodra een kaart verdiend is. <strong>Jij beslist of de activiteit een verrassing blijft of niet.</strong>"
+});
+Object.assign(I18N.de, {
+  "tuto.cartes_t": "FamiTeam-Karten 🎁",
+  "tuto.cartes_d": "Hier legen die Kinder ihre <strong>Herzen zusammen</strong>, um eine echte Familienaktivität freizuschalten: Kinoabend, Picknick, ein großer Ausflug. Es ist das einzige Ziel, das keines allein erreicht. Eltern wählen die Aktivitäten und legen das Datum fest, sobald eine Karte verdient ist. <strong>Du entscheidest, ob die Aktivität eine Überraschung bleibt oder nicht.</strong>"
 });

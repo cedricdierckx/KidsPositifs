@@ -137,7 +137,7 @@ function construireContexte() {
       // couche de données isolée (Phase D)
       Store,
       // données de référence
-      CATEGORIES, MISSIONS, TIERS_ECO, ENFANTS_DEFAUT, ETAT_VERSION,
+      CATEGORIES, MISSIONS, TIERS_ECO, ENFANTS_DEFAUT, ETAT_VERSION, BADGES_CATALOGUE,
       // plan de développement commercial (admin)
       CROISSANCE_PHASES, CROISSANCE_CHANTIERS, CROISSANCE_MAILS, CROISSANCE_CONTRAINTES, CROISSANCE_RITUEL,
       chantiersDePhase, mailCroissance, dureeChantier, seanceDeLaSemaine, cleEtapeCroissance,
