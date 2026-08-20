@@ -6272,7 +6272,10 @@ function vueReglages(c) {
     // discrète pour celui qui a déjà répondu, et reste visible pour l'autre.
     c.appendChild(carteRepliable(blocRituelSoir(), "rituel", !rituelReglage()));
     c.appendChild(carteRepliable(blocMissionsDuJour(enfantActif()), "missions", false));
-    c.appendChild(blocEval(enfantActif(), "parent"));
+    // Pas d'évaluation du comportement ici : noter son enfant chaque soir est
+    // un geste d'outil avancé, et le champ est facultatif — il ne nourrit que
+    // la comparaison avec l'auto-évaluation, dans les statistiques. En mode
+    // standard il occupait une carte entière au-dessus des encouragements.
     c.appendChild(blocReparation());
     c.appendChild(blocComplimentDuJour(enfantActif()));
     c.appendChild(carteRepliable(blocJournalActions(), "journal", false));
@@ -6282,7 +6285,10 @@ function vueReglages(c) {
     // positive). Tout en haut : c'est la première chose à voir chaque jour. -----
     c.appendChild(blocComplimentDuJour(enfantActif()));
 
-    // ----- Comportement de l'enfant (évaluation parent) : en 1ʳᵉ place -----
+    // ----- Comportement de l'enfant (évaluation parent) -----
+    // Sous le compliment, et en mode expert seulement : on lit d'abord ce
+    // qu'on peut DIRE à l'enfant, on note ensuite — l'inverse installait la
+    // notation comme le premier geste de la soirée.
     c.appendChild(blocEval(enfantActif(), "parent"));
 
     // ----- Défis réparation ("Oups, ça arrive…") : accès rapide -----

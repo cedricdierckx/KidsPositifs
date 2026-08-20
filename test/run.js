@@ -3773,6 +3773,42 @@ test("langue : le choix survit au rafraîchissement", () => {
     "<html lang> doit être posé dès le chargement, pas seulement au changement");
 });
 
+test("parents : noter le comportement est un geste d'expert, et il vient après l'éloge", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+
+  // On isole la section « quotidien » et ses deux branches de mode.
+  const debut = ui.indexOf('if (sectionVisible("quotidien")) {');
+  assert.ok(debut > 0, "section quotidien introuvable");
+  const simplifie = ui.indexOf("if (!exp) {", debut);
+  const expert = ui.indexOf("} else {", simplifie);
+  const finExpert = ui.indexOf('sectionVisible("papier")', expert);
+  assert.ok(simplifie > 0 && expert > simplifie && finExpert > expert, "bornes des branches");
+  const brSimple = ui.slice(simplifie, expert);
+  const brExpert = ui.slice(expert, finExpert);
+
+  const APPEL = 'blocEval(enfantActif(), "parent")';
+  // Mode standard : la carte ne doit pas y être. Noter son enfant chaque soir
+  // est un outil avancé, et le champ ne sert qu'aux statistiques.
+  assert.ok(brSimple.indexOf(APPEL) < 0,
+    "l'évaluation du comportement ne doit pas apparaître en mode standard");
+  // Mode expert : présente, et APRÈS le compliment. On lit d'abord ce qu'on
+  // peut dire à l'enfant, on note ensuite.
+  const iEval = brExpert.indexOf(APPEL);
+  const iCompliment = brExpert.indexOf("blocComplimentDuJour(enfantActif())");
+  assert.ok(iEval > 0, "l'évaluation doit rester disponible en mode expert");
+  assert.ok(iCompliment > 0 && iCompliment < iEval,
+    "le compliment du jour doit précéder l'évaluation du comportement");
+  // Une seule fois dans tout l'espace parent : deux cartes identiques à des
+  // endroits différents est le genre de doublon qui passe inaperçu.
+  assert.strictEqual((ui.match(/blocEval\(enfantActif\(\), "parent"\)/g) || []).length, 1);
+
+  // L'auto-évaluation de l'ENFANT, elle, reste sur son écran : c'est elle qui
+  // compte, et elle n'est pas concernée.
+  assert.ok(/blocEval\(enf, "enfant"\)/.test(ui),
+    "l'auto-évaluation de l'enfant ne doit pas avoir disparu au passage");
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {
