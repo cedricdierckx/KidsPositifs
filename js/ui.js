@@ -935,6 +935,10 @@ function lancerTuto() {
     { sel: "#selecteur-enfant", e: "👧", t: t("tuto.s2_t"), d: t("tuto.s2_d") },
     { sel: ".mission", e: "✅", t: t("tuto.s3_t"), d: t("tuto.s3_d") },
     { sel: "#timer-btn", e: "⏱️", t: t("tuto.s4_t"), d: t("tuto.s4_d") },
+    // La réparation est le parti pris central de l'application, et le
+    // tutoriel n'en disait rien. Placée juste après le minuteur : les deux
+    // pastilles de l'en-tête se présentent ainsi d'affilée.
+    { sel: "#pastille-reparer", e: "🌈", t: t("tuto.rep_t"), d: t("tuto.rep_d") },
     { sel: '.nav-btn[data-vue="avatar"]', e: "🎨", t: t("tuto.s5_t"), d: t("tuto.s5_d") },
     { sel: '.nav-btn[data-vue="planete"]', e: "🌍", t: t("tuto.s6_t"), d: t("tuto.s6_d") },
     { sel: '.nav-btn[data-vue="reglages"]', e: "⚙️", t: t("tuto.s7_t"), d: t("tuto.s7_d") },

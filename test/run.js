@@ -3463,6 +3463,25 @@ test("réparation : six gestes, tous traduits, et un accès direct sous code par
   Object.keys(api.LANGUES).forEach(lg =>
     ["rep.pastille", "rep.pin_titre"].forEach(k =>
       assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`)));
+
+  // Le tutoriel — l'intro du mode démo — doit présenter la pastille, et juste
+  // après le minuteur : les deux pastilles de l'en-tête se suivent ainsi.
+  const tuto = ui.slice(ui.indexOf("const etapes = ["), ui.indexOf("];", ui.indexOf("const etapes = [")));
+  assert.ok(/sel: "#pastille-reparer"[^\n]*tuto\.rep_t/.test(tuto),
+    "le tutoriel doit comporter une étape sur la pastille de réparation");
+  assert.ok(tuto.indexOf("#timer-btn") < tuto.indexOf("#pastille-reparer"),
+    "l'étape réparation doit venir après celle du minuteur");
+  Object.keys(api.LANGUES).forEach(lg => {
+    ["tuto.rep_t", "tuto.rep_d"].forEach(k =>
+      assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`));
+    // Le parti pris central doit être énoncé là, sinon l'étape ne sert à rien.
+    // Un motif par langue plutôt qu'une alternative fourre-tout : « ever »
+    // aurait aussi accepté « every », et « nie » n'importe quel mot en -nie-.
+    const promesse = { fr: /jamais retiré/i, en: /never|taken away/i,
+                       nl: /nooit een punt/i, de: /nie ein Punkt/i };
+    assert.ok(promesse[lg].test(api.I18N[lg]["tuto.rep_d"]),
+      "l'étape doit dire qu'aucun point n'est jamais retiré (" + lg + ")");
+  });
 });
 
 /* ---------- Exécution ---------- */

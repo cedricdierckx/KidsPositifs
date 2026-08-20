@@ -4082,3 +4082,21 @@ Object.assign(I18N.fr, { "rep.pastille": "Oups, ça arrive… — réparer", "re
 Object.assign(I18N.en, { "rep.pastille": "Oops, it happens… — make it right", "rep.pin_titre": "🔒 Parent code to credit a repair" });
 Object.assign(I18N.nl, { "rep.pastille": "Oeps, dat gebeurt… — goedmaken", "rep.pin_titre": "🔒 Oudercode om een herstel toe te kennen" });
 Object.assign(I18N.de, { "rep.pastille": "Ups, das passiert… — wiedergutmachen", "rep.pin_titre": "🔒 Elterncode, um eine Reparatur anzurechnen" });
+
+/* Tutoriel : la pastille de reparation, parti pris central de l'app. */
+Object.assign(I18N.fr, {
+  "tuto.rep_t": "Oups, ça arrive… 🌈",
+  "tuto.rep_d": "Cette pastille ouvre les <strong>gestes de réparation</strong>. Quand quelque chose se passe mal — un objet cassé, un mot qui blesse — l'enfant choisit comment réparer, et c'est ce geste-là qui rapporte des cœurs. <strong>Aucun point n'est jamais retiré.</strong>"
+});
+Object.assign(I18N.en, {
+  "tuto.rep_t": "Oops, it happens… 🌈",
+  "tuto.rep_d": "This button opens the <strong>repair gestures</strong>. When something goes wrong — something broken, a hurtful word — the child picks how to make it right, and that gesture is what earns hearts. <strong>No point is ever taken away.</strong>"
+});
+Object.assign(I18N.nl, {
+  "tuto.rep_t": "Oeps, dat gebeurt… 🌈",
+  "tuto.rep_d": "Deze knop opent de <strong>herstelgebaren</strong>. Als er iets misgaat — iets gebroken, een kwetsend woord — kiest het kind hoe het dat goedmaakt, en dát gebaar levert hartjes op. <strong>Er wordt nooit een punt afgenomen.</strong>"
+});
+Object.assign(I18N.de, {
+  "tuto.rep_t": "Ups, das passiert… 🌈",
+  "tuto.rep_d": "Diese Taste öffnet die <strong>Wiedergutmachungen</strong>. Wenn etwas schiefgeht — etwas zerbrochen, ein verletzendes Wort — wählt das Kind, wie es das wieder gut macht, und genau diese Tat bringt Herzen. <strong>Es wird nie ein Punkt abgezogen.</strong>"
+});
