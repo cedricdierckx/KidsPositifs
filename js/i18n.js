@@ -16,7 +16,13 @@ const DRAPEAUX_SVG = {
   de: `<svg class="dpx" viewBox="0 0 3 3" aria-hidden="true"><rect width="3" height="1" fill="#000"/><rect y="1" width="3" height="1" fill="#DD0000"/><rect y="2" width="3" height="1" fill="#FFCE00"/></svg>`
 };
 function drapeau(l) { return DRAPEAUX_SVG[l] || ""; }
-let langue = "fr";
+// detecterLangue() (definie plus bas, donc hissee) n'etait appelee de NULLE
+// PART : `langue` restait a "fr" a chaque chargement. Le choix s'ecrivait bien
+// dans le stockage local — definirLangue() le fait — mais rien ne le relisait,
+// si bien qu'un rafraichissement ramenait tout le monde au francais. Et la
+// langue du navigateur ne servait pas davantage : un parent neerlandophone
+// atterrissait en francais a sa premiere visite.
+let langue = detecterLangue();
 
 const I18N = {
   fr: {
@@ -177,6 +183,10 @@ function detecterLangue() {
   const n = ((navigator && navigator.language) || "fr").slice(0, 2).toLowerCase();
   return LANGUES[n] ? n : "fr";
 }
+// Au chargement aussi, pas seulement lors d'un changement : `<html lang>`
+// renseigne le navigateur, les lecteurs d'ecran et les moteurs.
+try { if (typeof document !== "undefined" && document.documentElement) document.documentElement.lang = langue; } catch {}
+
 function definirLangue(l) {
   if (!LANGUES[l]) return;
   langue = l;

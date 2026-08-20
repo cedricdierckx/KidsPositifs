@@ -3733,6 +3733,46 @@ test("parents : le bandeau d'en-tête tient sur deux lignes, pas sur quatre", ()
     "sans cela le groupe de drapeaux est insécable et « Langue » garde sa ligne");
 });
 
+/* La langue survit au rafraîchissement. Le défaut était discret : le choix
+ * s'écrivait correctement dans le stockage local, et detecterLangue() savait
+ * le relire — mais personne ne l'appelait, si bien que `langue` restait à sa
+ * valeur initiale « fr » à chaque chargement. Un test de source n'aurait rien
+ * vu : les deux moitiés du mécanisme existaient. On teste donc ce que
+ * l'application LIT au démarrage, pas ce qu'elle écrit. */
+test("langue : le choix survit au rafraîchissement", () => {
+  // Une langue mémorisée est reprise, quelle que soit celle du navigateur.
+  ["nl", "de", "en", "fr"].forEach(l => {
+    const { api } = construireContexte({ stockage: { kp_langue: l }, langueNavigateur: "fr" });
+    assert.strictEqual(api.langue, l, "langue mémorisée non reprise : " + l);
+    // Et les textes suivent réellement, pas seulement la variable.
+    assert.strictEqual(api.t("langue"), api.I18N[l]["langue"]);
+  });
+
+  // Rien en mémoire : on suit le navigateur. Un parent néerlandophone ne doit
+  // pas atterrir en français à sa première visite.
+  assert.strictEqual(construireContexte({ langueNavigateur: "nl" }).api.langue, "nl");
+  assert.strictEqual(construireContexte({ langueNavigateur: "nl-BE" }).api.langue, "nl",
+    "la région doit être ignorée");
+  assert.strictEqual(construireContexte({ langueNavigateur: "de-AT" }).api.langue, "de");
+
+  // Langue non traduite, ou valeur abîmée dans le stockage : repli sur le
+  // français, sans jamais laisser `langue` dans un état non traduit.
+  assert.strictEqual(construireContexte({ langueNavigateur: "es" }).api.langue, "fr");
+  assert.strictEqual(construireContexte(
+    { stockage: { kp_langue: "xx" }, langueNavigateur: "es" }).api.langue, "fr");
+  assert.strictEqual(construireContexte(
+    { stockage: { kp_langue: "xx" }, langueNavigateur: "de" }).api.langue, "de",
+    "un stockage abîmé ne doit pas empêcher la détection");
+
+  // La fonction doit rester branchée : c'est précisément ce qui manquait.
+  const fs = require("fs"), path = require("path");
+  const src = fs.readFileSync(path.join(__dirname, "..", "js/i18n.js"), "utf8");
+  assert.ok(/let langue = detecterLangue\(\);/.test(src),
+    "detecterLangue() doit initialiser `langue`, sinon elle est du code mort");
+  assert.ok(/document\.documentElement\.lang = langue/.test(src),
+    "<html lang> doit être posé dès le chargement, pas seulement au changement");
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

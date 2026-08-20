@@ -61,15 +61,22 @@ class StockageMemoire {
 }
 
 // ---------- Construction du contexte ----------
-function construireContexte() {
+// `options.stockage` : paires a deposer dans localStorage AVANT l'execution
+// des scripts. Indispensable pour tester ce que l'application lit au
+// demarrage — la langue memorisee, par exemple — plutot que ce qu'elle ecrit.
+// `options.langueNavigateur` : valeur de navigator.language.
+function construireContexte(options) {
+  const opt = options || {};
+  const stockage = new StockageMemoire();
+  Object.keys(opt.stockage || {}).forEach(k => stockage.setItem(k, opt.stockage[k]));
   const contexte = {
     console,
     setTimeout: () => 0,
     clearTimeout: () => {},
     Math, Date, JSON, Object, Array, String, Number, Boolean, RegExp, parseInt, parseFloat, isNaN,
     document: documentFactice,
-    navigator: { language: "fr" },
-    localStorage: new StockageMemoire(),
+    navigator: { language: opt.langueNavigateur || "fr" },
+    localStorage: stockage,
     location: { href: "https://famiteam.com/", search: "", hash: "" },
     rendre() {},                 // rendu UI (no-op en test)
     demanderPin() {},            // dialogue PIN (no-op en test)
