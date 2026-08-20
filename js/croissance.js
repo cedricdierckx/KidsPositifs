@@ -501,6 +501,26 @@ Intéressé·e ? Je vous envoie le lien.
 FamiTeam — {lien}`
   },
   {
+    id: "m_messenger", titre: "Message direct (Messenger) a un compte parentalite",
+    dest: "Compte ou page de parentalite positive, en message prive",
+    quand: "Chantier Contacts choisis. Un message a la fois, jamais de copier-coller en serie",
+    sujet: "(Messenger : pas d'objet — les deux premieres lignes decident de tout)",
+    corps: `Bonjour {prenom},
+
+Je m'appelle {qui}, papa de {nb_enfants} enfants a {ville}. Je vous ecris pour une raison precise, et un peu genante : votre nom figure dans une application que j'ai construite, et je prefere vous le dire moi-meme.
+
+Elle s'appelle {app}. Je l'ai faite sur mon temps libre pour mes propres enfants, et {raison_precise} — au point que les idees d'activites y sont presentees comme « inspirees de {prenom} et de psychologues ». Si cela vous derange, dites-le : je le retire ce soir.
+
+Le principe tient en une phrase : on ne retire jamais de points. Quand quelque chose se passe mal, l'enfant choisit un geste de reparation, et c'est ce geste-la qui est recompense.
+
+C'est gratuit, sans publicite, sans revente de donnees, et je ne vends rien : le projet coute 27 euros par an, couverts par quelques dons.
+
+Si un jour vous avez dix minutes, j'aimerais votre avis, meme severe. Je ne vous demande pas d'en parler.
+
+{qui}
+{lien}`
+  },
+  {
     id: "m_influence_relance", titre: "Relance d'un contact choisi (J+15)", dest: "Blog ou compte contacté quinze jours plus tôt",
     quand: "Chantier Contacts choisis, une seule fois",
     sujet: "Re : test honnête de FamiTeam",
