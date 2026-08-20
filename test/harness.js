@@ -149,6 +149,9 @@ function construireContexte() {
       joursActifsFamille, familleConvaincue, ARBRE_J7_JOURS_ACTIFS, ARBRE_J7_ANCIENNETE,
       // bandeau dodo : lecture de l'heure de coucher et ambiance courante
       momentDodo, minutesCoucher, DODO_FENETRE, DODO_DEFAUT,
+      // rendez-vous du soir : rappel délégué à l'agenda du parent
+      RITUEL_RYTHMES, RITUEL_DUREE_MIN, RITUEL_AVANT_DODO,
+      heureRituelConseillee, debutRituel, rituelRrule, icsRituelSoir, hhmm, heureValide,
     };
   `;
   const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/croissance.js"), lire("js/qr.js"), lire("js/app.js"), lire("js/store.js"), epilogue].join("\n;\n");

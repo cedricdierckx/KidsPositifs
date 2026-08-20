@@ -1292,6 +1292,16 @@ function reinitCarteSurprise(id) {
  */
 const DATE_ISO = /^\d{4}-\d{2}-\d{2}$/;
 const HEURE_ISO = /^\d{2}:\d{2}$/;
+// HEURE_ISO ne vérifie que la FORME : « 25:00 » et « 19:99 » la passent, et
+// produisaient alors un DTEND à « NaNNaNNaN » — un fichier d'agenda que
+// l'appareil refuse en bloc, sans rien dire au parent. La plage se contrôle
+// donc à part, comme le fait déjà minutesCoucher.
+function heureValide(txt) {
+  const m = /^(\d{2}):(\d{2})$/.exec(String(txt == null ? "" : txt).trim());
+  if (!m) return false;
+  const h = parseInt(m[1], 10), mi = parseInt(m[2], 10);
+  return h >= 0 && h <= 23 && mi >= 0 && mi <= 59;
+}
 
 function definirDateCarte(id, date, heure) {
   const c = trouverCarteSurprise(id);
@@ -1360,7 +1370,7 @@ function icsCarteSurprise(carte, titreLisible, activiteLisible, maintenant) {
   if (!carte || !DATE_ISO.test(carte.prevueLe || "")) return null;
   const jour = carte.prevueLe.replace(/-/g, "");
   let debut, fin;
-  if (HEURE_ISO.test(carte.prevueHeure || "")) {
+  if (heureValide(carte.prevueHeure)) {
     const hm = carte.prevueHeure.replace(":", "");
     debut = "DTSTART:" + jour + "T" + hm + "00";
     const d = new Date(carte.prevueLe + "T" + carte.prevueHeure + ":00");
@@ -1381,6 +1391,113 @@ function icsCarteSurprise(carte, titreLisible, activiteLisible, maintenant) {
     debut, fin,
     icsPlier("SUMMARY:" + icsEchapper((carte.emoji || "🎁") + " " + (titreLisible || carte.titre))),
     icsPlier("DESCRIPTION:" + icsEchapper(activiteLisible || carte.activite || "")),
+    "END:VEVENT", "END:VCALENDAR"
+  ];
+  return lignes.filter(l => l !== "DESCRIPTION:").join("\r\n") + "\r\n";
+}
+
+/* ---------- Le rendez-vous du soir (rappel par l'agenda du parent) ----------
+ * La raison d'arrêt la plus citée par les familles est « on n'y pense pas ».
+ * La réponse habituelle serait une notification ; elle nous est interdite par
+ * nos propres repères (« pas de notifications », SCIENCE_DEFAUT.neurologie),
+ * et cette contrainte est tenue.
+ *
+ * On délègue donc le rappel à l'agenda DU PARENT : il choisit son rythme et
+ * son heure, l'événement part chez lui, et c'est son agenda qui le prévient.
+ * Rien n'est poussé depuis l'application, aucune permission n'est demandée,
+ * aucun service worker n'est nécessaire — donc cela fonctionne aussi sur
+ * iPhone, où la notification web exige d'ajouter le site à l'écran d'accueil.
+ * Et le parent garde la main : supprimer l'événement dans son agenda suffit,
+ * il n'a pas à venir nous le demander.
+ * ------------------------------------------------------------------- */
+const RITUEL_RYTHMES = ["quotidien", "deux_jours", "trois_jours", "hebdo"];
+const RITUEL_DUREE_MIN = 5;      // l'objectif est de 3 minutes ; 5 reste honnête
+const RITUEL_AVANT_DODO = 30;    // minutes avant le coucher le plus tôt
+const RITUEL_JOURS_ICS = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+
+function hhmm(minutes) {
+  const p = (n) => String(n).padStart(2, "0");
+  return p(Math.floor(minutes / 60)) + ":" + p(minutes % 60);
+}
+
+// Heure conseillée : une demi-heure avant le coucher le PLUS TÔT de la
+// fratrie — le moment où tout le monde est encore debout et où le parent est
+// déjà auprès des enfants. On ne propose pas un rituel que le cadet passerait
+// au lit. Repli sur 19:00 si le calcul sort de la journée.
+function heureRituelConseillee(etatRef) {
+  const src = etatRef || (typeof etat !== "undefined" ? etat : null);
+  const enfants = (src && src.enfants) ? Object.values(src.enfants) : [];
+  const couchers = enfants.map(e => minutesCoucher(e && e.heureCoucher));
+  const plusTot = couchers.length ? Math.min.apply(null, couchers) : DODO_DEFAUT;
+  const m = plusTot - RITUEL_AVANT_DODO;
+  return (m >= 0 && m < 24 * 60) ? hhmm(m) : "19:00";
+}
+
+// Premier jour du rituel : aujourd'hui si l'heure n'est pas encore passée,
+// demain sinon. Sans cela, le tout premier rappel ne sonnerait jamais — et
+// le parent conclurait que la fonction ne marche pas.
+function debutRituel(heure, maintenant) {
+  const now = maintenant || new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  const cle = now.getFullYear() + "-" + p(now.getMonth() + 1) + "-" + p(now.getDate());
+  const h = /^(\d{1,2}):(\d{2})$/.exec(String(heure == null ? "" : heure).trim());
+  if (!h) return cle;
+  const cible = parseInt(h[1], 10) * 60 + parseInt(h[2], 10);
+  return cible > (now.getHours() * 60 + now.getMinutes()) ? cle : demain(cle);
+}
+
+// Règle de répétition. Le repère pédagogique dit « un petit rituel quotidien
+// ou tous les 2-3 jours suffit » : on ne propose donc rien de plus dense que
+// chaque jour. L'hebdomadaire sert au suivi papier, qu'on encode en une fois ;
+// il retombe sur le jour de la semaine du premier rendez-vous, ce qui évite
+// de demander au parent une information qu'il a déjà donnée.
+function rituelRrule(rythme, jourDebut) {
+  if (rythme === "quotidien") return "RRULE:FREQ=DAILY";
+  if (rythme === "deux_jours") return "RRULE:FREQ=DAILY;INTERVAL=2";
+  if (rythme === "trois_jours") return "RRULE:FREQ=DAILY;INTERVAL=3";
+  if (rythme === "hebdo") {
+    const d = new Date(String(jourDebut) + "T00:00:00");
+    return "RRULE:FREQ=WEEKLY;BYDAY=" + RITUEL_JOURS_ICS[isNaN(d.getTime()) ? 0 : d.getDay()];
+  }
+  return null;
+}
+
+// L'événement récurrent, en heure LOCALE flottante (comme les cartes) : pas
+// de fuseau, donc 19:00 reste 19:00 après le changement d'heure. Un VTIMEZONE
+// aurait fait dériver le rituel d'une heure deux fois par an.
+function icsRituelSoir(rythme, heure, titre, texte, maintenant, jourDebut) {
+  if (!heureValide(heure)) return null;
+  if (RITUEL_RYTHMES.indexOf(rythme) < 0) return null;
+  const debut = DATE_ISO.test(jourDebut || "") ? jourDebut : debutRituel(heure, maintenant);
+  const regle = rituelRrule(rythme, debut);
+  if (!regle) return null;
+
+  const p = (n) => String(n).padStart(2, "0");
+  const hm = heure.replace(":", "");
+  const fin = new Date(debut + "T" + heure + ":00");
+  fin.setMinutes(fin.getMinutes() + RITUEL_DUREE_MIN);
+
+  const sujet = titre || "FamiTeam";
+  const lignes = [
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//FamiTeam//Rituel du soir//FR",
+    "CALSCALE:GREGORIAN", "BEGIN:VEVENT",
+    // Identifiant déterministe, sans rien de personnel : réimporter avec les
+    // mêmes réglages met l'événement à jour au lieu de le dupliquer.
+    "UID:rituel-" + rythme + "-" + hm + "-" + debut + "@fami.team",
+    "DTSTAMP:" + icsHorodatage(maintenant || new Date()),
+    "DTSTART:" + debut.replace(/-/g, "") + "T" + hm + "00",
+    "DTEND:" + fin.getFullYear() + p(fin.getMonth() + 1) + p(fin.getDate())
+      + "T" + p(fin.getHours()) + p(fin.getMinutes()) + "00",
+    regle,
+    // Le parent n'est pas « occupé » cinq minutes : sans cela, l'événement
+    // le ferait passer indisponible aux yeux de ses collègues.
+    "TRANSP:TRANSPARENT",
+    icsPlier("SUMMARY:" + icsEchapper(sujet)),
+    icsPlier("DESCRIPTION:" + icsEchapper(texte || "")),
+    // Sans VALARM, l'événement s'affiche mais ne prévient personne — c'est
+    // pourtant tout l'objet de la fonction.
+    "BEGIN:VALARM", "ACTION:DISPLAY", "TRIGGER:PT0M",
+    icsPlier("DESCRIPTION:" + icsEchapper(sujet)), "END:VALARM",
     "END:VEVENT", "END:VCALENDAR"
   ];
   return lignes.filter(l => l !== "DESCRIPTION:").join("\r\n") + "\r\n";

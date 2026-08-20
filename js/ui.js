@@ -5831,6 +5831,75 @@ function blocPremiersPas() {
   return sec;
 }
 
+/* ----- Le rendez-vous du soir : le rappel que nous ne ferons pas -----
+ * « On n'y pense pas systématiquement » est la première raison d'abandon
+ * donnée par les familles. La réponse évidente serait une notification, et
+ * elle nous est fermée : nos repères neurologiques l'excluent, et nous le
+ * répétons partout comme un argument. Le parent dépose donc lui-même un
+ * rendez-vous dans SON agenda, et c'est son agenda qui le prévient.
+ *
+ * Conséquence assumée : nous ne saurons jamais s'il l'a fait ni s'il l'a
+ * supprimé. C'est le prix d'un rappel qui n'appartient pas à l'application. */
+function rituelReglage() {
+  const r = (etat.reglages && etat.reglages.rituel) || null;
+  if (!r || RITUEL_RYTHMES.indexOf(r.rythme) < 0 || !heureValide(r.heure)) return null;
+  return r;
+}
+
+function blocRituelSoir() {
+  const regle = rituelReglage();
+  const sec = el("section", "carte rituel");
+  // L'état se lit dans le titre : replié, ce bloc doit tout de même dire si
+  // un rappel est réglé, sinon le parent le rouvre pour rien.
+  const etatTxt = regle
+    ? t("rituel.resume", { r: t("rituel.r_" + regle.rythme), h: regle.heure })
+    : t("rituel.jamais");
+  sec.innerHTML = `<h2>${t("rituel.titre")}<span class="rituel-etat">${echapper(etatTxt)}</span></h2>
+    <p class="note">${t("rituel.intro")}</p>`;
+
+  const conseillee = heureRituelConseillee();
+  const choix = regle || { rythme: "quotidien", heure: conseillee };
+
+  const lR = el("label", "champ", t("rituel.rythme"));
+  const sel = el("select");
+  RITUEL_RYTHMES.forEach(r => {
+    const o = el("option", "", t("rituel.r_" + r));
+    o.value = r;
+    if (r === choix.rythme) o.selected = true;
+    sel.appendChild(o);
+  });
+  lR.appendChild(sel);
+  sec.appendChild(lR);
+
+  const lH = el("label", "champ", t("rituel.heure"));
+  const inp = el("input");
+  inp.type = "time";
+  inp.value = choix.heure;
+  lH.appendChild(inp);
+  sec.appendChild(lH);
+
+  sec.appendChild(el("p", "note", t("rituel.conseil", { h: conseillee })));
+
+  const b = el("button", "gros-bouton planete", t("rituel.ajouter"));
+  b.onclick = () => {
+    const rythme = sel.value, heure = inp.value;
+    const ics = icsRituelSoir(rythme, heure, t("rituel.sujet"), t("rituel.corps"));
+    if (!ics) { toast(t("rituel.echec"), "info"); return; }
+    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+    if (!telechargerBlob(blob, "famiteam-rendez-vous.ics")) { toast(t("rituel.echec"), "info"); return; }
+    // On mémorise le choix, pas le fait que l'agenda l'ait accepté : c'est
+    // ce que le parent a demandé, et rien de plus.
+    if (!etat.reglages) etat.reglages = {};
+    etat.reglages.rituel = { rythme, heure };
+    sauver();
+    toast(t("rituel.ok"), "ok");
+    rendre();
+  };
+  sec.appendChild(b);
+  sec.appendChild(el("p", "note", t("rituel.note")));
+  return sec;
+}
+
 // ----- Validations en attente (mission cochée par l'enfant, à confirmer) -----
 function blocAttente(total) {
   const att = el("section", "carte");
@@ -6183,6 +6252,9 @@ function vueReglages(c) {
     if (bm) c.appendChild(bm);
     const j7 = blocArbreSeptiemeJour();
     if (j7) c.appendChild(j7);
+    // Ouvert tant que rien n'est réglé, replié ensuite : la carte se fait
+    // discrète pour celui qui a déjà répondu, et reste visible pour l'autre.
+    c.appendChild(carteRepliable(blocRituelSoir(), "rituel", !rituelReglage()));
     c.appendChild(carteRepliable(blocMissionsDuJour(enfantActif()), "missions", false));
     c.appendChild(blocEval(enfantActif(), "parent"));
     c.appendChild(blocReparation());
@@ -6199,6 +6271,9 @@ function vueReglages(c) {
 
     // ----- Défis réparation ("Oups, ça arrive…") : accès rapide -----
     c.appendChild(blocReparation());
+
+    // ----- Le rendez-vous du soir (rappel par l'agenda du parent) -----
+    c.appendChild(carteRepliable(blocRituelSoir(), "rituel", !rituelReglage()));
 
     // ----- Le bon moment pour parler de l'app (après une carte débloquée) -----
     const bmExp = blocBonMoment();

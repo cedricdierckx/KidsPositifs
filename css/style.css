@@ -897,6 +897,12 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .champ input{display:block; width:100%; margin-top:4px; padding:10px;
   border:2px solid #e3edf5; border-radius:12px; font-size:16px; font-family:inherit}
 .champ input[type=color]{height:44px; padding:4px}
+/* `.champ input` existait, `.champ select` non : le premier menu déroulant
+   déposé dans un `.champ` restait donc collé à son libellé, sur la même
+   ligne, alors que le champ voisin passait à la ligne. Même traitement. */
+.champ select{display:block; width:100%; margin-top:4px; padding:10px;
+  border:2px solid #e3edf5; border-radius:12px; font-size:16px;
+  font-family:inherit; background:#fff}
 .btn-secondaire,.btn-danger{border:none; border-radius:14px; padding:14px;
   font-size:15px; font-weight:800; cursor:pointer; width:100%; margin-top:8px; font-family:inherit}
 .btn-secondaire{background:#e8f0fb; color:#2b3445}
@@ -1760,3 +1766,10 @@ body.impression .carte-ami-actions{display:none}
 .pastille-reparer:active{transform:scale(.92)}
 .rep-modale{max-width:460px}
 .rep-modale .missions{margin-top:10px}
+
+/* Le rendez-vous du soir. L'état ("Rappel réglé : chaque jour, à 18:45")
+   vit dans le titre pour rester lisible quand la carte est repliée : il passe
+   donc dans le <summary>, où il doit peser moins que le titre lui-même. */
+.rituel-etat{display:block; margin-top:3px; font-size:12.5px; font-weight:600;
+  color:var(--doux); letter-spacing:0}
+.rituel .gros-bouton{margin-top:12px}

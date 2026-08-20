@@ -2831,10 +2831,19 @@ test("parents : les cartes longues sont repliables et retiennent leur état", ()
       "carte longue non repliée : " + cle);
   });
   // Chaque clé de pli doit être unique, sinon deux cartes partagent leur état.
+  // Exception : une carte présente dans les DEUX branches de mode (simplifié
+  // et expert) apparaît deux fois dans la source alors qu'une seule est
+  // rendue. Partager la clé est alors voulu — la préférence du parent
+  // survit au changement de mode. Toute autre répétition est un défaut.
+  const DEUX_MODES = ["missions", "journal", "rituel"];
   const cles = (ui.match(/carteRepliable\([^,]+, "([a-z]+)"/g) || [])
     .map(m => /"([a-z]+)"$/.exec(m)[1]);
-  const doublons = cles.filter((c, i) => cles.indexOf(c) !== i && c !== "missions" && c !== "journal");
+  const doublons = cles.filter((c, i) => cles.indexOf(c) !== i && DEUX_MODES.indexOf(c) < 0);
   assert.strictEqual(doublons.length, 0, "clés de pli partagées : " + doublons.join(", "));
+  // Et une clé exemptée doit vraiment apparaître deux fois : sinon
+  // l'exemption masque une carte qu'on a oublié de rendre dans un mode.
+  DEUX_MODES.forEach(c => assert.strictEqual(cles.filter(x => x === c).length, 2,
+    "carte absente d'un des deux modes parents : " + c));
   const css = fs.readFileSync(path.join(__dirname, "..", "css/style.css"), "utf8");
   ["carte-pli", "carte-pli-t", "carte-pli-c"].forEach(c =>
     assert.ok(css.includes("." + c), "style manquant : ." + c));
@@ -3568,6 +3577,108 @@ test("écrans : le mode sans écran est annoncé avant l'inscription", () => {
   assert.ok(/feuille de la semaine/.test(rep), "la réponse doit citer la feuille papier");
   assert.ok(/notification/i.test(rep), "la réponse doit dire qu'il n'y a aucune notification");
   assert.ok(/[Tt]rois minutes|3 minutes/.test(rep), "la réponse doit chiffrer le temps d'écran");
+});
+
+/* Le rendez-vous du soir. L'application ne notifiera jamais : le rappel est
+ * délégué à l'agenda du parent. Ce qui doit donc être garanti, c'est que le
+ * fichier produit prévienne réellement (VALARM), qu'il ne dérive pas au
+ * changement d'heure, et qu'aucune heure absurde ne le rende illisible. */
+test("rendez-vous du soir : l'heure hors plage est refusée, pas encodée", () => {
+  const { api } = construireContexte();
+  // HEURE_ISO ne contrôle que la forme. C'est ce piège qui produisait un
+  // DTEND « NaNNaNNaN », donc un fichier rejeté en bloc par l'appareil.
+  assert.strictEqual(api.heureValide("25:00"), false);
+  assert.strictEqual(api.heureValide("19:99"), false);
+  assert.strictEqual(api.heureValide("7:30"), false, "la forme à un chiffre n'est pas la nôtre");
+  assert.strictEqual(api.heureValide("00:00"), true);
+  assert.strictEqual(api.heureValide("23:59"), true);
+  assert.strictEqual(api.icsRituelSoir("quotidien", "25:00", "x", "y"), null);
+  assert.strictEqual(api.icsRituelSoir("quotidien", "19:99", "x", "y"), null);
+  assert.strictEqual(api.icsRituelSoir("toutes_les_heures", "19:00", "x", "y"), null);
+
+  // Même exigence pour la carte planifiée, qui partageait le défaut.
+  const carte = { id: "c1", titre: "T", prevueLe: "2026-09-01", prevueHeure: "26:00" };
+  const ics = api.icsCarteSurprise(carte, "T", "A", new Date(2026, 7, 20, 12, 0, 0));
+  assert.ok(!/NaN/.test(ics), "une heure hors plage ne doit jamais produire NaN");
+});
+
+test("rendez-vous du soir : le fichier prévient vraiment, et ne dérive pas", () => {
+  const { api } = construireContexte();
+  const ref = new Date(2026, 7, 20, 14, 5, 0);          // jeudi 20 août, 14h05
+  const ics = api.icsRituelSoir("quotidien", "19:00", "Titre", "Corps", ref);
+
+  // Sans alarme, l'événement s'affiche mais ne rappelle rien : tout l'objet
+  // de la fonction disparaîtrait sans que cela se voie.
+  assert.ok(/BEGIN:VALARM/.test(ics) && /ACTION:DISPLAY/.test(ics) && /TRIGGER:/.test(ics),
+    "il faut une alarme, sinon le rendez-vous ne prévient personne");
+  // Heure locale flottante : un DTSTART en UTC dériverait d'une heure à
+  // chaque changement d'heure, deux fois par an.
+  assert.ok(/\r\nDTSTART:20260820T190000\r\n/.test(ics), "DTSTART doit être local et flottant");
+  assert.ok(!/DTSTART[^\r\n]*Z/.test(ics), "DTSTART ne doit porter aucun fuseau");
+  assert.ok(/\r\nDTEND:20260820T190500\r\n/.test(ics), "la durée doit être de 5 minutes");
+  // Le parent n'est pas « occupé » : sinon il passe indisponible au bureau.
+  assert.ok(/TRANSP:TRANSPARENT/.test(ics));
+  assert.ok(/^BEGIN:VCALENDAR/.test(ics) && /END:VCALENDAR\r\n$/.test(ics));
+  // Rien de personnel dans l'identifiant, et réimporter met à jour.
+  assert.ok(/UID:rituel-quotidien-1900-2026-08-20@fami\.team/.test(ics));
+
+  // Les quatre rythmes, et l'hebdomadaire qui déduit son jour du premier
+  // rendez-vous plutôt que de le redemander au parent.
+  assert.ok(/RRULE:FREQ=DAILY\r\n/.test(api.icsRituelSoir("quotidien", "19:00", "a", "b", ref)));
+  assert.ok(/RRULE:FREQ=DAILY;INTERVAL=2/.test(api.icsRituelSoir("deux_jours", "19:00", "a", "b", ref)));
+  assert.ok(/RRULE:FREQ=DAILY;INTERVAL=3/.test(api.icsRituelSoir("trois_jours", "19:00", "a", "b", ref)));
+  assert.strictEqual(api.rituelRrule("hebdo", "2026-08-20"), "RRULE:FREQ=WEEKLY;BYDAY=TH");
+  assert.strictEqual(api.rituelRrule("hebdo", "2026-08-23"), "RRULE:FREQ=WEEKLY;BYDAY=SU");
+  api.RITUEL_RYTHMES.forEach(r =>
+    assert.ok(api.icsRituelSoir(r, "19:00", "a", "b", ref), "rythme non produit : " + r));
+});
+
+test("rendez-vous du soir : le premier rappel ne tombe jamais dans le passé", () => {
+  const { api } = construireContexte();
+  const ref = new Date(2026, 7, 20, 14, 5, 0);
+  // Heure déjà passée aujourd'hui → on commence demain, sinon le tout premier
+  // rappel ne sonnerait pas et le parent croirait la fonction cassée.
+  assert.strictEqual(api.debutRituel("10:00", ref), "2026-08-21");
+  assert.strictEqual(api.debutRituel("22:00", ref), "2026-08-20");
+  assert.strictEqual(api.debutRituel("14:05", ref), "2026-08-21", "à la minute près, c'est passé");
+
+  // Heure conseillée : une demi-heure avant le coucher LE PLUS TÔT de la
+  // fratrie — on ne propose pas un rituel que le cadet passerait au lit.
+  assert.strictEqual(api.heureRituelConseillee(
+    { enfants: { a: { heureCoucher: "20:00" }, b: { heureCoucher: "19:15" } } }), "18:45");
+  assert.strictEqual(api.heureRituelConseillee({ enfants: {} }),
+    api.hhmm(api.DODO_DEFAUT - api.RITUEL_AVANT_DODO));
+  // Un coucher très tôt ne doit pas produire une heure négative.
+  assert.ok(api.heureValide(api.heureRituelConseillee(
+    { enfants: { a: { heureCoucher: "00:10" } } })), "heure de repli invalide");
+});
+
+test("rendez-vous du soir : l'app promet l'absence de notification, pas l'inverse", () => {
+  const { api } = construireContexte();
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const cles = ["rituel.titre", "rituel.intro", "rituel.rythme", "rituel.heure",
+    "rituel.conseil", "rituel.ajouter", "rituel.ok", "rituel.echec", "rituel.resume",
+    "rituel.jamais", "rituel.note", "rituel.sujet", "rituel.corps"]
+    .concat(api.RITUEL_RYTHMES.map(x => "rituel.r_" + x));
+  Object.keys(api.LANGUES).forEach(lg =>
+    cles.forEach(k => assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`)));
+
+  // L'introduction doit NIER la notification. C'est le seul argument qui
+  // rassure un parent méfiant, et une traduction distraite l'inverserait.
+  const nie = { fr: /jamais de notification/i, en: /never send you a notification/i,
+    nl: /nooit een melding/i, de: /niemals eine Benachrichtigung/i };
+  Object.keys(api.LANGUES).forEach(lg =>
+    assert.ok(nie[lg].test(api.I18N[lg]["rituel.intro"]),
+      "l'intro doit nier la notification en " + lg));
+
+  // La carte existe dans les deux modes parents, et se replie une fois réglée.
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const appels = ui.match(/carteRepliable\(blocRituelSoir\(\), "rituel", !rituelReglage\(\)\)/g) || [];
+  assert.strictEqual(appels.length, 2, "il faut la carte en mode simplifié ET en mode expert");
+  // Un `<select>` dans un `.champ` doit être mis en forme comme un `input`,
+  // sinon il reste collé à son libellé alors que le champ voisin s'aligne.
+  const css = fs.readFileSync(path.join(r, "css/style.css"), "utf8");
+  assert.ok(/\.champ select\{[^}]*width:100%/.test(css), "le menu déroulant doit occuper la ligne");
 });
 
 /* ---------- Exécution ---------- */
