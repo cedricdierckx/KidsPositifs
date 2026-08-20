@@ -3528,6 +3528,48 @@ test("cartes : le nom « surprise » a disparu de tout ce que voient les famille
       assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`)));
 });
 
+/* La raison d'arrêt la plus citée par les familles amies est le refus de
+ * l'écran pour un jeune enfant. Le mode sans écran existait déjà, mais il
+ * n'était nommé nulle part avant l'inscription : le parent partait sans
+ * jamais apprendre qu'il existait. La réponse doit donc se lire à la porte —
+ * page de connexion et FAQ — et pas seulement au fond de l'espace parents. */
+test("écrans : le mode sans écran est annoncé avant l'inscription", () => {
+  const { api } = construireContexte();
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  // Cinquième promesse sur la page de connexion, traduite partout.
+  Object.keys(api.LANGUES).forEach(lg =>
+    ["auth.feat5_t", "auth.feat5_d"].forEach(k =>
+      assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`)));
+
+  // Elle doit parler de papier ou d'absence d'écran, pas d'autre chose.
+  const motifs = {
+    fr: /écran|papier|feuille/i, en: /screen|paper|sheet/i,
+    nl: /scherm|papier|blad/i, de: /Bildschirm|Papier|Blatt/i
+  };
+  Object.keys(api.LANGUES).forEach(lg => {
+    const txt = api.I18N[lg]["auth.feat5_t"] + " " + api.I18N[lg]["auth.feat5_d"];
+    assert.ok(motifs[lg].test(txt), "promesse hors sujet en " + lg);
+    assert.ok(/3/.test(txt), "les 3 minutes par jour doivent être chiffrées en " + lg);
+  });
+
+  // Et elle est réellement affichée : une clé traduite que personne ne rend
+  // ne sert à rien. C'est exactement l'erreur que ce test doit empêcher.
+  const auth = fs.readFileSync(path.join(r, "js/auth.js"), "utf8");
+  const bloc = auth.slice(auth.indexOf("const features = ["), auth.indexOf("].map(", auth.indexOf("const features = [")));
+  assert.ok(/auth\.feat5_t/.test(bloc) && /auth\.feat5_d/.test(bloc),
+    "la promesse sans écran doit figurer dans la liste rendue");
+
+  // La FAQ répond à l'objection telle qu'un parent la formule, et cite le
+  // mode papier ainsi que l'absence de notification.
+  const faq = fs.readFileSync(path.join(r, "faq.html"), "utf8");
+  const q = faq.slice(faq.indexOf("<h2>Je ne veux pas d'écran"));
+  assert.ok(q.length > 0, "la FAQ doit poser la question du refus de l'écran");
+  const rep = q.slice(0, q.indexOf("<h2>", 4));
+  assert.ok(/feuille de la semaine/.test(rep), "la réponse doit citer la feuille papier");
+  assert.ok(/notification/i.test(rep), "la réponse doit dire qu'il n'y a aucune notification");
+  assert.ok(/[Tt]rois minutes|3 minutes/.test(rep), "la réponse doit chiffrer le temps d'écran");
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

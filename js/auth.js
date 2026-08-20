@@ -1190,7 +1190,13 @@ function ecranAuth() {
     ["🎯", t("auth.feat1_t"), t("auth.feat1_d")],
     ["🎁", t("auth.feat2_t"), t("auth.feat2_d")],
     ["🌍", t("auth.feat3_t"), t("auth.feat3_d")],
-    ["🏆", t("auth.feat4_t"), t("auth.feat4_d")]
+    ["🏆", t("auth.feat4_t"), t("auth.feat4_d")],
+    // Les quatre premières promesses décrivent un jeu pour enfants, ce qui
+    // suffit à faire fuir un parent réticent aux écrans — la raison d'arrêt
+    // la plus citée par les familles interrogées. Le mode sans écran existe
+    // depuis longtemps, mais il était replié au fond de l'espace parents :
+    // personne ne le trouvait avant d'avoir décidé de partir.
+    ["📄", t("auth.feat5_t"), t("auth.feat5_d")]
   ].map(([e, ti, de]) => `<div class="feat"><span class="feat-emoji">${e}</span>
       <div><strong>${ti}</strong><span>${de}</span></div></div>`).join("");
 
