@@ -1767,9 +1767,26 @@ body.impression .carte-ami-actions{display:none}
 .rep-modale{max-width:460px}
 .rep-modale .missions{margin-top:10px}
 
+/* ----- L'espace parent parle d'une seule voix -----
+   `.gros-bouton` est dimensionné pour un doigt de quatre ans : 20px de marge
+   intérieure, texte de 18px. C'est juste sur les écrans enfants. Dans
+   l'espace parent, où il apparaît quinze fois, il faisait de chaque carte un
+   pavé — et il cohabitait à quelques lignes d'écart avec `.btn-secondaire`
+   (14px / 15px), ce qui donnait cette impression de mise en forme décousue.
+   Les deux prennent donc ici la même mesure. On ne touche ni à la largeur ni
+   aux marges : plusieurs cartes les règlent déjà pour leur propre besoin
+   (rangées de boutons côte à côte, notamment), et les écraser d'ici
+   désalignerait ces rangées. */
+#contenu[data-vue="reglages"] .gros-bouton{padding:14px; font-size:15px; border-radius:14px}
+
 /* Le rendez-vous du soir. L'état ("Rappel réglé : chaque jour, à 18:45")
    vit dans le titre pour rester lisible quand la carte est repliée : il passe
    donc dans le <summary>, où il doit peser moins que le titre lui-même. */
 .rituel-etat{display:block; margin-top:3px; font-size:12.5px; font-weight:600;
   color:var(--doux); letter-spacing:0}
-.rituel .gros-bouton{margin-top:12px}
+/* Rythme et heure sur une seule ligne. En dessous de 300px de large la
+   colonne double ne tient plus : elle retombe d'elle-même grâce à `auto-fit`,
+   sans requête de média à maintenir. */
+.rituel-grille{display:grid; grid-template-columns:repeat(auto-fit, minmax(132px, 1fr));
+  gap:10px; align-items:start}
+.rituel-grille .champ{margin:10px 0 0}

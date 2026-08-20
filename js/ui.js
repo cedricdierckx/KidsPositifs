@@ -5860,6 +5860,10 @@ function blocRituelSoir() {
   const conseillee = heureRituelConseillee();
   const choix = regle || { rythme: "quotidien", heure: conseillee };
 
+  // Les deux champs tiennent sur une ligne : empilés, ils faisaient à eux
+  // seuls un tiers de la hauteur de la carte pour deux réglages triviaux.
+  const grille = el("div", "rituel-grille");
+
   const lR = el("label", "champ", t("rituel.rythme"));
   const sel = el("select");
   RITUEL_RYTHMES.forEach(r => {
@@ -5869,16 +5873,19 @@ function blocRituelSoir() {
     sel.appendChild(o);
   });
   lR.appendChild(sel);
-  sec.appendChild(lR);
+  grille.appendChild(lR);
 
   const lH = el("label", "champ", t("rituel.heure"));
   const inp = el("input");
   inp.type = "time";
   inp.value = choix.heure;
   lH.appendChild(inp);
-  sec.appendChild(lH);
+  grille.appendChild(lH);
+  sec.appendChild(grille);
 
-  sec.appendChild(el("p", "note", t("rituel.conseil", { h: conseillee })));
+  // Le conseil est une aide de champ, pas un paragraphe : il se rapporte à
+  // l'heure et n'a pas à peser comme une phrase de plus.
+  lH.appendChild(el("small", "champ-aide", t("rituel.conseil", { h: conseillee })));
 
   const b = el("button", "gros-bouton planete", t("rituel.ajouter"));
   b.onclick = () => {

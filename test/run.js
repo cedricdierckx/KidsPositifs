@@ -3681,6 +3681,28 @@ test("rendez-vous du soir : l'app promet l'absence de notification, pas l'invers
   assert.ok(/\.champ select\{[^}]*width:100%/.test(css), "le menu déroulant doit occuper la ligne");
 });
 
+test("parents : l'action principale a partout la même taille", () => {
+  const fs = require("fs"), path = require("path");
+  const css = fs.readFileSync(path.join(__dirname, "..", "css/style.css"), "utf8");
+  // `.gros-bouton` est taillé pour un doigt de quatre ans (20px / 18px). Il
+  // est juste sur les écrans enfants et faisait de chaque carte parent un
+  // pavé, à côté de `.btn-secondaire` deux fois plus discret.
+  const regle = /#contenu\[data-vue="reglages"\] \.gros-bouton\{([^}]*)\}/.exec(css);
+  assert.ok(regle, "l'action principale doit être ramenée à la mesure parent");
+  assert.ok(/padding:14px/.test(regle[1]) && /font-size:15px/.test(regle[1]),
+    "elle doit prendre la mesure de .btn-secondaire");
+  // Elle ne doit surtout PAS toucher largeur ni marges : plusieurs cartes
+  // rangent leurs boutons côte à côte et règlent cela elles-mêmes ; les
+  // écraser d'ici désalignerait ces rangées d'un bouton sur deux.
+  assert.ok(!/width|margin/.test(regle[1]),
+    "la règle ne doit régler que la taille, pas la largeur ni les marges");
+  // La portée doit rester l'espace parent : sur les écrans enfants, le gros
+  // bouton est une cible tactile, pas une maladresse.
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  assert.ok(/c\.setAttribute\("data-vue", etat\.vue\)/.test(ui),
+    "le sélecteur ci-dessus dépend de cet attribut : il doit continuer d'être posé");
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {
