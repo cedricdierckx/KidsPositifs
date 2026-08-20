@@ -412,7 +412,7 @@ const ENCOURAGEMENTS = [
 
 /* ---- Compliments du jour (espace parent) ------------------------------
  * Corpus de repli en français ; traduits via i18n (trData) si besoin.
- * Inspirés de la parentalité positive (Papa Positive) : on valorise l'effort,
+ * Dans l'esprit de la parentalité positive : on valorise l'effort,
  * la régularité et la progression plutôt que le résultat brut. Utilisés par
  * complimentDuJour() (app.js) avec les variables {prenom}, {mission}, {n},
  * {semaine} (jours cette semaine) et {avant} (jours la semaine précédente). */
@@ -718,8 +718,7 @@ const CARTES_SURPRISES_DEFAUT = [
 ];
 
 /* ---- Idées d'activités à proposer aux parents ---------------------
- * Inspirées de la parentalité positive (Papa Positive, Faber & Mazlish)
- * et des recommandations de psychologues : du temps de qualité, de la
+ * Dans l'esprit de la parentalité positive : du temps de qualité, de la
  * connexion, sans écran, qui crée des souvenirs. Les parents les ajoutent
  * en un clic. taille → coût par enfant : petite 50 / moyenne 200 / grande 1000.
  * ------------------------------------------------------------------- */

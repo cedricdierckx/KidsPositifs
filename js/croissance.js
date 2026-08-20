@@ -505,17 +505,22 @@ FamiTeam — {lien}`
     dest: "Compte ou page de parentalite positive, en message prive",
     quand: "Chantier Contacts choisis. Un message a la fois, jamais de copier-coller en serie",
     sujet: "(Messenger : pas d'objet — les deux premieres lignes decident de tout)",
+    // L'ouverture est une IDEE, jamais un compliment au destinataire : on ne
+    // s'appuie sur le nom, le travail ni la reputation de personne. C'est une
+    // question de droit autant que de tenue.
     corps: `Bonjour {prenom},
 
-Je m'appelle {qui}, papa de {nb_enfants} enfants a {ville}. Je vous ecris pour une raison precise, et un peu genante : votre nom figure dans une application que j'ai construite, et je prefere vous le dire moi-meme.
+Je suis {qui}, papa de {nb_enfants} enfants a {ville}. Je vous ecris a propos d'une idee, pas pour vous vendre quelque chose.
 
-Elle s'appelle {app}. Je l'ai faite sur mon temps libre pour mes propres enfants, et {raison_precise} — au point que les idees d'activites y sont presentees comme « inspirees de {prenom} et de psychologues ». Si cela vous derange, dites-le : je le retire ce soir.
+Les tableaux de recompenses me genaient tous pour la meme raison : on y RETIRE des points. Un enfant apprend alors qu'une semaine d'efforts peut etre effacee par un mauvais quart d'heure — et surtout, il apprend a cacher ses betises.
 
-Le principe tient en une phrase : on ne retire jamais de points. Quand quelque chose se passe mal, l'enfant choisit un geste de reparation, et c'est ce geste-la qui est recompense.
+J'ai donc construit, sur mon temps libre et pour mes propres enfants, une application qui ne retire JAMAIS de points. Quand quelque chose se passe mal, l'enfant choisit un geste de reparation — ranger, s'excuser, reconforter — et c'est ce geste-la qui est recompense.
 
-C'est gratuit, sans publicite, sans revente de donnees, et je ne vends rien : le projet coute 27 euros par an, couverts par quelques dons.
+Elle s'appelle {app} : gratuite, sans publicite, sans revente de donnees, et je ne vends rien. 27 euros de frais par an, couverts par quelques dons.
 
-Si un jour vous avez dix minutes, j'aimerais votre avis, meme severe. Je ne vous demande pas d'en parler.
+J'ai ecrit ce que je pense du sujet ici : {lien}/punir-ou-reparer.html — c'est utile meme sans l'application.
+
+Si un jour vous avez dix minutes, votre avis m'interesserait, meme severe. Je ne vous demande pas d'en parler.
 
 {qui}
 {lien}`

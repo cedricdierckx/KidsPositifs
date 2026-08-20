@@ -1969,14 +1969,14 @@ Object.assign(I18N.de, { "cs.revele_label": "Aktivität für Kinder sichtbar (so
 /* ---- Cartes surprises : bibliothèque d'idées (parentalité positive) ---- */
 Object.assign(I18N.fr, {
   "cs.idees_titre": "💡 Idées d'activités (parentalité positive)",
-  "cs.idees_sous": "Inspirées de Papa Positive et de psychologues. Touche ＋ pour l'ajouter.",
+  "cs.idees_sous": "Des idées prêtes à l'emploi, essayées en famille. Touche ＋ pour l'ajouter.",
   "cs.taille_petite": "🟢 Petites (rapides, quotidiennes)",
   "cs.taille_moyenne": "🟡 Moyennes (sorties & projets)",
   "cs.taille_grande": "🔴 Grandes (grandes expériences)"
 });
 Object.assign(I18N.en, {
   "cs.idees_titre": "💡 Activity ideas (positive parenting)",
-  "cs.idees_sous": "Inspired by positive-parenting experts and psychologists. Tap ＋ to add.",
+  "cs.idees_sous": "Ready-made ideas, tried out at home. Tap ＋ to add.",
   "cs.taille_petite": "🟢 Small (quick, everyday)",
   "cs.taille_moyenne": "🟡 Medium (outings & projects)",
   "cs.taille_grande": "🔴 Big (big experiences)",
@@ -1995,7 +1995,7 @@ Object.assign(I18N.en, {
 });
 Object.assign(I18N.nl, {
   "cs.idees_titre": "💡 Activiteitenideeën (positief opvoeden)",
-  "cs.idees_sous": "Geïnspireerd door positief-opvoedexperts en psychologen. Tik op ＋ om toe te voegen.",
+  "cs.idees_sous": "Kant-en-klare ideeën, thuis uitgeprobeerd. Tik op ＋ om toe te voegen.",
   "cs.taille_petite": "🟢 Klein (snel, dagelijks)",
   "cs.taille_moyenne": "🟡 Middel (uitjes & projecten)",
   "cs.taille_grande": "🔴 Groot (grote ervaringen)",
@@ -2014,7 +2014,7 @@ Object.assign(I18N.nl, {
 });
 Object.assign(I18N.de, {
   "cs.idees_titre": "💡 Aktivitätsideen (positive Erziehung)",
-  "cs.idees_sous": "Inspiriert von Experten für positive Erziehung und Psychologen. Tippe auf ＋ zum Hinzufügen.",
+  "cs.idees_sous": "Fertige Ideen, in der Familie erprobt. Tippe auf ＋ zum Hinzufügen.",
   "cs.taille_petite": "🟢 Klein (schnell, täglich)",
   "cs.taille_moyenne": "🟡 Mittel (Ausflüge & Projekte)",
   "cs.taille_grande": "🔴 Groß (große Erlebnisse)",
