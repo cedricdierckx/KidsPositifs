@@ -71,7 +71,18 @@ function hotesProduction() {
   const liste = brut ? brut.split(",") : HOTES_PRODUCTION;
   return liste.map(h => String(h).trim().toLowerCase().replace(/^www\./, "")).filter(Boolean);
 }
+// Vrai dans l'app native (Capacitor) — coquille iOS/Android autour du même
+// code web. `window.Capacitor` n'existe alors que là : détection sûre même
+// avant l'installation du plugin, elle vaut simplement toujours faux ici.
+function estAppNative() {
+  return typeof window !== "undefined" &&
+    !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+}
 function estProduction() {
+  // Dans l'app native, `location.hostname` n'est plus un domaine public
+  // (ex. "localhost") : il n'existe pas d'« aperçu » pour un binaire installé,
+  // donc l'app packagée EST la production.
+  if (estAppNative()) return true;
   const hote = String((typeof location !== "undefined" && location.hostname) || "").toLowerCase();
   if (!hote) return false;
   // Comparaison exacte, jamais « se termine par » : famiteam.com.exemple.net
@@ -395,9 +406,17 @@ function abonnerRealtime()          { return Store.abonnerRealtime(); }
 function majBadgeSync(symbole)      { return Store.badge(symbole); }
 
 /* ---------- Authentification ---------- */
+// Où revenir après un lien d'authentification. Sur le web, on garde
+// location.origin (voir HOTE_PUBLIC plus haut : ça permet de tester un lien
+// magique sur un aperçu Vercel). Dans l'app native, cette adresse n'existe
+// pas — il faut renvoyer vers l'hôte public, à charge pour lui de rouvrir
+// l'app (App Links / Universal Links à configurer côté Capacitor).
+function urlRetourAuth() {
+  return estAppNative() ? HOTE_PUBLIC : (location.origin + location.pathname);
+}
 async function connexionLienMagique(email) {
   const { error } = await sb.auth.signInWithOtp({
-    email, options: { emailRedirectTo: location.origin + location.pathname }
+    email, options: { emailRedirectTo: urlRetourAuth() }
   });
   return error;
 }
@@ -408,14 +427,14 @@ async function connexionMotDePasse(email, mdp) {
 }
 async function inscription(email, mdp) {
   const { data, error } = await sb.auth.signUp({
-    email, password: mdp, options: { emailRedirectTo: location.origin + location.pathname }
+    email, password: mdp, options: { emailRedirectTo: urlRetourAuth() }
   });
   if (!error && data.session) { utilisateur = data.user; await apresConnexion(); }
   return error;
 }
 async function envoyerResetMdp(email) {
   const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: location.origin + location.pathname
+    redirectTo: urlRetourAuth()
   });
   return error;
 }

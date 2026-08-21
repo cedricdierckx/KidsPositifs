@@ -1634,9 +1634,10 @@ test("avertissements : libellés traduits dans les 4 langues", () => {
 
 /* ---------- Aucun envoi hors production ---------- */
 test("production : les quatre domaines officiels, et eux seuls", () => {
-  const estProd = (hote, cfg) => fonctionDeSource("js/auth.js", "estProduction", {
+  const estProd = (hote, cfg, natif) => fonctionDeSource("js/auth.js", "estProduction", {
     location: { hostname: hote },
     HOTES_PRODUCTION: ["famiteam.com", "fami.team"],
+    estAppNative: () => !!natif,
     hotesProduction: fonctionDeSource("js/auth.js", "hotesProduction", {
       configApp: cfg || {}, window: { KP_CONFIG: {} },
       HOTES_PRODUCTION: ["famiteam.com", "fami.team"]
@@ -1658,6 +1659,13 @@ test("production : les quatre domaines officiels, et eux seuls", () => {
     "un domaine retiré de la liste ne doit plus compter comme production");
   // Un « www. » écrit dans la configuration ne doit pas casser la comparaison.
   assert.strictEqual(estProd("nouveau.be", { hote_prod: "www.nouveau.be" }), true);
+  // Dans l'app native, il n'existe pas d'« aperçu » : le binaire installé
+  // EST la production, quel que soit l'hôte (ou son absence) rapporté par
+  // la WebView.
+  assert.strictEqual(estProd("localhost", {}, true), true,
+    "l'app native doit toujours être considérée comme la production");
+  assert.strictEqual(estProd("", {}, true), true,
+    "même sans hôte, l'app native doit être considérée comme la production");
 });
 
 test("production : le point de sortie des e-mails bloque par défaut", () => {
@@ -3135,9 +3143,18 @@ test("liens : tout ce qui part vers l'extérieur vise le domaine public", () => 
   // Les e-mails aux familles non plus.
   assert.ok(!/lien: location\.origin/.test(auth),
     "les e-mails aux familles ne doivent pas porter l'adresse du déploiement courant");
-  // Les redirections d'authentification, elles, DOIVENT y rester.
-  assert.ok(/emailRedirectTo: location\.origin/.test(auth),
-    "la redirection d'authentification doit revenir sur le déploiement en cours");
+  // Les redirections d'authentification, elles, DOIVENT y rester sur le web —
+  // mais dans l'app native, où il n'existe pas de « déploiement en cours »,
+  // elles doivent basculer vers l'hôte public (urlRetourAuth, Capacitor).
+  const i2 = auth.indexOf("function urlRetourAuth");
+  assert.ok(i2 > -1, "urlRetourAuth introuvable");
+  const urlRetour = auth.slice(i2, auth.indexOf("\n}", i2));
+  assert.ok(/location\.origin \+ location\.pathname/.test(urlRetour),
+    "la redirection d'authentification doit revenir sur le déploiement en cours (web)");
+  assert.ok(/estAppNative\(\)\s*\?\s*HOTE_PUBLIC/.test(urlRetour),
+    "dans l'app native, la redirection d'authentification doit viser l'hôte public");
+  ["emailRedirectTo: urlRetourAuth()", "redirectTo: urlRetourAuth()"].forEach(motif =>
+    assert.ok(auth.includes(motif), motif + " introuvable — un flux d'authentification a été oublié"));
 });
 
 test("QR : un carré impossible à produire ne s'écrit jamais « null »", () => {
