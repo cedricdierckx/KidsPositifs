@@ -1309,11 +1309,25 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .sync-etat{font-size:14px; opacity:.8; margin-left:4px}
 
 /* ---- Page d'accueil publique (landing) ---- */
-.landing{max-width:1080px; margin:0 auto; padding:24px 16px 40px;
-  display:grid; grid-template-columns:1fr; gap:22px; align-items:start}
-.landing-hero{order:2}
-.landing-form{order:1}
+.landing{max-width:1080px; margin:0 auto; padding:18px 16px 40px;
+  display:grid; grid-template-columns:1fr; gap:20px; align-items:start}
+/* Ordre sur téléphone : langues, présentation, formulaire, puis le détail.
+   On ne demande pas de créer un compte avant d'avoir dit de quoi il s'agit. */
+.landing-langues{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:0}
+.landing-tete{margin:0}
 .landing-form .code-carte{max-width:none; width:100%; text-align:center; margin:0}
+/* Barre de langues compacte : drapeau + code, une seule ligne même en 320px. */
+.lang-min{display:inline-flex; align-items:center; gap:5px; padding:5px 9px; cursor:pointer;
+  border:2px solid #e3edf5; border-radius:999px; background:#fff; font-family:inherit;
+  font-size:12px; font-weight:800; color:#54616f; letter-spacing:.03em;
+  transition:border-color .15s, background .15s, color .15s}
+.lang-min:hover{border-color:#bcdcf0}
+.lang-min.actif{border-color:#37b985; background:linear-gradient(135deg,#e7faf1,#dff3ff); color:#1d7a52}
+.lang-min .langue-drapeau{display:inline-flex; line-height:0}
+.lang-min .dpx{width:18px; height:13px}
+/* Liens légaux : jamais coupés en plein milieu d'un intitulé. */
+.landing-liens{display:flex; flex-wrap:wrap; justify-content:center; gap:4px 14px; margin-top:14px}
+.landing-liens a{white-space:nowrap}
 .hero-logo{font-size:54px; text-align:center}
 .hero-nom{font-size:34px; margin:.1em 0; text-align:center}
 .hero-titre{font-size:22px; font-weight:800; color:var(--texte); margin:.2em 0; text-align:center}
@@ -1342,9 +1356,24 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .landing-centre .landing-form{width:100%; max-width:420px}
 
 @media(min-width:860px){
-  .landing{grid-template-columns:1.25fr 380px; gap:32px; padding:34px 22px 50px; align-items:center}
-  .landing-hero{order:1}
-  .landing-form{order:2; position:sticky; top:24px}
+  /* Deux colonnes nommées : le formulaire occupe le haut de la colonne de
+     droite. Auparavant « align-items:center » le centrait verticalement sur
+     un héros très haut, ce qui le rejetait à plus de 600 px du haut — donc
+     sous la ligne de flottaison, avec un grand vide au-dessus. */
+  .landing{
+    grid-template-columns:1.25fr 380px; gap:16px 32px; padding:28px 22px 50px;
+    align-items:start;
+    grid-template-areas:
+      "langues langues"
+      "tete    form"
+      "cle     form"
+      "corps   form";
+  }
+  .landing-langues{grid-area:langues; justify-content:flex-end; margin-bottom:2px}
+  .landing-tete{grid-area:tete}
+  .landing-cle{grid-area:cle}
+  .landing-form{grid-area:form; align-self:start; position:sticky; top:24px}
+  .landing-corps{grid-area:corps}
   .hero-logo,.hero-nom,.hero-titre,.hero-sous{text-align:left}
   .hero-nom{font-size:40px}
   .hero-titre{font-size:26px}
@@ -1641,8 +1670,14 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .hero-apercus img{width:100%; max-width:260px; height:auto; border-radius:16px;
   border:2px solid #e3edf5; box-shadow:0 8px 24px rgba(30,50,80,.12); background:#fff}
 .hero-apercus figcaption{font-size:13px; font-weight:700; color:#54616f; margin-top:8px; line-height:1.4}
+/* Placé avant le formulaire : sur téléphone, chaque pixel qu'il prend éloigne
+   la carte de connexion. D'où des marges serrées ici, desserrées à partir de
+   860 px où il vit dans la colonne de gauche, sans rien repousser. */
 .hero-principe{background:#fff; border:2px solid #e9dcff; border-left:6px solid #a78bfa;
-  border-radius:16px; padding:16px 18px; margin:18px 0 6px; text-align:left}
+  border-radius:16px; padding:12px 14px; margin:0; text-align:left}
+@media(min-width:860px){
+  .hero-principe{padding:16px 18px; margin:18px 0 6px}
+}
 .hero-principe h2{margin:0 0 8px; font-size:20px; color:#27384a}
 .hero-principe p{color:#54616f; line-height:1.6; font-size:15px; margin:0 0 8px}
 .hero-principe strong{color:#27384a}

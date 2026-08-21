@@ -3809,6 +3809,79 @@ test("parents : noter le comportement est un geste d'expert, et il vient après 
     "l'auto-évaluation de l'enfant ne doit pas avoir disparu au passage");
 });
 
+/* ---------- Accueil public : agencement ---------- */
+test("accueil : on dit ce qu'est l'app avant de demander un compte", () => {
+  const fs = require("fs"), path = require("path");
+  const auth = fs.readFileSync(path.join(__dirname, "..", "js", "auth.js"), "utf8");
+  const bloc = auth.slice(auth.indexOf("function ecranAuth"));
+  const corps = bloc.slice(0, bloc.indexOf("</div>`;"));
+  // « landing-cle » porte la réponse à l'objection principale (« on ne punit
+  // jamais ») : elle doit rester AVANT le formulaire, c'est ce qui décide un
+  // parent hésitant.
+  const ordre = ["landing-langues", "landing-tete", "landing-cle",
+                 "landing-form", "landing-corps"].map(c => corps.indexOf(c));
+  ordre.forEach((p, i) => assert.ok(p > -1, "section absente : " + i));
+  for (let i = 1; i < ordre.length; i++) {
+    assert.ok(ordre[i - 1] < ordre[i],
+      "l'ordre du document doit être langues → présentation → formulaire → détail");
+  }
+  // Une seule carte de formulaire : le déplacement ne doit pas l'avoir dupliquée.
+  assert.strictEqual((corps.match(/id="b-principal"/g) || []).length, 1,
+    "le formulaire ne doit apparaître qu'une fois");
+  assert.strictEqual((corps.match(/class="landing-form"/g) || []).length, 1);
+});
+
+test("accueil : sur grand écran, le formulaire est en haut, pas centré", () => {
+  const fs = require("fs"), path = require("path");
+  const css = fs.readFileSync(path.join(__dirname, "..", "css", "style.css"), "utf8");
+  const i = css.indexOf("@media(min-width:860px)");
+  assert.notStrictEqual(i, -1, "la règle grand écran doit exister");
+  const bloc = css.slice(i, css.indexOf(".hero-features{grid-template-columns:1fr 1fr}", i));
+  // On isole la seule règle .landing de ce bloc : ailleurs, un
+  // « align-items:center » est légitime (écran centré de réinitialisation).
+  const dLanding = bloc.indexOf(".landing{");
+  assert.notStrictEqual(dLanding, -1, ".landing doit être redéfini sur grand écran");
+  const regleLanding = bloc.slice(dLanding, bloc.indexOf("}", dLanding));
+  // « align-items:center » centrait le formulaire sur un héros très haut et le
+  // rejetait sous la ligne de flottaison : la régression à ne pas refaire.
+  assert.strictEqual(/align-items:\s*center/.test(regleLanding), false,
+    "le formulaire ne doit plus être centré verticalement sur la hauteur du héros");
+  assert.ok(/align-items:\s*start/.test(regleLanding), "les colonnes doivent s'aligner en haut");
+  assert.ok(/grid-template-areas/.test(regleLanding), "la grille doit nommer ses zones");
+  ["langues", "tete", "form", "corps"].forEach(z =>
+    assert.ok(new RegExp("grid-area:\\s*" + z).test(bloc), "zone non placée : " + z));
+});
+
+test("accueil : la barre de langues reste compacte et accessible", () => {
+  const fs = require("fs"), path = require("path");
+  const auth = fs.readFileSync(path.join(__dirname, "..", "js", "auth.js"), "utf8");
+  const css = fs.readFileSync(path.join(__dirname, "..", "css", "style.css"), "utf8");
+  // Codes à deux lettres : quatre langues sur une ligne, même en 320 px.
+  assert.ok(/lang-code">\$\{l\.toUpperCase\(\)\}/.test(auth),
+    "les pastilles doivent porter le code de langue, pas le nom complet");
+  // Le nom complet reste lisible par un lecteur d'écran et au survol.
+  assert.ok(/aria-label="\$\{LANGUES\[l\]\}"/.test(auth), "aria-label manquant");
+  assert.ok(/title="\$\{LANGUES\[l\]\}"/.test(auth), "title manquant");
+  assert.ok(/aria-current="true"/.test(auth), "la langue active doit être annoncée");
+  // La pastille compacte est une classe distincte : le sélecteur de langue de
+  // l'app (Réglages) garde son propre style, plus grand.
+  assert.ok(/\.lang-min\{/.test(css), "la classe compacte doit exister");
+  assert.ok(/\.langue-btn\{/.test(css), "le sélecteur de l'app ne doit pas être supprimé");
+  assert.ok(auth.indexOf('querySelectorAll(".lang-min")') > -1,
+    "le gestionnaire de clic doit viser la nouvelle classe");
+});
+
+test("accueil : libellés de la barre et des liens traduits dans les 4 langues", () => {
+  const { api } = construireContexte();
+  const cles = ["auth.langues", "auth.lien_faq", "auth.lien_legal", "auth.lien_confid"];
+  const manquantes = [];
+  Object.keys(api.LANGUES).forEach(lg => cles.forEach(k => {
+    const v = api.I18N[lg][k];
+    if (typeof v !== "string" || !v.length) manquantes.push(lg + " → " + k);
+  }));
+  assert.strictEqual(manquantes.length, 0, manquantes.join(", "));
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

@@ -4212,3 +4212,29 @@ Object.assign(I18N.de, {
   "rituel.sujet": "🌟 FamiTeam — der kleine Moment",
   "rituel.corps": "Zwei Minuten mit den Kindern: die Missionen von heute abhaken.\nfami.team"
 });
+
+/* ---- Accueil public : barre de langues et liens de bas de carte ---- */
+Object.assign(I18N.fr, {
+  "auth.langues": "Choix de la langue",
+  "auth.lien_faq": "Questions fréquentes",
+  "auth.lien_legal": "Mentions légales",
+  "auth.lien_confid": "Confidentialité",
+});
+Object.assign(I18N.en, {
+  "auth.langues": "Language",
+  "auth.lien_faq": "FAQ",
+  "auth.lien_legal": "Legal notice",
+  "auth.lien_confid": "Privacy",
+});
+Object.assign(I18N.nl, {
+  "auth.langues": "Taalkeuze",
+  "auth.lien_faq": "Veelgestelde vragen",
+  "auth.lien_legal": "Juridische info",
+  "auth.lien_confid": "Privacy",
+});
+Object.assign(I18N.de, {
+  "auth.langues": "Sprachauswahl",
+  "auth.lien_faq": "Häufige Fragen",
+  "auth.lien_legal": "Impressum",
+  "auth.lien_confid": "Datenschutz",
+});

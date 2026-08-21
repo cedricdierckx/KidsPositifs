@@ -1181,9 +1181,15 @@ function ecranConfig() {
 function ecranAuth() {
   const parrain = localStorage.getItem(PARRAIN_KEY);
   const parrainCode = localStorage.getItem(PARRAIN_CODE_KEY);
+  // Barre de langues compacte : drapeau + code à deux lettres. Quatre langues
+  // tiennent ainsi sur une seule ligne, même sur un petit téléphone — les noms
+  // complets en occupaient trois ou quatre. Le nom entier reste porté par
+  // aria-label et title, pour les lecteurs d'écran et au survol.
   const boutonsLangue = Object.keys(LANGUES).map(l =>
-    `<button type="button" class="langue-btn${l === langue ? " actif" : ""}" data-lang="${l}">
-       <span class="langue-drapeau">${drapeau(l)}</span><span class="langue-nom">${LANGUES[l]}</span>
+    `<button type="button" class="lang-min${l === langue ? " actif" : ""}" data-lang="${l}"
+             aria-label="${LANGUES[l]}" title="${LANGUES[l]}"
+             ${l === langue ? 'aria-current="true"' : ""}>
+       <span class="langue-drapeau">${drapeau(l)}</span><span class="lang-code">${l.toUpperCase()}</span>
      </button>`).join("");
 
   const features = [
@@ -1202,12 +1208,60 @@ function ecranAuth() {
 
   document.body.innerHTML = `
     <div class="landing">
-      <section class="landing-hero">
-        <div class="choix-langue langue-choix">${boutonsLangue}</div>
+      <!-- Barre de langues : une ligne, en haut, hors du flux du texte. -->
+      <nav class="landing-langues" aria-label="${t("auth.langues")}">${boutonsLangue}</nav>
+
+      <!-- Qui nous sommes, en quatre lignes. Sur téléphone, ce bloc précède le
+           formulaire : on ne demande pas de créer un compte avant d'avoir dit
+           de quoi il s'agit. -->
+      <section class="landing-tete">
         <div class="hero-logo">🌟</div>
         <h1 class="hero-nom">${APP_NOM}</h1>
         <p class="hero-titre">${t("auth.hero_titre")}</p>
         <p class="hero-sous">${t("auth.hero_sous", { app: APP_NOM })}</p>
+      </section>
+
+      <!-- Le différenciateur, expliqué sans jargon. Il reste AVANT le
+           formulaire : c'est la réponse à l'objection principale, et c'est ce
+           qui décide un parent hésitant. -->
+      <section class="landing-cle">
+        <div class="hero-principe">
+          <h2>${t("auth.principe_titre")}</h2>
+          <p>${t("auth.principe_1")}</p>
+          <p>${t("auth.principe_2")}</p>
+          <p class="hero-principe-faq"><a href="faq.html">${t("auth.principe_faq")}</a></p>
+        </div>
+      </section>
+
+      <!-- Le formulaire vient ensuite : sur téléphone, on l'atteint sans faire
+           défiler toute la page ; sur grand écran, la grille le place en haut
+           à droite (voir grid-template-areas). -->
+      <section class="landing-form">
+        <div class="carte code-carte">
+          <div id="parrain-banniere"></div>
+          <h2 class="form-titre" id="form-titre">${t("auth.form_titre")}</h2>
+          <p id="form-sous" class="note" style="display:none"></p>
+          <p id="auth-msg"></p>
+          <input id="email" type="email" inputmode="email" placeholder="${t("auth.email_ph")}" autocomplete="email">
+          <input id="mdp" type="password" placeholder="${t("auth.mdp_ph")}" autocomplete="current-password">
+          <button id="b-principal" class="gros-bouton planete">${t("auth.connexion")}</button>
+          <button id="b-oubli" class="lien-discret" type="button">${t("auth.mdp_oublie")}</button>
+          <button id="b-signup" class="btn-secondaire">${t("auth.pas_compte")}</button>
+          <div id="attente-bloc">
+            <p class="note">${t("auth.attente_note")}</p>
+            <button id="b-waitlist" class="btn-secondaire">${t("auth.rejoindre_attente")}</button>
+          </div>
+          <hr style="border:none;border-top:1px solid #e3edf5;margin:14px 0">
+          <button id="b-demo" class="btn-secondaire">${t("auth.demo")}</button>
+          <p class="note landing-liens">
+            <a href="faq.html">${t("auth.lien_faq")}</a>
+            <a href="mentions-legales.html">${t("auth.lien_legal")}</a>
+            <a href="confidentialite.html">${t("auth.lien_confid")}</a>
+          </p>
+        </div>
+      </section>
+
+      <section class="landing-corps">
         <div class="hero-features">${features}</div>
         <div class="hero-steps">
           <h2>${t("auth.comment_titre")}</h2>
@@ -1239,41 +1293,10 @@ function ecranAuth() {
           </figure>
         </div>
 
-        <!-- Le différenciateur, expliqué sans jargon. -->
-        <div class="hero-principe">
-          <h2>${t("auth.principe_titre")}</h2>
-          <p>${t("auth.principe_1")}</p>
-          <p>${t("auth.principe_2")}</p>
-          <p class="hero-principe-faq"><a href="faq.html">${t("auth.principe_faq")}</a></p>
-        </div>
-      </section>
-      <section class="landing-form">
-        <div class="carte code-carte">
-          <div id="parrain-banniere"></div>
-          <h2 class="form-titre" id="form-titre">${t("auth.form_titre")}</h2>
-          <p id="form-sous" class="note" style="display:none"></p>
-          <p id="auth-msg"></p>
-          <input id="email" type="email" inputmode="email" placeholder="${t("auth.email_ph")}" autocomplete="email">
-          <input id="mdp" type="password" placeholder="${t("auth.mdp_ph")}" autocomplete="current-password">
-          <button id="b-principal" class="gros-bouton planete">${t("auth.connexion")}</button>
-          <button id="b-oubli" class="lien-discret" type="button">${t("auth.mdp_oublie")}</button>
-          <button id="b-signup" class="btn-secondaire">${t("auth.pas_compte")}</button>
-          <div id="attente-bloc">
-            <p class="note">${t("auth.attente_note")}</p>
-            <button id="b-waitlist" class="btn-secondaire">${t("auth.rejoindre_attente")}</button>
-          </div>
-          <hr style="border:none;border-top:1px solid #e3edf5;margin:14px 0">
-          <button id="b-demo" class="btn-secondaire">${t("auth.demo")}</button>
-          <p class="note" style="margin-top:14px">
-            <a href="faq.html">Questions fréquentes</a> ·
-            <a href="mentions-legales.html">Mentions légales</a> ·
-            <a href="confidentialite.html">Politique de confidentialité</a>
-          </p>
-        </div>
       </section>
     </div>`;
 
-  document.querySelectorAll(".langue-btn").forEach(b => {
+  document.querySelectorAll(".lang-min").forEach(b => {
     b.onclick = () => { const l = b.dataset.lang; if (l && l !== langue) { definirLangue(l); ecranAuth(); } };
   });
 
