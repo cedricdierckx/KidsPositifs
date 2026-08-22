@@ -3269,6 +3269,32 @@ test("liens : tout ce qui part vers l'extérieur vise le domaine public", () => 
     assert.ok(auth.includes(motif), motif + " introuvable — un flux d'authentification a été oublié"));
 });
 
+test("analyserJetonsAuthDepuisUrl extrait les jetons du lien d'authentification (app native)", () => {
+  const analyser = fonctionDeSource("js/auth.js", "analyserJetonsAuthDepuisUrl", { URLSearchParams });
+
+  // Un lien d'invitation/parrainage ordinaire (?invite=, ?p=...) n'a pas de
+  // fragment #  : il ne doit surtout pas être pris pour un lien d'auth.
+  assert.strictEqual(analyser("https://fami.team/?invite=ABC"), null);
+  assert.strictEqual(analyser(""), null);
+  assert.strictEqual(analyser(undefined), null);
+  // Fragment présent mais sans les deux jetons : rien à faire.
+  assert.strictEqual(analyser("https://fami.team/#type=recovery"), null);
+
+  // Comparaison champ par champ : l'objet est construit dans le sandbox vm de
+  // fonctionDeSource, un realm distinct — deepStrictEqual y verrait à tort des
+  // prototypes différents malgré une structure identique.
+  const lien = "https://fami.team/#access_token=AAA&refresh_token=BBB&type=magiclink&expires_in=3600";
+  const r = analyser(lien);
+  assert.strictEqual(r.access_token, "AAA");
+  assert.strictEqual(r.refresh_token, "BBB");
+  assert.strictEqual(r.type, "magiclink");
+
+  // Mot de passe oublié : le type "recovery" doit être préservé pour que
+  // l'appelant sache qu'il faut proposer un nouveau mot de passe.
+  const reset = "https://fami.team/#access_token=CCC&refresh_token=DDD&type=recovery";
+  assert.strictEqual(analyser(reset).type, "recovery");
+});
+
 test("QR : un carré impossible à produire ne s'écrit jamais « null »", () => {
   const fs = require("fs"), path = require("path");
   const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");

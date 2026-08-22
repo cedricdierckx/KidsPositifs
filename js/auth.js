@@ -144,6 +144,7 @@ async function demarrer() {
   }
   sb = supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
   Store.init(sb);                          // couche de données isolée (Phase D)
+  initDeepLinkAuth();                      // app native : rattraper le lien d'authentification
   configAppPrete();                        // réglages globaux (mode d'inscription, lien de don…)
 
   memoriserSource();                       // d'où vient ce visiteur (avant tout nettoyage d'URL)
@@ -413,6 +414,35 @@ function majBadgeSync(symbole)      { return Store.badge(symbole); }
 // l'app (App Links / Universal Links à configurer côté Capacitor).
 function urlRetourAuth() {
   return estAppNative() ? HOTE_PUBLIC : (location.origin + location.pathname);
+}
+
+// Réception du lien d'authentification dans l'app native. Sur le web, cliquer
+// le lien recharge la page sur HOTE_PUBLIC/urlRetourAuth : le SDK Supabase lit
+// alors tout seul les jetons dans location.hash au chargement. Dans l'app,
+// ouvrir ce même lien ne recharge rien — le système remet juste l'URL à l'app
+// (Universal Links iOS / App Links Android, plugin @capacitor/app) — donc rien
+// ne lit jamais ce hash si on ne va pas le chercher explicitement ici.
+// Fonction pure (testée isolément) : extrait les jetons, ne fait aucun accès réseau.
+function analyserJetonsAuthDepuisUrl(url) {
+  const i = (url || "").indexOf("#");
+  if (i === -1) return null;
+  const params = new URLSearchParams(url.slice(i + 1));
+  const access_token = params.get("access_token"), refresh_token = params.get("refresh_token");
+  if (!access_token || !refresh_token) return null;
+  return { access_token, refresh_token, type: params.get("type") || "" };
+}
+function initDeepLinkAuth() {
+  if (!estAppNative()) return;
+  const app = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+  if (!app || typeof app.addListener !== "function") return;
+  app.addListener("appUrlOpen", async ({ url }) => {
+    const jetons = analyserJetonsAuthDepuisUrl(url);
+    if (!jetons) return;   // lien d'invitation/parrainage ordinaire : rien à faire ici
+    const { error } = await sb.auth.setSession(jetons);
+    if (error) return;
+    if (jetons.type === "recovery") ecranNouveauMdp();
+    else await apresConnexion();
+  });
 }
 async function connexionLienMagique(email) {
   const { error } = await sb.auth.signInWithOtp({

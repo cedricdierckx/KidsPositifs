@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "A_COMPLETER_TEAM_ID.team.fami.app",
+        "paths": ["*"]
+      }
+    ]
+  }
+}
