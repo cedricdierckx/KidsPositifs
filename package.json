@@ -4,6 +4,17 @@
   "private": true,
   "description": "FamiTeam — application familiale gamifiée (vanilla JS, Supabase)",
   "scripts": {
-    "test": "node test/run.js"
+    "test": "node test/run.js",
+    "cap:copy": "node scripts/sync-www.mjs",
+    "cap:sync": "npm run cap:copy && cap sync"
+  },
+  "dependencies": {
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/core": "^8.5.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/ios": "^8.5.0"
   }
 }
