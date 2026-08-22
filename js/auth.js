@@ -364,7 +364,15 @@ async function ouvrirFamille(f) {
   pingUsage();                            // mesure d'activité (best-effort, 1×/jour)
   declencherEnvoisAuto();                 // relances + rapport (admin, 1×/jour, si armé)
 }
-function auRetour() { if (!document.hidden) { tirerEtat(); if (typeof majDodo === "function") majDodo(); } }
+function auRetour() {
+  if (document.hidden) return;
+  // Le plafond de 6 h du minuteur (verrouillage compris) doit s'appliquer dès
+  // le retour au premier plan, sans attendre un rechargement complet — sinon
+  // un téléphone simplement déverrouillé après la nuit resterait bloqué.
+  if (typeof verifierDelaiMaxTimer === "function" && verifierDelaiMaxTimer()) rendre();
+  tirerEtat();
+  if (typeof majDodo === "function") majDodo();
+}
 
 // Ping d'usage : une fois par jour et par famille (best-effort, jamais bloquant).
 // Sert aux statistiques « familles actives ». N'écrit jamais dans family_state.

@@ -140,10 +140,38 @@ function annulerAction(id) {
 // la reprise du minuteur après un changement d'enfant. Pendant cette phase le
 // temps de l'enfant n'est PAS décompté.
 const PREP_MS = 5000;
-let timerEtat = { actif: false, fin: 0, total: 0, enfant: null, restes: {}, prep: 0, choix: false, verrouille: false };
+// Plafond de sécurité : quel que soit l'état (compte à rebours en cours, choix
+// de l'enfant qui continue, ou verrouillage), le mode minuteur ne doit jamais
+// rester engagé plus de 6 h d'affilée depuis son lancement — même si le temps
+// a été rallongé entretemps (+ajouts, changements d'enfant) et que le compte
+// à rebours interne n'est donc pas encore écoulé. Sans ce plafond, un
+// verrouillage oublié (téléphone laissé de côté pour la nuit) restait actif
+// indéfiniment au lieu de se réinitialiser tout seul.
+const TIMER_DELAI_MAX_MS = 6 * 60 * 60 * 1000;
+let timerEtat = { actif: false, fin: 0, total: 0, enfant: null, restes: {}, prep: 0, choix: false, verrouille: false, lance: 0 };
 let timerInterval = null;
 function cleTimer() { return STORAGE_KEY + ":timer:" + (familleId || "_local"); }
-function timerVierge() { return { actif: false, fin: 0, total: 0, enfant: null, restes: {}, prep: 0, choix: false, verrouille: false }; }
+function timerVierge() { return { actif: false, fin: 0, total: 0, enfant: null, restes: {}, prep: 0, choix: false, verrouille: false, lance: 0 }; }
+// Vrai si le minuteur (dans n'importe quel sous-état) tourne depuis plus de
+// TIMER_DELAI_MAX_MS. `lance` n'est jamais touché par les ajouts de temps ni
+// les changements d'enfant : c'est bien le lancement d'ORIGINE qui compte.
+function timerDepasseDelaiMax() {
+  return !!(timerEtat.lance && (Date.now() - timerEtat.lance) >= TIMER_DELAI_MAX_MS
+    && (timerEtat.actif || timerEtat.choix || timerEtat.verrouille));
+}
+// Réinitialise complètement le minuteur si le plafond de 6 h est dépassé, en
+// masquant l'écran de verrouillage ou de choix éventuellement affiché.
+// Renvoie true si une réinitialisation a eu lieu (pour que l'appelant
+// rafraîchisse l'affichage si nécessaire).
+function verifierDelaiMaxTimer() {
+  if (!timerDepasseDelaiMax()) return false;
+  stopTickTimer();
+  timerEtat = timerVierge();
+  ecrireTimer();
+  if (typeof masquerVerrou === "function") masquerVerrou();
+  if (typeof masquerChoixEnfant === "function") masquerChoixEnfant();
+  return true;
+}
 function chargerTimer() {
   try {
     const b = localStorage.getItem(cleTimer());
@@ -152,6 +180,8 @@ function chargerTimer() {
   if (!timerEtat || typeof timerEtat !== "object") timerEtat = timerVierge();
   if (!timerEtat.restes || typeof timerEtat.restes !== "object") timerEtat.restes = {};
   if (typeof timerEtat.prep !== "number") timerEtat.prep = 0;
+  if (typeof timerEtat.lance !== "number") timerEtat.lance = 0;   // anciens minuteurs (avant ce plafond)
+  if (verifierDelaiMaxTimer()) return;   // priorité au plafond de 6 h
   // Le minuteur a expiré pendant l'absence (onglet fermé).
   if (timerEtat.actif && timerEtat.fin && Date.now() >= timerEtat.fin) {
     finDeTempsEnfant();   // gère verrouillage OU proposition de continuer
@@ -180,7 +210,7 @@ function demarrerTimer() {
   const id = enf ? enf.id : null;
   const restes = {};
   if (timerMode() === "parEnfant" && id) restes[id] = ms;   // budget initial de l'enfant actif
-  timerEtat = { actif: true, fin: Date.now() + ms, total: ms, enfant: id, restes, choix: false, verrouille: false };
+  timerEtat = { actif: true, fin: Date.now() + ms, total: ms, enfant: id, restes, choix: false, verrouille: false, lance: Date.now() };
   ecrireTimer();
   lancerTickTimer();
   if (typeof toast === "function") toast(t("timer.lance"), "info");
@@ -201,6 +231,7 @@ function lancerTickTimer() {
 function stopTickTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
 function tickTimer() {
   if (!timerEtat.actif) { stopTickTimer(); return; }
+  if (verifierDelaiMaxTimer()) { rendre(); return; }   // plafond de 6 h dépassé
   // Phase « prépare-toi » : décompte de 5 s avant de (re)lancer le minuteur.
   if (timerEtat.prep) {
     const restePrep = timerEtat.prep - Date.now();

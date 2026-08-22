@@ -3882,6 +3882,114 @@ test("accueil : libellés de la barre et des liens traduits dans les 4 langues",
   assert.strictEqual(manquantes.length, 0, manquantes.join(", "));
 });
 
+/* ---------- Minuteur d'écran : plafond de 6 h depuis le lancement ---------- */
+const H = 60 * 60 * 1000;
+
+test("minuteur : un lancement tout frais n'est jamais considéré comme dépassé", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  api.demarrerTimer();
+  assert.strictEqual(api.timerEtat.actif, true);
+  assert.ok(api.timerEtat.lance > 0, "le lancement doit être horodaté");
+  assert.strictEqual(api.timerDepasseDelaiMax(), false);
+  assert.strictEqual(api.verifierDelaiMaxTimer(), false, "rien ne doit être réinitialisé");
+  assert.strictEqual(api.timerEtat.actif, true, "le minuteur doit rester actif");
+});
+
+test("minuteur : passé 6 h depuis le lancement, il se réinitialise entièrement", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  api.demarrerTimer();
+  // On recule artificiellement l'horodatage de lancement de 6 h et 1 ms,
+  // même si le compte à rebours interne (fin) est loin d'être écoulé.
+  api.timerEtat = Object.assign({}, api.timerEtat, {
+    lance: Date.now() - (6 * H + 1),
+    fin: Date.now() + 999999999   // le minuteur a été rallongé : pas près de finir
+  });
+  assert.strictEqual(api.timerDepasseDelaiMax(), true);
+  assert.strictEqual(api.verifierDelaiMaxTimer(), true);
+  // Comparaison via JSON des deux côtés : timerVierge() s'exécute dans le
+  // contexte vm et renvoie un objet d'un autre « réalm » que celui du test,
+  // ce que deepStrictEqual distinguerait à tort (prototypes différents).
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(api.timerEtat)),
+    JSON.parse(JSON.stringify(api.timerVierge())),
+    "le minuteur doit revenir à un état totalement vierge");
+});
+
+test("minuteur : le plafond de 6 h s'applique aussi verrouillé ou en attente de choix", () => {
+  const { api } = construireContexte();
+  const ancien = Date.now() - (6 * H + 5000);
+  // Verrouillé (temps écoulé, PIN requis) : plus « actif », mais bien engagé.
+  api.timerEtat = Object.assign({}, api.timerVierge(), { verrouille: true, lance: ancien });
+  assert.strictEqual(api.timerDepasseDelaiMax(), true, "un verrouillage oublié doit expirer aussi");
+  assert.strictEqual(api.verifierDelaiMaxTimer(), true);
+  // En attente du choix de l'enfant qui continue : ni actif, ni verrouillé.
+  api.timerEtat = Object.assign({}, api.timerVierge(), { choix: true, lance: ancien });
+  assert.strictEqual(api.timerDepasseDelaiMax(), true, "un choix resté sans réponse doit expirer aussi");
+  assert.strictEqual(api.verifierDelaiMaxTimer(), true);
+});
+
+test("minuteur : un état vierge ou sans horodatage de lancement n'expire jamais de force", () => {
+  const { api } = construireContexte();
+  assert.strictEqual(api.timerDepasseDelaiMax(), false, "rien n'est engagé : rien à expirer");
+  // Compatibilité : un minuteur enregistré avant l'ajout de ce plafond n'a pas
+  // de champ « lance ». On ne doit pas le considérer comme expiré à tort.
+  api.timerEtat = { actif: true, fin: Date.now() + 999999999, total: 999999999,
+                    enfant: "e1", restes: {}, prep: 0, choix: false, verrouille: false };
+  assert.strictEqual(api.timerDepasseDelaiMax(), false,
+    "sans horodatage connu, impossible de dire qu'il a dépassé 6 h");
+  assert.strictEqual(api.verifierDelaiMaxTimer(), false);
+});
+
+test("minuteur : rallonger le temps ou changer d'enfant ne repousse jamais l'horodatage de lancement", () => {
+  const { api } = construireContexte();
+  const e2 = api.etatVierge();
+  const ids = Object.keys(e2.enfants);
+  api.familleId = "f1";
+  api.lierEtat(e2);
+  api.demarrerTimer();
+  const lanceInitial = api.timerEtat.lance;
+
+  // Ajouter du temps au premier enfant : le lancement d'origine doit survivre.
+  api.ajouterTempsEnfant(ids[0], 30 * 60 * 1000);
+  assert.strictEqual(api.timerEtat.lance, lanceInitial,
+    "ajouter du temps ne doit jamais repousser le plafond de 6 h");
+
+  // Continuer avec un second enfant (flux « choix ») : toujours le même lancement.
+  api.timerEtat.choix = true;
+  api.continuerAvecEnfant(ids[1]);
+  assert.strictEqual(api.timerEtat.lance, lanceInitial,
+    "changer d'enfant ne doit pas repousser le plafond de 6 h");
+
+  // Même chose pour le minuteur global.
+  api.definirReglageTimer(10, "global");
+  api.demarrerTimer();
+  const lanceGlobal = api.timerEtat.lance;
+  api.ajouterTempsGlobal(45 * 60 * 1000);
+  assert.strictEqual(api.timerEtat.lance, lanceGlobal,
+    "ajouter du temps au minuteur global ne doit pas repousser le plafond");
+});
+
+test("minuteur : ouvrir l'app le lendemain applique le plafond dès la lecture du cache", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  // Une session d'hier, rallongée plusieurs fois, encore techniquement active :
+  // exactement le scénario signalé (« le lendemain, le mode timer est toujours
+  // actif », même si le compte à rebours interne n'est pas écoulé).
+  api.timerEtat = { actif: true, fin: Date.now() + 999999999, total: 999999999,
+                    enfant: "e1", restes: {}, prep: 0, choix: false, verrouille: false,
+                    lance: Date.now() - (20 * H) };
+  api.ecrireTimer();
+  api.timerEtat = api.timerVierge();   // simule un onglet fermé puis rouvert
+  api.chargerTimer();                  // relit le cache, comme au démarrage de l'app
+  assert.strictEqual(api.timerEtat.actif, false,
+    "un minuteur vieux de 20 h ne doit plus être actif après rechargement");
+  assert.strictEqual(api.timerEtat.lance, 0, "l'état doit être totalement vierge");
+});
+
 /* ---------- Exécution ---------- */
 (function executer() {
   for (const { nom, fn } of cas) {

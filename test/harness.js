@@ -73,6 +73,8 @@ function construireContexte(options) {
     console,
     setTimeout: () => 0,
     clearTimeout: () => {},
+    setInterval: () => 0,        // ex. le minuteur d'écran : jamais exécuté en test
+    clearInterval: () => {},
     Math, Date, JSON, Object, Array, String, Number, Boolean, RegExp, parseInt, parseFloat, isNaN,
     document: documentFactice,
     navigator: { language: opt.langueNavigateur || "fr" },
@@ -159,6 +161,12 @@ function construireContexte(options) {
       // rendez-vous du soir : rappel délégué à l'agenda du parent
       RITUEL_RYTHMES, RITUEL_DUREE_MIN, RITUEL_AVANT_DODO,
       heureRituelConseillee, debutRituel, rituelRrule, icsRituelSoir, hhmm, heureValide,
+      // minuteur d'écran (verrouillage PIN) : plafond de 6 h depuis le lancement
+      get timerEtat() { return timerEtat; }, set timerEtat(v) { timerEtat = v; },
+      timerVierge, chargerTimer, ecrireTimer, cleTimer,
+      timerDureeMin, timerMode, definirReglageTimer, demarrerTimer, arreterTimer,
+      timerDepasseDelaiMax, verifierDelaiMaxTimer, TIMER_DELAI_MAX_MS,
+      continuerAvecEnfant, ajouterTempsEnfant, ajouterTempsGlobal, tempsRestantEnfant,
     };
   `;
   const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/croissance.js"), lire("js/qr.js"), lire("js/app.js"), lire("js/store.js"), epilogue].join("\n;\n");
