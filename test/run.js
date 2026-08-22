@@ -4145,6 +4145,29 @@ test("minuteur : ouvrir l'app le lendemain applique le plafond dès la lecture d
   assert.strictEqual(api.timerEtat.lance, 0, "l'état doit être totalement vierge");
 });
 
+/* ---------- Applications Android & iOS : le manuel dans l'admin ---------- */
+test("mobile : le manuel liste précisément ce qui revient au fondateur", () => {
+  const { api } = construireContexte();
+  const ch = api.CROISSANCE_CHANTIERS.find(x => x.id === "c_mobile");
+  assert.ok(ch, "chantier c_mobile introuvable");
+  // Comparaison via .join(",") : ch.etapes vient du contexte vm, un tableau
+  // « d'un autre réalm » que deepStrictEqual distinguerait à tort d'un
+  // tableau littéral de ce fichier, même à valeurs strictement identiques.
+  const restantes = ch.etapes.filter(e => !e.fait).map(e => e.id).join(",");
+  assert.strictEqual(restantes, "c_mobile_4,c_mobile_5,c_mobile_6,c_mobile_7",
+    "les étapes restantes doivent être exactement les comptes, la capacité Xcode et la soumission");
+  // Chaque étape restante dépend d'un compte, d'un paiement, ou d'un Mac —
+  // rien que Claude Code ne pourrait faire à la place du fondateur.
+  const comptes = ch.etapes.find(e => e.id === "c_mobile_4");
+  assert.ok(/25 \$/.test(comptes.detail), "le coût du compte Google Play doit être chiffré");
+  const apple = ch.etapes.find(e => e.id === "c_mobile_5");
+  assert.ok(/99 \$/.test(apple.detail), "le coût du compte Apple Developer doit être chiffré");
+  // Les étapes déjà faites ne doivent plus porter d'espace réservé à compléter.
+  ch.etapes.filter(e => e.fait).forEach(e =>
+    assert.strictEqual(/A_COMPLETER|TODO|XXX/.test(e.detail), false,
+      "une étape marquée faite ne doit pas contenir un espace réservé : " + e.id));
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async

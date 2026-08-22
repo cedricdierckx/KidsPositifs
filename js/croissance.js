@@ -208,6 +208,20 @@ const CROISSANCE_CHANTIERS = [
       { id: "c_contenu_5", titre: "Mesurer et décider", min: 15, detail: "Si les trois articles n'amènent rien en trois mois, le canal n'est pas pour nous." }
     ]
   },
+  {
+    id: "c_mobile", phase: "p1", emoji: "📱", titre: "Applications Android & iOS", perimetre: "coeur",
+    but: "Être trouvable sur Google Play et l'App Store — un canal de découverte que le web seul n'offre pas — sans jamais risquer le site existant : l'app embarque une copie figée du même code (Capacitor), pas une fenêtre ouverte en permanence sur fami.team.",
+    kpi: "Apps publiées sur les deux stores · lien reçu par e-mail qui rouvre l'app",
+    etapes: [
+      { id: "c_mobile_1", titre: "Préparer les coquilles Android et iOS", min: 60, detail: "Fait : Capacitor installé, projet Android (Gradle) et projet iOS (Xcode/Swift Package Manager, sans CocoaPods) générés depuis le code existant, sans rien dupliquer à la main.", fait: true },
+      { id: "c_mobile_2", titre: "Faire reconnaître l'app installée, et récupérer le lien d'authentification", min: 45, detail: "Fait : l'app détecte qu'elle tourne installée (estAppNative()) et se traite alors comme la production — il n'existe pas d'« aperçu » pour un binaire sur un téléphone. Le lien reçu par e-mail (connexion, inscription, mot de passe oublié) rouvre l'app plutôt que le navigateur. Au passage, les conflits de synchronisation entre deux appareils hors ligne en même temps sont désormais détectés plutôt qu'écrasés en silence — plus fréquent sur mobile, où les coupures prolongées sont courantes.", fait: true },
+      { id: "c_mobile_3", titre: "Générer l'icône et l'écran de démarrage", min: 20, detail: "Fait : une étoile blanche sur le dégradé doré déjà utilisé pour les récompenses dans l'app — fidèle à l'identité existante plutôt qu'une nouvelle création. Régénérable à tout moment (npm run icon:generer) si un vrai logo est dessiné plus tard : ce n'est pas bloquant pour publier.", fait: true },
+      { id: "c_mobile_4", titre: "Créer le compte Google Play Console et le keystore Android", min: 30, detail: "25 $, paiement unique, avec vos identifiants Google. Android Studio propose ensuite de créer le keystore de signature (le mot de passe se conserve précieusement : il ne se régénère pas). L'empreinte SHA-256 qui en sort remplace l'espace réservé dans .well-known/assetlinks.json." },
+      { id: "c_mobile_5", titre: "Créer le compte Apple Developer et récupérer le Team ID", min: 30, detail: "99 $/an, avec vos identifiants Apple. Le Team ID (visible dans le compte développeur) remplace l'espace réservé dans .well-known/apple-app-site-association." },
+      { id: "c_mobile_6", titre: "Activer « Associated Domains » dans Xcode", min: 10, detail: "Sur un Mac, dans le projet iOS : Signing & Capabilities → + Capability → Associated Domains → applinks:fami.team et applinks:famiteam.com. Un clic, mais qui doit se faire dans Xcode : l'éditer à l'aveugle risquerait de corrompre le projet sans pouvoir le recompiler pour vérifier." },
+      { id: "c_mobile_7", titre: "Premier build et soumission aux stores", min: 60, detail: "npm run cap:sync avant chaque ouverture d'Android Studio ou Xcode, pour repartir du code à jour. Un premier build sur émulateur ne demande aucun compte ; la soumission aux stores, elle, dépend des étapes précédentes. Penser à ajouter les 25 $ + 99 $/an dans le coût annuel une fois payés." }
+    ]
+  },
 
   /* ===== Phase 2 — Prescripteurs ===== */
   {
