@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node test/run.js",
     "cap:copy": "node scripts/sync-www.mjs",
-    "cap:sync": "npm run cap:copy && cap sync"
+    "cap:sync": "npm run cap:copy && cap sync",
+    "icon:generer": "node scripts/generer-icone.mjs && capacitor-assets generate --android --ios"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.1",
@@ -14,7 +15,9 @@
   },
   "devDependencies": {
     "@capacitor/android": "^8.5.0",
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.5.0",
-    "@capacitor/ios": "^8.5.0"
+    "@capacitor/ios": "^8.5.0",
+    "sharp": "^0.35.3"
   }
 }
