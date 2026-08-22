@@ -42,6 +42,11 @@ applications qui ne font que réafficher un site web.
   ligne qui modifient l'état en même temps ne s'écrasent plus en silence
   (voir commit dédié) — pertinent ici car les coupures prolongées
   deviennent courantes sur mobile.
+- **Icône et écran de démarrage** (Android + iOS) : une étoile blanche sur
+  le dégradé doré déjà utilisé pour les récompenses dans l'app — fidèle à
+  l'identité existante, sans en inventer une nouvelle. Régénérable avec
+  `npm run icon:generer`. Reste un « bon repli visuel », pas un vrai logo
+  dessiné par un graphiste (voir §3, point 1 — non bloquant).
 
 ## 2. Comment relancer la synchro après une modification du site
 
@@ -55,7 +60,7 @@ nouvelle version.
 
 | # | Élément | Pourquoi je ne peux pas le faire moi-même |
 |---|---|---|
-| 1 | **Icône et écran de démarrage** réels (FamiTeam n'a aujourd'hui aucun logo graphique, seulement le texte « 🌟 FamiTeam ») | Choix de marque — à valider avec vous avant de le figer sur les stores |
+| 1 | **Un vrai logo dessiné** (l'étoile actuelle est un repli fidèle à l'identité existante, pas une création graphique) — *non bloquant, remplaçable à tout moment via `npm run icon:generer`* | Choix de marque — à valider avec vous avant de le figer durablement sur les stores |
 | 2 | **Compte Google Play Console** (25 $, paiement unique) + création d'un **keystore de signature** | Nécessite vos identifiants Google et un paiement |
 | 3 | **Empreinte SHA-256** du keystore → à coller dans `.well-known/assetlinks.json` (actuellement un espace réservé) | Dépend du keystore du point 2 |
 | 4 | **Compte Apple Developer** (99 $/an) | Nécessite vos identifiants Apple et un paiement |
