@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FamiTeam</string>
+    <string name="title_activity_main">FamiTeam</string>
+    <string name="package_name">team.fami.app</string>
+    <string name="custom_url_scheme">team.fami.app</string>
+</resources>

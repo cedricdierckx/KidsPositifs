@@ -138,6 +138,118 @@ test("Store.ecritureAutorisee bloque un état au schéma corrompu", () => {
   assert.strictEqual(api.Store.ecritureAutorisee().ok, false);
 });
 
+/* ---------- Synchro : conflit entre appareils hors ligne (garde-fou anti-écrasement) ----------
+ * Deux appareils hors ligne modifient chacun leur propre copie (gouttes,
+ * cœurs...), puis retrouvent une connexion : sans garde-fou, celui qui écrit
+ * en second écrase entièrement l'autre, en silence — aucune goutte ni cœur
+ * ne se fusionne jamais, c'est le bloc entier de la famille qui est remplacé. */
+function clientFactice(serveur) {
+  const client = {
+    enPanneLecture: false, enPanneEcriture: false,
+    appels: { lectures: 0, ecritures: [] },
+    from() {
+      return {
+        select() {
+          return { eq() { return { async maybeSingle() {
+            client.appels.lectures++;
+            if (client.enPanneLecture) return { data: null, error: new Error("hors ligne") };
+            // Copie profonde : un vrai aller-retour réseau ne renvoie jamais
+            // la même référence mémoire que ce que l'appelant modifie ensuite.
+            const copie = serveur.row ? JSON.parse(JSON.stringify(serveur.row)) : null;
+            return { data: copie, error: null };
+          } }; } };
+        },
+        async upsert(payload) {
+          if (client.enPanneEcriture) return { error: new Error("échec réseau") };
+          client.appels.ecritures.push(payload);
+          serveur.row = { data: JSON.parse(JSON.stringify(payload.data)) };
+          return { error: null };
+        }
+      };
+    }
+  };
+  return client;
+}
+
+test("Store.sauver refuse d'écraser un état modifié par un autre appareil hors ligne", async () => {
+  const { contexte, api } = construireContexte();
+  const appelsToast = [];
+  contexte.toast = (msg, type) => appelsToast.push({ msg, type });
+
+  api.familleId = "f1";
+  const local = api.etatVierge();
+  local.maj = 1000;
+  api.lierEtat(local);
+
+  const serveur = { row: { data: { ...local, maj: 1000 } } };
+  const client = clientFactice(serveur);
+  api.Store.init(client);
+  await api.Store.charger();   // établit la version serveur connue (1000)
+
+  // Un AUTRE appareil, lui aussi hors ligne, a entretemps poussé sa propre
+  // version (2000) — simulé directement côté « serveur », sans passer par
+  // ce Store-ci (exactement ce qui se passerait avec deux téléphones).
+  serveur.row = { data: { ...api.etatVierge(), maj: 2000 } };
+
+  // Cet appareil-ci ajoute une goutte pendant qu'il était hors ligne, puis
+  // tente de sauvegarder en retrouvant la connexion.
+  const idEnfant = Object.keys(api.etat.enfants)[0];
+  api.etat.enfants[idEnfant].gouttes += 1;
+  api.etat.maj = 1500;
+
+  const avant = client.appels.ecritures.length;
+  await api.Store.sauver();
+
+  assert.strictEqual(client.appels.ecritures.length, avant,
+    "aucune écriture ne doit partir : le serveur a changé sous nos pieds");
+  assert.strictEqual(serveur.row.data.maj, 2000, "la version de l'autre appareil doit rester intacte");
+  assert.strictEqual(appelsToast.length, 1, "la famille doit être prévenue");
+  assert.strictEqual(appelsToast[0].msg, api.I18N.fr["sync.conflit"]);
+});
+
+test("Store.sauver écrit normalement quand personne d'autre n'a modifié l'état", async () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const local = api.etatVierge();
+  local.maj = 1000;
+  api.lierEtat(local);
+
+  const serveur = { row: { data: { ...local, maj: 1000 } } };
+  const client = clientFactice(serveur);
+  api.Store.init(client);
+  await api.Store.charger();
+
+  api.etat.maj = 1200;
+  await api.Store.sauver();
+  assert.strictEqual(client.appels.ecritures.length, 1, "l'écriture doit partir");
+  assert.strictEqual(serveur.row.data.maj, 1200);
+
+  // Deuxième sauvegarde consécutive : ne doit pas être bloquée comme un faux
+  // conflit — Store doit avoir retenu la version qu'il vient d'écrire.
+  api.etat.maj = 1300;
+  await api.Store.sauver();
+  assert.strictEqual(client.appels.ecritures.length, 2, "la deuxième écriture doit partir aussi");
+});
+
+test("Store.sauver retente l'écriture directe si la vérification anti-conflit échoue (hors ligne)", async () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const local = api.etatVierge();
+  local.maj = 1000;
+  api.lierEtat(local);
+
+  const serveur = { row: { data: { ...local, maj: 1000 } } };
+  const client = clientFactice(serveur);
+  api.Store.init(client);
+  await api.Store.charger();
+
+  client.enPanneLecture = true;   // la vérification elle-même échoue (hors ligne)
+  api.etat.maj = 1400;
+  await api.Store.sauver();
+  assert.strictEqual(client.appels.ecritures.length, 1,
+    "sans pouvoir vérifier, on retente l'écriture directe comme avant");
+});
+
 /* ---------- Humour (touches bon enfant, désactivables) ---------- */
 test("humour: activé par défaut, messageVide renvoie une blague", () => {
   const { api } = construireContexte();
@@ -1634,9 +1746,10 @@ test("avertissements : libellés traduits dans les 4 langues", () => {
 
 /* ---------- Aucun envoi hors production ---------- */
 test("production : les quatre domaines officiels, et eux seuls", () => {
-  const estProd = (hote, cfg) => fonctionDeSource("js/auth.js", "estProduction", {
+  const estProd = (hote, cfg, natif) => fonctionDeSource("js/auth.js", "estProduction", {
     location: { hostname: hote },
     HOTES_PRODUCTION: ["famiteam.com", "fami.team"],
+    estAppNative: () => !!natif,
     hotesProduction: fonctionDeSource("js/auth.js", "hotesProduction", {
       configApp: cfg || {}, window: { KP_CONFIG: {} },
       HOTES_PRODUCTION: ["famiteam.com", "fami.team"]
@@ -1658,6 +1771,13 @@ test("production : les quatre domaines officiels, et eux seuls", () => {
     "un domaine retiré de la liste ne doit plus compter comme production");
   // Un « www. » écrit dans la configuration ne doit pas casser la comparaison.
   assert.strictEqual(estProd("nouveau.be", { hote_prod: "www.nouveau.be" }), true);
+  // Dans l'app native, il n'existe pas d'« aperçu » : le binaire installé
+  // EST la production, quel que soit l'hôte (ou son absence) rapporté par
+  // la WebView.
+  assert.strictEqual(estProd("localhost", {}, true), true,
+    "l'app native doit toujours être considérée comme la production");
+  assert.strictEqual(estProd("", {}, true), true,
+    "même sans hôte, l'app native doit être considérée comme la production");
 });
 
 test("production : le point de sortie des e-mails bloque par défaut", () => {
@@ -3135,9 +3255,44 @@ test("liens : tout ce qui part vers l'extérieur vise le domaine public", () => 
   // Les e-mails aux familles non plus.
   assert.ok(!/lien: location\.origin/.test(auth),
     "les e-mails aux familles ne doivent pas porter l'adresse du déploiement courant");
-  // Les redirections d'authentification, elles, DOIVENT y rester.
-  assert.ok(/emailRedirectTo: location\.origin/.test(auth),
-    "la redirection d'authentification doit revenir sur le déploiement en cours");
+  // Les redirections d'authentification, elles, DOIVENT y rester sur le web —
+  // mais dans l'app native, où il n'existe pas de « déploiement en cours »,
+  // elles doivent basculer vers l'hôte public (urlRetourAuth, Capacitor).
+  const i2 = auth.indexOf("function urlRetourAuth");
+  assert.ok(i2 > -1, "urlRetourAuth introuvable");
+  const urlRetour = auth.slice(i2, auth.indexOf("\n}", i2));
+  assert.ok(/location\.origin \+ location\.pathname/.test(urlRetour),
+    "la redirection d'authentification doit revenir sur le déploiement en cours (web)");
+  assert.ok(/estAppNative\(\)\s*\?\s*HOTE_PUBLIC/.test(urlRetour),
+    "dans l'app native, la redirection d'authentification doit viser l'hôte public");
+  ["emailRedirectTo: urlRetourAuth()", "redirectTo: urlRetourAuth()"].forEach(motif =>
+    assert.ok(auth.includes(motif), motif + " introuvable — un flux d'authentification a été oublié"));
+});
+
+test("analyserJetonsAuthDepuisUrl extrait les jetons du lien d'authentification (app native)", () => {
+  const analyser = fonctionDeSource("js/auth.js", "analyserJetonsAuthDepuisUrl", { URLSearchParams });
+
+  // Un lien d'invitation/parrainage ordinaire (?invite=, ?p=...) n'a pas de
+  // fragment #  : il ne doit surtout pas être pris pour un lien d'auth.
+  assert.strictEqual(analyser("https://fami.team/?invite=ABC"), null);
+  assert.strictEqual(analyser(""), null);
+  assert.strictEqual(analyser(undefined), null);
+  // Fragment présent mais sans les deux jetons : rien à faire.
+  assert.strictEqual(analyser("https://fami.team/#type=recovery"), null);
+
+  // Comparaison champ par champ : l'objet est construit dans le sandbox vm de
+  // fonctionDeSource, un realm distinct — deepStrictEqual y verrait à tort des
+  // prototypes différents malgré une structure identique.
+  const lien = "https://fami.team/#access_token=AAA&refresh_token=BBB&type=magiclink&expires_in=3600";
+  const r = analyser(lien);
+  assert.strictEqual(r.access_token, "AAA");
+  assert.strictEqual(r.refresh_token, "BBB");
+  assert.strictEqual(r.type, "magiclink");
+
+  // Mot de passe oublié : le type "recovery" doit être préservé pour que
+  // l'appelant sache qu'il faut proposer un nouveau mot de passe.
+  const reset = "https://fami.team/#access_token=CCC&refresh_token=DDD&type=recovery";
+  assert.strictEqual(analyser(reset).type, "recovery");
 });
 
 test("QR : un carré impossible à produire ne s'écrit jamais « null »", () => {
@@ -3990,10 +4145,13 @@ test("minuteur : ouvrir l'app le lendemain applique le plafond dès la lecture d
   assert.strictEqual(api.timerEtat.lance, 0, "l'état doit être totalement vierge");
 });
 
-/* ---------- Exécution ---------- */
-(function executer() {
+/* ---------- Exécution ----------
+ * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
+ * qui n'est pas une promesse est un no-op), et permet aux tests async
+ * (synchro cloud simulée) de s'exécuter jusqu'au bout avant le test suivant. */
+(async function executer() {
   for (const { nom, fn } of cas) {
-    try { fn(); reussites++; console.log(`  ✓ ${nom}`); }
+    try { await fn(); reussites++; console.log(`  ✓ ${nom}`); }
     catch (e) { echecs++; console.log(`  ✗ ${nom}\n      ${e.message}`); }
   }
   console.log(`\n${reussites}/${cas.length} tests réussis` + (echecs ? `, ${echecs} échec(s)` : ""));

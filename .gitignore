@@ -1,0 +1,32 @@
+node_modules/
+
+# Copie de travail générée par `npm run cap:copy` (voir scripts/sync-www.mjs) —
+# jamais éditée à la main, jamais commitée : la source reste la racine du dépôt.
+www/
+
+# Android (généré par `npx cap add android` / Android Studio)
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/*.iml
+android/captures/
+# Copie des fichiers web dans la coquille Android — régénérée par
+# `npm run cap:sync` à partir de la racine du dépôt, jamais éditée ici.
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+
+# iOS (généré par `npx cap add ios` / Xcode — nécessite un Mac)
+ios/App/Pods/
+ios/App/build/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
+ios/.DS_Store
+# Copie des fichiers web dans la coquille iOS — même logique que ci-dessus.
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+
+.DS_Store
