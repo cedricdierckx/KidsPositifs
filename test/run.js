@@ -138,6 +138,118 @@ test("Store.ecritureAutorisee bloque un état au schéma corrompu", () => {
   assert.strictEqual(api.Store.ecritureAutorisee().ok, false);
 });
 
+/* ---------- Synchro : conflit entre appareils hors ligne (garde-fou anti-écrasement) ----------
+ * Deux appareils hors ligne modifient chacun leur propre copie (gouttes,
+ * cœurs...), puis retrouvent une connexion : sans garde-fou, celui qui écrit
+ * en second écrase entièrement l'autre, en silence — aucune goutte ni cœur
+ * ne se fusionne jamais, c'est le bloc entier de la famille qui est remplacé. */
+function clientFactice(serveur) {
+  const client = {
+    enPanneLecture: false, enPanneEcriture: false,
+    appels: { lectures: 0, ecritures: [] },
+    from() {
+      return {
+        select() {
+          return { eq() { return { async maybeSingle() {
+            client.appels.lectures++;
+            if (client.enPanneLecture) return { data: null, error: new Error("hors ligne") };
+            // Copie profonde : un vrai aller-retour réseau ne renvoie jamais
+            // la même référence mémoire que ce que l'appelant modifie ensuite.
+            const copie = serveur.row ? JSON.parse(JSON.stringify(serveur.row)) : null;
+            return { data: copie, error: null };
+          } }; } };
+        },
+        async upsert(payload) {
+          if (client.enPanneEcriture) return { error: new Error("échec réseau") };
+          client.appels.ecritures.push(payload);
+          serveur.row = { data: JSON.parse(JSON.stringify(payload.data)) };
+          return { error: null };
+        }
+      };
+    }
+  };
+  return client;
+}
+
+test("Store.sauver refuse d'écraser un état modifié par un autre appareil hors ligne", async () => {
+  const { contexte, api } = construireContexte();
+  const appelsToast = [];
+  contexte.toast = (msg, type) => appelsToast.push({ msg, type });
+
+  api.familleId = "f1";
+  const local = api.etatVierge();
+  local.maj = 1000;
+  api.lierEtat(local);
+
+  const serveur = { row: { data: { ...local, maj: 1000 } } };
+  const client = clientFactice(serveur);
+  api.Store.init(client);
+  await api.Store.charger();   // établit la version serveur connue (1000)
+
+  // Un AUTRE appareil, lui aussi hors ligne, a entretemps poussé sa propre
+  // version (2000) — simulé directement côté « serveur », sans passer par
+  // ce Store-ci (exactement ce qui se passerait avec deux téléphones).
+  serveur.row = { data: { ...api.etatVierge(), maj: 2000 } };
+
+  // Cet appareil-ci ajoute une goutte pendant qu'il était hors ligne, puis
+  // tente de sauvegarder en retrouvant la connexion.
+  const idEnfant = Object.keys(api.etat.enfants)[0];
+  api.etat.enfants[idEnfant].gouttes += 1;
+  api.etat.maj = 1500;
+
+  const avant = client.appels.ecritures.length;
+  await api.Store.sauver();
+
+  assert.strictEqual(client.appels.ecritures.length, avant,
+    "aucune écriture ne doit partir : le serveur a changé sous nos pieds");
+  assert.strictEqual(serveur.row.data.maj, 2000, "la version de l'autre appareil doit rester intacte");
+  assert.strictEqual(appelsToast.length, 1, "la famille doit être prévenue");
+  assert.strictEqual(appelsToast[0].msg, api.I18N.fr["sync.conflit"]);
+});
+
+test("Store.sauver écrit normalement quand personne d'autre n'a modifié l'état", async () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const local = api.etatVierge();
+  local.maj = 1000;
+  api.lierEtat(local);
+
+  const serveur = { row: { data: { ...local, maj: 1000 } } };
+  const client = clientFactice(serveur);
+  api.Store.init(client);
+  await api.Store.charger();
+
+  api.etat.maj = 1200;
+  await api.Store.sauver();
+  assert.strictEqual(client.appels.ecritures.length, 1, "l'écriture doit partir");
+  assert.strictEqual(serveur.row.data.maj, 1200);
+
+  // Deuxième sauvegarde consécutive : ne doit pas être bloquée comme un faux
+  // conflit — Store doit avoir retenu la version qu'il vient d'écrire.
+  api.etat.maj = 1300;
+  await api.Store.sauver();
+  assert.strictEqual(client.appels.ecritures.length, 2, "la deuxième écriture doit partir aussi");
+});
+
+test("Store.sauver retente l'écriture directe si la vérification anti-conflit échoue (hors ligne)", async () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const local = api.etatVierge();
+  local.maj = 1000;
+  api.lierEtat(local);
+
+  const serveur = { row: { data: { ...local, maj: 1000 } } };
+  const client = clientFactice(serveur);
+  api.Store.init(client);
+  await api.Store.charger();
+
+  client.enPanneLecture = true;   // la vérification elle-même échoue (hors ligne)
+  api.etat.maj = 1400;
+  await api.Store.sauver();
+  assert.strictEqual(client.appels.ecritures.length, 1,
+    "sans pouvoir vérifier, on retente l'écriture directe comme avant");
+});
+
 /* ---------- Humour (touches bon enfant, désactivables) ---------- */
 test("humour: activé par défaut, messageVide renvoie une blague", () => {
   const { api } = construireContexte();
@@ -3899,10 +4011,13 @@ test("accueil : libellés de la barre et des liens traduits dans les 4 langues",
   assert.strictEqual(manquantes.length, 0, manquantes.join(", "));
 });
 
-/* ---------- Exécution ---------- */
-(function executer() {
+/* ---------- Exécution ----------
+ * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
+ * qui n'est pas une promesse est un no-op), et permet aux tests async
+ * (synchro cloud simulée) de s'exécuter jusqu'au bout avant le test suivant. */
+(async function executer() {
   for (const { nom, fn } of cas) {
-    try { fn(); reussites++; console.log(`  ✓ ${nom}`); }
+    try { await fn(); reussites++; console.log(`  ✓ ${nom}`); }
     catch (e) { echecs++; console.log(`  ✗ ${nom}\n      ${e.message}`); }
   }
   console.log(`\n${reussites}/${cas.length} tests réussis` + (echecs ? `, ${echecs} échec(s)` : ""));

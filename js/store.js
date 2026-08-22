@@ -27,6 +27,15 @@ const Store = (() => {
   let canal = null;           // abonnement temps réel
   let pollTimer = null;       // repli : interrogation périodique
 
+  // Dernière version (etat.maj) que Store SAIT présente sur le serveur —
+  // via une lecture ou une écriture réussie. Sert à détecter, juste avant
+  // d'écrire, qu'un AUTRE appareil a sauvegardé entretemps (deux appareils
+  // hors ligne en même temps, chacun modifiant sa propre copie). Sans ce
+  // garde-fou, l'upsert écrase silencieusement tout ce que l'autre appareil
+  // avait ajouté : aucune goutte ni aucun cœur ne se fusionne jamais, c'est
+  // le bloc entier de la famille qui remplace l'autre.
+  let derniereMajConnue = null;
+
   // Intervalle d'interrogation (ms) quand le temps réel est désactivé.
   const POLL_MS = 30000;
 
@@ -69,8 +78,9 @@ const Store = (() => {
       .select("data").eq("family_id", familleId).maybeSingle();
     if (!error && data && data.data && data.data.enfants) {
       const distant = normaliser(data.data);
-      if ((distant.maj || 0) >= (etat.maj || 0)) { lierEtat(distant); ecrireCache(); }
-      else await sauver();
+      if ((distant.maj || 0) >= (etat.maj || 0)) {
+        lierEtat(distant); ecrireCache(); derniereMajConnue = distant.maj || 0;
+      } else await sauver();
     } else {
       if (!etatNonVide(etat)) lierEtat(etatVierge());
       await sauver();                       // initialise la ligne distante
@@ -84,6 +94,7 @@ const Store = (() => {
       .select("data").eq("family_id", familleId).maybeSingle();
     if (!error && data && data.data && data.data.enfants && (data.data.maj || 0) > (etat.maj || 0)) {
       lierEtat(normaliser(data.data)); ecrireCache(); rendre();
+      derniereMajConnue = data.data.maj || 0;
     }
   }
 
@@ -105,8 +116,27 @@ const Store = (() => {
     }
     try {
       badge("⏫");
+      // Garde-fou anti-conflit : si on connaît déjà une version serveur, on
+      // vérifie qu'elle n'a pas bougé sous nos pieds avant d'écraser. Hors
+      // ligne, cette lecture échoue elle aussi — on retombe alors sur l'ancien
+      // comportement (tentative d'écriture directe) sans rien bloquer.
+      if (derniereMajConnue !== null) {
+        const { data: actuel, error: errLecture } = await client.from("family_state")
+          .select("data").eq("family_id", familleId).maybeSingle();
+        if (!errLecture) {
+          const majServeur = (actuel && actuel.data && actuel.data.maj) || 0;
+          if (majServeur !== derniereMajConnue) {
+            badge("🔀");
+            console.warn("Sauvegarde annulée : un autre appareil a modifié l'état entretemps",
+              { connu: derniereMajConnue, serveur: majServeur });
+            if (typeof toast === "function" && typeof t === "function") toast(t("sync.conflit"), "info");
+            return;
+          }
+        }
+      }
       const { error } = await client.from("family_state")
         .upsert({ family_id: familleId, data: etat, updated_at: new Date().toISOString() });
+      if (!error) derniereMajConnue = etat.maj || 0;
       badge(error ? "⚠️" : "✅");
     } catch { badge("📴"); }
   }
@@ -136,6 +166,7 @@ const Store = (() => {
             const d = payload.new && payload.new.data;
             if (d && d.enfants && (d.maj || 0) > (etat.maj || 0)) {
               lierEtat(normaliser(d)); ecrireCache(); rendre();
+              derniereMajConnue = d.maj || 0;
             }
           })
       .subscribe();
