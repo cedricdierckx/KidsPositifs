@@ -37,8 +37,8 @@ et le présent registre est tenu.
 | Finalité | Créer et sécuriser l'accès au compte du parent |
 | Base légale | Exécution du contrat — art. 6.1.b |
 | Personnes concernées | Parents utilisateurs |
-| Catégories de données | Adresse e-mail, mot de passe (haché par Supabase Auth), horodatages de connexion |
-| Destinataires | Supabase (sous-traitant) |
+| Catégories de données | Adresse e-mail, mot de passe (haché par Supabase Auth), horodatages de connexion. En cas de connexion par compte Google : adresse e-mail et identifiant de compte Google, transmis par Google. Aucun autre élément du profil Google n'est demandé ni conservé |
+| Destinataires | Supabase (sous-traitant). Google Ireland Ltd **uniquement si le parent choisit ce moyen de connexion** — la connexion par e-mail reste disponible et suffit à tout faire |
 | Conservation | Tant que le compte existe ; suppression immédiate et définitive à la demande du parent |
 | Mesures | HTTPS, mots de passe hachés, Row Level Security, accès administrateur restreint |
 

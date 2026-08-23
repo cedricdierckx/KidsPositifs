@@ -4242,3 +4242,69 @@ Object.assign(I18N.de, {
   "auth.lien_legal": "Impressum",
   "auth.lien_confid": "Datenschutz",
 });
+
+/* ---- Connexion par compte Google ----
+ * Le libellé suit les règles de marque de Google : « Continuer avec Google »,
+ * le nom jamais traduit, jamais abrégé. */
+Object.assign(I18N.fr, {
+  "auth.google": "Continuer avec Google",
+  "auth.ou": "ou",
+  "goog.echec": "La connexion Google n'a pas abouti. Réessayez, ou utilisez votre e-mail.",
+  "goog.premiere_titre": "Première connexion avec Google 👋",
+  "goog.premiere_texte": "Cette adresse Google n'est encore reliée à aucune famille FamiTeam. <strong>Si vous aviez déjà un compte avec cette adresse</strong>, revenez à la connexion par e-mail : vous y retrouverez vos enfants et vos compteurs.",
+  "goog.premiere_attente": "Les inscriptions sont momentanément sur liste d'attente. Revenez par l'e-mail pour vous y inscrire.",
+  "goog.premiere_continuer": "C'est une nouvelle famille, continuer",
+  "goog.premiere_email": "← Revenir à la connexion par e-mail"
+});
+Object.assign(I18N.en, {
+  "auth.google": "Continue with Google",
+  "auth.ou": "or",
+  "goog.echec": "Google sign-in did not complete. Try again, or use your e-mail.",
+  "goog.premiere_titre": "First sign-in with Google 👋",
+  "goog.premiere_texte": "This Google address is not linked to any FamiTeam family yet. <strong>If you already had an account with this address</strong>, go back to e-mail sign-in: your children and counters are waiting there.",
+  "goog.premiere_attente": "Sign-ups are currently on a waiting list. Come back via e-mail to join it.",
+  "goog.premiere_continuer": "This is a new family, continue",
+  "goog.premiere_email": "← Back to e-mail sign-in"
+});
+Object.assign(I18N.nl, {
+  "auth.google": "Doorgaan met Google",
+  "auth.ou": "of",
+  "goog.echec": "Aanmelden met Google is niet gelukt. Probeer opnieuw of gebruik uw e-mail.",
+  "goog.premiere_titre": "Eerste aanmelding met Google 👋",
+  "goog.premiere_texte": "Dit Google-adres is nog aan geen enkel FamiTeam-gezin gekoppeld. <strong>Had u al een account met dit adres?</strong> Ga dan terug naar aanmelden met e-mail: daar staan uw kinderen en uw tellers.",
+  "goog.premiere_attente": "Inschrijvingen staan momenteel op een wachtlijst. Kom via e-mail terug om u aan te melden.",
+  "goog.premiere_continuer": "Dit is een nieuw gezin, doorgaan",
+  "goog.premiere_email": "← Terug naar aanmelden met e-mail"
+});
+Object.assign(I18N.de, {
+  "auth.google": "Weiter mit Google",
+  "auth.ou": "oder",
+  "goog.echec": "Die Google-Anmeldung ist fehlgeschlagen. Versuchen Sie es erneut oder nutzen Sie Ihre E-Mail.",
+  "goog.premiere_titre": "Erste Anmeldung mit Google 👋",
+  "goog.premiere_texte": "Diese Google-Adresse ist noch mit keiner FamiTeam-Familie verknüpft. <strong>Hatten Sie bereits ein Konto mit dieser Adresse?</strong> Kehren Sie zur E-Mail-Anmeldung zurück: dort warten Ihre Kinder und Ihre Zähler.",
+  "goog.premiere_attente": "Anmeldungen stehen derzeit auf einer Warteliste. Kommen Sie per E-Mail zurück, um sich einzutragen.",
+  "goog.premiere_continuer": "Das ist eine neue Familie, weiter",
+  "goog.premiere_email": "← Zurück zur E-Mail-Anmeldung"
+});
+
+/* ---- Interrupteur admin : connexion Google ---- */
+Object.assign(I18N.fr, {
+  "admin.google": "Proposer la connexion par compte Google",
+  "admin.google_on": "Le bouton « Continuer avec Google » est visible sur l'écran d'accueil.",
+  "admin.google_off": "Éteint. À n'allumer qu'une fois le fournisseur Google configuré dans Supabase, sinon chaque clic finit sur une erreur."
+});
+Object.assign(I18N.en, {
+  "admin.google": "Offer sign-in with a Google account",
+  "admin.google_on": "The “Continue with Google” button is visible on the landing screen.",
+  "admin.google_off": "Off. Only switch on once the Google provider is configured in Supabase, otherwise every click ends in an error."
+});
+Object.assign(I18N.nl, {
+  "admin.google": "Aanmelden met een Google-account aanbieden",
+  "admin.google_on": "De knop “Doorgaan met Google” staat op het startscherm.",
+  "admin.google_off": "Uit. Zet dit pas aan zodra de Google-provider in Supabase is ingesteld, anders eindigt elke klik in een fout."
+});
+Object.assign(I18N.de, {
+  "admin.google": "Anmeldung mit Google-Konto anbieten",
+  "admin.google_on": "Die Schaltfläche „Weiter mit Google“ ist auf dem Startbildschirm sichtbar.",
+  "admin.google_off": "Aus. Erst einschalten, wenn der Google-Anbieter in Supabase eingerichtet ist, sonst endet jeder Klick in einem Fehler."
+});
