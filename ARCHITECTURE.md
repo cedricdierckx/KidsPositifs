@@ -16,6 +16,7 @@ Application **web vanilla** (sans framework), chargée par `index.html` :
 |---|---|
 | `js/demarrage.js` | Écran de démarrage animé (le temps que la session arrive) |
 | `js/config.js` | Clés Supabase (publiques, sécurité par RLS) |
+| `js/vendor/supabase.js` | Bibliothèque Supabase embarquée (MIT) — recopiée par `npm run vendor:supabase`, jamais éditée |
 | `js/i18n.js` | Traductions FR/EN/NL/DE + helper `t("clé")` |
 | `js/data.js` | Données statiques : `APP_NOM`, enfants, missions, avatar, écosystème |
 | `js/avatar.js` | Rendu vectoriel (SVG) des avatars |

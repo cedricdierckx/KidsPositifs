@@ -4374,6 +4374,47 @@ test("agenda : dans l'app, le .ics passe par le pont natif et jamais par un faux
       assert.ok(api.I18N[lg][cle], cle + " manquant en " + lg)));
 });
 
+/* ---------- La bibliothèque Supabase est embarquée ----------
+ * L'app installée est censée fonctionner hors ligne. Tant que ce script
+ * venait d'un CDN, un téléphone sans réseau ne le recevait pas : `supabase`
+ * restait indéfini et l'app affichait « Configuration requise » au lieu de
+ * travailler sur son cache local. */
+test("hors ligne : aucune page ne va chercher Supabase sur un CDN", () => {
+  const fs = require("fs"), path = require("path");
+  const racine = path.join(__dirname, "..");
+
+  const vendorisee = path.join(racine, "js/vendor/supabase.js");
+  assert.ok(fs.existsSync(vendorisee), "js/vendor/supabase.js doit être dans le dépôt");
+  const lib = fs.readFileSync(vendorisee, "utf8");
+  assert.ok(/^\/\* @supabase\/supabase-js v\d+\.\d+\.\d+ — licence MIT\./.test(lib),
+    "le fichier embarqué doit dire sa version et sa licence");
+  // C'est la variable globale que js/auth.js attend (`supabase.createClient`).
+  assert.ok(/var supabase=/.test(lib), "le build embarqué doit être l'UMD, pas un module");
+
+  // Le script de recopie garde l'opération reproductible : pas de fichier
+  // tombé du ciel qu'on ne saurait plus régénérer.
+  assert.ok(fs.existsSync(path.join(racine, "scripts/vendorer-supabase.mjs")),
+    "le script de recopie doit exister");
+  const pkg = JSON.parse(fs.readFileSync(path.join(racine, "package.json"), "utf8"));
+  assert.ok(pkg.scripts["vendor:supabase"], "npm run vendor:supabase doit être déclaré");
+  assert.ok((pkg.devDependencies || {})["@supabase/supabase-js"],
+    "la source de la recopie doit être une dépendance, pas un téléchargement manuel");
+
+  // Et surtout : plus une seule page ne dépend d'un domaine extérieur pour
+  // démarrer. Le dossier www/ (copie générée) est ignoré, il n'est pas suivi.
+  fs.readdirSync(racine).filter(n => n.endsWith(".html")).forEach(nom => {
+    const html = fs.readFileSync(path.join(racine, nom), "utf8");
+    assert.strictEqual(/<script[^>]+src="https?:/.test(html), false,
+      nom + " charge encore un script depuis un domaine extérieur");
+  });
+  // Les pages qui parlent à Supabase doivent, elles, charger la copie locale.
+  ["index.html", "defi.html", "challenge.html"].forEach(nom => {
+    const html = fs.readFileSync(path.join(racine, nom), "utf8");
+    assert.ok(/src="\/?js\/vendor\/supabase\.js/.test(html),
+      nom + " doit charger la bibliothèque embarquée");
+  });
+});
+
 /* ---------- L'écran de démarrage ----------
  * Deuxième retour du même téléphone : « au chargement c'est une page
  * blanche ». Le décor doit donc être dans la page AVANT les scripts. */

@@ -42,6 +42,12 @@ applications qui ne font que réafficher un site web.
   ligne qui modifient l'état en même temps ne s'écrasent plus en silence
   (voir commit dédié) — pertinent ici car les coupures prolongées
   deviennent courantes sur mobile.
+- **Bibliothèque Supabase embarquée** (`js/vendor/supabase.js`) : elle venait
+  d'un CDN, ce qui contredisait le hors-ligne annoncé au §0 — sans réseau, le
+  script n'arrivait pas, la variable `supabase` restait indéfinie et l'app
+  affichait « Configuration requise » au lieu de travailler sur son cache.
+  Elle est désormais dans le dépôt, recopiée depuis `node_modules` par
+  `npm run vendor:supabase` (à relancer après chaque montée de version).
 - **Envoi vers l'agenda depuis l'app** (`js/ui.js`, `envoyerVersAgenda`) :
   la WebView ignore l'attribut `download` d'un lien, sans erreur — les deux
   boutons « agenda » (carte surprise et rendez-vous du soir) ne faisaient donc
