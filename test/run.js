@@ -143,6 +143,11 @@ test("Store.ecritureAutorisee bloque un état au schéma corrompu", () => {
  * cœurs...), puis retrouvent une connexion : sans garde-fou, celui qui écrit
  * en second écrase entièrement l'autre, en silence — aucune goutte ni cœur
  * ne se fusionne jamais, c'est le bloc entier de la famille qui est remplacé. */
+// Un vrai appel réseau rend la main à la boucle d'événements : sans cette
+// pause, deux `sauver()` lancés ensemble s'exécuteraient l'un après l'autre
+// dans le banc, et le test de chevauchement ne testerait rien.
+const pauseReseau = () => new Promise(r => setImmediate(r));
+
 function clientFactice(serveur) {
   const client = {
     enPanneLecture: false, enPanneEcriture: false,
@@ -151,6 +156,7 @@ function clientFactice(serveur) {
       return {
         select() {
           return { eq() { return { async maybeSingle() {
+            await pauseReseau();
             client.appels.lectures++;
             if (client.enPanneLecture) return { data: null, error: new Error("hors ligne") };
             // Copie profonde : un vrai aller-retour réseau ne renvoie jamais
@@ -160,9 +166,17 @@ function clientFactice(serveur) {
           } }; } };
         },
         async upsert(payload) {
+          // La charge utile est figée AVANT la latence, comme le fait le vrai
+          // client (le corps de la requête est sérialisé au moment de l'appel).
+          // La figer après rendrait le banc plus sévère que la réalité.
+          const envoye = JSON.parse(JSON.stringify(payload.data));
+          await pauseReseau();
           if (client.enPanneEcriture) return { error: new Error("échec réseau") };
           client.appels.ecritures.push(payload);
-          serveur.row = { data: JSON.parse(JSON.stringify(payload.data)) };
+          serveur.row = { data: envoye };
+          // Crochet : simule l'utilisateur qui agit PENDANT l'aller-retour
+          // réseau (un enfant qui coche la mission suivante).
+          if (client.pendantEcriture) client.pendantEcriture();
           return { error: null };
         }
       };
@@ -229,6 +243,75 @@ test("Store.sauver écrit normalement quand personne d'autre n'a modifié l'éta
   api.etat.maj = 1300;
   await api.Store.sauver();
   assert.strictEqual(client.appels.ecritures.length, 2, "la deuxième écriture doit partir aussi");
+});
+
+test("Store.sauver ne se déclare pas en conflit avec lui-même", async () => {
+  // Le cas réellement rencontré par une famille à UN SEUL appareil : l'envoi
+  // est différé de 700 ms et `sauver()` avance `etat.maj` à chaque geste, si
+  // bien qu'un enfant qui coche deux missions d'affilée fait bouger `etat.maj`
+  // PENDANT l'aller-retour réseau. Si Store retient alors la valeur courante
+  // plutôt que celle qu'il vient réellement d'écrire, il se croit en conflit
+  // avec lui-même à la sauvegarde suivante.
+  const { contexte, api } = construireContexte();
+  const appelsToast = [];
+  contexte.toast = (msg, type) => appelsToast.push({ msg, type });
+
+  api.familleId = "f1";
+  const local = api.etatVierge();
+  local.maj = 1000;
+  api.lierEtat(local);
+  const serveur = { row: { data: { ...local, maj: 1000 } } };
+  const client = clientFactice(serveur);
+  api.Store.init(client);
+  await api.Store.charger();
+
+  api.etat.maj = 1200;
+  client.pendantEcriture = () => { api.etat.maj = 1300; };   // l'enfant coche encore
+  await api.Store.sauver();
+  assert.strictEqual(serveur.row.data.maj, 1200, "le serveur reçoit la version envoyée");
+
+  // Sauvegarde suivante, même appareil, personne d'autre n'a écrit.
+  client.pendantEcriture = null;
+  api.etat.maj = 1400;
+  await api.Store.sauver();
+  assert.strictEqual(appelsToast.length, 0,
+    "aucun avertissement ne doit s'afficher : cet appareil est seul");
+  assert.strictEqual(client.appels.ecritures.length, 2, "la deuxième écriture doit partir");
+  assert.strictEqual(serveur.row.data.maj, 1400);
+});
+
+test("Store.sauver ne laisse pas deux écritures se chevaucher", async () => {
+  // Deux `sauver()` en vol en même temps produisaient le même symptôme : celle
+  // qui se termine en dernier n'est pas forcément celle qui a écrit en dernier,
+  // et le repère de version se retrouvait en arrière du serveur.
+  const { contexte, api } = construireContexte();
+  const appelsToast = [];
+  contexte.toast = (msg, type) => appelsToast.push({ msg, type });
+
+  api.familleId = "f1";
+  const local = api.etatVierge();
+  local.maj = 1000;
+  api.lierEtat(local);
+  const serveur = { row: { data: { ...local, maj: 1000 } } };
+  const client = clientFactice(serveur);
+  api.Store.init(client);
+  await api.Store.charger();
+
+  api.etat.maj = 1200;
+  const a = api.Store.sauver();
+  api.etat.maj = 1300;              // second geste avant que le premier ait fini
+  const b = api.Store.sauver();
+  await Promise.all([a, b]);
+
+  assert.strictEqual(appelsToast.length, 0, "aucun conflit : c'est le même appareil");
+  // L'état le plus récent doit avoir atteint le serveur.
+  assert.strictEqual(serveur.row.data.maj, 1300, "la dernière version doit être celle du serveur");
+
+  // Et la sauvegarde d'après doit encore passer.
+  api.etat.maj = 1400;
+  await api.Store.sauver();
+  assert.strictEqual(appelsToast.length, 0);
+  assert.strictEqual(serveur.row.data.maj, 1400);
 });
 
 test("Store.sauver retente l'écriture directe si la vérification anti-conflit échoue (hors ligne)", async () => {

@@ -134,9 +134,18 @@ const Store = (() => {
           }
         }
       }
+      // La version retenue doit être celle qu'on ENVOIE, capturée avant
+      // l'attente réseau. La relire après l'`await` donnait la valeur courante
+      // de `etat.maj`, qui a pu avancer entretemps : `sauver()` avance ce
+      // compteur à CHAQUE geste et l'envoi est différé de 700 ms, si bien
+      // qu'un enfant cochant deux missions d'affilée décalait le repère d'un
+      // cran. L'appareil se déclarait alors en conflit avec lui-même, à la
+      // sauvegarde suivante et à toutes celles d'après — il cessait
+      // silencieusement de synchroniser jusqu'au rechargement de la page.
+      const majEnvoyee = etat.maj || 0;
       const { error } = await client.from("family_state")
         .upsert({ family_id: familleId, data: etat, updated_at: new Date().toISOString() });
-      if (!error) derniereMajConnue = etat.maj || 0;
+      if (!error) derniereMajConnue = majEnvoyee;
       badge(error ? "⚠️" : "✅");
     } catch { badge("📴"); }
   }
