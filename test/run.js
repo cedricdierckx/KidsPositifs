@@ -4934,6 +4934,26 @@ test("admin : le numéro de version affiché vient du script réellement chargé
       assert.ok(api.I18N[lg][cle], cle + " manquant en " + lg)));
 });
 
+test("parents : les cartes FamiTeam se distinguent visuellement", () => {
+  const fsx = require("fs"), pathx = require("path");
+  const css = fsx.readFileSync(pathx.join(__dirname, "..", "css/style.css"), "utf8");
+
+  // Une carte et son cadre étaient toutes deux blanches, avec une bordure
+  // presque invisible (#eef2f7 sur du blanc) : rien ne les séparait à l'œil.
+  const carte = /\.csp-carte\{([^}]*)\}/.exec(css)[1];
+  assert.ok(/background:var\(--bg\)/.test(carte),
+    "la carte doit prendre le fond de PAGE, pour trancher sur le cadre blanc qui la contient");
+  assert.ok(!/#eef2f7/.test(carte), "l'ancienne bordure quasi invisible ne doit plus être utilisée ici");
+
+  // Un numéro, qui suit l'ordre réel même après un tri (▲▼) ou une
+  // suppression, sans une ligne de JS supplémentaire — pur CSS.
+  assert.ok(/\.csp-liste\{[^}]*counter-reset:csp/.test(css),
+    "le compteur doit repartir de zéro à chaque rendu de la liste");
+  assert.ok(/\.csp-carte\{[^}]*counter-increment:csp/.test(carte.length ? css : css));
+  assert.ok(/content:"Carte " counter\(csp\)/.test(css),
+    "chaque carte doit afficher son numéro");
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async

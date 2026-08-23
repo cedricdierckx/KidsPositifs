@@ -988,9 +988,21 @@ main{max-width:680px; margin:0 auto; padding:14px}
   padding:4px 10px; font-size:14px; font-weight:800}
 .cs-carte.ouverte .cs-contrib-item{border-color:#bfe9da}
 
-/* Gestion des cartes surprises (espace parents) */
-.csp-liste{display:grid; gap:12px; margin-top:6px}
-.csp-carte{border:2px solid #eef2f7; border-radius:14px; padding:10px; display:grid; gap:8px}
+/* Gestion des cartes surprises (espace parents). Chaque carte vivait sur le
+   MÊME blanc que le cadre qui les contient toutes, avec une bordure presque
+   invisible (#eef2f7 sur du blanc) : impossible de voir où l'une finit et où
+   la suivante commence, surtout une fois les champs remplis de texte long.
+   Trois changements : un fond distinct du cadre (celui du fond de PAGE,
+   --bg, qui crée un effet de « casier » plutôt qu'un trait fin à repérer),
+   une bordure qui se voit vraiment, et un numéro — utile tel quel : c'est ce
+   qu'un parent nomme quand il en parle (« la carte 2 »), et il suit l'ordre
+   réel même après un tri (▲▼) ou une suppression, sans une ligne de JS. */
+.csp-liste{display:grid; gap:16px; margin-top:6px; counter-reset:csp}
+.csp-carte{counter-increment:csp; position:relative; border:2px solid #dde6f0;
+  border-radius:14px; padding:16px 10px 10px; display:grid; gap:8px; background:var(--bg)}
+.csp-carte::before{content:"Carte " counter(csp); position:absolute; top:-9px; left:12px;
+  background:#fff; border:2px solid #dde6f0; border-radius:999px; padding:1px 10px;
+  font-size:11px; font-weight:800; color:var(--doux); line-height:1.5}
 .csp-ajout{border:2px dashed #ffd9a8; border-radius:14px; padding:10px; margin-top:12px; display:grid; gap:8px}
 .csp-ligne{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
 .csp-emoji{width:60px; text-align:center; padding:10px; border:2px solid #e3edf5; border-radius:10px; font-family:inherit; font-size:16px}
