@@ -22,21 +22,20 @@ Les cinq comptes `gmail.com` de la base :
 | cedric.dierckx@gmail.com | confirmé | 1 |
 | cedric.dierckx.pro@gmail.com | confirmé | 1 |
 | cedricetanouchka@gmail.com | confirmé | 1 |
-| cedric.dierckx.bvba@gmail.com | **non confirmé** | **0**, jamais connecté |
+| cedric.dierckx.bvba@gmail.com | *supprimé — compte fantôme* | — |
 | damienvw@gmail.com | confirmé | 1 |
 
-Le seul compte non confirmé est un compte de l'éditeur, jamais utilisé et sans
-aucune famille : le rattacher ou non ne change rien, il est vide dans les deux
-cas. Tous les comptes portant réellement une famille sont confirmés, donc
-Supabase les rattachera.
+Le seul compte non confirmé était un compte de l'éditeur, jamais utilisé et
+sans aucune famille. Il a été supprimé, avec un second du même genre
+(`cedric.dierckx@belnot.be`) : deux comptes fantômes qui gonflaient le total à
+12 alors que 10 seulement étaient réels — sur d'aussi petits nombres, cela
+faussait la lecture de la traction.
 
-**Rien à faire avant d'allumer.**
+**État vérifié après nettoyage : 10 comptes, 10 familles, 10 membres,
+0 adresse non confirmée, aucune identité orpheline.**
 
-*(À nettoyer un jour, sans rapport avec Google : deux comptes fantômes de
-l'éditeur — `cedric.dierckx.bvba@gmail.com` et `cedric.dierckx@belnot.be` —
-jamais connectés, sans famille. Ils gonflent le total de 12 comptes alors que
-10 seulement sont réels : sur d'aussi petits nombres, cela fausse la lecture
-de la traction.)*
+Tous les comptes portant une famille sont confirmés, donc Supabase les
+rattachera. **Rien à faire avant d'allumer.**
 
 ---
 
