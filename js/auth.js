@@ -207,6 +207,13 @@ function configAppPrete() {
   if (!configAppPromesse) configAppPromesse = chargerConfigApp();
   return configAppPromesse;
 }
+// La connexion Google n'apparaît que si l'admin l'a allumée. Sans cet
+// interrupteur, le bouton serait visible AVANT que le fournisseur ne soit
+// configuré côté Supabase et Google Cloud : chaque clic finirait sur une
+// erreur, pour toutes les familles, sans qu'on puisse le retirer vite.
+function googleActif() {
+  return !!(configApp && configApp.google_actif === "on");
+}
 // Lien de don : priorité au lien Stripe configuré par l'admin, sinon config.js.
 function urlDon() {
   return (configApp && configApp.don_stripe_url) ||
@@ -317,7 +324,21 @@ async function apresConnexion() {
   if (inv) { localStorage.removeItem(INVITE_KEY); return ecranInvitation(inv); }
 
   await chargerFamilles();
-  if (mesFamilles.length === 0) return ecranFamilles({ premiere: true });
+  if (mesFamilles.length === 0) {
+    // Une premiere connexion Google merite un arret. Deux raisons :
+    //
+    // 1) Un parent deja inscrit avec la MEME adresse ne retrouve son compte
+    //    que si Supabase a lie les deux identites — ce qui n'arrive pas si son
+    //    e-mail n'avait jamais ete confirme. Il verrait alors un compte vide
+    //    et croirait ses enfants perdus. On le previent AVANT, pendant qu'il
+    //    peut encore repartir par l'e-mail.
+    // 2) Sans ce passage, Google contournerait la liste d'attente : on
+    //    n'ouvrirait plus les acces par vagues, on les subirait.
+    if (fournisseurSession() && fournisseurSession() !== "email") {
+      return ecranPremiereFoisTiers();
+    }
+    return ecranFamilles({ premiere: true });
+  }
 
   // Retours restés en file locale (envoyés hors ligne) : on les rejoue.
   if (typeof viderFileRetours === "function") viderFileRetours();
@@ -452,6 +473,50 @@ function initDeepLinkAuth() {
     else await apresConnexion();
   });
 }
+/* ---------- Connexion par compte Google ----------
+ * Aucun code de session a ecrire : apresConnexion() ne regarde que la session
+ * Supabase, pas la maniere dont elle a ete obtenue. Une premiere connexion
+ * Google sans famille tombe donc sur le meme ecran « creez votre famille »
+ * qu'une inscription par e-mail — la creation de compte vient gratuitement.
+ *
+ * Dans l'app native, Google REFUSE l'authentification en WebView embarquee :
+ * il faut le navigateur du systeme. On demande donc a Supabase l'URL sans
+ * rediriger nous-memes, et on l'ouvre dehors ; le retour passe par les App
+ * Links / Universal Links deja en place pour le lien magique. */
+async function connexionGoogle() {
+  const options = {
+    redirectTo: urlRetourAuth(),
+    // Sans cela, un parent connecte a plusieurs comptes Google est reconnecte
+    // en silence avec le mauvais — et se retrouve dans une famille vide.
+    queryParams: { prompt: "select_account" }
+  };
+  if (estAppNative()) options.skipBrowserRedirect = true;
+  const { data, error } = await sb.auth.signInWithOAuth({ provider: "google", options });
+  if (error) return error;
+  if (estAppNative() && data && data.url) ouvrirDehors(data.url);
+  return null;
+}
+
+// Ouvre une URL hors de la WebView. Le plugin Capacitor Browser s'il existe,
+// sinon un onglet du systeme : dans les deux cas, jamais la vue de l'app.
+function ouvrirDehors(url) {
+  try {
+    const cap = (typeof window !== "undefined") ? window.Capacitor : null;
+    const nav = cap && cap.Plugins && cap.Plugins.Browser;
+    if (nav && typeof nav.open === "function") { nav.open({ url }); return true; }
+  } catch (e) { /* on retombe sur l'ouverture standard */ }
+  try { window.open(url, "_system"); return true; } catch (e) { return false; }
+}
+
+// Par quel moyen la session courante a-t-elle ete ouverte ? "email", "google"…
+function fournisseurSession(u) {
+  const util = u || utilisateur;
+  if (!util) return null;
+  if (util.app_metadata && util.app_metadata.provider) return util.app_metadata.provider;
+  if (Array.isArray(util.identities) && util.identities.length) return util.identities[0].provider;
+  return null;
+}
+
 async function connexionLienMagique(email) {
   const { error } = await sb.auth.signInWithOtp({
     email, options: { emailRedirectTo: urlRetourAuth() }
@@ -1299,6 +1364,21 @@ function ecranAuth() {
           <h2 class="form-titre" id="form-titre">${t("auth.form_titre")}</h2>
           <p id="form-sous" class="note" style="display:none"></p>
           <p id="auth-msg"></p>
+          ${googleActif() ? `
+          <!-- Connexion par compte Google, avant le formulaire : c'est le
+               chemin le plus court, et il supprime l'aller-retour par un
+               courriel de confirmation — deux comptes sur douze n'avaient
+               jamais confirme le leur. Le logo est un SVG integre : aucune
+               ressource externe, donc rien ne casse hors ligne. -->
+          <button id="b-google" class="btn-google" type="button">
+            <svg class="g-logo" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+              <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.5 13.2l7.9 6.1C12.3 13.2 17.7 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v9.1h12.4c-.5 2.9-2.1 5.3-4.6 6.9l7.2 5.6c4.2-3.9 6.6-9.6 6.6-17z"/>
+              <path fill="#FBBC05" d="M10.4 28.7c-.5-1.4-.8-2.9-.8-4.5s.3-3.1.8-4.5l-7.9-6.1C.9 16.7 0 20.2 0 24s.9 7.3 2.5 10.4l7.9-5.7z"/>
+              <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.2-5.6c-2 1.4-4.6 2.2-8.7 2.2-6.3 0-11.7-3.7-13.6-9.1l-7.9 5.7C6.5 42.6 14.6 48 24 48z"/>
+            </svg><span>${t("auth.google")}</span>
+          </button>
+          <div class="sep-ou"><span>${t("auth.ou")}</span></div>` : ""}
           <input id="email" type="email" inputmode="email" placeholder="${t("auth.email_ph")}" autocomplete="email">
           <input id="mdp" type="password" placeholder="${t("auth.mdp_ph")}" autocomplete="current-password">
           <button id="b-principal" class="gros-bouton planete">${t("auth.connexion")}</button>
@@ -1435,6 +1515,14 @@ function ecranAuth() {
     setMsg(err ? t("auth.erreur", { msg: err.message }) : t("auth.msg_attente_ok"), err ? "err" : "ok");
   };
   document.getElementById("b-demo").onclick = demarrerDemo;
+
+  const bGoogle = document.getElementById("b-google");
+  if (bGoogle) bGoogle.onclick = async () => {
+    bGoogle.disabled = true;
+    const err = await connexionGoogle();
+    if (err) { bGoogle.disabled = false; setMsg(t("goog.echec"), "info"); }
+    // Pas de `else` : le navigateur part chez Google, cette page disparaît.
+  };
   rafraichir();
 }
 
@@ -1483,6 +1571,29 @@ function demarrerDemo() {
   rendre();
   majBadgeSync("🧪");
   if (typeof verifierTuto === "function") verifierTuto();   // tutoriel en démo aussi
+}
+
+/* Premiere connexion par un compte tiers, sans aucune famille. On ne cree rien
+ * tout de suite : on laisse une porte de sortie vers l'e-mail. */
+function ecranPremiereFoisTiers() {
+  const ouvert = inscriptionAutorisee();
+  carteEcran(`
+    <div class="code-logo">👋</div>
+    <h2>${t("goog.premiere_titre")}</h2>
+    <p class="note">${t("goog.premiere_texte")}</p>
+    ${ouvert ? "" : `<p class="note">${t("goog.premiere_attente")}</p>`}
+    ${ouvert ? `<button id="g-continuer" class="gros-bouton planete">${t("goog.premiere_continuer")}</button>` : ""}
+    <button id="g-retour" class="btn-secondaire">${t("goog.premiere_email")}</button>
+  `);
+  const bc = document.getElementById("g-continuer");
+  if (bc) bc.onclick = () => ecranFamilles({ premiere: true });
+  document.getElementById("g-retour").onclick = async () => {
+    // On se deconnecte : rester connecte a Google empecherait de se
+    // reconnecter par e-mail sans passer par le menu de deconnexion.
+    try { await sb.auth.signOut(); } catch (e) { /* session deja invalide */ }
+    utilisateur = null;
+    ecranAuth();
+  };
 }
 
 function ecranFamilles(opts) {

@@ -1850,6 +1850,25 @@ body.impression .carte-ami-actions{display:none}
   gap:10px; align-items:start}
 .rituel-grille .champ{margin:10px 0 0}
 
+/* ----- Connexion par compte Google -----
+   Bouton blanc à bordure grise et logo à gauche : ce sont les règles de marque
+   de Google, et s'en écarter fait rater la reconnaissance instantanée qui est
+   tout l'intérêt du bouton. Hauteur alignée sur `.btn-secondaire` pour ne pas
+   rouvrir la disparité de gabarits corrigée ailleurs. */
+.btn-google{display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; margin-top:8px; padding:13px; border:2px solid #dadce0;
+  border-radius:14px; background:#fff; color:#3c4043; font-family:inherit;
+  font-size:15px; font-weight:800; cursor:pointer;
+  transition:background .15s, border-color .15s, transform .1s}
+.btn-google:hover{background:#f7f8f8; border-color:#c9cfd6}
+.btn-google:active{transform:scale(.98)}
+.btn-google:disabled{opacity:.6; cursor:default}
+.btn-google .g-logo{width:19px; height:19px; flex:0 0 auto}
+
+/* Séparateur « ou » : un trait de chaque côté du mot, sans image. */
+.sep-ou{display:flex; align-items:center; gap:10px; margin:14px 0 10px;
+  color:var(--doux); font-size:12.5px; font-weight:700}
+.sep-ou::before, .sep-ou::after{content:""; flex:1 1 auto; height:1px; background:#e3edf5}
 /* =====================================================================
  * Écran de démarrage (« splash » web)
  * ---------------------------------------------------------------------

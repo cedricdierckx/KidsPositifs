@@ -2676,6 +2676,25 @@ function blocSoutenabilite() {
   sec.appendChild(l);
   sec.appendChild(el("p", "reglage-aide", t(actives ? "pause.notifs_on" : "pause.notifs_off")));
 
+  // Connexion par compte Google : l'interrupteur reste ETEINT tant que le
+  // fournisseur n'est pas configure dans Google Cloud ET dans Supabase.
+  // Allume trop tot, le bouton s'affiche pour toutes les familles et chaque
+  // clic finit sur une erreur.
+  const goog = !!(typeof configApp !== "undefined" && configApp && configApp.google_actif === "on");
+  const lg = el("label", "switch-ligne");
+  const ig = el("input"); ig.type = "checkbox"; ig.checked = goog;
+  ig.onchange = async () => {
+    ig.disabled = true;
+    await adminDefinirConfig("google_actif", ig.checked ? "on" : "off");
+    configApp.google_actif = ig.checked ? "on" : "off";
+    ig.disabled = false;
+    majSansSaut(() => rendre());
+  };
+  lg.appendChild(ig);
+  lg.appendChild(el("span", null, t("admin.google")));
+  sec.appendChild(lg);
+  sec.appendChild(el("p", "reglage-aide", t(goog ? "admin.google_on" : "admin.google_off")));
+
   // Mode vacances : une date de reprise, rien de plus.
   const enPause = (typeof enVacances === "function") ? enVacances() : false;
   const lv = el("label", "reglage-ligne");

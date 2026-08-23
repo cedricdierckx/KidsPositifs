@@ -4444,6 +4444,54 @@ test("démarrage : l'attente montre un décor animé, jamais une page blanche", 
     "après une attente anormale, le parent doit pouvoir reprendre la main");
 });
 
+/* Connexion par compte Google. Rien de reseau n'est testable ici : ce qui
+ * compte est que le bouton ne puisse pas apparaitre avant d'etre utilisable,
+ * et qu'une premiere connexion tierce ne laisse pas un parent croire qu'il a
+ * perdu ses enfants. */
+test("Google : le bouton n'existe pas tant que l'admin ne l'a pas allumé", () => {
+  const { api } = construireContexte();
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const auth = fs.readFileSync(path.join(r, "js/auth.js"), "utf8");
+
+  assert.ok(/\$\{googleActif\(\) \? `/.test(auth),
+    "le bouton doit être derrière l'interrupteur : sinon il s'affiche pour "
+    + "toutes les familles avant que Google ne soit configuré");
+  assert.ok(/configApp\.google_actif === "on"/.test(auth),
+    "l'interrupteur se lit dans app_config, donc réglable sans redéploiement");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  assert.ok(/adminDefinirConfig\("google_actif"/.test(ui),
+    "l'admin doit pouvoir l'allumer et l'éteindre depuis l'application");
+
+  ["auth.google", "auth.ou", "goog.echec", "goog.premiere_titre", "goog.premiere_texte",
+   "goog.premiere_attente", "goog.premiere_continuer", "goog.premiere_email",
+   "admin.google", "admin.google_on", "admin.google_off"].forEach(k =>
+    Object.keys(api.LANGUES).forEach(lg =>
+      assert.ok(api.I18N[lg][k], k + " manquant en " + lg)));
+  // Règle de marque : le nom ne se traduit ni ne s'abrège.
+  Object.keys(api.LANGUES).forEach(lg =>
+    assert.ok(/Google/.test(api.I18N[lg]["auth.google"]),
+      "le nom Google doit rester tel quel en " + lg));
+});
+
+test("Google : une première connexion tierce ne fait pas croire à un compte perdu", () => {
+  const fs = require("fs"), path = require("path");
+  const auth = fs.readFileSync(path.join(__dirname, "..", "js/auth.js"), "utf8");
+
+  assert.ok(/fournisseurSession\(\) !== "email"[\s\S]{0,120}ecranPremiereFoisTiers\(\)/.test(auth),
+    "une première connexion tierce sans famille doit passer par l'avertissement");
+  assert.ok(/function ecranPremiereFoisTiers/.test(auth));
+  assert.ok(/g-retour[\s\S]{0,260}auth\.signOut\(\)/.test(auth),
+    "le retour à l'e-mail doit fermer la session tierce");
+  assert.ok(/const ouvert = inscriptionAutorisee\(\);/.test(auth),
+    "Google ne doit pas être une porte dérobée quand les inscriptions sont fermées");
+
+  // Google refuse l'authentification en WebView : dans l'app, on sort.
+  assert.ok(/if \(estAppNative\(\)\) options\.skipBrowserRedirect = true;/.test(auth));
+  assert.ok(/function ouvrirDehors/.test(auth),
+    "l'app native doit ouvrir le navigateur du système, pas sa propre vue");
+  assert.ok(/prompt: "select_account"/.test(auth));
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async

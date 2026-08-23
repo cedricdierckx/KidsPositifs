@@ -40,7 +40,9 @@
 
       <h2>Données collectées</h2>
       <ul>
-        <li>Compte parent : adresse e-mail et mot de passe (géré par Supabase Auth).</li>
+        <li>Compte parent : adresse e-mail et mot de passe (géré par Supabase Auth). Si vous vous
+          connectez avec un compte Google, aucun mot de passe n'est créé : nous recevons de Google
+          votre adresse e-mail et un identifiant de compte, et rien de plus.</li>
         <li>Famille : nom de la famille, plan (gratuit/premium).</li>
         <li>Profils des enfants créés par les parents : <strong>un prénom ou un surnom au choix du
           parent</strong> (un surnom suffit et est recommandé), <strong>le mois et l'année de naissance</strong>
@@ -118,6 +120,13 @@
         <li><strong>Supabase Inc.</strong> — base de données, authentification et fonctions serveur.
           Données hébergées dans l'Union européenne (région <em>eu-west-1</em>, Irlande).
           <a href="https://supabase.com/privacy" target="_blank" rel="noopener">supabase.com/privacy</a></li>
+        <li><strong>Google Ireland Ltd</strong> — <em>uniquement si vous choisissez « Continuer avec
+          Google »</em> pour vous connecter. Google nous transmet alors votre adresse e-mail et un
+          identifiant de compte, rien d'autre : ni vos contacts, ni votre agenda, ni le contenu de
+          votre boîte. Nous ne transmettons à Google aucune donnée sur vos enfants. La connexion par
+          e-mail reste disponible et donne accès exactement aux mêmes fonctions — ce choix vous
+          appartient.
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">policies.google.com/privacy</a></li>
         <li><strong>Vercel Inc.</strong> — hébergement du site statique (pages et fichiers de
           l'application). Ne reçoit aucune donnée de compte ni de profil d'enfant.
           <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener">vercel.com/legal/privacy-policy</a></li>
