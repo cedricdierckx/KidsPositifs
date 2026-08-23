@@ -4713,6 +4713,55 @@ test("langues : le navigateur ne reçoit que celle qu'il lit", () => {
     + Math.round(base/1024) + " Ko contre " + Math.round(source/1024) + " Ko)");
 });
 
+/* App installée : trois mécanismes du web n'existent pas dans une WebView
+ * Android — window.print(), navigator.share et l'attribut `download`. Aucun
+ * ne lève d'erreur : le bouton ne fait simplement rien, et rien ne le dit.
+ * C'est le pire des cas — le parent croit à une panne. */
+test("app installée : aucun bouton ne peut échouer en silence", () => {
+  const { api } = construireContexte();
+  const fsx = require("fs"), pathx = require("path"), r = pathx.join(__dirname, "..");
+  const ui = fsx.readFileSync(pathx.join(r, "js/ui.js"), "utf8");
+  const app = fsx.readFileSync(pathx.join(r, "js/app.js"), "utf8");
+
+  // 1. telechargerBlob ne doit plus renvoyer « réussi » dans l'app : la
+  //    WebView ignore `download` sans rien lever, donc tous ses appelants
+  //    croyaient avoir réussi.
+  const tb = ui.slice(ui.indexOf("function telechargerBlob"),
+                      ui.indexOf("function telechargerBlob") + 700);
+  assert.ok(/if \(greffonNatif\("Filesystem"\)\) return false;/.test(tb),
+    "telechargerBlob doit refuser franchement dans l'app installée");
+
+  // 2. Le partage de la carte doit essayer le pont natif AVANT les API du web,
+  //    qui n'existent pas dans la WebView.
+  const pc = ui.slice(ui.indexOf("async function partagerCarteAmi"),
+                      ui.indexOf("async function partagerCarteAmi") + 1600);
+  const iNatif = pc.indexOf('greffonNatif("Share")');
+  const iWeb = pc.indexOf("navigator.canShare");
+  assert.ok(iNatif > 0 && iWeb > 0 && iNatif < iWeb,
+    "le partage natif doit être tenté avant navigator.share");
+
+  // 3. L'impression n'existe pas dans la WebView : il faut le dire.
+  const ic = ui.slice(ui.indexOf("function imprimerCible"),
+                      ui.indexOf("function imprimerCible") + 800);
+  assert.ok(/greffonNatif\("Filesystem"\)/.test(ic) && /impr\.indispo/.test(ic),
+    "imprimerCible doit prévenir au lieu de ne rien faire");
+  Object.keys(api.LANGUES).forEach(lg =>
+    assert.ok(api.I18N[lg]["impr.indispo"], "impr.indispo manquant en " + lg));
+
+  // 4. Les deux exports de fichiers passent par le chemin commun.
+  assert.ok(/function enregistrerOuPartager/.test(ui) && /function partagerFichierNatif/.test(ui));
+  assert.ok(/await enregistrerOuPartager\(blob, nomFichier/.test(ui),
+    "l'export JSON de l'admin doit passer par le chemin natif");
+  assert.ok(/enregistrerOuPartager\(blob, "famiteam-sauvegarde\.json"/.test(app),
+    "la sauvegarde complète aussi");
+  // Et elle doit prévenir si rien n'est parti.
+  assert.ok(/if \(!ok &&[\s\S]{0,120}sys\.export_ko/.test(app),
+    "une sauvegarde qui ne part pas doit le dire");
+
+  // 5. Le pont natif ne doit jamais etre suppose present : il n'existe pas sur le web.
+  assert.ok(/function greffonNatif/.test(ui) && /isNativePlatform/.test(ui));
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async

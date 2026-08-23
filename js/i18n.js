@@ -4381,3 +4381,18 @@ Object.assign(I18N.de, {
   "admin.connexion_titre": "🔑 Anmeldung der Eltern",
   "admin.connexion_sous": "Die auf dem Startbildschirm angebotenen Wege. E-Mail und Anmeldelink bleiben immer verfügbar, unabhängig davon, was hier angehakt ist."
 });
+
+/* ---- App installée : ce que la WebView ne sait pas faire ----
+ * Mieux vaut le dire que laisser un bouton sans effet. */
+Object.assign(I18N.fr, {
+  "impr.indispo": "L'impression n'est pas disponible dans l'application installée. Ouvrez {hote} dans votre navigateur pour imprimer — ou utilisez « Partager » pour envoyer la carte."
+});
+Object.assign(I18N.en, {
+  "impr.indispo": "Printing is not available in the installed app. Open {hote} in your browser to print — or use “Share” to send the card."
+});
+Object.assign(I18N.nl, {
+  "impr.indispo": "Afdrukken kan niet in de geïnstalleerde app. Open {hote} in uw browser om af te drukken — of gebruik “Delen” om de kaart te versturen."
+});
+Object.assign(I18N.de, {
+  "impr.indispo": "Drucken ist in der installierten App nicht möglich. Öffnen Sie {hote} im Browser zum Drucken — oder nutzen Sie „Teilen“, um die Karte zu senden."
+});

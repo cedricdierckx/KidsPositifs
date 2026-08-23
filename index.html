@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <!-- Propriété du domaine, exigée par Google avant d'afficher « FamiTeam »
+       et son logo sur l'écran de consentement : sans elle, il affiche l'hôte
+       de l'URI de redirection (…supabase.co). Ne pas retirer. -->
+  <meta name="google-site-verification" content="Yx5wnuzEwc3s68p3iLiFCp4BTrk4iFpVcIsFYrYk328">
   <meta name="theme-color" content="#f6a623">
   <title>FamiTeam — Une ambiance positive en famille</title>
   <meta name="description" content="Application familiale gratuite pour les 2-7 ans : deux minutes par jour pour valoriser les comportements positifs. Aucun point n'est jamais retiré — quand ça dérape, l'enfant répare. Sans publicité, données en Europe.">
@@ -30,7 +34,7 @@
     "isAccessibleForFree": true
   }
   </script>
-  <link rel="stylesheet" href="css/style.css?v=150">
+  <link rel="stylesheet" href="css/style.css?v=151">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌟</text></svg>">
 </head>
 <body>
@@ -58,9 +62,9 @@
     <div id="dem-lent" class="dem-lent" hidden></div>
   </div>
 
-  <script defer src="js/demarrage.js?v=150"></script>
-  <script defer src="js/config.js?v=150"></script>
-  <script defer src="js/i18n.base.js?v=150"></script>
+  <script defer src="js/demarrage.js?v=151"></script>
+  <script defer src="js/config.js?v=151"></script>
+  <script defer src="js/i18n.base.js?v=151"></script>
   <!-- Le français est dans i18n.base.js ; l'anglais, le néerlandais et
        l'allemand sont trois fichiers séparés d'environ 80 Ko qu'on ne tire
        que si le parent lit cette langue-là. `document.write` insère la balise
@@ -75,19 +79,19 @@
         var l = (m && /^(fr|en|nl|de)$/.test(m)) ? m
               : ((navigator.language || "fr").slice(0, 2).toLowerCase());
         if (/^(en|nl|de)$/.test(l)) {
-          document.write('<script defer src="js/i18n.' + l + '.js?v=150"><\/script>');
+          document.write('<script defer src="js/i18n.' + l + '.js?v=151"><\/script>');
         }
       } catch (e) { /* sans stockage : le français suffit */ }
     })();
   </script>
-  <script defer src="js/vendor/supabase.js?v=150"></script>
-  <script defer src="js/data.js?v=150"></script>
-  <script defer src="js/avatar.js?v=150"></script>
-  <script defer src="js/qr.js?v=150"></script>
-  <script defer src="js/croissance.js?v=150"></script>
-  <script defer src="js/app.js?v=150"></script>
-  <script defer src="js/store.js?v=150"></script>
-  <script defer src="js/ui.js?v=150"></script>
-  <script defer src="js/auth.js?v=150"></script>
+  <script defer src="js/vendor/supabase.js?v=151"></script>
+  <script defer src="js/data.js?v=151"></script>
+  <script defer src="js/avatar.js?v=151"></script>
+  <script defer src="js/qr.js?v=151"></script>
+  <script defer src="js/croissance.js?v=151"></script>
+  <script defer src="js/app.js?v=151"></script>
+  <script defer src="js/store.js?v=151"></script>
+  <script defer src="js/ui.js?v=151"></script>
+  <script defer src="js/auth.js?v=151"></script>
 </body>
 </html>

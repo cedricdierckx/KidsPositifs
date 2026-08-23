@@ -1356,5 +1356,6 @@ Object.assign(I18N.en, {
   "admin.google_on": "The “Continue with Google” button is visible on the landing screen.",
   "admin.google_off": "Off. Only switch on once the Google provider is configured in Supabase, otherwise every click ends in an error.",
   "admin.connexion_titre": "🔑 How parents sign in",
-  "admin.connexion_sous": "The methods offered on the landing screen. E-mail and the sign-in link always remain available, whatever is ticked here."
+  "admin.connexion_sous": "The methods offered on the landing screen. E-mail and the sign-in link always remain available, whatever is ticked here.",
+  "impr.indispo": "Printing is not available in the installed app. Open {hote} in your browser to print — or use “Share” to send the card."
 });

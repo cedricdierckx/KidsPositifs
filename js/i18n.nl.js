@@ -1356,5 +1356,6 @@ Object.assign(I18N.nl, {
   "admin.google_on": "De knop “Doorgaan met Google” staat op het startscherm.",
   "admin.google_off": "Uit. Zet dit pas aan zodra de Google-provider in Supabase is ingesteld, anders eindigt elke klik in een fout.",
   "admin.connexion_titre": "🔑 Hoe ouders zich aanmelden",
-  "admin.connexion_sous": "De manieren die op het startscherm worden aangeboden. E-mail en de aanmeldlink blijven altijd beschikbaar, wat hier ook is aangevinkt."
+  "admin.connexion_sous": "De manieren die op het startscherm worden aangeboden. E-mail en de aanmeldlink blijven altijd beschikbaar, wat hier ook is aangevinkt.",
+  "impr.indispo": "Afdrukken kan niet in de geïnstalleerde app. Open {hote} in uw browser om af te drukken — of gebruik “Delen” om de kaart te versturen."
 });

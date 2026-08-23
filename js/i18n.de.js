@@ -1356,5 +1356,6 @@ Object.assign(I18N.de, {
   "admin.google_on": "Die Schaltfläche „Weiter mit Google“ ist auf dem Startbildschirm sichtbar.",
   "admin.google_off": "Aus. Erst einschalten, wenn der Google-Anbieter in Supabase eingerichtet ist, sonst endet jeder Klick in einem Fehler.",
   "admin.connexion_titre": "🔑 Anmeldung der Eltern",
-  "admin.connexion_sous": "Die auf dem Startbildschirm angebotenen Wege. E-Mail und Anmeldelink bleiben immer verfügbar, unabhängig davon, was hier angehakt ist."
+  "admin.connexion_sous": "Die auf dem Startbildschirm angebotenen Wege. E-Mail und Anmeldelink bleiben immer verfügbar, unabhängig davon, was hier angehakt ist.",
+  "impr.indispo": "Drucken ist in der installierten App nicht möglich. Öffnen Sie {hote} im Browser zum Drucken — oder nutzen Sie „Teilen“, um die Karte zu senden."
 });
