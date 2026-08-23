@@ -4568,6 +4568,17 @@ test("Google : le bouton n'existe pas tant que l'admin ne l'a pas allumé", () =
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
   assert.ok(/adminDefinirConfig\("google_actif"/.test(ui),
     "l'admin doit pouvoir l'allumer et l'éteindre depuis l'application");
+  // Et il doit être TROUVABLE. Placé d'abord au milieu de « Pause et
+  // avertissements », dans l'onglet Croissance, il était introuvable : une
+  // carte à lui, en tête de Config, là où on cherche un réglage.
+  assert.ok(/function blocConnexionParents\(\)/.test(ui),
+    "l'interrupteur doit avoir sa propre carte, pas être noyé dans une autre");
+  assert.ok(/case "config":\s*\n\s*c\.appendChild\(blocConnexionParents\(\)\);/.test(ui),
+    "cette carte doit être en tête de l'onglet Config");
+  const pause = ui.slice(ui.indexOf("function blocSoutenabilite()"),
+                         ui.indexOf("function blocSoutenabilite()") + 2200);
+  assert.ok(pause.indexOf("google_actif") < 0,
+    "la connexion Google n'a rien à faire dans la carte « Pause et avertissements »");
 
   ["auth.google", "auth.ou", "goog.echec", "goog.premiere_titre", "goog.premiere_texte",
    "goog.premiere_attente", "goog.premiere_continuer", "goog.premiere_email",
@@ -4597,6 +4608,35 @@ test("Google : une première connexion tierce ne fait pas croire à un compte pe
   assert.ok(/function ouvrirDehors/.test(auth),
     "l'app native doit ouvrir le navigateur du système, pas sa propre vue");
   assert.ok(/prompt: "select_account"/.test(auth));
+});
+
+test("connexion : l'attente ne s'empile pas", () => {
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const auth = fs.readFileSync(path.join(r, "js/auth.js"), "utf8");
+  const html = fs.readFileSync(path.join(r, "index.html"), "utf8");
+
+  // Statut d'admin, config et familles sont indépendants : les enchaîner
+  // faisait quatre allers-retours en file avant le premier affichage — payés
+  // deux fois dans le parcours Google, puisque la page est rechargée.
+  const bloc = auth.slice(auth.indexOf("async function apresConnexion()"),
+                          auth.indexOf("async function apresConnexion()") + 1400);
+  assert.ok(/await Promise\.all\(\[/.test(bloc),
+    "les lectures indépendantes doivent partir ensemble");
+  ["is_admin", "configAppPrete()", "chargerFamilles()"].forEach(x =>
+    assert.ok(bloc.indexOf(x) > 0, "doit faire partie du lot parallèle : " + x));
+  // configAppPrete mémorise sa promesse : pas de seconde requête si le
+  // démarrage l'a déjà lancée.
+  assert.ok(/configAppPrete\(\)/.test(bloc) && !/await chargerConfigApp\(\)/.test(bloc),
+    "réutiliser la requête en vol plutôt qu'en refaire une");
+  // Et la liste des familles ne doit plus être rechargée juste après.
+  assert.ok(!/\n  await chargerFamilles\(\);/.test(bloc),
+    "chargerFamilles ne doit pas être appelé deux fois");
+
+  // 1,2 Mo de JavaScript : au minimum, ne pas bloquer l'analyse du document.
+  const balises = html.match(/<script[^>]*src="js\/[^"]*"/g) || [];
+  assert.ok(balises.length >= 10, "les scripts de l'application doivent être trouvés");
+  balises.forEach(b => assert.ok(/\sdefer\s/.test(b),
+    "script non différé, il bloque le rendu : " + b));
 });
 
 /* ---------- Exécution ----------

@@ -39,33 +39,119 @@ rattachera. **Rien à faire avant d'allumer.**
 
 ---
 
-## 1. Google Cloud (≈ 25 min, une seule fois)
+## 1. Google Cloud, écran par écran (≈ 25 min, une seule fois)
 
-1. <https://console.cloud.google.com> → créer un projet, nom libre (`FamiTeam`).
-2. **APIs & Services → OAuth consent screen** :
-   - type **External**, statut **In production** ;
-   - nom de l'application : `FamiTeam` ;
-   - e-mail d'assistance et de contact : votre adresse ;
-   - **Privacy policy** : `https://fami.team/confidentialite.html` ;
-   - **Terms of service** : `https://fami.team/mentions-legales.html` ;
-   - domaine autorisé : `fami.team` (ajoutez aussi `famiteam.com`).
-3. **Scopes** : ne cochez que `email`, `profile`, `openid`. Ce sont des portées
-   dites « non sensibles » : **aucune vérification Google n'est nécessaire**, et
-   la mise en production est immédiate. N'ajoutez rien d'autre — la moindre
-   portée sensible déclenche un examen de plusieurs semaines.
-4. **Credentials → Create credentials → OAuth client ID**, type **Web application** :
-   - **Authorized JavaScript origins** :
-     ```
-     https://fami.team
-     https://www.fami.team
-     https://famiteam.com
-     https://www.famiteam.com
-     ```
-   - **Authorized redirect URI** — une seule, celle de Supabase, exactement :
-     ```
-     https://ztraacsqtwslvcjfpdtp.supabase.co/auth/v1/callback
-     ```
-5. Copiez le **Client ID** et le **Client secret**.
+### Pourquoi on ne trouve pas « URI de redirection »
+
+C'est la confusion la plus fréquente, et elle a une cause simple : **ce champ
+n'est pas sur l'écran de consentement**. Google sépare deux objets distincts.
+
+| Objet | Ce qu'il contient | Où |
+|---|---|---|
+| **L'écran de consentement** (Branding / Audience / Accès aux données) | Le nom de l'app, le logo, les liens légaux, les portées | `console.cloud.google.com/auth` |
+| **Le client OAuth** | L'identifiant, le secret, **et les URI de redirection** | `console.cloud.google.com/auth/clients` |
+
+Trois raisons de ne pas voir le champ :
+
+1. vous êtes sur l'écran de consentement — il n'y est pas, par construction ;
+2. le client OAuth n'est pas encore créé — il faut le créer d'abord ;
+3. le client a été créé avec un **mauvais type d'application**. Le champ
+   « URI de redirection autorisés » n'existe **que** pour le type
+   **Application Web**. Un client « Application de bureau », « Android » ou
+   « iOS » ne l'affiche pas du tout.
+
+> Google a réorganisé cette console : l'ancien menu **API et services →
+> Écran de consentement OAuth** s'appelle désormais **Google Auth Platform**,
+> et les clients y sont sous **Clients** plutôt que sous **Identifiants**.
+> Selon l'ancienneté de votre compte, vous verrez l'une ou l'autre présentation
+> — les deux chemins mènent au même endroit, et l'ancienne adresse
+> `console.cloud.google.com/apis/credentials` fonctionne toujours.
+
+### 1.1 Le projet
+
+<https://console.cloud.google.com> → sélecteur de projet en haut à gauche →
+**Nouveau projet** → nom `FamiTeam` → **Créer**.
+
+Vérifiez ensuite que **le sélecteur affiche bien `FamiTeam`** avant chaque
+étape suivante : tout se configure par projet, et se tromper de projet est la
+deuxième cause de « je ne retrouve pas ce que j'ai fait ».
+
+### 1.2 L'écran de consentement
+
+Adresse directe : <https://console.cloud.google.com/auth/overview>
+(ancien chemin : **API et services → Écran de consentement OAuth**).
+
+À la première visite, Google demande de le configurer :
+
+- **Nom de l'application** : `FamiTeam`
+- **E-mail d'assistance utilisateur** : votre adresse
+- **Type d'utilisateur / Audience** : **Externe**
+- **Coordonnées du développeur** : votre adresse
+- **Branding** : logo facultatif ; liens à renseigner —
+  - Page d'accueil : `https://fami.team`
+  - Règles de confidentialité : `https://fami.team/confidentialite.html`
+  - Conditions d'utilisation : `https://fami.team/mentions-legales.html`
+- **Domaines autorisés** : `fami.team` puis `famiteam.com`
+
+### 1.3 Les portées (« Accès aux données »)
+
+Page **Accès aux données** → **Ajouter ou supprimer des champs
+d'application** → ne cochez que :
+
+```
+openid
+.../auth/userinfo.email
+.../auth/userinfo.profile
+```
+
+Ce sont des portées **non sensibles** : aucune vérification Google, aucune
+attente. Toute portée sensible (Gmail, Agenda, Drive…) déclencherait un examen
+de plusieurs semaines — et nous n'en avons besoin d'aucune.
+
+### 1.4 Publier l'application
+
+Page **Audience** → si le statut indique **Test**, cliquez sur
+**Publier l'application** pour passer **En production**.
+
+C'est important : tant que l'app est en **Test**, **seuls les comptes ajoutés
+manuellement comme utilisateurs de test** peuvent se connecter. Tous les
+autres reçoivent une erreur `access_denied`. Avec des portées non sensibles,
+la publication est immédiate et sans vérification.
+
+### 1.5 Le client OAuth — c'est ici qu'est l'URI de redirection
+
+Adresse directe : <https://console.cloud.google.com/auth/clients>
+(ancien chemin : **API et services → Identifiants**).
+
+1. **+ Créer un client** (ou **+ Créer des identifiants → ID client OAuth**).
+2. **Type d'application** : **Application Web**.
+   *C'est ce choix qui fait apparaître les deux champs suivants. Avec tout
+   autre type, ils n'existent pas — c'est très probablement ce qui vous est
+   arrivé.*
+3. **Nom** : `FamiTeam web` (usage interne, invisible des parents).
+4. **Origines JavaScript autorisées** → **+ Ajouter un URI**, quatre fois :
+   ```
+   https://fami.team
+   https://www.fami.team
+   https://famiteam.com
+   https://www.famiteam.com
+   ```
+   Sans barre oblique finale, sans chemin.
+5. **URI de redirection autorisés** → **+ Ajouter un URI**, **une seule** :
+   ```
+   https://ztraacsqtwslvcjfpdtp.supabase.co/auth/v1/callback
+   ```
+   Ce n'est pas une adresse de FamiTeam : c'est Supabase qui reçoit la réponse
+   de Google, puis renvoie le parent chez nous. Elle doit être copiée au
+   caractère près — une barre oblique en trop et Google refuse avec
+   `redirect_uri_mismatch`.
+6. **Créer**. Une fenêtre affiche l'**ID client** et le **Code secret** :
+   copiez les deux. Le secret reste consultable ensuite en rouvrant le client.
+
+> Un délai est normal : Google prévient qu'une modification d'URI peut mettre
+> **de quelques minutes à quelques heures** à se propager. Si le premier essai
+> échoue avec `redirect_uri_mismatch` alors que tout semble juste, attendez et
+> réessayez avant de chercher une erreur ailleurs.
 
 ## 2. Supabase (≈ 10 min)
 
@@ -86,8 +172,8 @@ rattachera. **Rien à faire avant d'allumer.**
 
 ## 3. Allumer
 
-Espace parents → **Admin → Système** → cocher
-« Proposer la connexion par compte Google ».
+Espace parents → **Admin → Config** → carte **« 🔑 Connexion des parents »**
+→ cocher « Proposer la connexion par compte Google ».
 
 Le réglage vit dans `app_config` : il prend effet **sans redéploiement**, et
 s'éteint aussi vite s'il y a un souci.
