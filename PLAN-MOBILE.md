@@ -136,6 +136,7 @@ conservées**.
 | Message | Ce que ça veut dire |
 |---|---|
 | `npm n'est pas reconnu` | Node.js absent, ou PowerShell à rouvrir |
+| `l'exécution de scripts est désactivée sur ce système` (`PSSecurityException`) | PowerShell bloque `npm.ps1` par défaut : `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`, répondre O, puis relancer |
 | `No target devices found` | Téléphone débranché, débogage USB éteint, ou autorisation refusée |
 | `SDK location not found` | Ouvrir Android Studio une fois et laisser installer le SDK |
 | `error: Your local changes…` | Des fichiers ont été modifiés sur le PC : taper `git stash` puis relancer |
