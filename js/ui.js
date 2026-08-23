@@ -2236,11 +2236,44 @@ function lienDashboardSupabase() {
   } catch (e) { return "https://supabase.com/dashboard"; }
 }
 
+// Numéro de cache (`?v=NNN`) du script le plus fiable à interroger : app.js,
+// présent sur toute page qui exécute l'application elle-même, jamais sur les
+// pages publiques indépendantes chargées à part. Un numéro introuvable
+// signale un problème plus grave qu'une simple question de version.
+function versionChargeeActuelle() {
+  const scripts = document.querySelectorAll('script[src*="/js/app.js"], script[src^="js/app.js"]');
+  for (const s of scripts) {
+    const m = /[?&]v=([\w.-]+)/.exec(s.getAttribute("src") || "");
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function blocVersionChargee() {
+  const sec = el("div", "admin-item sys-version");
+  const v = versionChargeeActuelle();
+  const natif = (typeof estAppNative === "function") && estAppNative();
+  sec.innerHTML = `<div class="adm-info">
+      <strong>🔖 ${t("sys.version_titre")}</strong>
+      <small>${v ? t("sys.version_valeur", { v }) : t("sys.version_inconnue")}
+        — ${natif ? t("sys.version_app") : t("sys.version_site")}</small>
+    </div>`;
+  return sec;
+}
+
 // Sous-section « Système » : stockage (base de données) + liens vers les
 // tableaux de bord. L'export et la migration sont ajoutés au lot F.
 function blocAdminSysteme() {
   const sec = el("section", "carte");
   sec.innerHTML = `<h2>🛠️ ${t("admin.nav_systeme")}</h2><p class="note">${t("admin.systeme_desc")}</p>`;
+
+  // ----- Version chargée -----
+  // Repère demandé après une session de dépannage où l'app installée
+  // tournait, sans qu'on le sache, sur un ancien code : le numéro affiché
+  // ici est lu directement dans l'URL du script déjà chargé (`?v=NNN`), donc
+  // il ne peut jamais mentir — comparer ce nombre entre le site et l'app
+  // suffit à savoir si l'app a bien reçu le dernier build.
+  sec.appendChild(blocVersionChargee());
 
   // ----- Stockage / base de données -----
   sec.appendChild(el("h3", "stat-titre", "💾 " + t("sys.stockage")));

@@ -4778,6 +4778,37 @@ test("app installée : aucun bouton ne peut échouer en silence", () => {
     assert.ok(api.I18N[lg]["papier.indispo"], "papier.indispo manquant en " + lg));
 });
 
+/* ---------- Repère de version dans l'espace admin ----------
+ * Demandé après une session de dépannage où l'app installée tournait sur du
+ * code périmé sans que personne ne puisse le voir : un numéro comparable
+ * entre le site et l'app, lu depuis l'URL déjà chargée plutôt que déclaré à
+ * part (donc jamais désynchronisable de ce qui tourne réellement). */
+test("admin : le numéro de version affiché vient du script réellement chargé", () => {
+  const { api } = construireContexte();
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+
+  const vc = ui.slice(ui.indexOf("function versionChargeeActuelle"),
+                      ui.indexOf("function versionChargeeActuelle") + 500);
+  assert.ok(/app\.js/.test(vc), "la lecture doit cibler app.js, chargé sur toute page applicative");
+  assert.ok(/\[\?&\]v=/.test(vc), "l'extraction doit lire le paramètre ?v= de l'URL du script");
+
+  const bv = ui.slice(ui.indexOf("function blocVersionChargee"),
+                      ui.indexOf("function blocVersionChargee") + 700);
+  assert.ok(/versionChargeeActuelle\(\)/.test(bv), "le bloc doit appeler la fonction de lecture");
+  assert.ok(/sys\.version_inconnue/.test(bv),
+    "un numéro introuvable doit être dit, pas masqué par un affichage vide");
+  assert.ok(/estAppNative\(\)/.test(bv),
+    "le bloc doit préciser app installée / site, sinon deux nombres identiques ne disent rien");
+
+  assert.ok(/blocVersionChargee\(\)/.test(ui.slice(ui.indexOf("function blocAdminSysteme"))),
+    "le bloc doit être inséré dans la section Admin → Système");
+
+  ["sys.version_titre", "sys.version_valeur", "sys.version_inconnue", "sys.version_app", "sys.version_site"]
+    .forEach(cle => Object.keys(api.LANGUES).forEach(lg =>
+      assert.ok(api.I18N[lg][cle], cle + " manquant en " + lg)));
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async
