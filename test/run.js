@@ -4503,6 +4503,35 @@ test("Google : une première connexion tierce ne fait pas croire à un compte pe
   assert.ok(/prompt: "select_account"/.test(auth));
 });
 
+test("connexion : l'attente ne s'empile pas", () => {
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const auth = fs.readFileSync(path.join(r, "js/auth.js"), "utf8");
+  const html = fs.readFileSync(path.join(r, "index.html"), "utf8");
+
+  // Statut d'admin, config et familles sont indépendants : les enchaîner
+  // faisait quatre allers-retours en file avant le premier affichage — payés
+  // deux fois dans le parcours Google, puisque la page est rechargée.
+  const bloc = auth.slice(auth.indexOf("async function apresConnexion()"),
+                          auth.indexOf("async function apresConnexion()") + 1400);
+  assert.ok(/await Promise\.all\(\[/.test(bloc),
+    "les lectures indépendantes doivent partir ensemble");
+  ["is_admin", "configAppPrete()", "chargerFamilles()"].forEach(x =>
+    assert.ok(bloc.indexOf(x) > 0, "doit faire partie du lot parallèle : " + x));
+  // configAppPrete mémorise sa promesse : pas de seconde requête si le
+  // démarrage l'a déjà lancée.
+  assert.ok(/configAppPrete\(\)/.test(bloc) && !/await chargerConfigApp\(\)/.test(bloc),
+    "réutiliser la requête en vol plutôt qu'en refaire une");
+  // Et la liste des familles ne doit plus être rechargée juste après.
+  assert.ok(!/\n  await chargerFamilles\(\);/.test(bloc),
+    "chargerFamilles ne doit pas être appelé deux fois");
+
+  // 1,2 Mo de JavaScript : au minimum, ne pas bloquer l'analyse du document.
+  const balises = html.match(/<script[^>]*src="js\/[^"]*"/g) || [];
+  assert.ok(balises.length >= 10, "les scripts de l'application doivent être trouvés");
+  balises.forEach(b => assert.ok(/\sdefer\s/.test(b),
+    "script non différé, il bloque le rendu : " + b));
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async

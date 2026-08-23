@@ -307,11 +307,22 @@ async function adminSupprimerBlague(lang, idx) {
 
 /* ---------- Après connexion : invitation, familles ---------- */
 async function apresConnexion() {
-  try { const { data } = await sb.rpc("is_admin"); estAdmin = !!data; } catch { estAdmin = false; }
+  // Trois lectures INDEPENDANTES : le statut d'administrateur, la config de
+  // l'application et la liste des familles. Elles s'attendaient l'une l'autre,
+  // ce qui faisait quatre allers-retours en file vers l'Irlande avant le
+  // moindre affichage — et le parent les paie une seconde fois au retour de
+  // Google, puisque la page est rechargée. Lancees ensemble, il en reste deux.
+  // `configAppPrete()` memorise sa promesse : si le demarrage l'a deja
+  // demandee, on reutilise la requete en vol au lieu d'en faire une seconde.
+  const [donneesAdmin] = await Promise.all([
+    sb.rpc("is_admin").then(r => r.data).catch(() => false),
+    configAppPrete().catch(() => {}),
+    chargerFamilles().catch(() => { mesFamilles = []; })
+  ]);
+  estAdmin = !!donneesAdmin;
 
   // Compte bloqué par l'admin : on refuse l'accès (sauf admin).
   if (!estAdmin) {
-    try { if (!configApp || !Object.keys(configApp).length) await chargerConfigApp(); } catch (e) { /* ignore */ }
     if (compteBloque()) {
       alert(t ? t("compte.bloque") : "Ce compte a été bloqué. Contacte hello@fami.team.");
       try { await sb.auth.signOut(); } catch (e) { /* ignore */ }
@@ -323,7 +334,6 @@ async function apresConnexion() {
   const inv = localStorage.getItem(INVITE_KEY);
   if (inv) { localStorage.removeItem(INVITE_KEY); return ecranInvitation(inv); }
 
-  await chargerFamilles();
   if (mesFamilles.length === 0) {
     // Une premiere connexion Google merite un arret. Deux raisons :
     //
