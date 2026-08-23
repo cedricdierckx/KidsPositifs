@@ -4639,6 +4639,80 @@ test("connexion : l'attente ne s'empile pas", () => {
     "script non différé, il bloque le rendu : " + b));
 });
 
+/* Découpe des traductions par langue. Le navigateur ne recevait qu'un quart
+ * de ce qu'il téléchargeait : 338 Ko pour quatre langues, alors qu'un parent
+ * n'en lit qu'une — et deux fois dans le parcours Google, qui recharge la
+ * page. `js/i18n.js` reste la source de vérité ; les fichiers servis sont
+ * générés. Ce qui doit être garanti, c'est qu'ils disent EXACTEMENT la même
+ * chose, et qu'ils ne se périment pas en silence. */
+test("langues : la découpe ne perd pas une seule traduction", () => {
+  const fsx = require("fs"), pathx = require("path"), vmx = require("vm");
+  const r = pathx.join(__dirname, "..");
+  const executer = (fichiers) => {
+    const c = { console, localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+                navigator: { language: "fr" }, document: { documentElement: {} } };
+    vmx.createContext(c);
+    vmx.runInContext(fichiers.map(f => fsx.readFileSync(pathx.join(r, f), "utf8")).join("\n;\n")
+      + "\n;globalThis.__t = I18N;", c);
+    return c.__t;
+  };
+  const avant = executer(["js/i18n.js"]);
+  const apres = executer(["js/i18n.base.js", "js/i18n.en.js", "js/i18n.nl.js", "js/i18n.de.js"]);
+
+  let cles = 0;
+  Object.keys(avant).forEach(lg => {
+    const a = avant[lg], b = apres[lg] || {};
+    assert.strictEqual(Object.keys(b).length, Object.keys(a).length,
+      "nombre de clés différent en " + lg);
+    Object.keys(a).forEach(k => {
+      cles++;
+      assert.strictEqual(b[k], a[k], "traduction différente : " + lg + "/" + k);
+    });
+  });
+  assert.ok(cles > 4000, "trop peu de clés comparées — la vérification ne prouverait rien");
+});
+
+test("langues : les fichiers générés ne peuvent pas se périmer en silence", () => {
+  const { execFileSync } = require("child_process");
+  const pathx = require("path"), r = pathx.join(__dirname, "..");
+  try {
+    execFileSync(process.execPath, [pathx.join(r, "scripts/construire-langues.js"), "--verifier"],
+      { cwd: r, stdio: "pipe" });
+  } catch (e) {
+    assert.fail("traductions modifiées sans régénérer les fichiers servis.\n"
+      + "Lancez : node scripts/construire-langues.js\n"
+      + String(e.stderr || e.stdout || e.message).trim());
+  }
+});
+
+test("langues : le navigateur ne reçoit que celle qu'il lit", () => {
+  const fsx = require("fs"), pathx = require("path"), r = pathx.join(__dirname, "..");
+  const html = fsx.readFileSync(pathx.join(r, "index.html"), "utf8");
+  const i18n = fsx.readFileSync(pathx.join(r, "js/i18n.js"), "utf8");
+
+  assert.ok(/src="js\/i18n\.base\.js/.test(html),
+    "la page doit charger le fichier de base, pas les quatre langues");
+  assert.ok(!/src="js\/i18n\.js/.test(html),
+    "js/i18n.js est la source de vérité, elle ne doit plus être servie");
+  // Les trois autres langues n'arrivent que si le parent les lit.
+  assert.ok(/document\.write\(/.test(html) && /i18n\.' \+ l \+ '\.js/.test(html),
+    "la langue du parent doit être injectée dans l'ordre, pendant l'analyse");
+  assert.ok(/\/\^\(fr\|en\|nl\|de\)\$\//.test(html),
+    "un parent ayant choisi le français ne doit pas tirer un fichier pour rien");
+
+  // Et la bascule en cours de route doit rester possible.
+  assert.ok(/function chargerLangue/.test(i18n) && /function urlLangue/.test(i18n));
+  assert.ok(/i18n\.base\.js/.test(i18n),
+    "l'adresse du fichier de langue se déduit de la balise, pas d'un chemin écrit à la main");
+
+  // Le poids servi doit rester très inférieur à la source.
+  const base = fsx.statSync(pathx.join(r, "js/i18n.base.js")).size;
+  const source = fsx.statSync(pathx.join(r, "js/i18n.js")).size;
+  assert.ok(base < source * 0.4,
+    "le fichier de base doit rester bien plus léger que la source (" 
+    + Math.round(base/1024) + " Ko contre " + Math.round(source/1024) + " Ko)");
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async
