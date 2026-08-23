@@ -4639,6 +4639,129 @@ test("connexion : l'attente ne s'empile pas", () => {
     "script non différé, il bloque le rendu : " + b));
 });
 
+/* Découpe des traductions par langue. Le navigateur ne recevait qu'un quart
+ * de ce qu'il téléchargeait : 338 Ko pour quatre langues, alors qu'un parent
+ * n'en lit qu'une — et deux fois dans le parcours Google, qui recharge la
+ * page. `js/i18n.js` reste la source de vérité ; les fichiers servis sont
+ * générés. Ce qui doit être garanti, c'est qu'ils disent EXACTEMENT la même
+ * chose, et qu'ils ne se périment pas en silence. */
+test("langues : la découpe ne perd pas une seule traduction", () => {
+  const fsx = require("fs"), pathx = require("path"), vmx = require("vm");
+  const r = pathx.join(__dirname, "..");
+  const executer = (fichiers) => {
+    const c = { console, localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+                navigator: { language: "fr" }, document: { documentElement: {} } };
+    vmx.createContext(c);
+    vmx.runInContext(fichiers.map(f => fsx.readFileSync(pathx.join(r, f), "utf8")).join("\n;\n")
+      + "\n;globalThis.__t = I18N;", c);
+    return c.__t;
+  };
+  const avant = executer(["js/i18n.js"]);
+  const apres = executer(["js/i18n.base.js", "js/i18n.en.js", "js/i18n.nl.js", "js/i18n.de.js"]);
+
+  let cles = 0;
+  Object.keys(avant).forEach(lg => {
+    const a = avant[lg], b = apres[lg] || {};
+    assert.strictEqual(Object.keys(b).length, Object.keys(a).length,
+      "nombre de clés différent en " + lg);
+    Object.keys(a).forEach(k => {
+      cles++;
+      assert.strictEqual(b[k], a[k], "traduction différente : " + lg + "/" + k);
+    });
+  });
+  assert.ok(cles > 4000, "trop peu de clés comparées — la vérification ne prouverait rien");
+});
+
+test("langues : les fichiers générés ne peuvent pas se périmer en silence", () => {
+  const { execFileSync } = require("child_process");
+  const pathx = require("path"), r = pathx.join(__dirname, "..");
+  try {
+    execFileSync(process.execPath, [pathx.join(r, "scripts/construire-langues.js"), "--verifier"],
+      { cwd: r, stdio: "pipe" });
+  } catch (e) {
+    assert.fail("traductions modifiées sans régénérer les fichiers servis.\n"
+      + "Lancez : node scripts/construire-langues.js\n"
+      + String(e.stderr || e.stdout || e.message).trim());
+  }
+});
+
+test("langues : le navigateur ne reçoit que celle qu'il lit", () => {
+  const fsx = require("fs"), pathx = require("path"), r = pathx.join(__dirname, "..");
+  const html = fsx.readFileSync(pathx.join(r, "index.html"), "utf8");
+  const i18n = fsx.readFileSync(pathx.join(r, "js/i18n.js"), "utf8");
+
+  assert.ok(/src="js\/i18n\.base\.js/.test(html),
+    "la page doit charger le fichier de base, pas les quatre langues");
+  assert.ok(!/src="js\/i18n\.js/.test(html),
+    "js/i18n.js est la source de vérité, elle ne doit plus être servie");
+  // Les trois autres langues n'arrivent que si le parent les lit.
+  assert.ok(/document\.write\(/.test(html) && /i18n\.' \+ l \+ '\.js/.test(html),
+    "la langue du parent doit être injectée dans l'ordre, pendant l'analyse");
+  assert.ok(/\/\^\(fr\|en\|nl\|de\)\$\//.test(html),
+    "un parent ayant choisi le français ne doit pas tirer un fichier pour rien");
+
+  // Et la bascule en cours de route doit rester possible.
+  assert.ok(/function chargerLangue/.test(i18n) && /function urlLangue/.test(i18n));
+  assert.ok(/i18n\.base\.js/.test(i18n),
+    "l'adresse du fichier de langue se déduit de la balise, pas d'un chemin écrit à la main");
+
+  // Le poids servi doit rester très inférieur à la source.
+  const base = fsx.statSync(pathx.join(r, "js/i18n.base.js")).size;
+  const source = fsx.statSync(pathx.join(r, "js/i18n.js")).size;
+  assert.ok(base < source * 0.4,
+    "le fichier de base doit rester bien plus léger que la source (" 
+    + Math.round(base/1024) + " Ko contre " + Math.round(source/1024) + " Ko)");
+});
+
+/* App installée : trois mécanismes du web n'existent pas dans une WebView
+ * Android — window.print(), navigator.share et l'attribut `download`. Aucun
+ * ne lève d'erreur : le bouton ne fait simplement rien, et rien ne le dit.
+ * C'est le pire des cas — le parent croit à une panne. */
+test("app installée : aucun bouton ne peut échouer en silence", () => {
+  const { api } = construireContexte();
+  const fsx = require("fs"), pathx = require("path"), r = pathx.join(__dirname, "..");
+  const ui = fsx.readFileSync(pathx.join(r, "js/ui.js"), "utf8");
+  const app = fsx.readFileSync(pathx.join(r, "js/app.js"), "utf8");
+
+  // 1. telechargerBlob ne doit plus renvoyer « réussi » dans l'app : la
+  //    WebView ignore `download` sans rien lever, donc tous ses appelants
+  //    croyaient avoir réussi.
+  const tb = ui.slice(ui.indexOf("function telechargerBlob"),
+                      ui.indexOf("function telechargerBlob") + 700);
+  assert.ok(/if \(greffonNatif\("Filesystem"\)\) return false;/.test(tb),
+    "telechargerBlob doit refuser franchement dans l'app installée");
+
+  // 2. Le partage de la carte doit essayer le pont natif AVANT les API du web,
+  //    qui n'existent pas dans la WebView.
+  const pc = ui.slice(ui.indexOf("async function partagerCarteAmi"),
+                      ui.indexOf("async function partagerCarteAmi") + 1600);
+  const iNatif = pc.indexOf('greffonNatif("Share")');
+  const iWeb = pc.indexOf("navigator.canShare");
+  assert.ok(iNatif > 0 && iWeb > 0 && iNatif < iWeb,
+    "le partage natif doit être tenté avant navigator.share");
+
+  // 3. L'impression n'existe pas dans la WebView : il faut le dire.
+  const ic = ui.slice(ui.indexOf("function imprimerCible"),
+                      ui.indexOf("function imprimerCible") + 800);
+  assert.ok(/greffonNatif\("Filesystem"\)/.test(ic) && /impr\.indispo/.test(ic),
+    "imprimerCible doit prévenir au lieu de ne rien faire");
+  Object.keys(api.LANGUES).forEach(lg =>
+    assert.ok(api.I18N[lg]["impr.indispo"], "impr.indispo manquant en " + lg));
+
+  // 4. Les deux exports de fichiers passent par le chemin commun.
+  assert.ok(/function enregistrerOuPartager/.test(ui) && /function partagerFichierNatif/.test(ui));
+  assert.ok(/await enregistrerOuPartager\(blob, nomFichier/.test(ui),
+    "l'export JSON de l'admin doit passer par le chemin natif");
+  assert.ok(/enregistrerOuPartager\(blob, "famiteam-sauvegarde\.json"/.test(app),
+    "la sauvegarde complète aussi");
+  // Et elle doit prévenir si rien n'est parti.
+  assert.ok(/if \(!ok &&[\s\S]{0,120}sys\.export_ko/.test(app),
+    "une sauvegarde qui ne part pas doit le dire");
+
+  // 5. Le pont natif ne doit jamais etre suppose present : il n'existe pas sur le web.
+  assert.ok(/function greffonNatif/.test(ui) && /isNativePlatform/.test(ui));
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async

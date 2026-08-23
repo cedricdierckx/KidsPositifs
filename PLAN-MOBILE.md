@@ -70,11 +70,121 @@ applications qui ne font que réafficher un site web.
   `npm run icon:generer`. Reste un « bon repli visuel », pas un vrai logo
   dessiné par un graphiste (voir §4, point 1 — non bloquant).
 
+## 1 bis. Première installation sur un PC Windows, sans rien supposer
+
+> **Avant de commencer : en avez-vous besoin ?** Pour vérifier un correctif,
+> non — le site `fami.team` est toujours à jour, y compris sur le téléphone.
+> Ce qui suit ne sert qu'à reconstruire l'**app installée**.
+
+### A. Les trois programmes à installer (une seule fois)
+
+| Programme | Où | Comment |
+|---|---|---|
+| **Node.js** | nodejs.org | Version **LTS**, puis Suivant → Suivant → Installer |
+| **Git** | git-scm.com | Suivant partout, sans rien changer |
+| **Android Studio** | developer.android.com/studio | ~1 Go. Au premier lancement, accepter l'installation du SDK proposée |
+
+Pour vérifier que c'est en place : ouvrir **PowerShell** (touche Windows, taper
+`powershell`, Entrée) et taper, une ligne à la fois :
+
+```
+node --version
+git --version
+```
+
+Chaque commande doit répondre un numéro de version. Si l'une répond
+« n'est pas reconnu », c'est que ce programme-là n'est pas installé, ou qu'il
+faut fermer et rouvrir PowerShell.
+
+### B. Récupérer le code (une seule fois)
+
+Toujours dans PowerShell :
+
+```
+cd $HOME\Documents
+git clone https://github.com/cedricdierckx/KidsPositifs.git
+cd KidsPositifs
+npm install
+```
+
+La dernière ligne prend quelques minutes.
+
+### C. Préparer le téléphone (une seule fois)
+
+1. **Paramètres → À propos du téléphone**
+2. Appuyer **sept fois** sur **Numéro de build**. Un message annonce que vous
+   êtes développeur.
+3. **Paramètres → Système → Options pour les développeurs** → activer
+   **Débogage USB**.
+4. Brancher le téléphone au PC. Une fenêtre demande d'autoriser le débogage :
+   **Autoriser**.
+
+### D. Mettre à jour l'app (à refaire à chaque fois)
+
+Téléphone branché, dans PowerShell :
+
+```
+cd $HOME\Documents\KidsPositifs
+npm run android:maj
+```
+
+C'est tout. L'app se réinstalle par-dessus l'ancienne, **les données sont
+conservées**.
+
+### Si ça coince
+
+| Message | Ce que ça veut dire |
+|---|---|
+| `npm n'est pas reconnu` | Node.js absent, ou PowerShell à rouvrir |
+| `No target devices found` | Téléphone débranché, débogage USB éteint, ou autorisation refusée |
+| `SDK location not found` | Ouvrir Android Studio une fois et laisser installer le SDK |
+| `error: Your local changes…` | Des fichiers ont été modifiés sur le PC : taper `git stash` puis relancer |
+
+---
+
 ## 2. Mettre à jour l'app Android déjà installée sur un téléphone
 
-L'app embarque une copie figée du site : une correction publiée sur
-fami.team n'y apparaît qu'après un nouveau build. La marche à suivre, à
-partir du dossier du projet :
+> ⚠️ **À retenir avant tout** : l'app embarque une **copie figée** du site.
+> Une correction déployée sur fami.team **n'y apparaît pas**, jamais, tant
+> qu'on n'a pas rebuildé. Tester dans l'app un correctif publié le matin même
+> donnera toujours l'ancien comportement — et fera conclure à tort que le
+> correctif ne marche pas.
+
+### La façon courte
+
+Téléphone connecté — câble **ou** sans fil (voir *Débogage sans fil*
+ci-dessous, dans « Le détail, étape par étape » : `cap run android` voit les
+mêmes appareils que *Run* dans Android Studio) —, puis, depuis le dossier du
+projet :
+
+```
+npm run android:maj
+```
+
+Cette commande enchaîne les quatre étapes détaillées plus bas : `git pull`,
+`npm install`, recopie du site dans `www/` + `android/`, build et installation
+sur le téléphone. Elle passe par `cap run android` plutôt que par `gradlew`,
+qui ne s'appelle pas de la même façon sous Windows.
+
+Pour un APK à transférer sans câble : `npm run android:apk`, puis récupérer le
+fichier sous `android/app/build/outputs/`.
+
+### Pourquoi ce n'est pas plus simple, et ce qui le rendrait plus simple
+
+Trois voies existent, et une seule est bonne à terme.
+
+| Voie | Mise à jour | Le prix à payer |
+|---|---|---|
+| **Aujourd'hui** : site figé dans l'app | Rebuild + réinstallation | Lourd, mais l'app marche hors ligne |
+| `server.url` vers fami.team | Instantanée | **Casse le hors-ligne**, et change l'origine : le cache local, le code PIN et la langue mémorisés repartent de zéro. À écarter |
+| **Mises à jour à la volée** (greffon type `@capgo/capacitor-updater`) | Instantanée | Une dépendance de plus et un endroit où héberger les paquets — mais le hors-ligne est conservé |
+
+La troisième est la vraie réponse le jour où l'app sera sur les stores : elle
+permet de corriger un défaut sans repasser par une revue Google Play. Tant que
+l'app n'est installée que sur vos propres téléphones, `npm run android:maj`
+suffit.
+
+### Le détail, étape par étape
 
 ```
 git pull                     # récupérer le code à jour

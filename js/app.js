@@ -2173,6 +2173,15 @@ async function exporter() {
   } catch (e) { /* l'état familial part quoi qu'il arrive */ }
 
   const blob = new Blob([JSON.stringify(paquet, null, 2)], { type: "application/json" });
+  // Dans l'app installee, un lien « download » ne fait rien et ne leve rien :
+  // la sauvegarde semblait partir alors que le fichier n'existait nulle part.
+  // enregistrerOuPartager (ui.js) prend le chemin natif quand il le faut, et
+  // renvoie false plutot que de laisser croire a une reussite.
+  if (typeof enregistrerOuPartager === "function") {
+    const ok = await enregistrerOuPartager(blob, "famiteam-sauvegarde.json", "FamiTeam");
+    if (!ok && typeof toast === "function" && typeof t === "function") toast(t("sys.export_ko"), "info");
+    return;
+  }
   const a = el("a");
   a.href = URL.createObjectURL(blob);
   a.download = "famiteam-sauvegarde.json";

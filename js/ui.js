@@ -311,9 +311,18 @@ function blocTableauHonneur() {
  * marquée `.impression-cible` part sur le papier. Partagé par la carte d'ami et
  * le dépliant des écoles. */
 function imprimerCible() {
+  // La WebView Android n'implémente pas window.print() : le bouton ne faisait
+  // rien du tout dans l'app installée. On ne peut pas imprimer d'ici, alors on
+  // le dit et on indique où c'est possible, plutôt que de laisser croire à une
+  // panne.
+  if (greffonNatif("Filesystem") || typeof window.print !== "function") {
+    if (typeof toast === "function") toast(t("impr.indispo", { hote: "fami.team" }), "info");
+    return false;
+  }
   document.body.classList.add("impression");
-  if (typeof window.print === "function") window.print();
+  window.print();
   setTimeout(() => document.body.classList.remove("impression"), 1000);
+  return true;
 }
 
 /* ---------- Le dépliant A5 des écoles ----------
@@ -618,6 +627,15 @@ async function partagerCarteAmi(enf, lien, code) {
   const titre = t("cami.partage_titre", { prenom });
   const blob = await imageCarteAmi(enf, code, lien);
 
+  // Dans l'app installée, `navigator.share` n'existe pas : la WebView Android
+  // ne fournit pas l'API de partage du web. Sans ce premier essai, la fonction
+  // traversait tous les replis pour finir sur un telechargerBlob sans effet —
+  // le bouton ne faisait rien, et rien ne le disait.
+  if (greffonNatif("Share")) {
+    const nom = "famiteam-" + (prenom || "carte") + ".png";
+    if (await partagerFichierNatif(blob, nom, titre, texte + " " + lien)) return;
+  }
+
   if (blob && navigator.canShare && typeof File === "function") {
     const fichier = new File([blob], "famiteam-" + (prenom || "carte") + ".png", { type: "image/png" });
     if (navigator.canShare({ files: [fichier] })) {
@@ -642,7 +660,13 @@ async function partagerCarteAmi(enf, lien, code) {
 }
 
 // Téléchargement d'un blob : utilisé par l'image de la carte et par le .ics.
+// Dans l'app installée, la WebView Android ignore l'attribut `download` SANS
+// lever d'erreur : `a.click()` ne fait rien et cette fonction renvoyait
+// pourtant `true`. Tous ses appelants croyaient donc avoir réussi, et le
+// parent voyait un bouton sans effet. On refuse ici, franchement, pour que
+// l'appelant prenne le chemin natif ou prévienne.
 function telechargerBlob(blob, nom) {
+  if (greffonNatif("Filesystem")) return false;
   try {
     const url = URL.createObjectURL(blob);
     const a = el("a");
@@ -701,6 +725,50 @@ async function ouvrirIcsNatif(ics, nomFichier, titre) {
     return "natif";
   }
   return false;
+}
+
+/* ---------- Partager un fichier depuis l'app installée ----------
+ * Même principe que l'agenda ci-dessus, mais pour un fichier binaire (une
+ * image) et avec le PARTAGE comme action, non l'ouverture : le parent veut
+ * l'envoyer à quelqu'un, pas la regarder.
+ *
+ * Le pont natif n'accepte pas un Blob : on passe par du base64, ce que
+ * Filesystem écrit tel quel quand aucun encodage n'est précisé. */
+function blobEnBase64(blob) {
+  return new Promise((resolve, reject) => {
+    try {
+      const lecteur = new FileReader();
+      lecteur.onerror = () => reject(new Error("lecture du fichier impossible"));
+      // Le résultat est une URL de données : on ne garde que ce qui suit la virgule.
+      lecteur.onload = () => resolve(String(lecteur.result).split(",")[1] || "");
+      lecteur.readAsDataURL(blob);
+    } catch (e) { reject(e); }
+  });
+}
+
+async function partagerFichierNatif(blob, nomFichier, titre, texte) {
+  const fichiers = greffonNatif("Filesystem");
+  const partage = greffonNatif("Share");
+  if (!fichiers || !partage || !blob) return false;
+  try {
+    const donnees = await blobEnBase64(blob);
+    if (!donnees) return false;
+    await fichiers.writeFile({ path: nomFichier, data: donnees, directory: "CACHE" });
+    const { uri } = await fichiers.getUri({ path: nomFichier, directory: "CACHE" });
+    await partage.share({ title: titre || APP_NOM, text: texte || "", files: [uri] });
+    return true;
+  } catch (e) {
+    // Un partage annulé par le parent lève aussi : ce n'est pas un échec, mais
+    // rien ne le distingue de façon fiable, donc on ne réessaie pas ailleurs.
+    return true;
+  }
+}
+
+/* Enregistrer ou partager un fichier, selon l'appareil. Renvoie false si rien
+ * n'est parti — l'appelant DOIT alors le dire, jamais se taire. */
+async function enregistrerOuPartager(blob, nomFichier, titre, texte) {
+  if (greffonNatif("Filesystem")) return await partagerFichierNatif(blob, nomFichier, titre, texte);
+  return telechargerBlob(blob, nomFichier);
 }
 
 /* Point d'entrée unique des deux boutons « agenda ». Renvoie :
@@ -2235,14 +2303,12 @@ function blocAdminSysteme() {
 }
 
 // Télécharge un objet en fichier JSON (côté client, sans dépendance).
-function telechargerJSON(nomFichier, obj) {
+async function telechargerJSON(nomFichier, obj) {
   try {
     const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = nomFichier;
-    document.body.appendChild(a); a.click();
-    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+    // Dans l'app, un lien « download » ne fait rien : on passe par le partage.
+    if (await enregistrerOuPartager(blob, nomFichier, nomFichier)) return;
+    toast(t("sys.export_ko"), "info");
   } catch (e) { toast(t("sys.export_ko"), "info"); }
 }
 

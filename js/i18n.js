@@ -192,6 +192,49 @@ function definirLangue(l) {
   langue = l;
   try { localStorage.setItem("kp_langue", l); } catch {}
   if (document.documentElement) document.documentElement.lang = l;
+  chargerLangue(l);
+}
+
+/* ---- Chargement d'une langue à la demande ----
+ * Le navigateur ne reçoit que le français : les trois autres langues sont des
+ * fichiers séparés d'environ 80 Ko, tirés seulement si un parent les choisit.
+ * Rien ne casse pendant le trajet — `t()` retombe déjà sur le français quand
+ * une clé manque — et l'écran se redessine à l'arrivée.
+ *
+ * Sans découpe, chaque visite téléchargeait et analysait 338 Ko de
+ * traductions pour n'en lire qu'un quart, et deux fois dans le parcours
+ * Google, qui recharge la page au retour. */
+function langueChargee(l) {
+  return l === "fr" || !!(I18N[l] && Object.keys(I18N[l]).length);
+}
+// L'adresse du fichier de langue se déduit de la balise déjà présente, en y
+// remplaçant simplement le nom. On hérite ainsi du chemin ET de la version de
+// cache, sans rien maintenir en double : un chemin relatif écrit à la main
+// casserait dès que la page n'est pas servie à la racine.
+function urlLangue(l) {
+  try {
+    const s = document.querySelector('script[src*="i18n.base.js"]');
+    const src = s && s.getAttribute("src");
+    if (src) return src.replace("i18n.base.js", "i18n." + l + ".js");
+  } catch (e) { /* repli ci-dessous */ }
+  return "js/i18n." + l + ".js";
+}
+function chargerLangue(l) {
+  if (!LANGUES[l] || langueChargee(l)) return;
+  if (typeof document === "undefined" || !document.head) return;
+  if (document.querySelector('script[data-langue="' + l + '"]')) return;   // déjà en vol
+  const s = document.createElement("script");
+  s.src = urlLangue(l);
+  s.dataset.langue = l;
+  s.onload = () => {
+    // Redessiner à l'arrivée. L'application et l'écran de connexion ne se
+    // redessinent pas de la même façon : la présence du squelette (#contenu)
+    // les distingue.
+    if (typeof document.getElementById === "function" && document.getElementById("contenu")
+        && typeof rendre === "function") rendre();
+    else if (typeof ecranAuth === "function") ecranAuth();
+  };
+  document.head.appendChild(s);
 }
 function t(cle, vars) {
   const table = I18N[langue] || I18N.fr;
@@ -4337,4 +4380,19 @@ Object.assign(I18N.nl, {
 Object.assign(I18N.de, {
   "admin.connexion_titre": "🔑 Anmeldung der Eltern",
   "admin.connexion_sous": "Die auf dem Startbildschirm angebotenen Wege. E-Mail und Anmeldelink bleiben immer verfügbar, unabhängig davon, was hier angehakt ist."
+});
+
+/* ---- App installée : ce que la WebView ne sait pas faire ----
+ * Mieux vaut le dire que laisser un bouton sans effet. */
+Object.assign(I18N.fr, {
+  "impr.indispo": "L'impression n'est pas disponible dans l'application installée. Ouvrez {hote} dans votre navigateur pour imprimer — ou utilisez « Partager » pour envoyer la carte."
+});
+Object.assign(I18N.en, {
+  "impr.indispo": "Printing is not available in the installed app. Open {hote} in your browser to print — or use “Share” to send the card."
+});
+Object.assign(I18N.nl, {
+  "impr.indispo": "Afdrukken kan niet in de geïnstalleerde app. Open {hote} in uw browser om af te drukken — of gebruik “Delen” om de kaart te versturen."
+});
+Object.assign(I18N.de, {
+  "impr.indispo": "Drucken ist in der installierten App nicht möglich. Öffnen Sie {hote} im Browser zum Drucken — oder nutzen Sie „Teilen“, um die Karte zu senden."
 });
