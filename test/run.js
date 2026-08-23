@@ -3380,9 +3380,8 @@ test("carte d'ami : le partage produit une image, avec le lien en légende", () 
   assert.ok(/telechargerBlob\(blob/.test(corpsPar), "sur ordinateur, l'image doit être téléchargée");
   assert.strictEqual((corpsPar.match(/AbortError/g) || []).length, 2,
     "chaque tentative de partage doit traiter l'annulation");
-  // Une seule mécanique de téléchargement, partagée avec l'export agenda.
-  assert.ok(/telechargerBlob\(blob, "famiteam-" \+ c\.id \+ "\.ics"\)/.test(ui),
-    "l'export .ics doit réutiliser telechargerBlob");
+  // Une seule mécanique de téléchargement, partagée avec l'export agenda —
+  // qui l'atteint maintenant par envoyerVersAgenda (voir le test dédié).
   assert.strictEqual((ui.match(/function telechargerBlob\(/g) || []).length, 1,
     "telechargerBlob ne doit être défini qu'une fois");
 });
@@ -4330,6 +4329,78 @@ test("mobile : le manuel liste précisément ce qui revient au fondateur", () =>
   ch.etapes.filter(e => e.fait).forEach(e =>
     assert.strictEqual(/A_COMPLETER|TODO|XXX/.test(e.detail), false,
       "une étape marquée faite ne doit pas contenir un espace réservé : " + e.id));
+});
+
+/* ---------- L'agenda depuis l'app installée ----------
+ * Le premier retour de terrain d'un téléphone équipé : « je n'arrive plus à
+ * mettre le rendez-vous dans mon agenda ». La cause n'est pas le fichier —
+ * il est valide, un test le vérifie déjà — mais la WebView, qui ignore
+ * l'attribut `download` sans lever la moindre erreur. */
+test("agenda : dans l'app, le .ics passe par le pont natif et jamais par un faux téléchargement", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+
+  const env = ui.slice(ui.indexOf("async function envoyerVersAgenda"));
+  const corps = env.slice(0, env.indexOf("\n}\n"));
+  assert.ok(/greffonNatif\("Filesystem"\)/.test(corps),
+    "la présence du pont natif doit décider de la voie empruntée");
+  assert.ok(/ouvrirIcsNatif\(/.test(corps), "dans l'app, l'envoi doit passer par le pont natif");
+  assert.ok(/telechargerBlob\(blob, nomFichier\)/.test(corps),
+    "sur le web, le téléchargement reste la voie normale");
+  // Dans l'app, retomber sur le téléchargement afficherait un succès pour une
+  // action qui ne fait rien : la branche native doit sortir sans y toucher.
+  const brancheNative = corps.slice(0, corps.indexOf("const blob"));
+  assert.strictEqual(/telechargerBlob/.test(brancheNative), false,
+    "l'app ne doit jamais retomber sur le téléchargement, qui y est muet");
+
+  const nat = ui.slice(ui.indexOf("async function ouvrirIcsNatif"));
+  const corpsNat = nat.slice(0, nat.indexOf("\n}\n"));
+  assert.ok(/directory: "CACHE"/.test(corpsNat),
+    "le fichier va dans le cache : le téléphone peut le vider, rien ne s'accumule");
+  assert.ok(/contentType: "text\/calendar"/.test(corpsNat),
+    "sans type MIME, l'appareil ne saurait pas que c'est un événement");
+  assert.ok(/greffonNatif\("Share"\)/.test(corpsNat),
+    "si aucune application ne sait ouvrir un .ics, la feuille de partage doit rester");
+
+  // Les deux boutons « agenda » (carte surprise et rituel du soir) empruntent
+  // le même chemin : une seule mécanique à corriger le jour où elle bouge.
+  assert.strictEqual((ui.match(/await envoyerVersAgenda\(/g) || []).length, 2,
+    "les deux boutons agenda doivent passer par envoyerVersAgenda");
+
+  // Et le parent doit être prévenu dans les deux cas, dans les quatre langues.
+  const { api } = construireContexte();
+  Object.keys(api.LANGUES).forEach(lg =>
+    ["cs.rdv_ouvert", "cs.rdv_fichier", "cs.rdv_echec", "rituel.ok_app"].forEach(cle =>
+      assert.ok(api.I18N[lg][cle], cle + " manquant en " + lg)));
+});
+
+/* ---------- L'écran de démarrage ----------
+ * Deuxième retour du même téléphone : « au chargement c'est une page
+ * blanche ». Le décor doit donc être dans la page AVANT les scripts. */
+test("démarrage : l'attente montre un décor animé, jamais une page blanche", () => {
+  const fs = require("fs"), path = require("path");
+  const racine = path.join(__dirname, "..");
+  const html = fs.readFileSync(path.join(racine, "index.html"), "utf8");
+  const css = fs.readFileSync(path.join(racine, "css/style.css"), "utf8");
+  const js = fs.readFileSync(path.join(racine, "js/demarrage.js"), "utf8");
+
+  assert.ok(/id="demarrage"/.test(html), "index.html doit porter l'écran de démarrage");
+  // Écrit après les scripts, il ne s'afficherait qu'une fois ceux-ci exécutés
+  // — c'est-à-dire trop tard, après la page blanche qu'il doit remplacer.
+  assert.ok(html.indexOf('id="demarrage"') < html.indexOf("js/config.js"),
+    "le décor doit précéder les scripts dans le <body>");
+  assert.ok(/class="demarrage"/.test(html) && /\.demarrage\{/.test(css),
+    "le décor doit être stylé, sinon il s'affiche brut");
+  assert.ok(/prefers-reduced-motion/.test(css.slice(css.indexOf(".demarrage{"))),
+    "un décor animé doit pouvoir s'immobiliser à la demande du système");
+
+  ["fr", "en", "nl", "de"].forEach(lg =>
+    assert.ok(new RegExp("\\n\\s*" + lg + ": \\[").test(js),
+      "les phrases d'attente manquent en " + lg));
+  assert.ok(/isConnected/.test(js),
+    "le minuteur doit s'arrêter quand le premier écran a remplacé le décor");
+  assert.ok(/location\.reload/.test(js),
+    "après une attente anormale, le parent doit pouvoir reprendre la main");
 });
 
 /* ---------- Exécution ----------

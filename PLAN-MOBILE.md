@@ -42,6 +42,22 @@ applications qui ne font que réafficher un site web.
   ligne qui modifient l'état en même temps ne s'écrasent plus en silence
   (voir commit dédié) — pertinent ici car les coupures prolongées
   deviennent courantes sur mobile.
+- **Envoi vers l'agenda depuis l'app** (`js/ui.js`, `envoyerVersAgenda`) :
+  la WebView ignore l'attribut `download` d'un lien, sans erreur — les deux
+  boutons « agenda » (carte surprise et rendez-vous du soir) ne faisaient donc
+  plus rien une fois l'app installée. Dans l'app, le `.ics` est écrit dans le
+  cache (`@capacitor/filesystem`) puis ouvert par l'appareil
+  (`@capacitor-community/file-opener`), qui propose l'import dans l'agenda ;
+  si aucune application ne sait ouvrir un `.ics`, la feuille de partage
+  (`@capacitor/share`) prend le relais. Sur le web, rien ne change.
+  ⚠️ Ces trois greffons sont nouveaux : le prochain build doit passer par
+  `npm install` puis `npm run cap:sync` (Gradle resynchronise tout seul).
+- **Écran de démarrage web** (`js/demarrage.js`, `index.html`) : l'app attend
+  la session Supabase avant de peindre son premier écran ; le `<body>` étant
+  vide jusque-là, l'app installée affichait une page blanche de plusieurs
+  secondes sur un réseau de téléphone. Un décor animé (étoile, ballons,
+  petites phrases) prend maintenant ce temps-là, aux couleurs de l'écran de
+  démarrage natif, et prévient si le réseau traîne.
 - **Icône et écran de démarrage** (Android + iOS) : une étoile blanche sur
   le dégradé doré déjà utilisé pour les récompenses dans l'app — fidèle à
   l'identité existante, sans en inventer une nouvelle. Régénérable avec

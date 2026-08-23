@@ -1849,3 +1849,94 @@ body.impression .carte-ami-actions{display:none}
 .rituel-grille{display:grid; grid-template-columns:repeat(auto-fit, minmax(132px, 1fr));
   gap:10px; align-items:start}
 .rituel-grille .champ{margin:10px 0 0}
+
+/* =====================================================================
+ * Écran de démarrage (« splash » web)
+ * ---------------------------------------------------------------------
+ * Avant le premier écran peint, l'application attend la session Supabase et
+ * les réglages globaux : pendant ce temps, le <body> ne contenait QUE des
+ * <script>, donc une page blanche. Dans un navigateur de bureau cela passe
+ * inaperçu ; dans l'app installée, sur un réseau de téléphone, cela dure
+ * assez longtemps pour ressembler à une panne — c'est le retour de la
+ * première famille équipée.
+ *
+ * Le décor est donc écrit en dur dans index.html et stylé ici : il s'affiche
+ * au tout premier rendu, avant l'exécution du premier script. Il disparaît
+ * seul, car le premier écran remplace le contenu du <body>.
+ * Les couleurs reprennent l'écran de démarrage natif (étoile blanche sur
+ * dégradé doré) : la transition entre les deux ne se voit pas.
+ * ===================================================================== */
+.demarrage{
+  position:fixed; inset:0; z-index:9999; overflow:hidden;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+  background:linear-gradient(160deg,#ffd77a 0%,var(--famille) 55%,#ef8f1c 100%);
+  color:#fff; text-align:center; padding:24px;
+}
+/* Le ciel : des étoiles qui scintillent, posées à des endroits fixes (aucun
+   hasard tiré au sort — le rendu doit être le même à chaque démarrage). */
+.dem-ciel{position:absolute; inset:0; pointer-events:none}
+.dem-ciel span{position:absolute; font-size:18px; opacity:.5;
+  /* Doré sur doré, l'étoile disparaîtrait : un halo blanc la détache du fond. */
+  filter:drop-shadow(0 0 5px rgba(255,255,255,.6));
+  animation:dem-scintille 2.6s ease-in-out infinite}
+.dem-ciel .s1{top:12%; left:14%; animation-delay:0s}
+.dem-ciel .s2{top:22%; right:16%; font-size:14px; animation-delay:.5s}
+.dem-ciel .s3{top:64%; left:9%;  font-size:15px; animation-delay:1.1s}
+.dem-ciel .s4{top:74%; right:12%; animation-delay:1.6s}
+.dem-ciel .s5{top:42%; right:24%; font-size:12px; animation-delay:.9s}
+.dem-ciel .s6{top:52%; left:22%;  font-size:12px; animation-delay:2s}
+@keyframes dem-scintille{
+  0%,100%{opacity:.25; transform:scale(.85)}
+  50%{opacity:.9; transform:scale(1.15)}
+}
+/* L'étoile centrale rebondit — c'est le même symbole que l'icône de l'app. */
+.dem-astre{display:block; font-size:74px; line-height:1; margin-bottom:14px;
+  filter:drop-shadow(0 8px 14px rgba(120,70,0,.28));
+  animation:dem-rebond 1.5s ease-in-out infinite}
+@keyframes dem-rebond{
+  0%,100%{transform:translateY(0) scale(1)}
+  35%{transform:translateY(-16px) scale(1.06)}
+  60%{transform:translateY(0) scale(.97)}
+}
+/* Deux ballons montent de part et d'autre : de quoi occuper l'œil d'un
+   enfant de trois ans le temps que la première mission arrive. */
+.dem-ballons{position:absolute; inset:0; pointer-events:none}
+.dem-ballons span{position:absolute; bottom:-70px; font-size:32px; opacity:.85;
+  animation:dem-monte 7s linear infinite}
+.dem-ballons .b1{left:16%; animation-delay:.4s}
+.dem-ballons .b2{right:18%; font-size:26px; animation-delay:2.8s}
+.dem-ballons .b3{left:44%; font-size:22px; animation-delay:5s}
+@keyframes dem-monte{
+  0%{transform:translateY(0) rotate(-4deg); opacity:0}
+  12%{opacity:.85}
+  85%{opacity:.85}
+  100%{transform:translateY(-118vh) rotate(6deg); opacity:0}
+}
+.dem-titre{font-size:30px; font-weight:800; letter-spacing:.5px;
+  text-shadow:0 2px 6px rgba(120,70,0,.28)}
+.dem-message{min-height:22px; font-size:16px; font-weight:700; opacity:.95;
+  transition:opacity .25s}
+.dem-message.change{opacity:0}
+/* Trois points qui sautent : le signe universel « ça travaille ». */
+.dem-points{display:flex; gap:7px; margin-top:4px}
+.dem-points i{width:9px; height:9px; border-radius:50%; background:#fff; opacity:.55;
+  animation:dem-saut 1.05s ease-in-out infinite}
+.dem-points i:nth-child(2){animation-delay:.15s}
+.dem-points i:nth-child(3){animation-delay:.3s}
+@keyframes dem-saut{
+  0%,100%{transform:translateY(0); opacity:.5}
+  40%{transform:translateY(-7px); opacity:1}
+}
+/* Réseau lent : on le dit, au lieu de laisser tourner un décor indéfiniment.
+   Le bouton n'apparaît que bien plus tard (voir js/demarrage.js). */
+.dem-lent{margin-top:14px; font-size:14px; font-weight:600; max-width:280px;
+  background:rgba(255,255,255,.22); border-radius:14px; padding:10px 14px}
+.dem-lent button{margin-top:8px; border:none; border-radius:12px; padding:9px 16px;
+  font-family:inherit; font-size:14px; font-weight:800; cursor:pointer;
+  background:#fff; color:#b4620a}
+/* Un décor qui bouge peut gêner (vestibulaire, épilepsie photosensible) :
+   à la demande du système, tout s'immobilise sans rien perdre du message. */
+@media(prefers-reduced-motion:reduce){
+  .dem-ciel span, .dem-astre, .dem-ballons span, .dem-points i{animation:none}
+  .dem-ballons{display:none}
+}

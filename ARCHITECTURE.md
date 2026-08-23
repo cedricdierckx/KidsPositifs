@@ -14,6 +14,7 @@ Application **web vanilla** (sans framework), chargée par `index.html` :
 
 | Fichier | Rôle |
 |---|---|
+| `js/demarrage.js` | Écran de démarrage animé (le temps que la session arrive) |
 | `js/config.js` | Clés Supabase (publiques, sécurité par RLS) |
 | `js/i18n.js` | Traductions FR/EN/NL/DE + helper `t("clé")` |
 | `js/data.js` | Données statiques : `APP_NOM`, enfants, missions, avatar, écosystème |

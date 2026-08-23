@@ -653,6 +653,71 @@ function telechargerBlob(blob, nom) {
   } catch (e) { return false; }
 }
 
+/* ---------- Envoyer un .ics vers l'agenda de l'appareil ----------
+ * Sur le web, le lien « download » ci-dessus suffit. Dans l'app installée
+ * (Capacitor), il ne suffit plus : la WebView Android ignore purement et
+ * simplement l'attribut `download`, et sans lever la moindre erreur — le
+ * parent tape « Ajouter à mon agenda », rien ne se passe, pas même un
+ * message. Vu du parent, la fonction a disparu en passant du site à l'app.
+ *
+ * Dans l'app, on passe donc par le pont natif : écrire le .ics dans le cache
+ * de l'app (que le téléphone peut vider : rien ne s'accumule, et rien de
+ * personnel ne sort de l'appareil), puis demander à l'appareil de l'OUVRIR.
+ * L'agenda affiche alors l'événement et propose de l'enregistrer. Si aucune
+ * application ne sait ouvrir un .ics, on retombe sur la feuille de partage,
+ * qui permet au moins de se l'envoyer par mail.
+ *
+ * Les greffons sont lus sur `window.Capacitor.Plugins` : l'app n'est pas
+ * « bundlée » (des <script> classiques, pas de modules), il n'y a donc aucun
+ * import à faire — le pont natif expose lui-même les greffons installés, et
+ * cet objet n'existe pas du tout sur le web.
+ */
+function greffonNatif(nom) {
+  const cap = (typeof window !== "undefined") ? window.Capacitor : null;
+  if (!cap || !cap.isNativePlatform || !cap.isNativePlatform()) return null;
+  return (cap.Plugins && cap.Plugins[nom]) || null;
+}
+
+// Écrit le fichier puis l'ouvre. Renvoie "natif" si l'agenda a été sollicité,
+// false si le pont n'est pas disponible (app trop ancienne, greffon absent).
+async function ouvrirIcsNatif(ics, nomFichier, titre) {
+  const fichiers = greffonNatif("Filesystem");
+  if (!fichiers) return false;
+  // "CACHE" / "utf8" : les valeurs des énumérations Directory.Cache et
+  // Encoding.UTF8, écrites en clair puisqu'on parle au pont sans le paquet JS.
+  await fichiers.writeFile({ path: nomFichier, data: ics, directory: "CACHE", encoding: "utf8" });
+  const { uri } = await fichiers.getUri({ path: nomFichier, directory: "CACHE" });
+
+  const ouvreur = greffonNatif("FileOpener");
+  if (ouvreur) {
+    try {
+      await ouvreur.open({ filePath: uri, contentType: "text/calendar" });
+      return "natif";
+    } catch (e) { /* aucune application pour ouvrir un .ics : on partage */ }
+  }
+  const partage = greffonNatif("Share");
+  if (partage) {
+    await partage.share({ title: titre || APP_NOM, files: [uri] });
+    return "natif";
+  }
+  return false;
+}
+
+/* Point d'entrée unique des deux boutons « agenda ». Renvoie :
+ *   "natif"   — l'agenda (ou le partage) s'est ouvert sur le téléphone
+ *   "fichier" — un fichier a été proposé au téléchargement (web)
+ *   false     — rien n'est parti, et il faut le dire au parent
+ * Dans l'app, on ne retombe PAS sur le téléchargement en cas d'échec : il
+ * ne ferait rien de visible, et un faux succès est pire qu'une erreur. */
+async function envoyerVersAgenda(ics, nomFichier, titre) {
+  if (greffonNatif("Filesystem")) {
+    try { return await ouvrirIcsNatif(ics, nomFichier, titre); }
+    catch (e) { return false; }
+  }
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  return telechargerBlob(blob, nomFichier) ? "fichier" : false;
+}
+
 
 /* Modale de partage : le code permanent de la famille, son QR code et le lien.
  * Un seul code, réutilisable indéfiniment — c'est tout l'intérêt : il se colle
@@ -4032,13 +4097,18 @@ function texteDecompteCarte(j) {
 
 // Envoi vers l'agenda : un fichier .ics, que tous les agendas savent ouvrir —
 // iOS, Android, Outlook, Google. Pas de compte à connecter, rien à autoriser.
-function exporterCarteAgenda(id) {
+async function exporterCarteAgenda(id) {
   const c = trouverCarteSurprise(id);
   if (!c) return;
-  const ics = icsCarteSurprise(c, trData("carte", c.id, c.titre), trData("carteAct", c.id, c.activite));
+  const titre = trData("carte", c.id, c.titre);
+  const ics = icsCarteSurprise(c, titre, trData("carteAct", c.id, c.activite));
   if (!ics) { toast(t("cs.rdv_sans_date"), "info"); return; }
-  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-  if (!telechargerBlob(blob, "famiteam-" + c.id + ".ics")) toast(t("cs.rdv_echec"), "info");
+  const parti = await envoyerVersAgenda(ics, "famiteam-" + c.id + ".ics", (c.emoji || "🎁") + " " + titre);
+  // Le parent doit savoir ce qui vient de se passer : sans retour, un
+  // téléphone qui ouvre l'agenda derrière l'app ressemble à un bouton mort.
+  if (parti === "natif") toast(t("cs.rdv_ouvert"), "ok");
+  else if (parti === "fichier") toast(t("cs.rdv_fichier"), "ok");
+  else toast(t("cs.rdv_echec"), "info");
 }
 
 // Date en toutes lettres, courte et lisible par un enfant : « dimanche 2 août ».
@@ -5888,18 +5958,18 @@ function blocRituelSoir() {
   lH.appendChild(el("small", "champ-aide", t("rituel.conseil", { h: conseillee })));
 
   const b = el("button", "gros-bouton planete", t("rituel.ajouter"));
-  b.onclick = () => {
+  b.onclick = async () => {
     const rythme = sel.value, heure = inp.value;
     const ics = icsRituelSoir(rythme, heure, t("rituel.sujet"), t("rituel.corps"));
     if (!ics) { toast(t("rituel.echec"), "info"); return; }
-    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-    if (!telechargerBlob(blob, "famiteam-rendez-vous.ics")) { toast(t("rituel.echec"), "info"); return; }
+    const parti = await envoyerVersAgenda(ics, "famiteam-rendez-vous.ics", t("rituel.sujet"));
+    if (!parti) { toast(t("rituel.echec"), "info"); return; }
     // On mémorise le choix, pas le fait que l'agenda l'ait accepté : c'est
     // ce que le parent a demandé, et rien de plus.
     if (!etat.reglages) etat.reglages = {};
     etat.reglages.rituel = { rythme, heure };
     sauver();
-    toast(t("rituel.ok"), "ok");
+    toast(parti === "natif" ? t("rituel.ok_app") : t("rituel.ok"), "ok");
     rendre();
   };
   sec.appendChild(b);
