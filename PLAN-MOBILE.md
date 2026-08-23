@@ -2,7 +2,7 @@
 
 > 🚧 **Statut : terrain préparé.** La coquille native (Capacitor) est en
 > place et se synchronise avec le code du site. Ce qui reste dépend de
-> comptes/actifs que seule l'équipe FamiTeam peut fournir (voir §3).
+> comptes/actifs que seule l'équipe FamiTeam peut fournir (voir §4).
 
 Objectif : publier FamiTeam sur Google Play et l'App Store **sans jamais
 risquer le site web existant**, en réutilisant tel quel le code de
@@ -68,9 +68,51 @@ applications qui ne font que réafficher un site web.
   le dégradé doré déjà utilisé pour les récompenses dans l'app — fidèle à
   l'identité existante, sans en inventer une nouvelle. Régénérable avec
   `npm run icon:generer`. Reste un « bon repli visuel », pas un vrai logo
-  dessiné par un graphiste (voir §3, point 1 — non bloquant).
+  dessiné par un graphiste (voir §4, point 1 — non bloquant).
 
-## 2. Comment relancer la synchro après une modification du site
+## 2. Mettre à jour l'app Android déjà installée sur un téléphone
+
+L'app embarque une copie figée du site : une correction publiée sur
+fami.team n'y apparaît qu'après un nouveau build. La marche à suivre, à
+partir du dossier du projet :
+
+```
+git pull                     # récupérer le code à jour
+npm install                  # indispensable si des greffons natifs ont été ajoutés
+npm run cap:sync             # recopie le site dans www/, android/ et ios/
+```
+
+Puis dans **Android Studio** (ouvrir le dossier `android/`) :
+
+1. *File → Sync Project with Gradle Files* — obligatoire après un
+   `npm install` qui ajoute un greffon : sans cela, Gradle compile l'ancienne
+   liste de dépendances et le greffon manque à l'exécution.
+2. Téléphone branché en USB, **débogage USB** activé, puis *Run* (▶).
+   L'app s'installe par-dessus l'ancienne : les données sont conservées.
+
+Sans Android Studio ouvert, la même chose en ligne de commande :
+
+```
+cd android && ./gradlew installDebug     # téléphone branché, débogage USB actif
+```
+
+Pour un APK à transférer à la main (sans câble) :
+*Build → Build Bundle(s) / APK(s) → Build APK(s)*, puis copier
+`android/app/build/outputs/apk/debug/app-debug.apk` sur le téléphone.
+
+**Trois pièges :**
+- une app **debug** et une app **release** ne portent pas la même signature :
+  passer de l'une à l'autre exige de désinstaller d'abord (et les données
+  locales partent avec — la famille est sur Supabase, mais autant se
+  reconnecter en connaissance de cause) ;
+- `versionCode` vaut encore `1` dans `android/app/build.gradle`. Tant qu'on
+  installe soi-même, c'est sans effet ; **Google Play refuse en revanche deux
+  envois avec le même `versionCode`** : l'incrémenter (et faire suivre
+  `versionName`) fait partie de chaque publication ;
+- vider le cache de la WebView n'est pas nécessaire : les fichiers sont
+  versionnés (`?v=147`), un nouveau build sert donc bien le nouveau code.
+
+## 3. Comment relancer la synchro après une modification du site
 
 ```
 npm run cap:sync      # copie www/ à jour + met à jour android/ et ios/
@@ -78,7 +120,7 @@ npm run cap:sync      # copie www/ à jour + met à jour android/ et ios/
 À faire avant chaque ouverture d'Android Studio / Xcode pour builder une
 nouvelle version.
 
-## 3. Ce qu'il reste — et qui ne dépend que de vous
+## 4. Ce qu'il reste — et qui ne dépend que de vous
 
 | # | Élément | Pourquoi je ne peux pas le faire moi-même |
 |---|---|---|
@@ -93,7 +135,7 @@ Tant que 3 et 5 ne sont pas complétés, les liens d'e-mail continueront de
 s'ouvrir dans le navigateur plutôt que dans l'app — sans casser quoi que ce
 soit : c'est exactement le comportement actuel, donc aucune régression.
 
-## 4. Prochaine étape suggérée
+## 5. Prochaine étape suggérée
 
 Lancer `android/` dans Android Studio pour un premier build sur émulateur
 (aucun compte requis pour ça) — voir la conversation pour les étapes.
