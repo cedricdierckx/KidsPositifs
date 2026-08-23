@@ -72,9 +72,45 @@ applications qui ne font que réafficher un site web.
 
 ## 2. Mettre à jour l'app Android déjà installée sur un téléphone
 
-L'app embarque une copie figée du site : une correction publiée sur
-fami.team n'y apparaît qu'après un nouveau build. La marche à suivre, à
-partir du dossier du projet :
+> ⚠️ **À retenir avant tout** : l'app embarque une **copie figée** du site.
+> Une correction déployée sur fami.team **n'y apparaît pas**, jamais, tant
+> qu'on n'a pas rebuildé. Tester dans l'app un correctif publié le matin même
+> donnera toujours l'ancien comportement — et fera conclure à tort que le
+> correctif ne marche pas.
+
+### La façon courte
+
+Téléphone branché en USB, **débogage USB** activé, puis, depuis le dossier du
+projet :
+
+```
+npm run android:maj
+```
+
+Cette commande enchaîne les quatre étapes détaillées plus bas : `git pull`,
+`npm install`, recopie du site dans `www/` + `android/`, build et installation
+sur le téléphone. Elle passe par `cap run android` plutôt que par `gradlew`,
+qui ne s'appelle pas de la même façon sous Windows.
+
+Pour un APK à transférer sans câble : `npm run android:apk`, puis récupérer le
+fichier sous `android/app/build/outputs/`.
+
+### Pourquoi ce n'est pas plus simple, et ce qui le rendrait plus simple
+
+Trois voies existent, et une seule est bonne à terme.
+
+| Voie | Mise à jour | Le prix à payer |
+|---|---|---|
+| **Aujourd'hui** : site figé dans l'app | Rebuild + réinstallation | Lourd, mais l'app marche hors ligne |
+| `server.url` vers fami.team | Instantanée | **Casse le hors-ligne**, et change l'origine : le cache local, le code PIN et la langue mémorisés repartent de zéro. À écarter |
+| **Mises à jour à la volée** (greffon type `@capgo/capacitor-updater`) | Instantanée | Une dépendance de plus et un endroit où héberger les paquets — mais le hors-ligne est conservé |
+
+La troisième est la vraie réponse le jour où l'app sera sur les stores : elle
+permet de corriger un défaut sans repasser par une revue Google Play. Tant que
+l'app n'est installée que sur vos propres téléphones, `npm run android:maj`
+suffit.
+
+### Le détail, étape par étape
 
 ```
 git pull                     # récupérer le code à jour
@@ -110,7 +146,7 @@ Pour un APK à transférer à la main (sans câble) :
   envois avec le même `versionCode`** : l'incrémenter (et faire suivre
   `versionName`) fait partie de chaque publication ;
 - vider le cache de la WebView n'est pas nécessaire : les fichiers sont
-  versionnés (`?v=147`), un nouveau build sert donc bien le nouveau code.
+  versionnés (`?v=…`), un nouveau build sert donc bien le nouveau code.
 
 ## 3. Comment relancer la synchro après une modification du site
 

@@ -8,7 +8,9 @@
     "cap:copy": "node scripts/sync-www.mjs",
     "vendor:supabase": "node scripts/vendorer-supabase.mjs",
     "cap:sync": "npm run cap:copy && cap sync",
-    "icon:generer": "node scripts/generer-icone.mjs && capacitor-assets generate --android --ios"
+    "icon:generer": "node scripts/generer-icone.mjs && capacitor-assets generate --android --ios",
+    "android:maj": "git pull --ff-only && npm install && npm run cap:sync && cap run android",
+    "android:apk": "npm run cap:sync && cap build android"
   },
   "dependencies": {
     "@capacitor-community/file-opener": "^8.0.1",
