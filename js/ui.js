@@ -715,7 +715,14 @@ async function ouvrirIcsNatif(ics, nomFichier, titre) {
   const ouvreur = greffonNatif("FileOpener");
   if (ouvreur) {
     try {
-      await ouvreur.open({ filePath: uri, contentType: "text/calendar" });
+      // openWithDefault: false — certains calendriers réglés comme
+      // application par défaut (constaté : Calendrier Samsung) refusent
+      // l'intent sans le dire à FamiTeam : `open()` réussit du point de vue
+      // du pont (l'activité a bien démarré), mais l'application cible échoue
+      // ensuite en silence de son côté. On force donc le sélecteur système,
+      // pour que le parent puisse choisir un autre calendrier (p. ex. Google
+      // Agenda) si celui par défaut ne sait pas importer ce fichier.
+      await ouvreur.open({ filePath: uri, contentType: "text/calendar", openWithDefault: false });
       return "natif";
     } catch (e) { /* aucune application pour ouvrir un .ics : on partage */ }
   }
