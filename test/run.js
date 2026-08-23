@@ -245,6 +245,87 @@ test("Store.sauver écrit normalement quand personne d'autre n'a modifié l'éta
   assert.strictEqual(client.appels.ecritures.length, 2, "la deuxième écriture doit partir aussi");
 });
 
+test("conflit réel : la version la plus récente gagne, l'autre reste récupérable", async () => {
+  // Ancien comportement : l'écriture était annulée, le repère restait faux,
+  // l'appareil répétait l'avertissement à chaque geste et cessait de
+  // synchroniser jusqu'au rechargement — en renvoyant le parent, en pleine
+  // soirée, vers un écran derrière le code PIN pour arbitrer lui-même.
+  // Désormais on tranche pour lui, sans rien perdre.
+  const { contexte, api } = construireContexte();
+  const appelsToast = [];
+  contexte.toast = (msg, type) => appelsToast.push({ msg, type });
+
+  api.familleId = "f1";
+  const local = api.etatVierge();
+  local.maj = 1000;
+  api.lierEtat(local);
+  const serveur = { row: { data: { ...local, maj: 1000 } } };
+  const client = clientFactice(serveur);
+  api.Store.init(client);
+  await api.Store.charger();
+
+  // L'autre appareil est en AVANCE (2000 > 1500).
+  const avance = api.etatVierge();
+  avance.maj = 2000;
+  const idA = Object.keys(avance.enfants)[0];
+  avance.enfants[idA].gouttes = 42;
+  serveur.row = { data: avance };
+
+  const idEnfant = Object.keys(api.etat.enfants)[0];
+  api.etat.enfants[idEnfant].gouttes += 1;
+  api.etat.maj = 1500;
+
+  const avant = client.appels.ecritures.length;
+  await api.Store.sauver();
+
+  assert.strictEqual(client.appels.ecritures.length, avant,
+    "on n'écrase pas l'appareil en avance");
+  assert.strictEqual(api.etat.maj, 2000, "sa version doit être adoptée, pas seulement signalée");
+  assert.strictEqual(api.etat.enfants[idA].gouttes, 42, "ses compteurs doivent être repris");
+  // Et la nôtre n'est pas perdue : elle est déposée sur cet appareil, où
+  // l'écran Récupération la retrouve sans qu'on ait rien à brancher.
+  const sauvegardes = api.listerSauvegardesLocales().filter(x => x.maj === 1500);
+  assert.strictEqual(sauvegardes.length, 1, "la version locale doit être mise à l'abri");
+
+  // Et surtout : l'appareil n'est PAS bloqué. Le geste suivant repart.
+  api.etat.maj = 3000;
+  await api.Store.sauver();
+  assert.strictEqual(client.appels.ecritures.length, avant + 1,
+    "la sauvegarde suivante doit passer : plus de blocage jusqu'au rechargement");
+});
+
+test("conflit réel : l'avertissement se dit une fois, pas à chaque geste", async () => {
+  const { contexte, api } = construireContexte();
+  const appelsToast = [];
+  contexte.toast = (msg, type) => appelsToast.push({ msg, type });
+
+  api.familleId = "f1";
+  const local = api.etatVierge();
+  local.maj = 1000;
+  api.lierEtat(local);
+  const serveur = { row: { data: { ...local, maj: 1000 } } };
+  const client = clientFactice(serveur);
+  api.Store.init(client);
+  await api.Store.charger();
+
+  // Notre version est la plus récente : on écrit, celle du serveur part dans
+  // l'historique côté base. Trois gestes de suite, un seul message.
+  for (const [majServeur, majLocale] of [[900, 1500], [1600, 2000], [2100, 2500]]) {
+    serveur.row = { data: { ...api.etatVierge(), maj: majServeur } };
+    api.etat.maj = majLocale;
+    await api.Store.sauver();
+  }
+  assert.strictEqual(appelsToast.length, 1,
+    "un seul avertissement par chargement, sinon c'est du bruit");
+  assert.strictEqual(appelsToast[0].msg, api.I18N.fr["sync.conflit"]);
+  // Le message ne doit plus demander au parent d'aller vérifier des compteurs.
+  Object.keys(api.LANGUES).forEach(lg => {
+    const m = api.I18N[lg]["sync.conflit"];
+    assert.ok(!/vérifier les compteurs|check the counters|tellers te controleren|Zähler zu prüfen/.test(m),
+      "le message ne doit plus faire arbitrer le parent (" + lg + ")");
+  });
+});
+
 test("Store.sauver ne se déclare pas en conflit avec lui-même", async () => {
   // Le cas réellement rencontré par une famille à UN SEUL appareil : l'envoi
   // est différé de 700 ms et `sauver()` avance `etat.maj` à chaque geste, si

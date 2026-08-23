@@ -58,6 +58,12 @@ class StockageMemoire {
   setItem(k, v) { this.m.set(k, String(v)); }
   removeItem(k) { this.m.delete(k); }
   clear() { this.m.clear(); }
+  // `length` et `key(i)` font partie de l'API Storage : sans eux,
+  // listerSauvegardesLocales() — qui balaie les clés — ne trouvait jamais
+  // rien, et un test des sauvegardes locales aurait passé pour de mauvaises
+  // raisons ou échoué sans que le produit soit en cause.
+  get length() { return this.m.size; }
+  key(i) { return Array.from(this.m.keys())[i] ?? null; }
 }
 
 // ---------- Construction du contexte ----------
@@ -93,6 +99,7 @@ function construireContexte(options) {
       // état & garde-fous
       get etat() { return etat; }, set etat(v) { etat = v; },
       lierEtat, etatNonVide, etatValide, etatVierge, etatDemo, normaliser, restaurerSauvegarde,
+      listerSauvegardesLocales, sauvegarderAvantConflit,
       get familleId() { return familleId; }, set familleId(v) { familleId = v; },
       get familleEtat() { return familleEtat; },
       // missions

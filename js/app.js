@@ -2203,6 +2203,13 @@ function listerSauvegardesLocales() {
   }
   return out.sort((a, b) => b.maj - a.maj);
 }
+// Met la version locale a l'abri AVANT d'adopter celle d'un autre appareil.
+// La cle garde le prefixe de cache, donc listerSauvegardesLocales() la
+// retrouve sans rien changer : l'ecran Recuperation la propose tout seul.
+function sauvegarderAvantConflit() {
+  try { localStorage.setItem(cleCache() + ":conflit", JSON.stringify(etat)); } catch {}
+}
+
 // Restaure un état (chaîne JSON) DANS la famille actuellement ouverte.
 function restaurerSauvegarde(brutJson) {
   let data;

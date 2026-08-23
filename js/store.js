@@ -35,6 +35,9 @@ const Store = (() => {
   // avait ajouté : aucune goutte ni aucun cœur ne se fusionne jamais, c'est
   // le bloc entier de la famille qui remplace l'autre.
   let derniereMajConnue = null;
+  // L'avertissement ne se dit qu'une fois par chargement : répété à chaque
+  // geste, il devient du bruit et n'apprend plus rien.
+  let conflitSignale = false;
 
   // Intervalle d'interrogation (ms) quand le temps réel est désactivé.
   const POLL_MS = 30000;
@@ -47,6 +50,12 @@ const Store = (() => {
   // persistantes quand on approche des milliers d'appareils simultanés.
   function realtimeActif() {
     return !(typeof window !== "undefined" && window.KP_CONFIG && window.KP_CONFIG.REALTIME === false);
+  }
+
+  function prevenirConflit() {
+    if (conflitSignale) return;
+    conflitSignale = true;
+    if (typeof toast === "function" && typeof t === "function") toast(t("sync.conflit"), "info");
   }
 
   function badge(symbole) {
@@ -126,11 +135,34 @@ const Store = (() => {
         if (!errLecture) {
           const majServeur = (actuel && actuel.data && actuel.data.maj) || 0;
           if (majServeur !== derniereMajConnue) {
-            badge("🔀");
-            console.warn("Sauvegarde annulée : un autre appareil a modifié l'état entretemps",
-              { connu: derniereMajConnue, serveur: majServeur });
-            if (typeof toast === "function" && typeof t === "function") toast(t("sync.conflit"), "info");
-            return;
+            // On ne BLOQUE plus. L'ancien comportement annulait l'écriture et
+            // laissait le repère faux : l'appareil répétait l'avertissement à
+            // chaque geste, cessait de synchroniser jusqu'au rechargement, et
+            // renvoyait le parent vers un écran caché derrière le code PIN,
+            // en pleine soirée, pour arbitrer une question qu'il ne pouvait
+            // pas trancher. On tranche donc à sa place, sans rien perdre :
+            // la version la plus récente est gardée, l'autre reste
+            // récupérable — dans l'historique côté serveur si c'est celle du
+            // serveur qui cède, sur l'appareil si c'est la nôtre.
+            const distant = actuel && actuel.data;
+            console.warn("Conflit de synchro", { connu: derniereMajConnue, serveur: majServeur });
+            if (distant && distant.enfants && majServeur > (etat.maj || 0)) {
+              // L'autre appareil est en avance : on met la nôtre à l'abri sur
+              // cet appareil, puis on adopte la sienne. Aucune écriture.
+              if (typeof sauvegarderAvantConflit === "function") sauvegarderAvantConflit();
+              lierEtat(normaliser(distant)); ecrireCache();
+              derniereMajConnue = majServeur;
+              badge("🔀");
+              prevenirConflit();
+              if (typeof rendre === "function") rendre();
+              return;
+            }
+            // Notre version est la plus récente : on écrit. Celle du serveur
+            // part dans family_state_history (déclencheur d'archivage), donc
+            // elle reste consultable. On repart d'un repère juste pour ne pas
+            // rester coincé à la sauvegarde suivante.
+            derniereMajConnue = majServeur;
+            prevenirConflit();
           }
         }
       }
