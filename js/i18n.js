@@ -4320,3 +4320,21 @@ Object.assign(I18N.de, {
   "admin.google_on": "Die Schaltfläche „Weiter mit Google“ ist auf dem Startbildschirm sichtbar.",
   "admin.google_off": "Aus. Erst einschalten, wenn der Google-Anbieter in Supabase eingerichtet ist, sonst endet jeder Klick in einem Fehler."
 });
+
+/* ---- Admin → Config : carte « Connexion des parents » ---- */
+Object.assign(I18N.fr, {
+  "admin.connexion_titre": "🔑 Connexion des parents",
+  "admin.connexion_sous": "Les moyens proposés sur l'écran d'accueil. L'e-mail et le lien de connexion restent toujours disponibles, quoi qu'on coche ici."
+});
+Object.assign(I18N.en, {
+  "admin.connexion_titre": "🔑 How parents sign in",
+  "admin.connexion_sous": "The methods offered on the landing screen. E-mail and the sign-in link always remain available, whatever is ticked here."
+});
+Object.assign(I18N.nl, {
+  "admin.connexion_titre": "🔑 Hoe ouders zich aanmelden",
+  "admin.connexion_sous": "De manieren die op het startscherm worden aangeboden. E-mail en de aanmeldlink blijven altijd beschikbaar, wat hier ook is aangevinkt."
+});
+Object.assign(I18N.de, {
+  "admin.connexion_titre": "🔑 Anmeldung der Eltern",
+  "admin.connexion_sous": "Die auf dem Startbildschirm angebotenen Wege. E-Mail und Anmeldelink bleiben immer verfügbar, unabhängig davon, was hier angehakt ist."
+});

@@ -172,8 +172,8 @@ Adresse directe : <https://console.cloud.google.com/auth/clients>
 
 ## 3. Allumer
 
-Espace parents → **Admin → Système** → cocher
-« Proposer la connexion par compte Google ».
+Espace parents → **Admin → Config** → carte **« 🔑 Connexion des parents »**
+→ cocher « Proposer la connexion par compte Google ».
 
 Le réglage vit dans `app_config` : il prend effet **sans redéploiement**, et
 s'éteint aussi vite s'il y a un souci.

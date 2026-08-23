@@ -4461,6 +4461,17 @@ test("Google : le bouton n'existe pas tant que l'admin ne l'a pas allumé", () =
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
   assert.ok(/adminDefinirConfig\("google_actif"/.test(ui),
     "l'admin doit pouvoir l'allumer et l'éteindre depuis l'application");
+  // Et il doit être TROUVABLE. Placé d'abord au milieu de « Pause et
+  // avertissements », dans l'onglet Croissance, il était introuvable : une
+  // carte à lui, en tête de Config, là où on cherche un réglage.
+  assert.ok(/function blocConnexionParents\(\)/.test(ui),
+    "l'interrupteur doit avoir sa propre carte, pas être noyé dans une autre");
+  assert.ok(/case "config":\s*\n\s*c\.appendChild\(blocConnexionParents\(\)\);/.test(ui),
+    "cette carte doit être en tête de l'onglet Config");
+  const pause = ui.slice(ui.indexOf("function blocSoutenabilite()"),
+                         ui.indexOf("function blocSoutenabilite()") + 2200);
+  assert.ok(pause.indexOf("google_actif") < 0,
+    "la connexion Google n'a rien à faire dans la carte « Pause et avertissements »");
 
   ["auth.google", "auth.ou", "goog.echec", "goog.premiere_titre", "goog.premiere_texte",
    "goog.premiere_attente", "goog.premiere_continuer", "goog.premiere_email",
