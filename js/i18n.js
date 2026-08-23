@@ -4067,6 +4067,7 @@ Object.assign(I18N.fr, {
   "cs.rdv_passe": "C'était prévu — à marquer comme fait",
   "cs.rdv_sans_date": "Choisis d'abord une date.",
   "cs.rdv_ouvert": "L'agenda s'ouvre — il ne reste qu'à enregistrer 📅",
+  "cs.rdv_calendrier": "Ajouté à votre calendrier ✅",
   "cs.rdv_fichier": "Fichier créé. Ouvrez-le pour l'ajouter à votre agenda 📅",
   "cs.rdv_echec": "Impossible d'envoyer le rendez-vous vers l'agenda."
 });
@@ -4080,6 +4081,7 @@ Object.assign(I18N.en, {
   "cs.rdv_passe": "It was planned — mark it as done",
   "cs.rdv_sans_date": "Pick a date first.",
   "cs.rdv_ouvert": "Your calendar is opening — just save the event 📅",
+  "cs.rdv_calendrier": "Added to your calendar ✅",
   "cs.rdv_fichier": "File created. Open it to add it to your calendar 📅",
   "cs.rdv_echec": "Could not send the appointment to your calendar."
 });
@@ -4093,6 +4095,7 @@ Object.assign(I18N.nl, {
   "cs.rdv_passe": "Het stond gepland — vink het af",
   "cs.rdv_sans_date": "Kies eerst een datum.",
   "cs.rdv_ouvert": "Je agenda opent — je hoeft alleen te bewaren 📅",
+  "cs.rdv_calendrier": "Toegevoegd aan uw agenda ✅",
   "cs.rdv_fichier": "Bestand aangemaakt. Open het om het aan je agenda toe te voegen 📅",
   "cs.rdv_echec": "Kon de afspraak niet naar de agenda sturen."
 });
@@ -4106,6 +4109,7 @@ Object.assign(I18N.de, {
   "cs.rdv_passe": "War geplant — als erledigt markieren",
   "cs.rdv_sans_date": "Wähle zuerst ein Datum.",
   "cs.rdv_ouvert": "Dein Kalender öffnet sich — nur noch speichern 📅",
+  "cs.rdv_calendrier": "Zu Ihrem Kalender hinzugefügt ✅",
   "cs.rdv_fichier": "Datei erstellt. Öffne sie, um sie deinem Kalender hinzuzufügen 📅",
   "cs.rdv_echec": "Der Termin konnte nicht an den Kalender gesendet werden."
 });
@@ -4228,6 +4232,7 @@ Object.assign(I18N.fr, {
   "rituel.ajouter": "📅 Déposer dans mon agenda",
   "rituel.ok": "Rendez-vous déposé. Ouvrez le fichier pour l'ajouter à votre agenda 📅",
   "rituel.ok_app": "L'agenda s'ouvre — il ne reste qu'à enregistrer 📅",
+  "rituel.ok_calendrier": "Rendez-vous ajouté à votre calendrier ✅",
   "rituel.echec": "Le rendez-vous n'a pas pu partir vers l'agenda.",
   "rituel.resume": "Rappel réglé : {r}, à {h}",
   "rituel.jamais": "Aucun rappel réglé",
@@ -4248,6 +4253,7 @@ Object.assign(I18N.en, {
   "rituel.ajouter": "📅 Add to my calendar",
   "rituel.ok": "Appointment ready. Open the file to add it to your calendar 📅",
   "rituel.ok_app": "Your calendar is opening — just save the event 📅",
+  "rituel.ok_calendrier": "Appointment added to your calendar ✅",
   "rituel.echec": "The appointment could not be sent to your calendar.",
   "rituel.resume": "Reminder set: {r}, at {h}",
   "rituel.jamais": "No reminder set",
@@ -4268,6 +4274,7 @@ Object.assign(I18N.nl, {
   "rituel.ajouter": "📅 In mijn agenda zetten",
   "rituel.ok": "Afspraak klaar. Open het bestand om het aan uw agenda toe te voegen 📅",
   "rituel.ok_app": "Uw agenda opent — u hoeft alleen te bewaren 📅",
+  "rituel.ok_calendrier": "Afspraak toegevoegd aan uw agenda ✅",
   "rituel.echec": "De afspraak kon niet naar de agenda worden gestuurd.",
   "rituel.resume": "Herinnering ingesteld: {r}, om {h}",
   "rituel.jamais": "Geen herinnering ingesteld",
@@ -4288,6 +4295,7 @@ Object.assign(I18N.de, {
   "rituel.ajouter": "📅 In meinen Kalender legen",
   "rituel.ok": "Termin bereit. Öffnen Sie die Datei, um sie Ihrem Kalender hinzuzufügen 📅",
   "rituel.ok_app": "Ihr Kalender öffnet sich — nur noch speichern 📅",
+  "rituel.ok_calendrier": "Termin zu Ihrem Kalender hinzugefügt ✅",
   "rituel.echec": "Der Termin konnte nicht an den Kalender gesendet werden.",
   "rituel.resume": "Erinnerung eingestellt: {r}, um {h}",
   "rituel.jamais": "Keine Erinnerung eingestellt",

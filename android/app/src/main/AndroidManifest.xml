@@ -46,4 +46,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Écriture seule : FamiTeam ajoute un rendez-vous quand le parent le
+         demande (bouton « Ajouter à mon agenda »), jamais ne lit ni ne
+         parcourt le calendrier existant. -->
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
 </manifest>

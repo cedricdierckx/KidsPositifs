@@ -1427,6 +1427,24 @@ function icsCarteSurprise(carte, titreLisible, activiteLisible, maintenant) {
   return lignes.filter(l => l !== "DESCRIPTION:").join("\r\n") + "\r\n";
 }
 
+// Mêmes informations que icsCarteSurprise, mais « à plat » (millisecondes,
+// pas de texte iCalendar) : ce que consomme l'écriture directe dans le
+// calendrier du système, plus fiable que l'ouverture d'un fichier (constaté :
+// Google Agenda refuse d'importer un .ics reçu ainsi, quand Outlook l'accepte
+// — voir envoyerVersAgenda dans js/ui.js). Réservé au cas AVEC heure : une
+// journée entière pose, pour une écriture directe, des questions de fuseau
+// (minuit UTC attendu par certains calendriers) que le fichier .ics gère déjà
+// correctement — on ne duplique donc pas ce cas-là.
+function champsCarteSurprise(carte, titreLisible, activiteLisible) {
+  if (!carte || !DATE_ISO.test(carte.prevueLe || "") || !heureValide(carte.prevueHeure)) return null;
+  const debutMs = new Date(carte.prevueLe + "T" + carte.prevueHeure + ":00").getTime();
+  return {
+    titre: (carte.emoji || "🎁") + " " + (titreLisible || carte.titre),
+    texte: activiteLisible || carte.activite || "",
+    debutMs, finMs: debutMs + 2 * 3600000
+  };
+}
+
 /* ---------- Le rendez-vous du soir (rappel par l'agenda du parent) ----------
  * La raison d'arrêt la plus citée par les familles est « on n'y pense pas ».
  * La réponse habituelle serait une notification ; elle nous est interdite par
@@ -1532,6 +1550,39 @@ function icsRituelSoir(rythme, heure, titre, texte, maintenant, jourDebut) {
     "END:VEVENT", "END:VCALENDAR"
   ];
   return lignes.filter(l => l !== "DESCRIPTION:").join("\r\n") + "\r\n";
+}
+
+// Même correspondance que rituelRrule (ci-dessus), en objet structuré plutôt
+// qu'en texte RRULE : le greffon de calendrier construit lui-même la règle
+// native à partir de ces champs.
+function rituelRecurrence(rythme, jourDebut) {
+  if (rythme === "quotidien") return { frequency: "daily", interval: 1 };
+  if (rythme === "deux_jours") return { frequency: "daily", interval: 2 };
+  if (rythme === "trois_jours") return { frequency: "daily", interval: 3 };
+  if (rythme === "hebdo") {
+    const d = new Date(String(jourDebut) + "T00:00:00");
+    const jsJour = isNaN(d.getTime()) ? 1 : d.getDay();   // JS : 0=dimanche..6=samedi
+    return { frequency: "weekly", interval: 1, byWeekDay: [jsJour === 0 ? 7 : jsJour] };  // greffon : 1=lundi..7=dimanche
+  }
+  return null;
+}
+
+// Mêmes informations que icsRituelSoir, « à plat » pour l'écriture directe
+// dans le calendrier du système (voir champsCarteSurprise ci-dessus pour le
+// pourquoi). Les deux fonctions décrivent le même rendez-vous par deux voies
+// différentes : une modification de l'une doit se répercuter sur l'autre.
+function champsRituelSoir(rythme, heure, titre, texte, maintenant, jourDebut) {
+  if (!heureValide(heure)) return null;
+  if (RITUEL_RYTHMES.indexOf(rythme) < 0) return null;
+  const debut = DATE_ISO.test(jourDebut || "") ? jourDebut : debutRituel(heure, maintenant);
+  const recurrence = rituelRecurrence(rythme, debut);
+  if (!recurrence) return null;
+  const debutMs = new Date(debut + "T" + heure + ":00").getTime();
+  return {
+    titre: titre || "FamiTeam", texte: texte || "",
+    debutMs, finMs: debutMs + RITUEL_DUREE_MIN * 60000,
+    alarmes: [0], recurrence
+  };
 }
 
 function marquerCarteFaite(id) {

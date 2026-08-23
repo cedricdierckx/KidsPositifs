@@ -42,6 +42,17 @@ applications qui ne font que réafficher un site web.
   ligne qui modifient l'état en même temps ne s'écrasent plus en silence
   (voir commit dédié) — pertinent ici car les coupures prolongées
   deviennent courantes sur mobile.
+- **Écriture directe dans le calendrier du système** (`@ebarooni/capacitor-calendar`) :
+  l'export `.ics` ouvert par une application tierce s'est révélé peu fiable
+  — Google Agenda refuse l'import sur un Samsung Galaxy testé, quand Outlook
+  l'accepte. FamiTeam écrit désormais directement dans le magasin de
+  calendrier du système (`CalendarContract` Android / `EventKit` iOS), le
+  même mécanisme que Facebook ou Eventbrite pour un bouton « Ajouter à mon
+  agenda » : toute application synchronisée le voit, Google Agenda compris.
+  Nécessite une autorisation système en écriture seule (`WRITE_CALENDAR` /
+  `NSCalendarsWriteOnlyAccessUsageDescription`), demandée une fois au premier
+  usage. Le fichier `.ics` reste le repli si le greffon est absent ou la
+  permission refusée.
 - **Bibliothèque Supabase embarquée** (`js/vendor/supabase.js`) : elle venait
   d'un CDN, ce qui contredisait le hors-ligne annoncé au §0 — sans réseau, le
   script n'arrivait pas, la variable `supabase` restait indéfinie et l'app

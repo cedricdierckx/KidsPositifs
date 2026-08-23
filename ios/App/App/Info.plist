@@ -24,6 +24,13 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- Écriture seule : un rendez-vous ajouté à la demande du parent, jamais
+	     de lecture du calendrier existant. iOS 17+ exige la clé dédiée ;
+	     iOS 13-16 retombent sur la clé générique. -->
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>FamiTeam ajoute le rendez-vous que vous demandez (rituel du soir ou date d'une activité) à votre calendrier.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>FamiTeam ajoute le rendez-vous que vous demandez (rituel du soir ou date d'une activité) à votre calendrier.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

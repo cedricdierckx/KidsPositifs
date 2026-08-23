@@ -778,19 +778,86 @@ async function enregistrerOuPartager(blob, nomFichier, titre, texte) {
   return telechargerBlob(blob, nomFichier);
 }
 
-/* Point d'entrée unique des deux boutons « agenda ». Renvoie :
- *   "natif"   — l'agenda (ou le partage) s'est ouvert sur le téléphone
- *   "fichier" — un fichier a été proposé au téléchargement (web)
- *   false     — rien n'est parti, et il faut le dire au parent
- * Dans l'app, on ne retombe PAS sur le téléchargement en cas d'échec : il
- * ne ferait rien de visible, et un faux succès est pire qu'une erreur. */
-async function envoyerVersAgenda(ics, nomFichier, titre) {
+/* ---------- Écriture directe dans le calendrier du système ----------
+ * Le fichier .ics ci-dessus reste le repli, mais s'est révélé peu fiable :
+ * Google Agenda refuse d'importer un .ics reçu par un intent de fichier
+ * (constaté sur un Samsung Galaxy — Outlook, lui, l'accepte). Cette voie
+ * écrit directement dans le magasin de calendrier du système (CalendarContract
+ * sur Android, EventKit sur iOS via le greffon) — le même mécanisme
+ * qu'utilisent Facebook ou Eventbrite pour leurs boutons « Ajouter à mon
+ * agenda ». Toute application synchronisée avec ce magasin voit l'événement,
+ * Google Agenda compris, sans dépendre de sa capacité à lire un fichier.
+ *
+ * Contrepartie : une autorisation système, demandée une fois (écriture
+ * seule — FamiTeam ne lit jamais le calendrier existant). Si le parent la
+ * refuse, ou si le greffon est absent (app trop ancienne), la fonction rend
+ * la main sans rien faire : c'est à l'appelant de retomber sur le fichier.
+ */
+async function permissionCalendrierEcriture() {
+  const cal = greffonNatif("CapacitorCalendar");
+  if (!cal) return false;
+  try {
+    const deja = await cal.checkPermission({ scope: "writeCalendar" });
+    if (deja && deja.result === "granted") return true;
+    const demande = await cal.requestWriteOnlyCalendarAccess();
+    return !!(demande && demande.result === "granted");
+  } catch (e) { return false; }
+}
+
+/* options : { titre, texte, debutMs, finMs, alarmes?, recurrence?, idExistant? }
+ * Renvoie l'identifiant de l'événement (à conserver pour une future mise à
+ * jour), ou null si cette voie n'a pas abouti — jamais une erreur bruyante :
+ * l'appelant retombe alors sur le fichier .ics sans que le parent le sache. */
+async function ecrireEvenementCalendrier(options) {
+  const cal = greffonNatif("CapacitorCalendar");
+  if (!cal || !(await permissionCalendrierEcriture())) return null;
+  const champs = {
+    title: options.titre,
+    description: options.texte || "",
+    startDate: options.debutMs,
+    endDate: options.finMs,
+    availability: 1   // EventAvailability.FREE : ne rend pas le parent indisponible
+  };
+  if (Array.isArray(options.alarmes)) champs.alerts = options.alarmes;
+  if (options.recurrence) champs.recurrence = options.recurrence;
+  try {
+    if (options.idExistant) { await cal.modifyEvent({ id: options.idExistant, ...champs }); return options.idExistant; }
+    const cree = await cal.createEvent(champs);
+    return (cree && cree.id) || null;
+  } catch (e) {
+    // L'identifiant mémorisé ne correspond peut-être plus à rien (événement
+    // supprimé à la main dans le calendrier) : une création neuve avant
+    // d'abandonner cette voie, plutôt que de renoncer sur un id périmé.
+    if (!options.idExistant) return null;
+    try { const cree = await cal.createEvent(champs); return (cree && cree.id) || null; }
+    catch (e2) { return null; }
+  }
+}
+
+/* Point d'entrée unique des deux boutons « agenda ». `champsCalendrier` (ou
+ * null si l'appelant n'a pas de version « à plat » pour ce cas — un
+ * rendez-vous journée entière, par exemple) tente d'abord l'écriture directe.
+ * Renvoie :
+ *   { voie: "calendrier", id }  — écrit directement, id à conserver
+ *   { voie: "natif" }           — l'agenda (ou le partage) s'est ouvert
+ *   { voie: "fichier" }         — un fichier a été proposé au téléchargement
+ *   null                        — rien n'est parti, et il faut le dire
+ * Dans l'app, on ne retombe PAS sur le téléchargement en cas d'échec total :
+ * il ne ferait rien de visible, et un faux succès est pire qu'une erreur. */
+async function envoyerVersAgenda(champsCalendrier, ics, nomFichier, titre) {
+  if (champsCalendrier) {
+    const id = await ecrireEvenementCalendrier(champsCalendrier);
+    if (id) return { voie: "calendrier", id };
+  }
   if (greffonNatif("Filesystem")) {
-    try { return await ouvrirIcsNatif(ics, nomFichier, titre); }
-    catch (e) { return false; }
+    try {
+      const r = await ouvrirIcsNatif(ics, nomFichier, titre);
+      if (r) return { voie: r };
+    } catch (e) { /* on tente encore le téléchargement classique */ }
+    return null;
   }
   const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-  return telechargerBlob(blob, nomFichier) ? "fichier" : false;
+  return telechargerBlob(blob, nomFichier) ? { voie: "fichier" } : null;
 }
 
 
@@ -4248,14 +4315,17 @@ async function exporterCarteAgenda(id) {
   const c = trouverCarteSurprise(id);
   if (!c) return;
   const titre = trData("carte", c.id, c.titre);
-  const ics = icsCarteSurprise(c, titre, trData("carteAct", c.id, c.activite));
+  const activite = trData("carteAct", c.id, c.activite);
+  const ics = icsCarteSurprise(c, titre, activite);
   if (!ics) { toast(t("cs.rdv_sans_date"), "info"); return; }
-  const parti = await envoyerVersAgenda(ics, "famiteam-" + c.id + ".ics", (c.emoji || "🎁") + " " + titre);
+  const champs = champsCarteSurprise(c, titre, activite);
+  const resultat = await envoyerVersAgenda(champs, ics, "famiteam-" + c.id + ".ics", (c.emoji || "🎁") + " " + titre);
   // Le parent doit savoir ce qui vient de se passer : sans retour, un
   // téléphone qui ouvre l'agenda derrière l'app ressemble à un bouton mort.
-  if (parti === "natif") toast(t("cs.rdv_ouvert"), "ok");
-  else if (parti === "fichier") toast(t("cs.rdv_fichier"), "ok");
-  else toast(t("cs.rdv_echec"), "info");
+  if (!resultat) { toast(t("cs.rdv_echec"), "info"); return; }
+  if (resultat.voie === "calendrier") toast(t("cs.rdv_calendrier"), "ok");
+  else if (resultat.voie === "natif") toast(t("cs.rdv_ouvert"), "ok");
+  else toast(t("cs.rdv_fichier"), "ok");
 }
 
 // Date en toutes lettres, courte et lisible par un enfant : « dimanche 2 août ».
@@ -6109,14 +6179,23 @@ function blocRituelSoir() {
     const rythme = sel.value, heure = inp.value;
     const ics = icsRituelSoir(rythme, heure, t("rituel.sujet"), t("rituel.corps"));
     if (!ics) { toast(t("rituel.echec"), "info"); return; }
-    const parti = await envoyerVersAgenda(ics, "famiteam-rendez-vous.ics", t("rituel.sujet"));
-    if (!parti) { toast(t("rituel.echec"), "info"); return; }
+    const champs = champsRituelSoir(rythme, heure, t("rituel.sujet"), t("rituel.corps"));
+    // Réutiliser l'identifiant déjà connu : un changement de rythme ou
+    // d'heure met à jour le MÊME événement plutôt que d'en accumuler un
+    // nouveau à côté — un rappel qui se répète pour toujours, sans dedup,
+    // finirait par en laisser tourner plusieurs en parallèle.
+    if (champs && regle && regle.eventId) champs.idExistant = regle.eventId;
+    const resultat = await envoyerVersAgenda(champs, ics, "famiteam-rendez-vous.ics", t("rituel.sujet"));
+    if (!resultat) { toast(t("rituel.echec"), "info"); return; }
     // On mémorise le choix, pas le fait que l'agenda l'ait accepté : c'est
     // ce que le parent a demandé, et rien de plus.
     if (!etat.reglages) etat.reglages = {};
     etat.reglages.rituel = { rythme, heure };
+    if (resultat.voie === "calendrier") etat.reglages.rituel.eventId = resultat.id;
+    else if (regle && regle.eventId) etat.reglages.rituel.eventId = regle.eventId;
     sauver();
-    toast(parti === "natif" ? t("rituel.ok_app") : t("rituel.ok"), "ok");
+    toast(resultat.voie === "calendrier" ? t("rituel.ok_calendrier")
+        : resultat.voie === "natif" ? t("rituel.ok_app") : t("rituel.ok"), "ok");
     rendre();
   };
   sec.appendChild(b);

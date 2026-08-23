@@ -135,7 +135,7 @@ function construireContexte(options) {
       // cartes surprises (objectifs d'équipe)
       cartesSurprises, trouverCarteSurprise, donnerCarte,
       // rendez-vous d'une carte gagnée (date, décompte, export agenda)
-      definirDateCarte, joursAvantCarte, icsCarteSurprise, icsEchapper, icsPlier,
+      definirDateCarte, joursAvantCarte, icsCarteSurprise, champsCarteSurprise, icsEchapper, icsPlier,
       ajouterCarteSurprise, modifierCarteSurprise, supprimerCarteSurprise,
       reinitCarteSurprise, marquerCarteFaite, deplacerCarteSurprise,
       // badges & divers
@@ -167,7 +167,7 @@ function construireContexte(options) {
       momentDodo, minutesCoucher, DODO_FENETRE, DODO_DEFAUT,
       // rendez-vous du soir : rappel délégué à l'agenda du parent
       RITUEL_RYTHMES, RITUEL_DUREE_MIN, RITUEL_AVANT_DODO,
-      heureRituelConseillee, debutRituel, rituelRrule, icsRituelSoir, hhmm, heureValide,
+      heureRituelConseillee, debutRituel, rituelRrule, rituelRecurrence, icsRituelSoir, champsRituelSoir, hhmm, heureValide,
       // minuteur d'écran (verrouillage PIN) : plafond de 6 h depuis le lancement
       get timerEtat() { return timerEtat; }, set timerEtat(v) { timerEtat = v; },
       timerVierge, chargerTimer, ecrireTimer, cleTimer,

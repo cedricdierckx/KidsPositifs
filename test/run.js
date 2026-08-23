@@ -3404,6 +3404,131 @@ test("carte surprise : le fichier d'agenda est un iCalendar valide", () => {
     assert.ok(l.startsWith(" "), "une ligne repliée doit commencer par une espace"));
 });
 
+/* ---------- Écriture directe dans le calendrier (Google Agenda) ----------
+ * Le fichier .ics s'est révélé peu fiable avec Google Agenda (constaté sur
+ * un Samsung Galaxy : Outlook l'importe, Google Agenda le refuse en
+ * silence). champsCarteSurprise/champsRituelSoir fournissent la même
+ * information "à plat", pour l'écriture directe dans le calendrier du
+ * système (js/ui.js, ecrireEvenementCalendrier). Testés ici comme logique
+ * pure, au même titre que leurs équivalents .ics. */
+test("carte surprise : les champs à plat correspondent au fichier .ics", () => {
+  const { api } = construireContexte();
+  const c = carteGagnee(api);
+
+  // Sans heure : réservé au fichier .ics (question de fuseau pour une
+  // journée entière écrite directement — voir le commentaire du code).
+  api.definirDateCarte(c.id, "2026-09-12");
+  assert.strictEqual(api.champsCarteSurprise(c, "Ciné", "Un film"), null,
+    "une journée entière ne doit pas passer par l'écriture directe");
+
+  api.definirDateCarte(c.id, "2026-09-12", "16:30");
+  const champs = api.champsCarteSurprise(c, "Soirée ciné", "On choisit un film");
+  assert.strictEqual(champs.titre, (c.emoji || "🎁") + " Soirée ciné");
+  assert.strictEqual(champs.texte, "On choisit un film");
+  assert.strictEqual(new Date(champs.debutMs).toString(), new Date("2026-09-12T16:30:00").toString());
+  assert.strictEqual(champs.finMs - champs.debutMs, 2 * 3600000, "l'événement doit durer deux heures");
+  assert.strictEqual(champs.alarmes, undefined,
+    "la carte surprise n'a pas d'alarme dans le fichier .ics : les champs à plat doivent s'accorder");
+});
+
+test("rendez-vous du soir : les champs à plat correspondent au fichier .ics", () => {
+  const { api } = construireContexte();
+  assert.strictEqual(api.champsRituelSoir("quotidien", "25:00", "x", "y"), null, "heure invalide");
+  assert.strictEqual(api.champsRituelSoir("toutes_les_heures", "19:00", "x", "y"), null, "rythme inconnu");
+
+  // JSON.stringify plutôt que deepStrictEqual : ces objets/tableaux viennent
+  // du contexte vm, un « autre réalm » que deepStrictEqual distinguerait à
+  // tort d'un littéral de ce fichier, même à valeurs strictement identiques
+  // (voir plus bas dans ce fichier pour le même piège sur un tableau).
+  const ref = new Date("2026-08-10T12:00:00");   // un lundi, après 19h ne s'applique pas ici
+  const champs = api.champsRituelSoir("quotidien", "19:00", "Titre", "Corps", ref);
+  assert.strictEqual(champs.titre, "Titre");
+  assert.strictEqual(champs.texte, "Corps");
+  assert.strictEqual(JSON.stringify(champs.alarmes), "[0]", "une alerte au moment même du rendez-vous");
+  assert.strictEqual(champs.finMs - champs.debutMs, api.RITUEL_DUREE_MIN * 60000);
+  assert.strictEqual(JSON.stringify(champs.recurrence), JSON.stringify({ frequency: "daily", interval: 1 }));
+
+  assert.strictEqual(JSON.stringify(api.rituelRecurrence("deux_jours")), JSON.stringify({ frequency: "daily", interval: 2 }));
+  assert.strictEqual(JSON.stringify(api.rituelRecurrence("trois_jours")), JSON.stringify({ frequency: "daily", interval: 3 }));
+  // Hebdomadaire : retombe sur le jour de la semaine du premier rendez-vous,
+  // numéroté 1=lundi..7=dimanche (convention du greffon), pas 0=dimanche
+  // (convention JavaScript) — la conversion est le point à ne pas rater.
+  assert.strictEqual(JSON.stringify(api.rituelRecurrence("hebdo", "2026-08-10")), // lundi
+    JSON.stringify({ frequency: "weekly", interval: 1, byWeekDay: [1] }));
+  assert.strictEqual(JSON.stringify(api.rituelRecurrence("hebdo", "2026-08-16")), // dimanche
+    JSON.stringify({ frequency: "weekly", interval: 1, byWeekDay: [7] }));
+  assert.strictEqual(api.rituelRecurrence("inconnu", "2026-08-10"), null);
+
+  // Les deux constructeurs doivent s'accorder sur le jour de départ : sinon
+  // le fichier .ics et l'écriture directe décriraient deux rendez-vous
+  // différents pour le même réglage.
+  const rrule = api.icsRituelSoir("hebdo", "19:00", "a", "b", ref);
+  const rec = api.champsRituelSoir("hebdo", "19:00", "a", "b", ref);
+  const jourIcs = /DTSTART:(\d{8})T/.exec(rrule)[1];
+  const jourPlat = new Date(rec.debutMs);
+  const p = n => String(n).padStart(2, "0");
+  const jourPlatTxt = jourPlat.getFullYear() + p(jourPlat.getMonth() + 1) + p(jourPlat.getDate());
+  assert.strictEqual(jourIcs, jourPlatTxt, "le fichier .ics et l'écriture directe doivent viser le même jour");
+});
+
+test("agenda natif : le calendrier est tenté avant le fichier, avec permission d'abord", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+
+  const pc = ui.slice(ui.indexOf("async function permissionCalendrierEcriture"),
+                      ui.indexOf("async function permissionCalendrierEcriture") + 700);
+  assert.ok(/scope: "writeCalendar"/.test(pc),
+    "seule l'autorisation d'écriture doit être demandée — jamais la lecture");
+
+  const ec = ui.slice(ui.indexOf("async function ecrireEvenementCalendrier"),
+                      ui.indexOf("async function ecrireEvenementCalendrier") + 1400);
+  assert.ok(/permissionCalendrierEcriture\(\)/.test(ec),
+    "l'écriture ne doit jamais être tentée sans vérifier l'autorisation d'abord");
+  assert.ok(/modifyEvent/.test(ec) && /createEvent/.test(ec),
+    "un identifiant existant doit mettre à jour l'événement, pas en créer un nouveau");
+  assert.ok(/if \(!options\.idExistant\) return null;/.test(ec),
+    "un échec de mise à jour doit retenter une création neuve, pas abandonner tout de suite");
+
+  const ev = ui.slice(ui.indexOf("async function envoyerVersAgenda"),
+                      ui.indexOf("async function envoyerVersAgenda") + 900);
+  const iCal = ev.indexOf("ecrireEvenementCalendrier");
+  const iFichier = ev.indexOf("ouvrirIcsNatif");
+  assert.ok(iCal > 0 && iFichier > 0 && iCal < iFichier,
+    "le calendrier direct doit être tenté avant le fichier .ics, pas après");
+
+  // Les deux boutons agenda doivent construire des champs, même si null pour
+  // les cas non couverts (journée entière) — sinon l'un des deux garderait
+  // l'ancien comportement (toujours le fichier) sans qu'un test ne le voie.
+  assert.ok(/champsCarteSurprise\(/.test(ui) && /champsRituelSoir\(/.test(ui),
+    "les deux points d'appel doivent tenter l'écriture directe");
+  // Le rendez-vous du soir doit réutiliser son identifiant pour éviter
+  // d'accumuler des rappels récurrents en double à chaque réglage changé.
+  assert.ok(/champs\.idExistant = regle\.eventId/.test(ui),
+    "changer le rythme ou l'heure doit mettre à jour le même événement, pas en créer un autre");
+
+  Object.keys(construireContexte().api.LANGUES).forEach(lg =>
+    ["cs.rdv_calendrier", "rituel.ok_calendrier"].forEach(cle =>
+      assert.ok(construireContexte().api.I18N[lg][cle], cle + " manquant en " + lg)));
+});
+
+test("agenda natif : permissions et dépendance déclarées côté natif", () => {
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  assert.ok((JSON.parse(fs.readFileSync(path.join(r, "package.json"), "utf8"))
+    .dependencies || {})["@ebarooni/capacitor-calendar"],
+    "le greffon de calendrier doit être une dépendance déclarée, pas un ajout manuel");
+
+  const manifest = fs.readFileSync(path.join(r, "android/app/src/main/AndroidManifest.xml"), "utf8");
+  assert.ok(/WRITE_CALENDAR/.test(manifest), "permission Android manquante");
+  assert.strictEqual(/READ_CALENDAR/.test(manifest), false,
+    "FamiTeam n'écrit qu'un rendez-vous demandé : la lecture du calendrier n'a pas lieu d'être");
+
+  const plist = fs.readFileSync(path.join(r, "ios/App/App/Info.plist"), "utf8");
+  assert.ok(/NSCalendarsWriteOnlyAccessUsageDescription/.test(plist), "clé iOS 17+ manquante");
+  assert.ok(/NSCalendarsUsageDescription/.test(plist), "repli iOS 13-16 manquant");
+  assert.strictEqual(/NSCalendarsFullAccessUsageDescription/.test(plist), false,
+    "aucune clé d'accès complet : FamiTeam ne lit jamais le calendrier");
+});
+
 test("carte surprise : les familles existantes reçoivent les champs de rendez-vous", () => {
   const { api } = construireContexte();
   const ancien = api.etatVierge();
