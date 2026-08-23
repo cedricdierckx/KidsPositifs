@@ -2303,11 +2303,18 @@ function lienDashboardSupabase() {
   } catch (e) { return "https://supabase.com/dashboard"; }
 }
 
-// Numéro de cache (`?v=NNN`) du script le plus fiable à interroger : app.js,
-// présent sur toute page qui exécute l'application elle-même, jamais sur les
-// pages publiques indépendantes chargées à part. Un numéro introuvable
-// signale un problème plus grave qu'une simple question de version.
+// Numéro de cache (`?v=NNN`) d'app.js. Capturé PENDANT l'exécution du
+// fichier lui-même (VERSION_APP_JS, app.js), pas relu ici dans le DOM : la
+// première version cherchait la balise <script> après coup, et la manquait
+// dès que l'application affichait son premier écran — initSquelette()
+// remplace document.body.innerHTML en bloc, et les balises qui vivent dans
+// <body> disparaissent avec le reste. Un numéro introuvable signale un
+// problème plus grave qu'une simple question de version.
 function versionChargeeActuelle() {
+  if (typeof VERSION_APP_JS !== "undefined" && VERSION_APP_JS) return VERSION_APP_JS;
+  // Repli, pour un contexte où app.js n'aurait pas encore posé la variable
+  // (chargement partiel, ou page qui l'inclut autrement) : on retente la
+  // recherche dans le DOM telle qu'elle existait avant.
   const scripts = document.querySelectorAll('script[src*="/js/app.js"], script[src^="js/app.js"]');
   for (const s of scripts) {
     const m = /[?&]v=([\w.-]+)/.exec(s.getAttribute("src") || "");

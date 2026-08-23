@@ -1,3 +1,19 @@
+// Numéro de cache (`?v=NNN`) de CE fichier, capturé pendant sa propre
+// exécution via `document.currentScript`. Le lire plus tard, depuis
+// ailleurs, en cherchant la balise dans le DOM (`querySelectorAll`) semblait
+// marcher — et casse dès que l'application affiche son premier écran :
+// initSquelette() remplace `document.body.innerHTML` en bloc, et les
+// balises <script> qui vivent dans <body> disparaissent avec le reste.
+// Elles ont déjà été exécutées, l'application continue de tourner, mais
+// plus rien ne les retrouve dans le DOM. Capturé ici, MAINTENANT, la valeur
+// survit à ce remplacement — un simple nombre en mémoire, pas un élément.
+var VERSION_APP_JS = (function () {
+  try {
+    var m = /[?&]v=([\w.-]+)/.exec((document.currentScript && document.currentScript.src) || "");
+    return m ? m[1] : null;
+  } catch (e) { return null; }
+})();
+
 /* =====================================================================
  * FamiTeam — Logique de l'application (jeu)
  * L'authentification, les familles et la synchronisation Supabase sont

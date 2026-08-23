@@ -4954,6 +4954,39 @@ test("parents : les cartes FamiTeam se distinguent visuellement", () => {
     "chaque carte doit afficher son numéro");
 });
 
+test("admin : le numéro de version chargée survit au premier écran affiché", () => {
+  // Le premier bug etait discret : la fonction cherchait la balise <script>
+  // d'app.js dans le DOM. Ca marchait au tout premier instant — puis
+  // initSquelette() (comme ecranAuth() et les autres ecrans) remplace
+  // document.body.innerHTML EN BLOC, et les balises <script>, qui vivent
+  // dans <body>, disparaissent avec le reste. Au moment ou un parent ouvre
+  // Admin -> Systeme, ce remplacement a deja eu lieu au moins une fois :
+  // la fonction ne trouvait plus rien et affichait "Numero de version
+  // introuvable" en permanence, dans l'app comme sur le site.
+  const { api } = construireContexte();
+  const fsx = require("fs"), pathx = require("path"), r = pathx.join(__dirname, "..");
+  const app = fsx.readFileSync(pathx.join(r, "js/app.js"), "utf8");
+  const ui = fsx.readFileSync(pathx.join(r, "js/ui.js"), "utf8");
+
+  // La valeur doit être capturée PENDANT l'exécution d'app.js lui-même
+  // (document.currentScript), pas relue plus tard dans le DOM en premier lieu.
+  assert.ok(/var VERSION_APP_JS = \(function/.test(app),
+    "app.js doit capturer sa propre version au moment où il s'exécute");
+  assert.ok(/document\.currentScript/.test(app),
+    "document.currentScript est la seule source fiable de CE script-ci, en train de s'exécuter");
+  const vc = ui.slice(ui.indexOf("function versionChargeeActuelle"),
+                      ui.indexOf("function versionChargeeActuelle") + 700);
+  assert.ok(/if \(typeof VERSION_APP_JS !== "undefined" && VERSION_APP_JS\) return VERSION_APP_JS;/.test(vc),
+    "la valeur capturée à l'exécution doit être consultée EN PREMIER");
+  // Le repli par recherche DOM doit rester, pour un contexte dégradé — mais
+  // en second choix seulement.
+  assert.ok(/document\.querySelectorAll/.test(vc));
+
+  // Traductions toujours présentes (non-régression du texte affiché).
+  Object.keys(api.LANGUES).forEach(lg =>
+    assert.ok(api.I18N[lg]["sys.version_inconnue"], "sys.version_inconnue manquant en " + lg));
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async
