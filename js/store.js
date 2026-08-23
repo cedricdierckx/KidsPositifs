@@ -101,10 +101,51 @@ const Store = (() => {
     if (!pret()) return;
     const { data, error } = await client.from("family_state")
       .select("data").eq("family_id", familleId).maybeSingle();
-    if (!error && data && data.data && data.data.enfants && (data.data.maj || 0) > (etat.maj || 0)) {
-      lierEtat(normaliser(data.data)); ecrireCache(); rendre();
-      derniereMajConnue = data.data.maj || 0;
+    if (error || !data || !data.data || !data.data.enfants) return;
+    const distant = data.data;
+    const majDistante = distant.maj || 0;
+    if (majDistante === (etat.maj || 0)) return;          // rien de neuf
+
+    // Comparer les horodatages ne suffit pas. `etat.maj` est l'heure de CET
+    // appareil, avancée à chaque geste ; deux téléphones ne sont jamais à la
+    // même seconde, et il suffit qu'une horloge avance de deux minutes pour
+    // que son porteur ne reçoive PLUS JAMAIS ce que l'autre a coché : sa
+    // version paraît toujours « plus récente », donc `tirer()` ne prenait
+    // rien. C'est exactement l'écart constaté entre l'app et le site.
+    //
+    // Quand rien n'attend d'être envoyé — notre état est celui que le
+    // serveur a déjà reçu — le serveur fait foi (ARCHITECTURE §1) et on
+    // adopte sa version, fût-elle horodatée avant la nôtre. Rien ne peut se
+    // perdre : nous n'avons, par définition, aucune modification à nous.
+    const rienEnAttente = derniereMajConnue !== null && (etat.maj || 0) === derniereMajConnue;
+    if (majDistante > (etat.maj || 0) || rienEnAttente) {
+      lierEtat(normaliser(distant)); ecrireCache(); rendre();
+      derniereMajConnue = majDistante;
     }
+    // Sinon : nous avons des modifications non envoyées ET le serveur a une
+    // autre version. On ne tranche pas ici — c'est le rôle de sauver(), qui
+    // met la version perdante à l'abri avant d'adopter l'autre.
+  }
+
+  /* ---------- Retour au premier plan ----------
+   * Android gèle la WebView d'une app en arrière-plan : les minuteurs
+   * s'arrêtent, et — plus grave — le canal temps réel meurt sans rien dire.
+   * Un canal mort ne rejoue JAMAIS les changements manqués : l'app pouvait
+   * donc rester des heures sur un écran périmé pendant que le site, lui,
+   * était à jour. On relit donc l'état ET on rouvre le canal à chaque retour.
+   * Le verrou de cinq secondes évite d'enchaîner les reconnexions quand
+   * plusieurs signaux de reprise arrivent ensemble (visibilité + focus +
+   * plugin natif, qui se déclenchent souvent coup sur coup). */
+  const REPRISE_MIN_MS = 5000;
+  let derniereReprise = 0;
+
+  async function reprendre() {
+    if (!pret()) return;
+    const maintenant = Date.now();
+    if (maintenant - derniereReprise < REPRISE_MIN_MS) return;
+    derniereReprise = maintenant;
+    await tirer();
+    abonnerRealtime();
   }
 
   function planifierSauver() {
@@ -226,6 +267,6 @@ const Store = (() => {
     if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
   }
 
-  return { init, charger, tirer, planifierSauver, annulerSauverDiffere, sauver,
+  return { init, charger, tirer, reprendre, planifierSauver, annulerSauverDiffere, sauver,
            historique, abonnerRealtime, fermerRealtime, badge, ecritureAutorisee, realtimeActif };
 })();

@@ -245,6 +245,113 @@ test("Store.sauver écrit normalement quand personne d'autre n'a modifié l'éta
   assert.strictEqual(client.appels.ecritures.length, 2, "la deuxième écriture doit partir aussi");
 });
 
+/* ---------- L'app et le site montraient deux états différents ----------
+ * Constaté sur un téléphone : l'app affichait les missions du jour cochées,
+ * le site (même famille, même enfant) les affichait vides. Deux causes
+ * distinctes, testées ici séparément. */
+test("horloges décalées : l'appareil en avance reçoit quand même ce que l'autre a coché", async () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+
+  // Cet appareil est à jour avec le serveur : rien n'attend d'être envoyé.
+  const local = api.etatVierge();
+  local.maj = 5000;                       // son horloge avance (5000)
+  api.lierEtat(local);
+  const serveur = { row: { data: JSON.parse(JSON.stringify(local)) } };
+  const client = clientFactice(serveur);
+  api.Store.init(client);
+  await api.Store.charger();
+
+  // L'autre appareil coche une mission. Son horloge, elle, retarde : il
+  // écrit 4000 — un horodatage ANTÉRIEUR, alors que son contenu est le plus
+  // récent. L'ancienne règle (« adopter seulement si maj distante > la
+  // nôtre ») ne prenait alors jamais rien : l'écart devenait permanent.
+  const autre = api.etatVierge();
+  autre.maj = 4000;
+  const idEnfant = Object.keys(autre.enfants)[0];
+  autre.enfants[idEnfant].gouttes = 7;
+  serveur.row = { data: autre };
+
+  await api.Store.tirer();
+  assert.strictEqual(api.etat.enfants[idEnfant].gouttes, 7,
+    "sans rien à envoyer, le serveur fait foi — même horodaté avant nous");
+});
+
+test("modification non envoyée : tirer() ne l'écrase pas au profit du serveur", async () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const local = api.etatVierge();
+  local.maj = 1000;
+  api.lierEtat(local);
+  const serveur = { row: { data: JSON.parse(JSON.stringify(local)) } };
+  const client = clientFactice(serveur);
+  api.Store.init(client);
+  await api.Store.charger();
+
+  // Un geste local encore non synchronisé (l'enfant vient de cocher).
+  const idEnfant = Object.keys(api.etat.enfants)[0];
+  api.etat.enfants[idEnfant].gouttes = 3;
+  api.etat.maj = 1500;
+  // Le serveur, lui, porte une version PLUS ANCIENNE que la nôtre.
+  const ancien = api.etatVierge();
+  ancien.maj = 900;
+  serveur.row = { data: ancien };
+
+  await api.Store.tirer();
+  assert.strictEqual(api.etat.enfants[idEnfant].gouttes, 3,
+    "un geste non encore envoyé ne doit jamais être effacé par une lecture");
+  assert.strictEqual(api.etat.maj, 1500, "notre version doit rester en place");
+});
+
+test("reprise : revenir au premier plan relit l'état et rouvre le canal temps réel", async () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const local = api.etatVierge();
+  local.maj = 1000;
+  api.lierEtat(local);
+  const serveur = { row: { data: JSON.parse(JSON.stringify(local)) } };
+  const client = clientFactice(serveur);
+  // Un canal temps réel gelé par la mise en veille ne rejoue rien : la
+  // reprise doit en rouvrir un, sinon l'app reste sourde indéfiniment.
+  let abonnements = 0;
+  client.channel = () => ({ on() { return this; }, subscribe() { abonnements++; return this; } });
+  client.removeChannel = () => {};
+  api.Store.init(client);
+  await api.Store.charger();
+
+  const autre = api.etatVierge();
+  autre.maj = 2000;
+  const idEnfant = Object.keys(autre.enfants)[0];
+  autre.enfants[idEnfant].coeurs = 4;
+  serveur.row = { data: autre };
+
+  await api.Store.reprendre();
+  assert.strictEqual(api.etat.enfants[idEnfant].coeurs, 4, "la reprise doit relire l'état");
+  assert.strictEqual(abonnements, 1, "la reprise doit rouvrir le canal temps réel");
+
+  // Verrou : plusieurs signaux de reprise arrivent souvent coup sur coup
+  // (visibilité, focus, plugin natif). On ne rouvre pas trois canaux.
+  await api.Store.reprendre();
+  assert.strictEqual(abonnements, 1, "deux reprises rapprochées ne font qu'une reconnexion");
+});
+
+test("reprise : l'app installée ne dépend pas du seul événement de visibilité", () => {
+  const fs = require("fs"), path = require("path");
+  const auth = fs.readFileSync(path.join(__dirname, "..", "js/auth.js"), "utf8");
+  // Android gèle la WebView : selon les versions, visibilitychange n'est pas
+  // émis au réveil. Le plugin App, lui, le dit toujours.
+  assert.ok(/addListener\("appStateChange"/.test(auth),
+    "le réveil natif doit être écouté, pas seulement la visibilité du document");
+  ["visibilitychange", "focus", "pageshow"].forEach(ev =>
+    assert.ok(new RegExp('"' + ev + '"').test(auth), "signal de reprise absent : " + ev));
+  assert.ok(/Store\.reprendre\(\)/.test(auth),
+    "le retour au premier plan doit passer par Store.reprendre (relecture + canal)");
+  // L'écouteur reçoit un Event : le passer directement à une fonction qui
+  // prendrait un drapeau « forcer » contournerait le filtre de visibilité.
+  assert.ok(/function auRetourVisible\(\) \{ if \(!document\.hidden\) auRetour\(\); \}/.test(auth),
+    "l'enveloppe de visibilité doit rester nommée et explicite");
+});
+
 test("conflit réel : la version la plus récente gagne, l'autre reste récupérable", async () => {
   // Ancien comportement : l'écriture était annulée, le repère restait faux,
   // l'appareil répétait l'avertissement à chaque geste et cessait de

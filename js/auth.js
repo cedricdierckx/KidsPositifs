@@ -391,19 +391,46 @@ async function ouvrirFamille(f) {
   rendre();
   if (typeof verifierTuto === "function") verifierTuto();   // tutoriel au 1ᵉʳ lancement
   abonnerRealtime();
-  document.removeEventListener("visibilitychange", auRetour);
-  document.addEventListener("visibilitychange", auRetour);
+  armerRepriseAuPremierPlan();
   verifierParrainages();                  // féliciter le parrain si un filleul a rejoint
   pingUsage();                            // mesure d'activité (best-effort, 1×/jour)
   declencherEnvoisAuto();                 // relances + rapport (admin, 1×/jour, si armé)
 }
+/* ---------- Retour au premier plan ----------
+ * Trois signaux plutôt qu'un : `visibilitychange` seul suffisait tant que
+ * FamiTeam n'était qu'un site, mais dans l'app installée Android gèle la
+ * WebView, et selon les versions l'événement n'est pas toujours émis au
+ * réveil. Le plugin App, lui, le dit toujours. Sans ce filet, l'app pouvait
+ * rester des heures sur un écran périmé pendant que le site était à jour —
+ * l'écart constaté entre les deux.
+ * Un seul armement par famille ouverte : les écouteurs sont retirés avant
+ * d'être reposés, et le plugin natif n'est branché qu'une fois. */
+let repriseNativeArmee = false;
+function armerRepriseAuPremierPlan() {
+  ["visibilitychange", "focus", "pageshow"].forEach(ev => {
+    (ev === "visibilitychange" ? document : window).removeEventListener(ev, auRetourVisible);
+    (ev === "visibilitychange" ? document : window).addEventListener(ev, auRetourVisible);
+  });
+  if (repriseNativeArmee) return;
+  const app = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+  if (!app || typeof app.addListener !== "function") return;
+  repriseNativeArmee = true;
+  // `document.hidden` peut encore valoir true au moment où le plugin annonce
+  // le réveil : on ne passe donc pas par le filtre de visibilité.
+  app.addListener("appStateChange", ({ isActive }) => { if (isActive) auRetour(); });
+}
+// L'écouteur reçoit un Event en argument : il ne doit surtout pas servir de
+// « forcer », d'où cette enveloppe nommée (nommée, pour rester retirable).
+function auRetourVisible() { if (!document.hidden) auRetour(); }
+
 function auRetour() {
-  if (document.hidden) return;
   // Le plafond de 6 h du minuteur (verrouillage compris) doit s'appliquer dès
   // le retour au premier plan, sans attendre un rechargement complet — sinon
   // un téléphone simplement déverrouillé après la nuit resterait bloqué.
   if (typeof verifierDelaiMaxTimer === "function" && verifierDelaiMaxTimer()) rendre();
-  tirerEtat();
+  // Relit l'état ET rouvre le canal temps réel : celui d'avant la mise en
+  // veille est mort, et un canal mort ne rejoue jamais ce qu'on a manqué.
+  Store.reprendre();
   if (typeof majDodo === "function") majDodo();
 }
 
