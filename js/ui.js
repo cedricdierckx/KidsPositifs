@@ -3635,6 +3635,16 @@ function libelleSemaine(d1, d2) {
 
 // Construit la feuille A4 (HTML autonome) et ouvre la fenêtre d'impression.
 function imprimerFeuilleSemaine(mode) {
+  // Même limite que imprimerCible() (plus haut), en pire : ici la WebView
+  // Android n'échoue pas en silence, elle ouvre l'aperçu d'impression NATIF
+  // du système sur une fenêtre que l'app n'a jamais pu créer proprement —
+  // puis reste coincée derrière, sans bouton retour, jusqu'à devoir fermer
+  // l'app de force. On refuse donc d'y entrer, avant même de construire le
+  // HTML ou d'ouvrir la fenêtre.
+  if (greffonNatif("Filesystem") || typeof window.print !== "function") {
+    if (typeof toast === "function") toast(t("papier.indispo", { hote: "fami.team" }), "info");
+    return;
+  }
   const jours = joursSemaine(semainePapierDebut);
   const lettres = t("planif.jours_courts").split(",");
   const famille = (typeof familleActive !== "undefined" && familleActive && familleActive.name) ? familleActive.name : "";

@@ -4760,6 +4760,22 @@ test("app installée : aucun bouton ne peut échouer en silence", () => {
 
   // 5. Le pont natif ne doit jamais etre suppose present : il n'existe pas sur le web.
   assert.ok(/function greffonNatif/.test(ui) && /isNativePlatform/.test(ui));
+
+  // 6. La feuille de la semaine imprime autrement (window.open + fenêtre à
+  //    part) et n'avait pas hérité du même garde-fou : dans l'app installée,
+  //    ce chemin ouvrait l'aperçu d'impression natif du système puis restait
+  //    coincé derrière, sans retour possible — pire qu'un échec silencieux.
+  const ifs = ui.slice(ui.indexOf("function imprimerFeuilleSemaine"),
+                       ui.indexOf("function imprimerFeuilleSemaine") + 700);
+  assert.ok(/greffonNatif\("Filesystem"\)/.test(ifs) && /papier\.indispo/.test(ifs),
+    "imprimerFeuilleSemaine doit refuser AVANT window.open, pas seulement échouer dedans");
+  // Le refus doit précéder toute tentative d'ouverture de fenêtre.
+  const iGarde = ifs.indexOf('greffonNatif("Filesystem")');
+  const iOuvre = ui.indexOf("window.open(", ui.indexOf("function imprimerFeuilleSemaine"));
+  assert.ok(iGarde > 0 && iOuvre > 0 && (ui.indexOf("function imprimerFeuilleSemaine") + iGarde) < iOuvre,
+    "le garde-fou doit venir avant window.open, pas après");
+  Object.keys(api.LANGUES).forEach(lg =>
+    assert.ok(api.I18N[lg]["papier.indispo"], "papier.indispo manquant en " + lg));
 });
 
 /* ---------- Exécution ----------

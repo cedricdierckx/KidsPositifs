@@ -709,6 +709,7 @@ Object.assign(I18N.nl, {
   "papier.feuille_intro": "Vink elke voltooide opdracht aan. Aan het einde van de week voert een ouder alles in de app in (een paar minuten).",
   "papier.feuille_pied": "FamiTeam · fami.team — 💛 hartjes (Gezin) · 💧 druppels (Planeet)",
   "papier.popup_bloque": "Sta pop-ups toe om het blad te genereren.",
+  "papier.indispo": "Afdrukken kan niet in de geïnstalleerde app: open {hote} in uw browser om het blad af te drukken.",
   "papier.humeur": "Mijn gedrag van de dag (omcirkel 😄 😐 😠)",
   "papier.humeur_jour": "Hoe ik me gedroeg",
   "papier.encoder_titre": "⌨️ Het weekblad invoeren",

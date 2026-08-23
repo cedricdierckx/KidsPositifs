@@ -709,6 +709,7 @@ Object.assign(I18N.en, {
   "papier.feuille_intro": "Tick each completed mission. At the end of the week, a parent enters everything into the app (a few minutes).",
   "papier.feuille_pied": "FamiTeam · fami.team — 💛 hearts (Family) · 💧 drops (Planet)",
   "papier.popup_bloque": "Allow pop-ups to generate the sheet.",
+  "papier.indispo": "Printing is not available in the installed app: open {hote} in your browser to print the sheet.",
   "papier.humeur": "My behavior each day (circle 😄 😐 😠)",
   "papier.humeur_jour": "How I behaved",
   "papier.encoder_titre": "⌨️ Enter the week's sheet",

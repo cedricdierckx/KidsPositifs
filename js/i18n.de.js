@@ -709,6 +709,7 @@ Object.assign(I18N.de, {
   "papier.feuille_intro": "Hake jede erledigte Aufgabe ab. Am Wochenende überträgt ein Elternteil alles in die App (ein paar Minuten).",
   "papier.feuille_pied": "FamiTeam · fami.team — 💛 Herzen (Familie) · 💧 Tropfen (Planet)",
   "papier.popup_bloque": "Erlaube Pop-ups, um das Blatt zu erstellen.",
+  "papier.indispo": "Drucken ist in der installierten App nicht möglich: Öffnen Sie {hote} im Browser, um das Blatt zu drucken.",
   "papier.humeur": "Mein Verhalten am Tag (kreise 😄 😐 😠 ein)",
   "papier.humeur_jour": "Wie ich mich verhalten habe",
   "papier.encoder_titre": "⌨️ Das Wochenblatt eingeben",

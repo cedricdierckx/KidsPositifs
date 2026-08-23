@@ -491,6 +491,7 @@ const I18N = {
     "papier.feuille_intro": "Cochez chaque mission accomplie. En fin de semaine, un parent reporte le tout dans l'application (quelques minutes).",
     "papier.feuille_pied": "FamiTeam · fami.team — 💛 cœurs (Famille) · 💧 gouttes (Planète)",
     "papier.popup_bloque": "Autorise les fenêtres pop-up pour générer la feuille.",
+    "papier.indispo": "L'impression n'est pas disponible dans l'application installée : ouvrez {hote} dans votre navigateur pour imprimer la feuille.",
     "papier.humeur": "Mon comportement du jour (entoure 😄 😐 😠)",
     "papier.humeur_jour": "Comment je me suis comporté",
     "papier.encoder_titre": "⌨️ Encoder la feuille de la semaine",
