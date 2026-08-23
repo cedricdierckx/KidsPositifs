@@ -9,25 +9,34 @@ d'avoir configuré ferait échouer chaque clic, pour toutes les familles.
 
 ---
 
-## Avant tout : un compte à régler
+## Vérifié : aucun compte à régler au préalable
 
-Sur vos 12 comptes, **5 sont des adresses `gmail.com`** — donc 5 parents
-susceptibles de cliquer sur le bouton. Supabase ne rattache une identité Google à
-un compte existant **que si l'adresse e-mail a déjà été confirmée**.
+J'avais d'abord signalé un risque — un parent gmail dont l'adresse n'aurait
+jamais été confirmée ne retrouverait pas sa famille en passant par Google.
+**Vérification faite, ce risque n'existe pas ici.**
 
-Or **l'un de ces 5 comptes gmail n'a jamais confirmé son adresse**. Si cette
-personne clique sur « Continuer avec Google », elle arrivera dans un compte neuf
-et vide, et croira avoir perdu ses enfants.
+Les cinq comptes `gmail.com` de la base :
 
-Deux façons de traiter cela, au choix :
+| Adresse | État | Familles |
+|---|---|---|
+| cedric.dierckx@gmail.com | confirmé | 1 |
+| cedric.dierckx.pro@gmail.com | confirmé | 1 |
+| cedricetanouchka@gmail.com | confirmé | 1 |
+| cedric.dierckx.bvba@gmail.com | **non confirmé** | **0**, jamais connecté |
+| damienvw@gmail.com | confirmé | 1 |
 
-- lui demander de cliquer le lien de confirmation resté dans sa boîte (ou lui en
-  renvoyer un) **avant** d'allumer l'interrupteur ;
-- ou confirmer l'adresse depuis le tableau de bord Supabase → Authentication →
-  Users.
+Le seul compte non confirmé est un compte de l'éditeur, jamais utilisé et sans
+aucune famille : le rattacher ou non ne change rien, il est vide dans les deux
+cas. Tous les comptes portant réellement une famille sont confirmés, donc
+Supabase les rattachera.
 
-Le garde-fou décrit plus bas rattrape le cas si rien n'est fait, mais il vaut
-mieux ne pas avoir à s'en servir.
+**Rien à faire avant d'allumer.**
+
+*(À nettoyer un jour, sans rapport avec Google : deux comptes fantômes de
+l'éditeur — `cedric.dierckx.bvba@gmail.com` et `cedric.dierckx@belnot.be` —
+jamais connectés, sans famille. Ils gonflent le total de 12 comptes alors que
+10 seulement sont réels : sur d'aussi petits nombres, cela fausse la lecture
+de la traction.)*
 
 ---
 
