@@ -87,13 +87,36 @@ Puis dans **Android Studio** (ouvrir le dossier `android/`) :
 1. *File → Sync Project with Gradle Files* — obligatoire après un
    `npm install` qui ajoute un greffon : sans cela, Gradle compile l'ancienne
    liste de dépendances et le greffon manque à l'exécution.
-2. Téléphone branché en USB, **débogage USB** activé, puis *Run* (▶).
-   L'app s'installe par-dessus l'ancienne : les données sont conservées.
+2. Téléphone connecté (câble **ou** sans fil, voir ci-dessous), puis
+   *Run* (▶) — le téléphone apparaît dans la liste des appareils, en haut de
+   la fenêtre. L'app s'installe par-dessus l'ancienne : les données sont
+   conservées.
 
-Sans Android Studio ouvert, la même chose en ligne de commande :
+### Débogage sans fil (une seule fois par réseau Wi-Fi)
+
+Le téléphone et l'ordinateur doivent être sur le **même réseau Wi-Fi**.
+
+Sur le téléphone : *Paramètres → Options pour les développeurs* (si absent,
+*À propos du téléphone* → taper 7 fois sur *Numéro de build*) →
+**Débogage sans fil** → l'activer → *Associer l'appareil avec un code QR*
+(ou *Associer avec un code d'appairage*, selon les modèles).
+
+Dans Android Studio : bandeau supérieur → menu des appareils → **Pair Devices
+Using Wi-Fi** → scanner le QR code affiché sur le téléphone avec l'appareil
+photo qu'Android Studio ouvre à l'écran. L'appairage ne se refait plus tant
+que les deux restent sur le même réseau ; changer de Wi-Fi (ou redémarrer le
+téléphone) demande parfois de le refaire.
+
+Une fois apparié, le téléphone reste visible dans la liste des appareils de
+Run — plus besoin du câble, y compris pour les builds suivants.
+
+Sans Android Studio ouvert, la même chose en ligne de commande — une fois
+l'appairage ci-dessus déjà fait :
 
 ```
-cd android && ./gradlew installDebug     # téléphone branché, débogage USB actif
+adb pair 192.168.1.XX:XXXXX          # adresse + code affichés sur le téléphone
+adb connect 192.168.1.XX:XXXXX       # adresse affichée sous "Débogage sans fil"
+cd android && ./gradlew installDebug
 ```
 
 Pour un APK à transférer à la main (sans câble) :
@@ -110,7 +133,8 @@ Pour un APK à transférer à la main (sans câble) :
   envois avec le même `versionCode`** : l'incrémenter (et faire suivre
   `versionName`) fait partie de chaque publication ;
 - vider le cache de la WebView n'est pas nécessaire : les fichiers sont
-  versionnés (`?v=147`), un nouveau build sert donc bien le nouveau code.
+  versionnés (`?v=NNN`, incrémenté à chaque changement), un nouveau build
+  sert donc bien le nouveau code.
 
 ## 3. Comment relancer la synchro après une modification du site
 
