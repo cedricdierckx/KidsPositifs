@@ -7028,23 +7028,29 @@ function vueReglages(c) {
   }
 
   // ----- Bandeau mode parents actif -----
-  // Ce bandeau annonce un ÉTAT et offre deux gestes rares : il n'a pas à
-  // occuper quatre lignes en haut de chaque écran parent. Le titre, l'état et
-  // la sortie tiennent sur une ligne ; le libellé de langue passe à côté des
-  // drapeaux au lieu de s'offrir la sienne.
+  // Ce bandeau annonce un ÉTAT et offre des réglages rares : il n'a pas à
+  // occuper quatre lignes en haut de chaque écran parent. Le titre et la
+  // sortie tiennent sur UNE ligne à eux deux ; Standard/Expert et la langue
+  // ont chacun la leur, dessous — trois éléments sur la ligne du titre
+  // (le libellé, le sélecteur Standard/Expert, ET Quitter) se disputaient la
+  // largeur et rejetaient Quitter, seul, sur une ligne à moitié vide dès que
+  // l'écran resserrait un peu : exactement ce qui donnait un air de brouillon.
   const banniere = el("section", "carte par-banniere");
   const entete = el("div", "par-entete");
   // Plus de pastille « activé » : le parent est sur l'écran parent, avec un
   // bouton « Quitter » juste à côté — elle ne disait rien de neuf, et c'est
   // elle qui empêchait le titre et la sortie de tenir sur une seule ligne.
   entete.innerHTML = `<h1>${t("par.actif.titre")}</h1>`;
-  // Toggle Standard/Expert juste à côté du titre : plus de carte séparée,
-  // le réglage le plus consulté de l'espace parents tient sur cette ligne.
-  entete.appendChild(toggleModeParents());
   const bq = el("button", "btn-secondaire", t("par.actif.quitter"));
   bq.onclick = quitterModeParents;
   entete.appendChild(bq);
   banniere.appendChild(entete);
+  // Standard/Expert sur sa propre ligne : le réglage le plus consulté de
+  // l'espace parents, mais un réglage tout de même — pas un geste d'identité
+  // ou de sortie, il n'a pas à se disputer leur ligne.
+  const blocMode = el("div", "mode-bloc");
+  blocMode.appendChild(toggleModeParents());
+  banniere.appendChild(blocMode);
   // Sélecteur de langue « fun » : boutons drapeaux (plutôt qu'une liste).
   const blocLang = el("div", "langue-bloc");
   blocLang.innerHTML = `<span class="langue-titre">🌐 ${t("langue")}</span>`;
