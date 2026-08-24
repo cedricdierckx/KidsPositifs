@@ -1047,6 +1047,7 @@ const I18N = {
     "notif.titre": "🔔 Rappel du soir",
     "notif.intro": "FamiTeam peut vous envoyer un petit rappel chaque soir, à l'heure que vous choisissez. Un seul message calme par jour — jamais de son insistant, jamais de badge.",
     "notif.activer": "Activer le rappel",
+    "notif.appliquer": "🔔 Activer",
     "notif.heure": "À quelle heure ?",
     "notif.resume": "Activé à {h}",
     "notif.jamais": "Désactivé",

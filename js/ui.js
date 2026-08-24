@@ -815,8 +815,8 @@ function chargerLibsImpression() {
     // Les deux fois : un échec ne doit pas laisser la promesse « grillée »
     // en mémoire pour le reste de la session — retenter doit rester possible.
     _libsImpressionPromesse = Promise.all([
-      chargerScript("js/vendor/html2canvas.js?v=158"),
-      chargerScript("js/vendor/jspdf.js?v=158")
+      chargerScript("js/vendor/html2canvas.js?v=159"),
+      chargerScript("js/vendor/jspdf.js?v=159")
     ]).catch(e => { _libsImpressionPromesse = null; throw e; });
   }
   return _libsImpressionPromesse;
@@ -986,19 +986,20 @@ async function envoyerVersAgenda(champsCalendrier, ics, nomFichier, titre) {
  * ne dépendait que de l'agenda du parent (ci-dessus), ou de sa mémoire.
  * Trop de familles n'y pensaient tout simplement jamais.
  *
- * FamiTeam envoie donc désormais UN rappel, une fois par jour, à une heure
- * choisie par le parent — activé par défaut, désactivable en un geste. Ce
- * n'est ni une boucle addictive ni un score : pas de son insistant, pas de
- * badge qui donne envie de rouvrir l'app, un seul message calme par jour.
- * L'esprit du repère neurologique (éviter la sollicitation permanente) est
- * tenu ; sa lettre (aucune notification, jamais) ne l'est plus. */
+ * FamiTeam propose donc désormais UN rappel, une fois par jour, à l'heure
+ * conseillée — un bouton suffit à l'activer, aussi facilement qu'à l'éteindre
+ * ensuite. Ce n'est ni une boucle addictive ni un score : pas de son
+ * insistant, pas de badge qui donne envie de rouvrir l'app, un seul message
+ * calme par jour. L'esprit du repère neurologique (éviter la sollicitation
+ * permanente) est tenu ; sa lettre (aucune notification, jamais) ne l'est
+ * plus. */
 let _notifSoirSyncFaite = false;   // voir vueReglages : jamais avant le déverrouillage parent
 const NOTIF_SOIR_ID = 4171;        // identifiant stable : reprogrammer réutilise le même, sans doublon
 
 function notifReglage() {
   const r = etat.reglages && etat.reglages.notifSoir;
   if (r && typeof r.active === "boolean" && heureValide(r.heure)) return r;
-  return { active: true, heure: heureRituelConseillee() };   // défaut : activé, à l'heure conseillée
+  return null;   // rien de choisi encore : voir blocNotificationSoir pour l'état recommandé affiché
 }
 
 async function permissionNotification() {
@@ -1042,30 +1043,56 @@ async function programmerNotificationSoir(heure) {
   } catch (e) { return false; }
 }
 
-// Applique le réglage courant au système : programme ou annule. Appelée à
-// chaque changement explicite ET une fois par session (voir vueReglages) pour
-// rattraper un réglage déjà enregistré — nouvel appareil, permission
-// entre-temps révoquée dans les réglages du téléphone, etc.
-async function synchroniserNotificationSoir() {
+// Applique le réglage courant au système. `interactif` distingue deux
+// contextes bien différents :
+//  - true  : le parent vient d'appuyer sur le bouton de la carte — un geste
+//            explicite et isolé, où une éventuelle boîte de dialogue système
+//            (permission) est attendue et sans risque d'interférer avec un
+//            autre bouton.
+//  - false : appel passif au chargement de l'écran (voir vueReglages), pour
+//            rattraper un réglage déjà enregistré — permission entre-temps
+//            révoquée dans les réglages du téléphone, app mise à jour, etc.
+//            AUCUNE boîte de dialogue système n'y est jamais déclenchée : un
+//            parent a rapporté qu'une notification système apparue à ce
+//            moment avait fait basculer, par un appui qui ne lui était pas
+//            destiné, le bouton d'agenda voisin. On se contente donc ici de
+//            reprogrammer si la permission est déjà acquise, sans jamais la
+//            redemander.
+async function synchroniserNotificationSoir(interactif) {
   const notif = greffonNatif("LocalNotifications");
   if (!notif) return false;
   const r = notifReglage();
+  if (!r) return false;   // rien de choisi : on n'agit pas tant que le parent n'a pas tranché
   if (!r.active) { await annulerNotificationSoir(); return true; }
+  if (!interactif) {
+    try {
+      const deja = await notif.checkPermissions();
+      if (!(deja && deja.display === "granted")) return false;
+    } catch (e) { return false; }
+    return await programmerNotificationSoir(r.heure);
+  }
   if (!(await permissionNotification())) return false;
   return await programmerNotificationSoir(r.heure);
 }
 
+// La permission système ne doit apparaître qu'en réponse à un appui explicite
+// et isolé sur LE bouton de cette carte — jamais en silence à l'ouverture de
+// l'écran (voir synchroniserNotificationSoir). Le réglage « recommandé » est
+// donc pré-rempli et la case pré-cochée, mais rien ne se programme tant que
+// le parent n'a pas lui-même appuyé sur « Activer » : même geste que la
+// carte agenda ci-dessous, jamais d'action automatique au premier rendu.
 function blocNotificationSoir() {
   const r = notifReglage();
+  const choix = r || { active: true, heure: heureRituelConseillee() };
   const sec = el("section", "carte notif-soir");
-  const etatTxt = r.active ? t("notif.resume", { h: r.heure }) : t("notif.jamais");
+  const etatTxt = (r && r.active) ? t("notif.resume", { h: r.heure }) : t("notif.jamais");
   sec.innerHTML = `<h2>${t("notif.titre")}<span class="rituel-etat">${echapper(etatTxt)}</span></h2>
     <p class="note">${t("notif.intro")}</p>`;
 
   const lActive = el("label", "switch-ligne");
   const caseActive = el("input");
   caseActive.type = "checkbox";
-  caseActive.checked = r.active;
+  caseActive.checked = choix.active;
   lActive.appendChild(caseActive);
   lActive.appendChild(el("span", null, t("notif.activer")));
   sec.appendChild(lActive);
@@ -1074,25 +1101,23 @@ function blocNotificationSoir() {
   const lH = el("label", "champ", t("notif.heure"));
   const inpH = el("input");
   inpH.type = "time";
-  inpH.value = r.heure;
-  inpH.disabled = !r.active;
+  inpH.value = choix.heure;
   lH.appendChild(inpH);
   grille.appendChild(lH);
   sec.appendChild(grille);
 
-  const appliquer = async () => {
+  const b = el("button", "gros-bouton planete", t("notif.appliquer"));
+  b.onclick = async () => {
     const active = caseActive.checked, heure = inpH.value;
-    inpH.disabled = !active;
     if (active && !heureValide(heure)) { toast(t("rituel.echec"), "info"); return; }
     if (!etat.reglages) etat.reglages = {};
     etat.reglages.notifSoir = { active, heure };
     sauver();
-    const ok = await synchroniserNotificationSoir();
+    const ok = await synchroniserNotificationSoir(true);   // interactif : le parent vient d'appuyer ici même
     toast(!active ? t("notif.off") : ok ? t("notif.ok") : t("notif.refuse"), ok || !active ? "ok" : "info");
     majSansSaut(rendre);
   };
-  caseActive.onchange = appliquer;
-  inpH.onchange = appliquer;
+  sec.appendChild(b);
 
   sec.appendChild(el("p", "note", t("notif.note")));
   return sec;
@@ -6776,13 +6801,15 @@ function vueReglages(c) {
     return;
   }
 
-  // Rappel du soir (notification) : activé par défaut, on rattrape le réglage
-  // auprès du système une seule fois par session — jamais avant que le parent
-  // ait déverrouillé cet espace, pour ne jamais faire surgir une demande de
-  // permission pendant qu'un enfant tient l'appareil.
+  // Rappel du soir (notification) : on rattrape le réglage déjà choisi
+  // auprès du système une seule fois par session — jamais avant que le
+  // parent ait déverrouillé cet espace, ET jamais de façon interactive ici
+  // (voir synchroniserNotificationSoir) : aucune demande de permission ne
+  // doit pouvoir surgir pendant qu'un enfant tient l'appareil, ni pendant
+  // que ce même écran affiche d'autres boutons à portée de doigt.
   if (!_notifSoirSyncFaite) {
     _notifSoirSyncFaite = true;
-    synchroniserNotificationSoir();
+    synchroniserNotificationSoir(false);
   }
 
   // ----- Bandeau mode parents actif -----
@@ -6860,8 +6887,9 @@ function vueReglages(c) {
     if (bm) c.appendChild(bm);
     const j7 = blocArbreSeptiemeJour();
     if (j7) c.appendChild(j7);
-    // Repliée : activée par défaut, rien n'y réclame l'attention du parent.
-    c.appendChild(carteRepliable(blocNotificationSoir(), "notif", false));
+    // Ouverte tant que rien n'est choisi, repliée ensuite — même logique que
+    // la carte agenda juste en dessous.
+    c.appendChild(carteRepliable(blocNotificationSoir(), "notif", !notifReglage()));
     // Ouvert tant que rien n'est réglé, replié ensuite : la carte se fait
     // discrète pour celui qui a déjà répondu, et reste visible pour l'autre.
     c.appendChild(carteRepliable(blocRituelSoir(), "rituel", !rituelReglage()));
@@ -6888,8 +6916,8 @@ function vueReglages(c) {
     // ----- Défis réparation ("Oups, ça arrive…") : accès rapide -----
     c.appendChild(blocReparation());
 
-    // ----- Rappel du soir (notification, activée par défaut) -----
-    c.appendChild(carteRepliable(blocNotificationSoir(), "notif", false));
+    // ----- Rappel du soir (notification) -----
+    c.appendChild(carteRepliable(blocNotificationSoir(), "notif", !notifReglage()));
 
     // ----- Le rendez-vous du soir (rappel par l'agenda du parent) -----
     c.appendChild(carteRepliable(blocRituelSoir(), "rituel", !rituelReglage()));
