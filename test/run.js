@@ -3242,18 +3242,26 @@ test("parents : les cartes longues sont repliables et retiennent leur état", ()
   // Le <h2> est déplacé dans le <summary> : le titre reste un titre.
   assert.ok(/som\.appendChild\(titre\)/.test(ui), "la sémantique de titre doit être conservée");
   [["blocSelectionGroupee\\(\\)", "selection"], ["blocTournantes\\(\\)", "tournantes"],
-   ["blocMissionsDuJour\\(enfantActif\\(\\)\\)", "missions"],
    ["blocCorrections\\(enfantActif\\(\\)\\)", "corrections"],
    ["blocJournalActions\\(\\)", "journal"]].forEach(([bloc, cle]) => {
     assert.ok(new RegExp(`carteRepliable\\(${bloc}, "${cle}"`).test(ui),
       "carte longue non repliée : " + cle);
   });
+  // « Missions proposées » : un pli PAR ENFANT, pas un seul pour toute la
+  // famille — passer de l'aîné au cadet ne doit pas hériter du pli laissé
+  // par l'autre. La clé porte donc l'id de l'enfant actif, jamais un
+  // littéral fixe.
+  assert.strictEqual(
+    (ui.match(/carteRepliable\(blocMissionsDuJour\(enfantActif\(\)\), "missions-" \+ enfantActif\(\)\.id, false\)/g) || []).length,
+    2, "carte Missions proposées non repliée par enfant, dans les deux modes parents");
   // Chaque clé de pli doit être unique, sinon deux cartes partagent leur état.
   // Exception : une carte présente dans les DEUX branches de mode (simplifié
   // et expert) apparaît deux fois dans la source alors qu'une seule est
   // rendue. Partager la clé est alors voulu — la préférence du parent
   // survit au changement de mode. Toute autre répétition est un défaut.
-  const DEUX_MODES = ["missions", "journal", "rituel", "compliment", "attente", "bonmoment", "septiemejour", "notif"];
+  // (« missions » ne figure plus ici : sa clé n'est plus un littéral fixe,
+  // vérifiée séparément juste au-dessus.)
+  const DEUX_MODES = ["journal", "rituel", "compliment", "attente", "bonmoment", "septiemejour", "notif"];
   const cles = (ui.match(/carteRepliable\([^,]+, "([a-z]+)"/g) || [])
     .map(m => /"([a-z]+)"$/.exec(m)[1]);
   const doublons = cles.filter((c, i) => cles.indexOf(c) !== i && DEUX_MODES.indexOf(c) < 0);

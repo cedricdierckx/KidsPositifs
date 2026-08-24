@@ -1089,7 +1089,16 @@ function initSquelette() {
 
   // Navigation : choix d'affichage local (non synchronisé entre appareils).
   document.querySelectorAll(".nav-btn").forEach(b =>
-    b.addEventListener("click", () => { etat.vue = b.dataset.vue; ecrireCache(); rendre(); }));
+    b.addEventListener("click", () => {
+      etat.vue = b.dataset.vue;
+      // L'espace parents s'ouvre toujours sur « Aujourd'hui » : sans ce
+      // réinitialisation, revenir sur cet onglet (sans repasser par le
+      // cadenas — le mode parents restait déverrouillé le temps de la
+      // session) laissait le sous-menu sur le dernier onglet consulté,
+      // parfois loin à droite dans la barre défilante.
+      if (b.dataset.vue === "reglages" && typeof ongletParent !== "undefined") ongletParent = "quotidien";
+      ecrireCache(); rendre();
+    }));
 
   // Pastille « inviter une autre famille » (parrainage rapide).
   const pInv = document.getElementById("pastille-inviter");
@@ -4147,6 +4156,11 @@ function htmlFeuilleSemaine(mode) {
         }
       });
     });
+    // Répétée sur chaque page où la carte se poursuit (voir <thead> plus
+    // bas) : sans elle, une liste assez longue pour déborder sur une
+    // deuxième page y perdait le nom de l'enfant ET l'en-tête des jours —
+    // rien ne disait alors à qui appartenait la suite du tableau.
+    const nomRepete = `<tr class="cat nom-repete"><th colspan="${mode === "jours" ? 8 : 2}">${vignetteEnfant(enf, "mini")} ${echapper(enf.prenom)}</th></tr>`;
     const entete = (mode === "jours")
       ? `<tr class="head"><th></th>${lettres.map(l => `<th>${l}</th>`).join("")}</tr>`
       : `<tr class="head"><th></th><th>${t("papier.total")}</th></tr>`;
@@ -4167,7 +4181,7 @@ function htmlFeuilleSemaine(mode) {
     const tG = gouttesSem ? `<strong>${gouttesSem}</strong>` : `<span class="trait"></span>`;
     return `<div class="enfant enf-${k}" style="--c:${coul}">
         <h3>${vignetteEnfant(enf, "mini")} ${echapper(enf.prenom)} <span class="stars">★ ★ ★</span></h3>
-        <table>${entete}${lignes}</table>
+        <table><thead>${nomRepete}${entete}</thead><tbody>${lignes}</tbody></table>
         ${humeur}
         <div class="totaux">💛 ${t("money.coeurs")} : ${tC}&nbsp;&nbsp; 💧 ${t("money.gouttes")} : ${tG}</div>
       </div>`;
@@ -4228,7 +4242,8 @@ function htmlFeuilleSemaine(mode) {
       table{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
       th,td{border:1px solid #e0e6ec;padding:3px 4px;text-align:center}
       td.m{text-align:left;font-size:10.5px;line-height:1.2} td.m small{color:#9aa7b3}
-      tr.cat td{background:var(--c);color:#fff;text-align:left;font-weight:800;font-size:10.5px;border-color:var(--c)}
+      tr.cat td,tr.cat th{background:var(--c);color:#fff;text-align:left;font-weight:800;font-size:10.5px;border-color:var(--c)}
+      tr.nom-repete th{font-size:12px}
       tr.head th{background:#f3f6fa;font-size:10px;width:23px;font-weight:800}
       td.c{width:23px;height:19px;color:#cfd8e0;font-size:12px} td.c.large{width:62px;color:#fff}
       td.c.hors{background:repeating-linear-gradient(45deg,#f4f4f4,#f4f4f4 3px,#eaeaea 3px,#eaeaea 6px);color:#c8c8c8}
@@ -6534,10 +6549,15 @@ function missionsChoisies() {
   return Object.values(etat.enfants).some(e => planEffectif(e, aujourdHui()) !== null);
 }
 // Une mission a-t-elle déjà été validée aujourd'hui (la boucle tourne) ?
+// Une mission a-t-elle DÉJÀ été validée un jour, n'importe lequel — pas
+// seulement aujourd'hui. Ce pas de « Premiers pas » atteste que le geste du
+// soir a déjà eu lieu au moins une fois : comme les deux précédents (profils
+// renseignés, missions choisies), une fois vrai ça le reste, et la carte
+// entière peut disparaître pour de bon plutôt que de ressurgir chaque
+// matin tant que rien n'a encore été coché ce jour-là.
 function journeeEntamee() {
-  const auj = aujourdHui();
   return Object.values(etat.enfants).some(e =>
-    e.journal && e.journal[auj] && Object.keys(e.journal[auj]).length > 0);
+    e.journal && Object.values(e.journal).some(jour => Object.keys(jour || {}).length > 0));
 }
 
 function blocPremiersPas() {
@@ -6575,7 +6595,10 @@ function blocPremiersPas() {
       li.querySelector(".pp-corps").appendChild(b);
     } else if (!e.fait && e.sortir) {
       const b = el("button", "mini-btn", e.bouton);
-      b.onclick = () => quitterModeParents();
+      // quitterModeParents() seul ne fait que reverrouiller l'espace parents
+      // — sur l'onglet Réglages, l'écran suivant restait celui du cadenas,
+      // pas l'accueil de l'enfant que ce bouton promet.
+      b.onclick = () => { etat.vue = "accueil"; quitterModeParents(); };
       li.querySelector(".pp-corps").appendChild(b);
     }
     liste.appendChild(li);
@@ -6987,7 +7010,6 @@ function vueReglages(c) {
   bq.onclick = quitterModeParents;
   entete.appendChild(bq);
   banniere.appendChild(entete);
-  banniere.appendChild(el("p", "note mode-aide", t(exp ? "mode.aide_expert" : "mode.aide_standard")));
   // Sélecteur de langue « fun » : boutons drapeaux (plutôt qu'une liste).
   const blocLang = el("div", "langue-bloc");
   blocLang.innerHTML = `<span class="langue-titre">🌐 ${t("langue")}</span>`;
@@ -7060,7 +7082,11 @@ function vueReglages(c) {
     // Ouvert tant que rien n'est réglé, replié ensuite : la carte se fait
     // discrète pour celui qui a déjà répondu, et reste visible pour l'autre.
     c.appendChild(carteRepliable(blocRituelSoir(), "rituel", !rituelReglage()));
-    c.appendChild(carteRepliable(blocMissionsDuJour(enfantActif()), "missions", false));
+    // Pli par enfant : le sélecteur d'enfants ne fait pas partie de l'onglet
+    // Aujourd'hui, mais reste accessible en permanence tout en haut de
+    // l'écran — passer de Maria à Jojo ne doit donc pas hériter du pli que
+    // Maria avait choisi.
+    c.appendChild(carteRepliable(blocMissionsDuJour(enfantActif()), "missions-" + enfantActif().id, false));
     c.appendChild(carteRepliable(blocJournalActions(), "journal", false));
   } else {
     // ----- Compliment du jour : un mot d'encouragement concret à dire à
@@ -7099,7 +7125,11 @@ function vueReglages(c) {
     c.appendChild(carteRepliable(blocTournantes(), "tournantes", false));
 
     // ----- Missions du jour (sélection par les parents) -----
-    c.appendChild(carteRepliable(blocMissionsDuJour(enfantActif()), "missions", false));
+    // Pli par enfant : le sélecteur d'enfants ne fait pas partie de l'onglet
+    // Aujourd'hui, mais reste accessible en permanence tout en haut de
+    // l'écran — passer de Maria à Jojo ne doit donc pas hériter du pli que
+    // Maria avait choisi.
+    c.appendChild(carteRepliable(blocMissionsDuJour(enfantActif()), "missions-" + enfantActif().id, false));
 
     // ----- Corrections fines (ajustements/badges) -----
     c.appendChild(carteRepliable(blocCorrections(enfantActif()), "corrections", false));

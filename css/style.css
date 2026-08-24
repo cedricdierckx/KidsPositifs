@@ -317,7 +317,6 @@ main{max-width:680px; margin:0 auto; padding:14px}
    carte séparée à chercher dans Réglages. */
 .mode-toggle-mini{margin:0; flex:0 0 auto}
 .mode-toggle-mini .seg{flex:0 0 auto; padding:6px 10px; font-size:13px}
-.mode-aide{margin:2px 0 0}
 
 /* Tournantes de tâches */
 .rot-item{position:relative;border:2px solid #e9eef4;border-radius:14px;padding:12px 44px 12px 12px;margin-bottom:10px}
