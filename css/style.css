@@ -1066,8 +1066,8 @@ main{max-width:680px; margin:0 auto; padding:14px}
 @keyframes eco-vol{
   0%{transform:translateX(0) translateY(0) scale(1,1)}
   20%{transform:translateX(34vw) translateY(-14px) scale(1.1,.9)}
-  50%{transform:translateX(72vw) translateY(8px) scale(.95,1.05) scaleX(-1)}
-  80%{transform:translateX(34vw) translateY(-10px) scale(1.1,.9) scaleX(-1)}
+  50%{transform:translateX(72vw) translateY(8px) scale(.95,1.05)}
+  80%{transform:translateX(34vw) translateY(-10px) scale(1.1,.9)}
   100%{transform:translateX(0) translateY(0) scale(1,1)}}
 
 /* Sol : le décor change selon le niveau */
@@ -1108,15 +1108,16 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .ecomonde-plus{font-size:14px!important; font-weight:800; line-height:1;
   color:#fff; background:rgba(0,0,0,.45); border-radius:8px; padding:2px 6px;
   vertical-align:middle; filter:none!important}
-/* Déplacement au sol : va-et-vient, l'animal se retourne dans le sens de la
-   marche (flip instantané aux points de demi-tour). */
+/* Déplacement au sol : un simple va-et-vient, sans retournement. Un
+   retournement suppose une orientation de départ (l'animal « fait face à
+   gauche » par défaut) qui n'est vraie que sur certaines polices d'émoji —
+   sur d'autres (Samsung notamment), le dessin de base fait déjà face à
+   droite, et le flip envoyait alors l'animal à l'envers de sa marche. Sans
+   flip, aucune police ne peut se tromper de sens. */
 @keyframes eco-marche{
-  0%{transform:translateX(0) scaleX(-1)}
-  25%{transform:translateX(28px) scaleX(-1)}
-  25.01%{transform:translateX(28px) scaleX(1)}
-  75%{transform:translateX(-24px) scaleX(1)}
-  75.01%{transform:translateX(-24px) scaleX(-1)}
-  100%{transform:translateX(0) scaleX(-1)}}
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(28px)}
+  75%{transform:translateX(-24px)}}
 @keyframes eco-saut{
   0%,100%{transform:translateY(0) scale(1,1)}
   10%{transform:translateY(0) scale(1.14,.84)}     /* anticipation : on s'écrase */

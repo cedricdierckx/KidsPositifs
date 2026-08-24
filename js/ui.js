@@ -3676,6 +3676,46 @@ function repeterEmoji(n, emoji, cap) {
   return s || "·";
 }
 
+/* ---------- Repli pour les emoji non pris en charge (case vide / tofu) ----------
+ * Certains emoji récents (ex. 🪥 la brosse à dents, Unicode 13.0) ne sont pas
+ * encore dessinés par toutes les polices système — Windows non mis à jour,
+ * vieil Android — et s'affichent comme une case vide. Détection : on compare
+ * le rendu réel du caractère, sur un <canvas> hors écran, à celui d'un
+ * caractère de la zone d'usage privé Unicode — qui n'est JAMAIS un vrai
+ * emoji et échoue donc toujours. Deux rendus identiques = l'emoji testé
+ * n'est pas mieux traité que ce caractère bidon, donc pas fiable. Résultat
+ * mis en cache (le test ne se refait jamais deux fois pour un même
+ * caractère). Absence de <canvas> (tests Node, contexte restreint) : on
+ * suppose l'emoji correct plutôt que de risquer un faux repli. */
+const _emojiSupporteCache = {};
+function emojiSupporte(emoji) {
+  if (emoji in _emojiSupporteCache) return _emojiSupporteCache[emoji];
+  let ok = true;
+  try {
+    if (typeof document === "undefined" || !document.createElement) return (_emojiSupporteCache[emoji] = true);
+    const cv = document.createElement("canvas");
+    cv.width = 28; cv.height = 28;
+    const ctx = cv.getContext("2d");
+    if (!ctx || !ctx.fillText) return (_emojiSupporteCache[emoji] = true);
+    ctx.textBaseline = "top";
+    ctx.font = "22px sans-serif";
+    const dessiner = (txt) => {
+      ctx.clearRect(0, 0, 28, 28);
+      ctx.fillText(txt, 0, 0);
+      return ctx.getImageData(0, 0, 28, 28).data;
+    };
+    const rendu = dessiner(emoji);
+    const inconnu = dessiner(""); // zone d'usage privé : jamais un vrai emoji
+    ok = rendu.some((v, i) => v !== inconnu[i]);
+  } catch (e) { ok = true; }
+  return (_emojiSupporteCache[emoji] = ok);
+}
+// Emoji à afficher pour `principal`, avec un repli sûr (jamais de case vide)
+// si le système ne sait pas le dessiner.
+function emojiOuRepli(principal, repli) {
+  return emojiSupporte(principal) ? principal : (repli || "⭐");
+}
+
 // Récompense d'une mission : chiffre pour les grands, emojis pour les petits
 // (ex. +2 💛 → 💛💛). Plafonné pour rester lisible.
 function pointsVisuels(points, emoji, jeune) {
@@ -4408,7 +4448,7 @@ function grilleMissions(catId) {
     const recompense = pointsVisuels(pointsMission(enf, m), cat.monnaieEmoji, jeune);
     carte.innerHTML = `
       ${rotM ? `<span class="m-tour" aria-label="${t("rot.badge")}">🔁</span>` : ""}
-      <span class="m-emoji">${m.emoji}</span>
+      <span class="m-emoji">${emojiOuRepli(m.emoji, m.emojiRepli)}</span>
       <span class="m-titre">${titreMission(m)}</span>
       <span class="m-points">${fait ? "✅" : (enAttente ? "⏳" : recompense)}</span>`;
     // En révision (parent) : un tap (dé)valide directement pour le jour affiché.
@@ -5254,7 +5294,7 @@ function blocReparation() {
   DEFIS_REPARATION.forEach(d => {
     const actif = reparationActive(enf, d.id);
     const b = el("button", "mission rep" + (actif ? " fait" : ""));
-    b.innerHTML = `<span class="m-emoji">${d.emoji}</span>
+    b.innerHTML = `<span class="m-emoji">${emojiOuRepli(d.emoji, d.emojiRepli)}</span>
       <span class="m-titre">${trData("defi", d.id, d.titre)}</span>
       <span class="m-points">${actif ? "✅" : pointsVisuels(d.bonus, "💛", jeune)}</span>`;
     b.onclick = () => defiReparation(d);
@@ -5306,7 +5346,7 @@ function modaleReparation() {
   DEFIS_REPARATION.forEach(d => {
     const actif = reparationActive(enf, d.id);
     const b = el("button", "mission rep" + (actif ? " fait" : ""));
-    b.innerHTML = `<span class="m-emoji">${d.emoji}</span>
+    b.innerHTML = `<span class="m-emoji">${emojiOuRepli(d.emoji, d.emojiRepli)}</span>
       <span class="m-titre">${trData("defi", d.id, d.titre)}</span>
       <span class="m-points">${actif ? "✅" : pointsVisuels(d.bonus, "💛", jeune)}</span>`;
     b.onclick = () => { defiReparation(d); fermer(); };
@@ -5377,7 +5417,7 @@ function sceneVivante(enf) {
         : (tier.id === "plantes" ? plantes                         // immobile au sol
         : animaux);                                                // se déplace au sol
       const affiches = Math.min(n, CAP_SCENE);
-      for (let k = 0; k < affiches; k++) cible.push(sp.emoji);
+      for (let k = 0; k < affiches; k++) cible.push(emojiOuRepli(sp.emoji, sp.emojiRepli));
       if (n > CAP_SCENE) {
         const nom = trData("espece", sp.id, sp.nom);
         cible.push(`<span class="ecomonde-plus" title="${echapper(nom)} : ${n}">+${n - CAP_SCENE}</span>`);
@@ -5420,7 +5460,7 @@ function renduSceneEco(enf) {
     t.especes.forEach(sp => {
       const n = (enf.ecosysteme[t.id] || {})[sp.id] || 0;
       for (let i = 0; i < n; i++)
-        html += `<span class="eco-item" title="${trData("espece", sp.id, sp.nom)}">${sp.emoji}</span>`;
+        html += `<span class="eco-item" title="${trData("espece", sp.id, sp.nom)}">${emojiOuRepli(sp.emoji, sp.emojiRepli)}</span>`;
     });
   });
   return html;
@@ -5493,7 +5533,7 @@ function carteEspece(enf, tier, sp) {
   const coutAff = jeune ? repeterEmoji(cout, "💧", 6) : `${cout} 💧`;
   carte.innerHTML = `
     <span class="ec-coin${jeune ? " imgs" : ""}">${possede ? coinAff : ""}</span>
-    <span class="ec-emoji">${sp.emoji}</span>
+    <span class="ec-emoji">${emojiOuRepli(sp.emoji, sp.emojiRepli)}</span>
     <span class="ec-nom">${trData("espece", sp.id, sp.nom)}</span>
     <span class="ec-cout ${assezGouttes ? "" : "manque"}">${coutAff}</span>
     ${prereqHtml}
