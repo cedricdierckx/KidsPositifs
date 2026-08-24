@@ -219,6 +219,10 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .carte h2{margin:.1em 0 .5em; font-size:19px}
 .carte p{margin:.3em 0; color:var(--doux); line-height:1.4}
 .note{font-size:13px; background:#f3f7fb; padding:10px; border-radius:12px}
+/* Bandeau « mode tous petits » (écosystème) : distinct d'une simple note,
+   pour qu'un tiroir vide se lise comme un état normal, pas une panne. */
+.eco-mode-simplifie{background:#fff6e6; color:#8a6a2c; margin-bottom:10px}
+.eco-tier-vide{margin-top:4px}
 /* Message de retour (succès / erreur) — pas de cadre si vide */
 .msg-retour{font-size:14px; font-weight:700; padding:10px 12px; border-radius:12px; margin-top:8px}
 .msg-ok{background:#eafaf2; color:#1d7a52; border:1px solid #bfe9da}

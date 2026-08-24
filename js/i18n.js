@@ -283,6 +283,8 @@ Object.assign(I18N.fr, {
   "rep.aide.pourquoi": "Pourquoi pas de punition ? Retirer des points apprend surtout à cacher l'erreur. Réparer apprend à reconnaître son geste, à prendre soin de l'autre et à repartir du bon pied.",
   "eco.titre": "🌱 Mon écosystème vivant",
   "eco.intro": "Chaque être vivant est une <strong>carte</strong> 🃏 avec ses besoins. Crée d'abord les 🌱 plantes, puis les 🐰 herbivores qui les mangent, puis les 🦊 carnivores. Pour un 🐒 singe il faut 10 arbres et 1 bananier !",
+  "eco.mode_simplifie": "👶 Affichage simplifié pour {prenom} : seules les cartes que {prenom} peut créer là, tout de suite, sont affichées — les autres reviendront d'elles-mêmes, dès qu'il y aura assez de gouttes 💧.",
+  "eco.tier_vide": "Rien à créer ici pour l'instant — reviens quand tu auras plus de gouttes 💧 !",
   "eco.vide_court": "Crée ta première plante 🌱",
   "eco.aucun_prereq": "Aucun prérequis ☀️", "eco.creer": "➕ Créer",
   "eco.plus_gouttes": "💧 Plus de gouttes", "eco.verrouille": "🔒 Verrouillé"
@@ -316,6 +318,8 @@ Object.assign(I18N.en, {
   "rep.aide.pourquoi": "Why no punishment? Taking points away mostly teaches children to hide their mistakes. Repairing teaches them to own the act, care for the other person and start afresh.",
   "eco.titre": "🌱 My living ecosystem",
   "eco.intro": "Every living being is a <strong>card</strong> 🃏 with its needs. First create 🌱 plants, then 🐰 herbivores that eat them, then 🦊 carnivores. A 🐒 monkey needs 10 trees and 1 banana tree!",
+  "eco.mode_simplifie": "👶 Simplified view for {prenom}: only the cards {prenom} can create right now are shown — the others will come back on their own, as soon as there are enough drops 💧.",
+  "eco.tier_vide": "Nothing to create here yet — come back once you have more drops 💧!",
   "eco.vide_court": "Create your first plant 🌱",
   "eco.aucun_prereq": "No requirements ☀️", "eco.creer": "➕ Create",
   "eco.plus_gouttes": "💧 Not enough drops", "eco.verrouille": "🔒 Locked"
@@ -349,6 +353,8 @@ Object.assign(I18N.nl, {
   "rep.aide.pourquoi": "Waarom geen straf? Punten afnemen leert vooral om de fout te verbergen. Herstellen leert het kind zijn daad te erkennen, voor de ander te zorgen en met een propere lei verder te gaan.",
   "eco.titre": "🌱 Mijn levende ecosysteem",
   "eco.intro": "Elk levend wezen is een <strong>kaart</strong> 🃏 met zijn behoeften. Maak eerst 🌱 planten, dan 🐰 planteneters die ze opeten, dan 🦊 vleeseters. Een 🐒 aap heeft 10 bomen en 1 bananenboom nodig!",
+  "eco.mode_simplifie": "👶 Vereenvoudigde weergave voor {prenom}: alleen de kaarten die {prenom} nu meteen kan maken worden getoond — de andere komen vanzelf terug zodra er genoeg druppels 💧 zijn.",
+  "eco.tier_vide": "Hier is nog niets te maken — kom terug zodra je meer druppels 💧 hebt!",
   "eco.vide_court": "Maak je eerste plant 🌱",
   "eco.aucun_prereq": "Geen vereisten ☀️", "eco.creer": "➕ Maken",
   "eco.plus_gouttes": "💧 Te weinig druppels", "eco.verrouille": "🔒 Vergrendeld"
@@ -382,6 +388,8 @@ Object.assign(I18N.de, {
   "rep.aide.pourquoi": "Warum keine Strafe? Punkte abzuziehen lehrt vor allem, den Fehler zu verbergen. Wiedergutmachen lehrt, zur eigenen Tat zu stehen, sich um den anderen zu kümmern und neu zu beginnen.",
   "eco.titre": "🌱 Mein lebendiges Ökosystem",
   "eco.intro": "Jedes Lebewesen ist eine <strong>Karte</strong> 🃏 mit seinen Bedürfnissen. Erschaffe zuerst 🌱 Pflanzen, dann 🐰 Pflanzenfresser, die sie fressen, dann 🦊 Fleischfresser. Ein 🐒 Affe braucht 10 Bäume und 1 Bananenbaum!",
+  "eco.mode_simplifie": "👶 Vereinfachte Ansicht für {prenom}: nur die Karten, die {prenom} jetzt sofort erschaffen kann, werden angezeigt — die anderen kommen von selbst zurück, sobald genug Tropfen 💧 da sind.",
+  "eco.tier_vide": "Hier gibt es noch nichts zu erschaffen — komm zurück, sobald du mehr Tropfen 💧 hast!",
   "eco.vide_court": "Erschaffe deine erste Pflanze 🌱",
   "eco.aucun_prereq": "Keine Voraussetzungen ☀️", "eco.creer": "➕ Erschaffen",
   "eco.plus_gouttes": "💧 Zu wenig Tropfen", "eco.verrouille": "🔒 Gesperrt"

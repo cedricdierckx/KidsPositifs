@@ -5548,10 +5548,15 @@ function renduSceneEco(enf) {
 /* ---------- Écosystème détaillé (chaîne alimentaire, cartes) ---------- */
 function vueEcosysteme(enf) {
   const sec = el("section", "carte eco-carte");
+  const jeune = estJeune(enf);
   sec.innerHTML = `<h2>${t("eco.titre")}</h2>
     <p class="note">${t("eco.intro")}</p>`;
+  // Le mode « tous petits » masque les cartes non atteignables — sans le
+  // dire, une catégorie entière peut sembler avoir disparu (signalé comme un
+  // bug par une famille : « les carnivores ont disparu chez Pauline »).
+  // Un mot au parent suffit à couper court à l'inquiétude.
+  if (jeune) sec.appendChild(el("p", "note eco-mode-simplifie", t("eco.mode_simplifie", { prenom: echapper(enf.prenom) })));
 
-  const jeune = estJeune(enf);
   TIERS_ECO.forEach(tier => {
     const bloc = el("div", "eco-tier");
     const compte = nbTier(enf, tier.id);
@@ -5564,13 +5569,16 @@ function vueEcosysteme(enf) {
     // Mode « tous petits » (estJeune) : pas de cartes verrouillées à
     // déchiffrer — juste celles qu'on peut créer là, tout de suite. Passé le
     // seuil d'âge, la carte verrouillée reste utile : elle dit quoi viser.
-    tier.especes
+    const especesVisibles = tier.especes
       .filter(sp => especeActivePourEnfant(enf, sp.id))
-      .filter(sp => !jeune || (especeDebloquee(enf, sp) && enf.gouttes >= coutEspece(enf, sp)))
-      .forEach(sp => {
-        grille.appendChild(carteEspece(enf, tier, sp));
-      });
+      .filter(sp => !jeune || (especeDebloquee(enf, sp) && enf.gouttes >= coutEspece(enf, sp)));
+    especesVisibles.forEach(sp => grille.appendChild(carteEspece(enf, tier, sp)));
     bloc.appendChild(grille);
+    // Catégorie entièrement filtrée (rien d'atteignable pour l'instant) :
+    // le dire plutôt que de laisser un vide muet sous le titre.
+    if (jeune && !especesVisibles.length) {
+      bloc.appendChild(el("p", "note eco-tier-vide", t("eco.tier_vide")));
+    }
     sec.appendChild(bloc);
   });
 

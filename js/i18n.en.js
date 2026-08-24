@@ -79,6 +79,8 @@ Object.assign(I18N.en, {
   "rep.aide.pourquoi": "Why no punishment? Taking points away mostly teaches children to hide their mistakes. Repairing teaches them to own the act, care for the other person and start afresh.",
   "eco.titre": "🌱 My living ecosystem",
   "eco.intro": "Every living being is a <strong>card</strong> 🃏 with its needs. First create 🌱 plants, then 🐰 herbivores that eat them, then 🦊 carnivores. A 🐒 monkey needs 10 trees and 1 banana tree!",
+  "eco.mode_simplifie": "👶 Simplified view for {prenom}: only the cards {prenom} can create right now are shown — the others will come back on their own, as soon as there are enough drops 💧.",
+  "eco.tier_vide": "Nothing to create here yet — come back once you have more drops 💧!",
   "eco.vide_court": "Create your first plant 🌱",
   "eco.aucun_prereq": "No requirements ☀️",
   "eco.creer": "➕ Create",

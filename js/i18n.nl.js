@@ -79,6 +79,8 @@ Object.assign(I18N.nl, {
   "rep.aide.pourquoi": "Waarom geen straf? Punten afnemen leert vooral om de fout te verbergen. Herstellen leert het kind zijn daad te erkennen, voor de ander te zorgen en met een propere lei verder te gaan.",
   "eco.titre": "🌱 Mijn levende ecosysteem",
   "eco.intro": "Elk levend wezen is een <strong>kaart</strong> 🃏 met zijn behoeften. Maak eerst 🌱 planten, dan 🐰 planteneters die ze opeten, dan 🦊 vleeseters. Een 🐒 aap heeft 10 bomen en 1 bananenboom nodig!",
+  "eco.mode_simplifie": "👶 Vereenvoudigde weergave voor {prenom}: alleen de kaarten die {prenom} nu meteen kan maken worden getoond — de andere komen vanzelf terug zodra er genoeg druppels 💧 zijn.",
+  "eco.tier_vide": "Hier is nog niets te maken — kom terug zodra je meer druppels 💧 hebt!",
   "eco.vide_court": "Maak je eerste plant 🌱",
   "eco.aucun_prereq": "Geen vereisten ☀️",
   "eco.creer": "➕ Maken",

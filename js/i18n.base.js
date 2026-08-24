@@ -106,6 +106,8 @@ const I18N = {
     "rep.aide.pourquoi": "Pourquoi pas de punition ? Retirer des points apprend surtout à cacher l'erreur. Réparer apprend à reconnaître son geste, à prendre soin de l'autre et à repartir du bon pied.",
     "eco.titre": "🌱 Mon écosystème vivant",
     "eco.intro": "Chaque être vivant est une <strong>carte</strong> 🃏 avec ses besoins. Crée d'abord les 🌱 plantes, puis les 🐰 herbivores qui les mangent, puis les 🦊 carnivores. Pour un 🐒 singe il faut 10 arbres et 1 bananier !",
+    "eco.mode_simplifie": "👶 Affichage simplifié pour {prenom} : seules les cartes que {prenom} peut créer là, tout de suite, sont affichées — les autres reviendront d'elles-mêmes, dès qu'il y aura assez de gouttes 💧.",
+    "eco.tier_vide": "Rien à créer ici pour l'instant — reviens quand tu auras plus de gouttes 💧 !",
     "eco.vide_court": "Crée ta première plante 🌱",
     "eco.aucun_prereq": "Aucun prérequis ☀️",
     "eco.creer": "➕ Créer",

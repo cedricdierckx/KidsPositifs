@@ -79,6 +79,8 @@ Object.assign(I18N.de, {
   "rep.aide.pourquoi": "Warum keine Strafe? Punkte abzuziehen lehrt vor allem, den Fehler zu verbergen. Wiedergutmachen lehrt, zur eigenen Tat zu stehen, sich um den anderen zu kümmern und neu zu beginnen.",
   "eco.titre": "🌱 Mein lebendiges Ökosystem",
   "eco.intro": "Jedes Lebewesen ist eine <strong>Karte</strong> 🃏 mit seinen Bedürfnissen. Erschaffe zuerst 🌱 Pflanzen, dann 🐰 Pflanzenfresser, die sie fressen, dann 🦊 Fleischfresser. Ein 🐒 Affe braucht 10 Bäume und 1 Bananenbaum!",
+  "eco.mode_simplifie": "👶 Vereinfachte Ansicht für {prenom}: nur die Karten, die {prenom} jetzt sofort erschaffen kann, werden angezeigt — die anderen kommen von selbst zurück, sobald genug Tropfen 💧 da sind.",
+  "eco.tier_vide": "Hier gibt es noch nichts zu erschaffen — komm zurück, sobald du mehr Tropfen 💧 hast!",
   "eco.vide_court": "Erschaffe deine erste Pflanze 🌱",
   "eco.aucun_prereq": "Keine Voraussetzungen ☀️",
   "eco.creer": "➕ Erschaffen",
