@@ -5178,17 +5178,29 @@ test("Store.charger adopte le cloud même si le cache local paraît plus récent
   assert.strictEqual(appelsToast.length, 0, "ce n'est pas un conflit entre appareils, juste une ouverture normale");
 });
 
-test("feuille papier imprimée : la mise en page ne force plus une page presque vide", () => {
-  // Signale avec capture : impression a 3 pages, la premiere quasiment
-  // blanche (seulement l'entete), les 4 enfants repartis 2 par page suivante.
+test("feuille papier imprimée : la mise en page ne force plus une page presque vide, ni de colonnes désalignées", () => {
+  // Signalé une première fois avec capture : impression à 3 pages, la
+  // première quasiment blanche (seulement l'entête), les 4 enfants répartis
+  // 2 par page suivante. Signalé une seconde fois (familles nombreuses,
+  // 4 enfants et plus) : cartes qui débordent ou se désalignent d'une
+  // colonne à l'autre en cours de pagination.
   //
-  // Cause : `display:grid` pour les deux colonnes ne se pagine pas
-  // proprement a l'impression sous Chrome (limitation ancienne et connue du
-  // moteur), et `break-inside:avoid` posee sur LA CARTE ENTIERE forçait tout
-  // le bloc — mission, humeur, totaux — a rester ensemble. Des qu'une carte,
-  // avec une longue liste de missions, ne tenait plus a cote de l'entete
-  // (mais tenait seule sur une page), tout le bloc basculait a la page
-  // suivante en laissant l'entete seul.
+  // Trois causes distinctes :
+  // 1) `display:grid` pour les colonnes ne se pagine pas proprement à
+  //    l'impression sous Chrome (limitation ancienne et connue du moteur).
+  // 2) Un flottement (`float`) en deux colonnes paginait mieux qu'une
+  //    grille, mais reste fragile dès que les enfants ont des listes de
+  //    longueurs différentes : la colonne la plus longue force un saut de
+  //    page qui désaligne l'autre colonne, un rendu qui différait même
+  //    d'un navigateur à l'autre. Une seule colonne (chaque enfant occupe
+  //    toute la largeur, l'un sous l'autre) supprime la classe de bug
+  //    entière — plus de colonnes à désynchroniser.
+  // 3) `break-inside:avoid` posée sur LA CARTE ENTIÈRE forçait tout le
+  //    bloc — mission, humeur, totaux — à rester ensemble. Dès qu'une
+  //    carte, avec une longue liste de missions, ne tenait plus à côté de
+  //    la précédente (mais tenait seule sur une page), tout le bloc
+  //    basculait à la page suivante en laissant la page courante quasiment
+  //    vide.
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
   // Le CSS vit dans htmlFeuilleSemaine (construction du document HTML,
@@ -5199,9 +5211,11 @@ test("feuille papier imprimée : la mise en page ne force plus une page presque 
 
   assert.ok(!/\.grille\{display:grid/.test(bloc),
     "CSS Grid ne se pagine pas proprement à l'impression sous Chrome : à éviter ici");
-  assert.ok(/\.enfant\{float:left/.test(bloc),
-    "un flottement se pagine correctement, contrairement à une grille");
-  assert.ok(!/\.enfant\{break-inside:avoid/.test(bloc),
+  assert.ok(!/\.enfant\{float:left/.test(bloc),
+    "un flottement en deux colonnes désaligne les cartes d'une page à l'autre : à éviter aussi");
+  assert.ok(/\.enfant\{width:100%/.test(bloc),
+    "chaque enfant doit occuper toute la largeur — une seule colonne, jamais de désalignement possible");
+  assert.ok(!/\.enfant\{[^}]*break-inside:avoid/.test(bloc),
     "la carte entière ne doit plus être une seule unité insécable");
   assert.ok(/\.enfant tr\{break-inside:avoid\}/.test(bloc),
     "la césure doit porter sur les LIGNES du tableau, pas sur la carte entière — "
@@ -5211,7 +5225,8 @@ test("feuille papier imprimée : la mise en page ne force plus une page presque 
 
   // Vérifié empiriquement (hors suite, non reproductible ici sans moteur
   // d'impression réel) : une carte de 22 lignes rend 3 pages dont une à
-  // 7 opérateurs de texte (l'ancien CSS) contre 2 pages pleines (le nouveau).
+  // 7 opérateurs de texte (l'ancien CSS grid) contre 2 pages pleines
+  // (flottement, puis une seule colonne).
 });
 
 /* ---------- Exécution ----------

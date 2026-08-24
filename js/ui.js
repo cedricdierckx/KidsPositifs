@@ -2134,64 +2134,103 @@ function blocAdminBientot(titre, desc) {
 
 /* ---------- Sous-section « Mobile » : publier sur Google Play / App Store ----------
  * Guide autoporté pour le fondateur, pas pour un développeur : chaque étape
- * dit QUOI faire, OÙ, et POURQUOI, avec une case à cocher qui se souvient de
- * ce qui est déjà fait (app_config.mobile_ck_<id>). Rédigé en français
- * uniquement (à la différence du reste de l'app) : c'est un outil interne à
- * un seul lecteur, le fondateur — pas un écran vu par les familles. Le détail
- * technique (commandes, dépannage) reste dans PLAN-MOBILE.md ; cette carte
- * est la carte au trésor, pas le manuel du moteur. */
-const MOBILE_ETAPES = [
-  { id: "logo", titre: "1. Un vrai logo", texte:
-    "Aujourd'hui, l'icône de l'app est une étoile dorée — un repli honnête, pas un logo dessiné exprès pour FamiTeam. Ce n'est PAS bloquant : on peut publier avec cette étoile, et la changer plus tard sans tout redéployer (commande : npm run icon:generer). À faire quand vous aurez une image qui vous plaît : un carré de 1024×1024 pixels suffit." },
-  { id: "google_compte", titre: "2. Un compte Google Play Console", lien: "https://play.google.com/console/signup", lienTexte: "Ouvrir l'inscription Google Play Console", texte:
-    "C'est la porte d'entrée pour mettre une app sur Google Play (les téléphones Android). Coûte 25 $, une seule fois, à vie. Étapes : ouvrir le lien ci-dessous, se connecter avec le compte Google qui doit posséder l'app pour toujours (pas un compte personnel qu'on pourrait perdre), payer les 25 $, remplir la fiche développeur. Une fois fait, il faudra aussi créer un « keystore » : un fichier secret qui sert de signature électronique de l'app — sans lui, impossible de publier une mise à jour un jour." },
-  { id: "sha256", titre: "3. Coller l'empreinte du keystore", texte:
-    "Une fois le keystore de l'étape 2 créé, il a une « empreinte » (une longue suite de lettres et de chiffres, le SHA-256). Elle doit être collée dans le fichier .well-known/assetlinks.json du site (aujourd'hui, un espace réservé). Sans elle, les liens reçus par e-mail (confirmation d'inscription, etc.) s'ouvriront dans le navigateur au lieu de l'app installée — gênant, mais rien ne casse en attendant." },
-  { id: "apple_compte", titre: "4. Un compte Apple Developer", lien: "https://developer.apple.com/programs/enroll/", lienTexte: "Ouvrir l'inscription Apple Developer Program", texte:
-    "La porte d'entrée pour l'App Store (les iPhone). Coûte 99 $ par an. Étapes : ouvrir le lien ci-dessous, se connecter avec un Apple ID (idem, un compte qui restera à l'app pour toujours), payer, patienter — Apple vérifie chaque inscription, ça peut prendre un jour ou deux." },
-  { id: "apple_team_id", titre: "5. Coller le Team ID Apple", texte:
-    "Une fois le compte de l'étape 4 actif, Apple donne un « Team ID » (un code court). Il doit être collé dans .well-known/apple-app-site-association (aujourd'hui, un espace réservé) — même rôle que l'étape 3, côté Apple." },
-  { id: "associated_domains", titre: "6. Activer « Associated Domains » dans Xcode", texte:
-    "La dernière case à cocher, une fois les étapes 4 et 5 faites. Sur un Mac, dans Xcode : ouvrir le projet ios/, onglet Signing & Capabilities, bouton + Capability, choisir Associated Domains, ajouter applinks:fami.team et applinks:famiteam.com. Deux clics, mais réservé à un Mac avec Xcode — c'est la seule étape que je ne peux pas préparer à l'avance sans risquer de corrompre le projet." },
+ * dit QUOI faire, OÙ, et POURQUOI. Une piste par plateforme (Android/iOS),
+ * dans l'ordre chronologique réel — y compris les étapes déjà accomplies
+ * (fait:true, non décochables : ce sont des faits d'ingénierie, pas des
+ * choix de l'admin), pour que la carte raconte tout le chemin, pas
+ * seulement ce qu'il reste. Les étapes restantes (fait:false) gardent une
+ * case à cocher qui se souvient de l'avancement (app_config.mobile_ck_<id>).
+ * Rédigé en français uniquement (à la différence du reste de l'app) : outil
+ * interne à un seul lecteur, le fondateur — pas un écran vu par les
+ * familles. Le détail de dépannage (messages d'erreur, PowerShell…) reste
+ * dans PLAN-MOBILE.md, référencé en bas de chaque carte.  */
+const ANDROID_ETAPES = [
+  { id: "shell", fait: true, titre: "1. La coquille de l'app existe déjà", texte:
+    "Capacitor est installé et configuré (nom « FamiTeam », identifiant team.fami.app). Le dossier android/ est un projet Gradle complet — tout ce qu'Android Studio a besoin pour compiler l'app est déjà là. Rien à faire ici." },
+  { id: "icone", fait: true, titre: "2. Icône et écran de démarrage générés", texte:
+    "Une étoile blanche sur fond doré, dans le style déjà utilisé pour les récompenses de l'app — un repli honnête, pas un logo dessiné exprès. Changeable à tout moment, sans tout redéployer : commande npm run icon:generer, à lancer après avoir remplacé l'image source par un carré de 1024×1024 pixels." },
+  { id: "plomberie", fait: true, titre: "3. Calendrier, notifications, PDF : déjà câblés", texte:
+    "Trois choses qui ne marchent pas pareil dans une app installée que sur un site web sont déjà résolues : écrire un rendez-vous directement dans l'agenda du téléphone, envoyer le rappel du soir en notification, produire un vrai PDF pour la feuille à imprimer (une iframe ne suffit pas dans une WebView — voir PLAN-MOBILE.md si curieux du détail)." },
+  { id: "google_compte", fait: false, titre: "4. Ouvrir un compte Google Play Console", lien: "https://play.google.com/console/signup", lienTexte: "🔗 Ouvrir l'inscription Google Play Console", texte:
+    "La porte d'entrée pour publier sur Google Play. Coûte 25 $, une seule fois, à vie. Se connecter avec le compte Google qui doit posséder l'app POUR TOUJOURS — pas un compte personnel qu'on pourrait perdre — puis payer les 25 $ et remplir la fiche développeur." },
+  { id: "keystore", fait: false, titre: "5. Créer le keystore de signature", texte:
+    "Un keystore est un fichier secret qui sert de signature électronique de l'app : sans lui, impossible de publier une mise à jour un jour (Google refuse un fichier signé différemment). Il se crée une seule fois, dans Android Studio (Build → Generate Signed Bundle/APK → Create new…), et se garde précieusement — perdu, il n'y a aucun moyen de le récupérer, il faudrait republier l'app sous une nouvelle fiche." },
+  { id: "sha256", fait: false, titre: "6. Coller l'empreinte SHA-256 du keystore", texte:
+    "Une fois le keystore créé, il a une « empreinte » (une longue suite de lettres et de chiffres). Android Studio l'affiche pendant la création, ou plus tard via Gradle → Tasks → android → signingReport. Elle doit être collée dans le fichier .well-known/assetlinks.json du site (aujourd'hui, un espace réservé). Sans elle, les liens reçus par e-mail s'ouvrent dans le navigateur plutôt que dans l'app — gênant, mais rien ne casse en attendant." },
+  { id: "build_release", fait: false, titre: "7. Premier envoi sur Google Play", texte:
+    "Dans un terminal, à la racine du projet : npm run cap:sync (recopie le site dans android/). Puis dans Android Studio : Build → Generate Signed Bundle/APK, choisir le keystore de l'étape 5, produire un .aab (Android App Bundle, le format que Google Play demande). Ce fichier se dépose dans Google Play Console → votre app → Production → Créer une version. Avant chaque nouvel envoi : incrémenter versionCode dans android/app/build.gradle (Google refuse deux envois avec le même numéro)." },
 ];
 
-function blocAdminMobile() {
-  const sec = el("section", "carte");
-  sec.innerHTML = `<h2>📱 Publier l'app sur Android et iOS</h2>
-    <p class="note">Ce qu'il reste à faire pour que FamiTeam existe sur Google Play et l'App Store — écrit pour vous, pas pour un développeur. La coquille technique (l'app elle-même) est déjà prête et fonctionne ; ce qui suit ne dépend plus que de comptes et de paiements que seul vous pouvez faire.</p>`;
+const IOS_ETAPES = [
+  { id: "shell", fait: true, titre: "1. Le projet Xcode existe déjà", texte:
+    "Le dossier ios/ est un projet Xcode complet (Swift Package Manager, sans CocoaPods), prêt à ouvrir — mais seulement compilable sur un Mac, condition incontournable côté Apple." },
+  { id: "icone", fait: true, titre: "2. Icône et écran de démarrage générés", texte:
+    "La même étoile dorée que côté Android, générée pour toutes les tailles qu'iOS demande. Changeable avec la même commande, npm run icon:generer." },
+  { id: "plomberie", fait: true, titre: "3. Calendrier et notifications : déjà câblés", texte:
+    "Sur iOS, écrire dans l'agenda ne demande qu'une autorisation « écriture seule » (EventKit sait créer un événement dans l'agenda par défaut sans droit de lecture) ; le rappel du soir est programmé en heure locale, insensible au changement d'heure d'été/hiver." },
+  { id: "apple_compte", fait: false, titre: "4. Ouvrir un compte Apple Developer", lien: "https://developer.apple.com/programs/enroll/", lienTexte: "🔗 Ouvrir l'inscription Apple Developer Program", texte:
+    "La porte d'entrée pour l'App Store. Coûte 99 $ par an. Se connecter avec un Apple ID qui restera à l'app pour toujours, payer, puis patienter — Apple vérifie chaque inscription, ça peut prendre un jour ou deux." },
+  { id: "apple_team_id", fait: false, titre: "5. Coller le Team ID Apple", texte:
+    "Une fois le compte actif, Apple donne un « Team ID » (un code court, visible dans le compte développeur sous Membership). Il doit être collé dans .well-known/apple-app-site-association (aujourd'hui, un espace réservé) — même rôle que l'empreinte SHA-256 côté Android : sans lui, les liens reçus par e-mail s'ouvrent dans le navigateur plutôt que dans l'app." },
+  { id: "associated_domains", fait: false, titre: "6. Activer « Associated Domains » dans Xcode", texte:
+    "Sur un Mac, dans Xcode : ouvrir le projet ios/, onglet Signing & Capabilities, bouton + Capability, choisir Associated Domains, ajouter applinks:fami.team et applinks:famiteam.com. Deux clics, mais réservé à un Mac avec Xcode — la seule étape qui ne peut pas être préparée à l'avance sans risquer de corrompre le projet à l'aveugle." },
+  { id: "build_release", fait: false, titre: "7. Premier envoi sur l'App Store", texte:
+    "Dans un terminal, à la racine du projet : npm run cap:sync. Puis sur un Mac, dans Xcode : sélectionner « Any iOS Device » comme cible, Product → Archive, puis Distribute App → App Store Connect. La première fois, il faut aussi créer la fiche de l'app sur appstoreconnect.apple.com (nom, description, captures d'écran) avant qu'Apple accepte l'envoi." },
+];
 
+// Rend une piste (Android ou iOS) : une carte, une ligne par étape, case à
+// cocher uniquement pour les étapes qui dépendent d'un geste de l'admin.
+function blocMobiliePiste(titreCarte, etapes) {
+  const sec = el("section", "carte");
+  sec.innerHTML = `<h2>${titreCarte}</h2>`;
   const cfg = (typeof configApp !== "undefined") ? configApp : {};
-  MOBILE_ETAPES.forEach(e => {
+  etapes.forEach(e => {
     const cle = "mobile_ck_" + e.id;
-    const fait = cfg[cle] === "on";
+    const fait = e.fait || cfg[cle] === "on";
     const bloc = el("div", "mobile-etape" + (fait ? " fait" : ""));
     const lbl = el("label", "switch-ligne");
     const cb = el("input"); cb.type = "checkbox"; cb.checked = fait;
-    cb.onchange = async () => {
+    if (e.fait) {
       cb.disabled = true;
-      await adminDefinirConfig(cle, cb.checked ? "on" : "off");
-      if (!configApp) configApp = {};
-      configApp[cle] = cb.checked ? "on" : "off";
-      cb.disabled = false;
-      majSansSaut(() => rendre());
-    };
+      cb.title = "Déjà fait : ne dépend d'aucun réglage.";
+    } else {
+      cb.onchange = async () => {
+        cb.disabled = true;
+        await adminDefinirConfig(cle, cb.checked ? "on" : "off");
+        if (!configApp) configApp = {};
+        configApp[cle] = cb.checked ? "on" : "off";
+        cb.disabled = false;
+        majSansSaut(() => rendre());
+      };
+    }
     lbl.appendChild(cb);
     lbl.appendChild(el("strong", null, e.titre));
     bloc.appendChild(lbl);
     bloc.appendChild(el("p", "reglage-aide", e.texte));
     if (e.lien) {
-      const a = el("a", "btn-secondaire don-aide", "🔗 " + e.lienTexte);
+      const a = el("a", "btn-secondaire don-aide", e.lienTexte);
       a.href = e.lien; a.target = "_blank"; a.rel = "noopener";
       bloc.appendChild(a);
     }
     sec.appendChild(bloc);
   });
-
-  const fini = MOBILE_ETAPES.filter(e => cfg["mobile_ck_" + e.id] === "on").length;
-  sec.appendChild(el("p", "note", `${fini} / ${MOBILE_ETAPES.length} étapes cochées.`));
-  sec.appendChild(el("p", "reglage-aide",
-    "Le détail technique (comment reconstruire l'app, la mettre à jour sur un téléphone, dépanner un message d'erreur) est dans le fichier PLAN-MOBILE.md du projet — cette carte ne remplace pas ce guide, elle dit seulement où en sont les comptes et paiements."));
+  const restantes = etapes.filter(e => !e.fait);
+  const fini = restantes.filter(e => cfg["mobile_ck_" + e.id] === "on").length;
+  sec.appendChild(el("p", "note", `${fini} / ${restantes.length} étapes restantes cochées.`));
   return sec;
+}
+
+function blocAdminMobileIntro() {
+  const sec = el("section", "carte");
+  sec.innerHTML = `<h2>📱 Publier l'app sur Android et iOS</h2>
+    <p class="note">Deux pistes séparées ci-dessous — Android et iOS n'ont presque rien en commun côté comptes et outils. Chaque étape dit quoi faire, où, et pourquoi ; les étapes déjà accomplies sont cochées et grisées, pour que la carte raconte tout le chemin, pas seulement ce qu'il reste. Le détail de dépannage (messages d'erreur exacts, installation sur un PC Windows pas à pas) reste dans le fichier PLAN-MOBILE.md du projet — cette carte en est le résumé, pas le remplaçant.</p>`;
+  return sec;
+}
+
+function blocAdminMobile(c) {
+  c.appendChild(blocAdminMobileIntro());
+  c.appendChild(blocMobiliePiste("🤖 Android (Google Play)", ANDROID_ETAPES));
+  c.appendChild(blocMobiliePiste("🍏 iOS (App Store)", IOS_ETAPES));
 }
 
 // Graphique en barres minimaliste (SVG vanilla, sans dépendance externe).
@@ -3504,7 +3543,7 @@ function vueAdmin(c) {
       c.appendChild(blocAdminSysteme());
       break;
     case "mobile":
-      c.appendChild(blocAdminMobile());
+      blocAdminMobile(c);
       break;
   }
 }
@@ -4146,35 +4185,42 @@ function htmlFeuilleSemaine(mode) {
       .tete .logo{font-size:19px;font-weight:800}
       .tete .sem{font-size:13px;color:#5a6b7a;font-weight:700}
       .intro{font-size:11px;color:#6a7a88;margin:0 0 12px;text-align:center}
-      /* Deux problemes distincts corrigeaient la meme capture d'ecran :
-         page 1 quasi blanche (juste l'entete), puis une paire d'enfants par
-         page suivante au lieu de repartir le contenu au mieux.
+      /* Trois problemes distincts corrigeaient la meme capture d'ecran :
+         page 1 quasi blanche (juste l'entete), une paire d'enfants par page
+         au lieu de repartir le contenu au mieux, puis (familles nombreuses,
+         4 enfants et plus) des cartes qui debordent ou se desalignent d'une
+         page a l'autre.
 
          1) "display:grid" ne se pagine PAS correctement a l'impression sous
          Chrome (limitation connue et ancienne du moteur : les pistes d'une
-         grille ne se fragmentent pas proprement entre les pages). Remplace
-         par un flottement ("float"), qui se pagine normalement — c'est le
-         contournement standard pour un imprime multi-colonnes.
+         grille ne se fragmentent pas proprement entre les pages).
 
-         2) "break-inside:avoid" posee sur LA CARTE ENTIERE forcait chaque
-         enfant a rester d'un bloc. Avec une longue liste de missions (le cas
-         signale : plusieurs categories, beaucoup de lignes), une carte a elle
-         seule peut approcher la hauteur d'une page A4 imprimable (~277 mm).
-         Des qu'elle ne tient plus a cote de l'entete, tout le bloc bascule
-         sur la page suivante — laissant l'entete SEUL sur la premiere page,
-         qui apparait alors quasiment blanche dans un apercu d'impression.
-         La regle passe donc du bloc entier aux seules LIGNES du tableau
-         ("tr"), qui ne se coupent jamais en leur milieu de toute facon : une
-         longue liste se repartit desormais sur autant de pages que
-         necessaire, en utilisant le bas de la premiere page au lieu de le
-         laisser vide. Le nom de l'enfant reste coince au debut de son
-         tableau ("h3" avec "break-after:avoid"), pour ne jamais se retrouver
-         seul en bas d'une page, separe de son contenu. */
-      .grille{overflow:hidden}
-      .grille::after{content:"";display:table;clear:both}
-      .enfant{float:left; width:calc(50% - 8px); margin:0 16px 12px 0;
+         2) Un flottement ("float") en deux colonnes paginait mieux qu'une
+         grille, mais reste fragile des que les enfants ont des listes de
+         longueurs differentes : la colonne la plus longue force un saut de
+         page qui laisse l'autre colonne desalignee, voire coupee au milieu —
+         le rendu differait meme d'un navigateur a l'autre. Une seule colonne
+         (chaque enfant occupe toute la largeur, l'un sous l'autre) supprime
+         la classe de bug entiere : plus de colonnes a desynchroniser, chaque
+         carte se pagine independamment des autres. Le cout — un peu plus de
+         pages pour une famille nombreuse — est le prix d'un rendu fiable
+         partout, y compris a la maison sur une imprimante quelconque.
+
+         3) "break-inside:avoid" pose sur LA CARTE ENTIERE forcait chaque
+         enfant a rester d'un bloc. Avec une longue liste de missions, une
+         carte a elle seule peut approcher la hauteur d'une page A4
+         imprimable (~277 mm) : des qu'elle ne tient plus a cote de l'entete
+         ou de la carte precedente, tout le bloc bascule sur la page
+         suivante — laissant la page courante quasiment blanche. La regle
+         passe donc du bloc entier aux seules LIGNES du tableau ("tr"), qui
+         ne se coupent jamais en leur milieu de toute facon : une longue
+         liste se repartit desormais sur autant de pages que necessaire, en
+         utilisant le bas de la page courante au lieu de le laisser vide. Le
+         nom de l'enfant reste coince au debut de son tableau ("h3" avec
+         "break-after:avoid"), pour ne jamais se retrouver seul en bas d'une
+         page, separe de son contenu. */
+      .enfant{width:100%; margin:0 0 12px;
         border:2px solid var(--c);border-radius:16px;padding:9px 11px;background:#fff}
-      .enfant:nth-child(2n){margin-right:0}
       .enfant tr{break-inside:avoid}
       .enfant h3{margin:0 0 7px;font-size:15px;display:flex;align-items:center;gap:6px;break-after:avoid}
       .enfant h3 .em{font-size:19px}
