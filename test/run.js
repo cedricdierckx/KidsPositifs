@@ -4371,8 +4371,12 @@ test("rappel du soir : la notification est activée par défaut, désactivable",
   assert.ok(iVerrou > 0 && iSync > iVerrou,
     "dans vueReglages, la synchronisation doit avoir lieu après le contrôle du verrou parent");
 
-  // La carte figure dans les deux modes parents, comme celle de l'agenda.
-  const appelsNotif = ui.match(/carteRepliable\(blocNotificationSoir\(\), "notif", false\)/g) || [];
+  // La carte figure dans les deux modes parents, comme celle de l'agenda —
+  // mais seulement dans l'app installée : sur le web, aucun greffon de
+  // notification locale n'existe, et blocNotificationSoir renvoie null.
+  assert.ok(/if \(typeof estAppNative !== "function" \|\| !estAppNative\(\)\) return null;/.test(ui),
+    "blocNotificationSoir doit être absente sur le web (aucun greffon natif)");
+  const appelsNotif = ui.match(/const \w+ = blocNotificationSoir\(\);\s*\n\s*if \(\w+\) c\.appendChild\(carteRepliable\(\w+, "notif", false\)\);/g) || [];
   assert.strictEqual(appelsNotif.length, 2, "il faut la carte notification en mode simplifié ET en mode expert");
 
   // Dépendance déclarée, jamais un ajout manuel du dossier natif.

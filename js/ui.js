@@ -963,6 +963,10 @@ async function synchroniserNotificationSoir() {
 }
 
 function blocNotificationSoir() {
+  // Réservé à l'app installée : sur le site web, aucun greffon de
+  // notification locale n'existe, et une carte interactive qui ne déclenche
+  // jamais rien serait trompeuse (le parent croirait le rappel actif).
+  if (typeof estAppNative !== "function" || !estAppNative()) return null;
   const r = notifReglage();
   const sec = el("section", "carte notif-soir");
   const etatTxt = r.active ? t("notif.resume", { h: r.heure }) : t("notif.jamais");
@@ -3840,14 +3844,22 @@ function blocSemainePapier() {
   nav.appendChild(prev); nav.appendChild(lbl); nav.appendChild(next);
   sec.appendChild(nav);
 
-  // Deux mises en page possibles (choix à l'impression).
+  // Deux mises en page possibles (choix à l'impression) — mêmes deux mots
+  // (Détaillé / Rapide) et la même présentation « icône + titre + précision »
+  // que le choix de mode plus bas, pour qu'imprimer et encoder se lisent
+  // comme un seul et même choix, pas deux vocabulaires différents.
   sec.appendChild(el("p", "planif-sous", t("papier.format")));
-  const b1 = el("button", "gros-bouton planete", t("papier.imprimer_jours"));
-  b1.onclick = () => imprimerFeuilleSemaine("jours");
-  const b2 = el("button", "btn-secondaire", t("papier.imprimer_total"));
-  b2.onclick = () => imprimerFeuilleSemaine("total");
-  sec.appendChild(b1);
-  sec.appendChild(b2);
+  const impressions = el("div", "enc-modes segmente");
+  [["jours", "📋", t("papier.imprimer_jours")], ["total", "⚡", t("papier.imprimer_total")]].forEach(([val, ico, lab]) => {
+    const m = /^(.*?)\s*\((.*)\)\s*$/.exec(lab);
+    const titre = m ? m[1] : lab;
+    const hint = m ? m[2] : "";
+    const b = el("button", "seg seg-mode");
+    b.innerHTML = `<span class="seg-ico">${ico}</span><span class="seg-txt"><span class="seg-titre">${echapper(titre)}</span>${hint ? `<span class="seg-hint">${echapper(hint)}</span>` : ""}</span>`;
+    b.onclick = () => imprimerFeuilleSemaine(val);
+    impressions.appendChild(b);
+  });
+  sec.appendChild(impressions);
   return sec;
 }
 
@@ -6933,7 +6945,9 @@ function vueReglages(c) {
     const j7 = blocArbreSeptiemeJour();
     if (j7) c.appendChild(carteRepliable(j7, "septiemejour", true));
     // Repliée : activée par défaut, rien n'y réclame l'attention du parent.
-    c.appendChild(carteRepliable(blocNotificationSoir(), "notif", false));
+    // (Absente sur le web : réservée à l'app installée.)
+    const notif = blocNotificationSoir();
+    if (notif) c.appendChild(carteRepliable(notif, "notif", false));
     c.appendChild(carteRepliable(blocComplimentDuJour(enfantActif()), "compliment", true));
     // Ouvert tant que rien n'est réglé, replié ensuite : la carte se fait
     // discrète pour celui qui a déjà répondu, et reste visible pour l'autre.
@@ -6954,7 +6968,9 @@ function vueReglages(c) {
     c.appendChild(carteRepliable(blocEval(enfantActif(), "parent"), "eval", true));
 
     // ----- Rappel du soir (notification, activée par défaut) -----
-    c.appendChild(carteRepliable(blocNotificationSoir(), "notif", false));
+    // (Absente sur le web : réservée à l'app installée.)
+    const notifExp = blocNotificationSoir();
+    if (notifExp) c.appendChild(carteRepliable(notifExp, "notif", false));
 
     // ----- Le rendez-vous du soir (rappel par l'agenda du parent) -----
     c.appendChild(carteRepliable(blocRituelSoir(), "rituel", !rituelReglage()));
@@ -7106,25 +7122,29 @@ function vueReglages(c) {
     if (sectionVisible("famille")) sectionsFamille(c);
     if (ongletParent === "compte") sectionsCompte(c);
   } else if (ongletParent === "compte") {
-    // Toutes les cartes de Réglages démarrent repliées — y compris le
-    // programme, qu'on ne consulte qu'après avoir déjà réglé son compte.
-    const dep = (titre, cle, remplir) => {
-      const { details, corps } = blocPliable(titre, false, cle);
-      remplir(corps);
-      c.appendChild(details);
-    };
-    dep(t("regl.programme"), "std-prog", (x) => x.appendChild(blocProgramme()));
+    // Toutes les sections de Réglages portent la même signature visuelle
+    // qu'ailleurs dans l'espace parents : une carte blanche, une ligne de
+    // couleur à gauche, repliée par défaut (carteRepliable) — jamais la barre
+    // plate de blocPliable, réservée aux sous-dépliants À L'INTÉRIEUR d'une
+    // carte (« Comment ça marche ? », catégories de missions…), pas à un
+    // sommaire de premier niveau.
+    c.appendChild(carteRepliable(blocProgramme(), "std-prog", false));
     // « Mes enfants » : décisif à la création du compte (un lien concret vit
-    // dans « Premiers pas »), puis rarement rouvert — un simple bouton suffit,
-    // pas une carte entière de plus dans Réglages.
-    const bEnfants = el("button", "btn-secondaire", t("grp.enfants"));
+    // dans « Premiers pas »), puis rarement rouvert — une carte minimale,
+    // pas un bouton isolé qui romprait le rythme des cartes voisines.
+    const carteEnfants = el("section", "carte");
+    carteEnfants.innerHTML = `<h2>${t("grp.enfants")}</h2><p class="note">${t("regl.enfants_note")}</p>`;
+    const bEnfants = el("button", "btn-secondaire", t("regl.enfants_ouvrir"));
     bEnfants.onclick = () => { ongletParent = "enfants"; rendre(); };
-    c.appendChild(bEnfants);
+    carteEnfants.appendChild(bEnfants);
+    c.appendChild(carteEnfants);
     // Famille : pas de dépliant englobant. Ses trois cartes se présentent
     // elles-mêmes, et se replient déjà — un pli dans un pli demanderait deux
     // gestes pour arriver au premier bouton.
     sectionsFamille(c);
-    dep(t("regl.compte"), "std-cpt", (x) => sectionsCompte(x));
+    // Mon compte : même raison — ses propres cartes (compte, données,
+    // récupération, zone de danger) sont déjà repliées individuellement.
+    sectionsCompte(c);
   }
 }
 
