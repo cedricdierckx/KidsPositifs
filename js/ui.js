@@ -214,99 +214,6 @@ function blocArbreEnfant() {
   return sec;
 }
 
-/* ---------- Le tableau d'honneur ----------
- * Un mur de mercis, pas un podium. Trois règles tenues par construction :
- *   1. on n'y figure que sur consentement explicite, avec un pseudonyme
- *      d'équipe — jamais le nom de la famille, jamais un prénom d'enfant ;
- *   2. une famille non consentante voit le tableau mais ne reçoit AUCUN rang :
- *      « 47ᵉ sur 52 » ne se dit pas ;
- *   3. le tableau n'apparaît qu'au-delà d'un seuil de familles consentantes,
- *      réglable sans redéploiement (app_config.classement_seuil) : sur trois
- *      lignes, un classement humilie au lieu de motiver.
- * Saison annuelle, plus « tous les temps » : sans saison, la première famille
- * arrivée gagne à vie et démotive toutes les suivantes ; avec un mois, le
- * tableau repart de zéro avant que quiconque ait eu le temps de le remplir. */
-function blocTableauHonneur() {
-  const sec = el("section", "carte tableau-honneur");
-  sec.innerHTML = `<h2>${t("hon.titre")}</h2>
-    <div class="hon-onglets" role="tablist">
-      <button class="hon-onglet actif" data-saison="annee">${t("hon.annee")}</button>
-      <button class="hon-onglet" data-saison="tout">${t("hon.tout")}</button>
-    </div>
-    <div id="hon-corps"><p class="note">${t("arbre.attente")}</p></div>
-    <div id="hon-optin" class="hon-optin"></div>`;
-
-  const corps = sec.querySelector("#hon-corps");
-  const zoneOptin = sec.querySelector("#hon-optin");
-  let saisonAffichee = "annee";
-
-  const dessinerOptin = (etatCls) => {
-    const inscrite = !!(etatCls && etatCls.moi_inscrite);
-    const pseudo = (etatCls && etatCls.mon_pseudo) || "";
-    zoneOptin.innerHTML = `<p class="hon-optin-titre">${t(inscrite ? "hon.inscrite" : "hon.non_inscrite")}</p>
-      <p class="note">${t("hon.consentement")}</p>`;
-    if (inscrite) {
-      const b = el("button", "btn-secondaire", t("hon.retirer"));
-      b.onclick = async () => {
-        if (!confirm(t("hon.retirer_conf"))) return;
-        if (await definirClassementOptin(false, null)) { toast(t("hon.retiree"), "succes"); charger(); }
-      };
-      zoneOptin.appendChild(el("p", "hon-pseudo-actuel", pseudo));
-      zoneOptin.appendChild(b);
-    } else {
-      const inp = el("input", "aj-val");
-      inp.placeholder = t("hon.pseudo_ph"); inp.maxLength = 24; inp.value = pseudo;
-      const b = el("button", "gros-bouton planete", t("hon.rejoindre"));
-      b.onclick = async () => {
-        const v = (inp.value || "").trim();
-        if (!v) { inp.focus(); toast(t("hon.pseudo_requis"), "info"); return; }
-        if (await definirClassementOptin(true, v)) { toast(t("hon.inscrite_ok"), "succes"); charger(); }
-      };
-      zoneOptin.appendChild(inp);
-      zoneOptin.appendChild(b);
-    }
-  };
-
-  const dessiner = (cls) => {
-    if (!cls) { sec.remove(); return; }
-    if (!cls.visible) {
-      // Sous le seuil : on ne montre pas un tableau de trois lignes, mais on
-      // dit franchement à partir de quand il apparaîtra.
-      corps.innerHTML = `<p class="hon-attente">${t("hon.pas_encore", { n: cls.seuil, actuel: cls.consentantes })}</p>` +
-        (cls.mien > 0 ? `<p class="note">${t("hon.mien", { n: cls.mien })}</p>` : "");
-      dessinerOptin(cls);
-      return;
-    }
-    const lignes = (cls.top || []).map((r, i) =>
-      `<li class="hon-ligne"><span class="hon-place">${i + 1}</span>
-         <span class="hon-nom">${echapper(r.pseudo || "")}</span>
-         <span class="hon-n">${r.n}</span></li>`).join("");
-    corps.innerHTML = lignes
-      ? `<ol class="hon-liste">${lignes}</ol>`
-      : `<p class="note">${t("hon.vide")}</p>`;
-    // Le rang n'est affiché QUE si la famille a consenti à figurer.
-    if (cls.mon_rang) corps.innerHTML += `<p class="hon-ma-place">${t("hon.ma_place", { rang: cls.mon_rang })}</p>`;
-    else if (cls.mien > 0) corps.innerHTML += `<p class="note">${t("hon.mien", { n: cls.mien })}</p>`;
-    dessinerOptin(cls);
-  };
-
-  function charger() {
-    corps.innerHTML = `<p class="note">${t("arbre.attente")}</p>`;
-    classementParrainages(saisonAffichee === "annee" ? saisonCourante() : null)
-      .then(dessiner).catch(() => sec.remove());
-  }
-
-  sec.querySelectorAll(".hon-onglet").forEach(b => {
-    b.onclick = () => {
-      saisonAffichee = b.dataset.saison;
-      sec.querySelectorAll(".hon-onglet").forEach(x => x.classList.toggle("actif", x === b));
-      charger();
-    };
-  });
-  charger();
-  return sec;
-}
-
 /* Bascule les règles @media print le temps de l'impression : seule la cible
  * marquée `.impression-cible` part sur le papier. Partagé par la carte d'ami et
  * le dépliant des écoles. */
@@ -6302,14 +6209,27 @@ function ongletsParents() {
   // le parent qui le cherche sait où le trouver. L'onglet n'existe pas tant que
   // le don n'est pas proposé à cette famille (early adopters, première semaine).
   const soutien = (typeof donDisponible !== "function" || donDisponible());
+  // « Mes enfants » est décisif à la création du compte (prénom, date de
+  // naissance…) puis rarement rouvert : une fois les profils renseignés, il
+  // quitte la barre d'onglets — un bouton dans Réglages et le lien de
+  // « Premiers pas » restent la voie d'accès.
+  const enfants = !profilsRenseignes();
   if (!estModeExpert()) {
-    const ids = ["quotidien", "enfants", "activites", "compte"];
+    const ids = ["quotidien"];
+    if (enfants) ids.push("enfants");
+    ids.push("activites", "compte");
     if (soutien) ids.push("soutien");
+    // Semaine papier : menu à part entière, juste avant Admin — jamais un
+    // dépliant caché sous un autre onglet.
+    ids.push("papier");
     if (admin) ids.push("admin");
     return ids;
   }
-  const ids = ["quotidien", "papier", "activites", "enfants", "famille", "compte", "stats"];
+  const ids = ["quotidien", "activites"];
+  if (enfants) ids.push("enfants");
+  ids.push("famille", "compte", "stats");
   if (soutien) ids.push("soutien");
+  ids.push("papier");
   if (admin) ids.push("admin");
   return ids;
 }
@@ -6329,8 +6249,7 @@ function libelleOnglet(id) {
 function sectionVisible(section) {
   const exp = estModeExpert();
   switch (section) {
-    // Semaine papier : onglet dédié en expert, dépliant sous « Activités » sinon.
-    case "papier":  return ongletParent === (exp ? "papier" : "activites");
+    case "papier":  return ongletParent === "papier";  // onglet à part entière, dans les deux modes
     // Famille & invitations : onglet dédié en expert, dans « Réglages » sinon.
     case "famille": return ongletParent === (exp ? "famille" : "compte");
     case "stats":   return exp && ongletParent === "stats";  // outil avancé
@@ -6589,20 +6508,19 @@ function blocProgramme() {
   return prog;
 }
 
-// ----- Choix Standard / Expert (deux gros boutons + explication) -----
-function blocModeParents() {
+// ----- Choix Standard / Expert : toggle compact, à côté du titre « Mode
+// parents » — plus de carte séparée à chercher dans l'onglet Réglages. -----
+function toggleModeParents() {
   const exp = estModeExpert();
-  const modeBloc = el("div", "mode-bloc");
-  modeBloc.innerHTML = `<span class="langue-titre">🧭 ${t("mode.titre")}</span>`;
-  const choix = el("div", "mode-choix");
-  const bStd = el("button", "mode-btn" + (!exp ? " on" : ""), `🌿 ${t("mode.standard")}`);
+  const wrap = el("div", "segmente mode-toggle-mini");
+  const bStd = el("button", "seg" + (!exp ? " actif" : ""), `🌿 ${t("mode.standard")}`);
+  bStd.type = "button";
   bStd.onclick = () => { if (exp) majSansSaut(() => definirModeExpert(false)); };
-  const bExp = el("button", "mode-btn" + (exp ? " on" : ""), `🧪 ${t("mode.expert")}`);
+  const bExp = el("button", "seg" + (exp ? " actif" : ""), `🧪 ${t("mode.expert")}`);
+  bExp.type = "button";
   bExp.onclick = () => { if (!exp) majSansSaut(() => definirModeExpert(true)); };
-  choix.appendChild(bStd); choix.appendChild(bExp);
-  modeBloc.appendChild(choix);
-  modeBloc.appendChild(el("p", "note mode-aide", t(exp ? "mode.aide_expert" : "mode.aide_standard")));
-  return modeBloc;
+  wrap.appendChild(bStd); wrap.appendChild(bExp);
+  return wrap;
 }
 
 // ----- Famille, invitations, parrainage, abonnement -----
@@ -6645,7 +6563,7 @@ function sectionsFamille(c) {
     <p class="note">${t("arbre.modale_note")}</p>
     <div id="par-code" class="arbre-code-bloc"><p class="note">${t("arbre.attente")}</p></div>
     <div id="par-jauge" class="arbre-jauge-bloc"></div>`;
-  c.appendChild(par);
+  c.appendChild(carteRepliable(par, "fam-arbre", false));
   c.appendChild(carteRepliable(invit, "fam-invitations", false));
   c.appendChild(carteRepliable(fam, "fam-nom", false));
 
@@ -6718,9 +6636,6 @@ function sectionsFamille(c) {
     par.appendChild(bCarte);
   }
 
-  // ----- Le tableau d'honneur (mur de mercis, sur consentement) -----
-  if (!(typeof modeDemo !== "undefined" && modeDemo)) c.appendChild(blocTableauHonneur());
-
   // ----- Abonnement (masqué provisoirement : early adopters = gratuit) -----
   if (AFFICHER_ABONNEMENT) {
     const abo = el("section", "carte");
@@ -6735,10 +6650,12 @@ function sectionsFamille(c) {
 }
 
 // ----- Compte, données, récupération, suppression -----
+// Toutes les cartes démarrent repliées : Réglages n'affiche que des titres
+// tant qu'on n'a pas cliqué, et « Se déconnecter » vit tout en bas, dernier
+// geste de l'onglet plutôt que noyé en tête de « Mon compte ».
 function sectionsCompte(c) {
   if (typeof modeDemo !== "undefined" && modeDemo) {
     c.appendChild(bandeauDemo());
-    c.appendChild(blocFeedback());
     return;
   }
 
@@ -6746,15 +6663,12 @@ function sectionsCompte(c) {
   const u = typeof utilisateurCourant === "function" ? utilisateurCourant() : null;
   cpt.innerHTML = `<h2>${t("compte.titre")}</h2>
     <p>${t("compte.connecte", { email: u ? echapper(u.email) : "—" })}</p>`;
-  const bDeco = el("button", "btn-secondaire", t("compte.deconnexion"));
-  bDeco.onclick = deconnexion;
-  cpt.appendChild(bDeco);
   const liensLegaux = el("p", "note");
   liensLegaux.innerHTML = `<a href="faq.html">Questions fréquentes</a> ·
     <a href="mentions-legales.html">Mentions légales</a> ·
     <a href="confidentialite.html">Politique de confidentialité</a>`;
   cpt.appendChild(liensLegaux);
-  c.appendChild(cpt);
+  c.appendChild(carteRepliable(cpt, "cpt-compte", false));
 
   const actions = el("section", "carte");
   actions.innerHTML = `<h2>${t("donnees.titre")}</h2>`;
@@ -6764,16 +6678,10 @@ function sectionsCompte(c) {
   bRaz.onclick = reinitialiser;
   actions.appendChild(bExp);
   actions.appendChild(bRaz);
-  c.appendChild(actions);
+  c.appendChild(carteRepliable(actions, "cpt-donnees", false));
 
-  // ----- 🛟 Récupération de données -----
-  c.appendChild(blocRecuperation());
-
-  // ----- 💡 Boîte à idées : ouverte à toutes les familles. Un retour qu'on ne
-  // peut pas donner est un retour perdu. Placée ici, et non plus en tête de
-  // l'onglet : personne n'ouvre « Mon compte » pour signaler un bug, et un
-  // formulaire de retour au-dessus de son propre e-mail n'a pas de sens. -----
-  c.appendChild(blocFeedback());
+  // ----- 💾 Récupération de données -----
+  c.appendChild(carteRepliable(blocRecuperation(), "cpt-recup", false));
 
   // ----- ⚠️ Zone de danger : suppression du compte famille (propriétaire) -----
   if (familleActive && familleActive.role === "owner") {
@@ -6783,8 +6691,13 @@ function sectionsCompte(c) {
     const bDel = el("button", "btn-danger", t("suppr.bouton"));
     bDel.onclick = () => supprimerCompteFamille();
     danger.appendChild(bDel);
-    c.appendChild(danger);
+    c.appendChild(carteRepliable(danger, "cpt-danger", false));
   }
+
+  // ----- Se déconnecter : dernier geste de l'onglet Réglages. -----
+  const bDeco = el("button", "btn-secondaire deconnexion-pied", t("compte.deconnexion"));
+  bDeco.onclick = deconnexion;
+  c.appendChild(bDeco);
 }
 
 function vueReglages(c) {
@@ -6825,24 +6738,28 @@ function vueReglages(c) {
   // bouton « Quitter » juste à côté — elle ne disait rien de neuf, et c'est
   // elle qui empêchait le titre et la sortie de tenir sur une seule ligne.
   entete.innerHTML = `<h1>${t("par.actif.titre")}</h1>`;
+  // Toggle Standard/Expert juste à côté du titre : plus de carte séparée,
+  // le réglage le plus consulté de l'espace parents tient sur cette ligne.
+  entete.appendChild(toggleModeParents());
   const bq = el("button", "btn-secondaire", t("par.actif.quitter"));
   bq.onclick = quitterModeParents;
   entete.appendChild(bq);
   banniere.appendChild(entete);
+  banniere.appendChild(el("p", "note mode-aide", t(exp ? "mode.aide_expert" : "mode.aide_standard")));
   // Sélecteur de langue « fun » : boutons drapeaux (plutôt qu'une liste).
   const blocLang = el("div", "langue-bloc");
   blocLang.innerHTML = `<span class="langue-titre">🌐 ${t("langue")}</span>`;
   blocLang.appendChild(selecteurLangueFun(() => rendre()));
   banniere.appendChild(blocLang);
-  // Le choix Standard / Expert n'encombre l'entrée qu'en mode expert ; en mode
-  // simplifié il vit tout en bas de l'onglet « Réglages ».
-  if (exp) banniere.appendChild(blocModeParents());
   c.appendChild(banniere);
 
   // ----- Sous-menu (onglets) pour organiser l'espace parents -----
   const onglets = ongletsParents().map(id => [id, libelleOnglet(id)]);
-  // Si l'onglet courant n'est plus visible (ex. passage en Standard), on revient au 1ᵉʳ.
-  if (!onglets.some(([id]) => id === ongletParent)) ongletParent = onglets[0][0];
+  // Si l'onglet courant n'est plus visible (ex. passage en Standard), on revient
+  // au 1ᵉʳ — sauf « enfants » : ce n'est plus un onglet de la barre une fois les
+  // profils renseignés, mais on y accède quand même via un lien concret
+  // (Premiers pas, bouton dans Réglages), sans jamais rebondir dessus.
+  if (ongletParent !== "enfants" && !onglets.some(([id]) => id === ongletParent)) ongletParent = onglets[0][0];
   const nav = el("nav", "sous-nav");
   let btnActif = null;
   onglets.forEach(([id, label]) => {
@@ -6953,9 +6870,11 @@ function vueReglages(c) {
   }
 
   /* ===== ONGLET : Soutien ===== */
-  // Un seul sujet, entièrement facultatif, hors du chemin quotidien.
+  // Le don d'abord, entièrement facultatif ; la boîte à idées en bas — un
+  // autre geste facultatif, tourné vers l'app plutôt que vers la famille.
   if (sectionVisible("soutien")) {
     c.appendChild(blocDon());
+    c.appendChild(blocFeedback());
   }
 
   /* ===== ONGLET : Activités & récompenses ===== */
@@ -6970,18 +6889,11 @@ function vueReglages(c) {
     }
   }
 
-  /* ===== Semaine papier : onglet dédié en expert, dépliant en simplifié ===== */
+  /* ===== ONGLET : Semaine papier (à part entière, dans les deux modes) ===== */
   if (sectionVisible("papier")) {
-    if (exp) {
-      c.appendChild(blocSemainePapier());
-      c.appendChild(blocEncoderSemaine());
-    } else {
-      const { details, corps } = blocPliable(t("grp.papier"), false, "std-papier");
-      corps.appendChild(el("p", "note", t("papier.pour_quoi")));
-      corps.appendChild(blocSemainePapier());
-      corps.appendChild(blocEncoderSemaine());
-      c.appendChild(details);
-    }
+    c.appendChild(el("p", "note", t("papier.pour_quoi")));
+    c.appendChild(blocSemainePapier());
+    c.appendChild(blocEncoderSemaine());
   }
 
   /* ===== ONGLET : Mes enfants ===== */
@@ -7072,20 +6984,25 @@ function vueReglages(c) {
     if (sectionVisible("famille")) sectionsFamille(c);
     if (ongletParent === "compte") sectionsCompte(c);
   } else if (ongletParent === "compte") {
-    const dep = (titre, cle, remplir, ouvert) => {
-      const { details, corps } = blocPliable(titre, !!ouvert, cle);
+    // Toutes les cartes de Réglages démarrent repliées — y compris le
+    // programme, qu'on ne consulte qu'après avoir déjà réglé son compte.
+    const dep = (titre, cle, remplir) => {
+      const { details, corps } = blocPliable(titre, false, cle);
       remplir(corps);
       c.appendChild(details);
     };
-    dep(t("regl.programme"), "std-prog", (x) => x.appendChild(blocProgramme()), true);
+    dep(t("regl.programme"), "std-prog", (x) => x.appendChild(blocProgramme()));
+    // « Mes enfants » : décisif à la création du compte (un lien concret vit
+    // dans « Premiers pas »), puis rarement rouvert — un simple bouton suffit,
+    // pas une carte entière de plus dans Réglages.
+    const bEnfants = el("button", "btn-secondaire", t("grp.enfants"));
+    bEnfants.onclick = () => { ongletParent = "enfants"; rendre(); };
+    c.appendChild(bEnfants);
     // Famille : pas de dépliant englobant. Ses trois cartes se présentent
-    // elles-mêmes, et deux d'entre elles se replient déjà — un pli dans un pli
-    // demandait deux gestes pour arriver au premier bouton.
+    // elles-mêmes, et se replient déjà — un pli dans un pli demanderait deux
+    // gestes pour arriver au premier bouton.
     sectionsFamille(c);
     dep(t("regl.compte"), "std-cpt", (x) => sectionsCompte(x));
-    const modeCarte = el("section", "carte");
-    modeCarte.appendChild(blocModeParents());
-    c.appendChild(modeCarte);
   }
 }
 

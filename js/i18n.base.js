@@ -281,7 +281,7 @@ const I18N = {
     "suppr.ok": "Compte famille supprimé. À bientôt !",
     "suppr.erreur": "Échec de la suppression : {msg}",
     "sync.conflit": "🔄 Deux appareils jouaient en même temps : la version la plus récente a été gardée. Rien n'est perdu — l'autre reste dans l'espace parents → Récupération.",
-    "recup.titre": "🛟 Récupération de données",
+    "recup.titre": "💾 Récupération de données",
     "recup.note": "Si des enfants ont disparu, retrouve ici les <strong>sauvegardes locales</strong> de cet appareil et restaure la bonne dans la <strong>famille actuellement ouverte</strong> ({nom}).",
     "recup.aucune_locale": "Aucune sauvegarde locale trouvée sur cet appareil.",
     "recup.restaurer": "♻️ Restaurer",

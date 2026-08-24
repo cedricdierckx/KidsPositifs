@@ -313,14 +313,10 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* Explication d'un réglage (petit texte gris sous l'option) */
 .reglage-aide{font-size:12px;color:var(--doux);margin:2px 0 12px;line-height:1.4}
 
-/* Mode parents : Standard / Expert */
-.mode-bloc{margin-top:12px}
-.mode-choix{display:flex;gap:8px;margin:6px 0}
-.mode-btn{flex:1;border:2px solid #e3edf5;background:#fff;border-radius:14px;padding:12px 8px;
-  font-weight:800;font-size:14px;color:#54616f;cursor:pointer;transition:transform .12s,border-color .15s,background .15s}
-.mode-btn:hover{transform:translateY(-2px)}
-.mode-btn:active{transform:scale(.95)}
-.mode-btn.on{border-color:#37b985;background:linear-gradient(135deg,#e7faf1,#dff3ff);color:#1d7a52}
+/* Mode parents : Standard / Expert — toggle compact à côté du titre, plus de
+   carte séparée à chercher dans Réglages. */
+.mode-toggle-mini{margin:0; flex:0 0 auto}
+.mode-toggle-mini .seg{flex:0 0 auto; padding:6px 10px; font-size:13px}
 .mode-aide{margin:2px 0 0}
 
 /* Tournantes de tâches */
@@ -761,28 +757,6 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* La perte la plus coûteuse est signalée, pas noyée dans le tableau. */
 .ent-alerte{margin:8px 0 4px; font-size:13px; background:#fff5e6; color:#9a6a12;
   border:1px solid #ffe0b0; border-radius:10px; padding:8px 10px}
-
-/* ---- Le tableau d'honneur (mur de mercis, jamais un podium) ---- */
-.hon-onglets{display:flex; gap:6px; margin:4px 0 10px}
-.hon-onglet{flex:1 1 auto; border:1px solid #dbe4ee; background:#fff; border-radius:10px;
-  padding:8px 10px; font-size:14px; font-weight:700; cursor:pointer; color:var(--doux)}
-.hon-onglet.actif{background:#eafaf2; border-color:#bfe9da; color:#1d7a52}
-.hon-liste{list-style:none; margin:0; padding:0}
-.hon-ligne{display:flex; align-items:center; gap:10px; padding:8px 4px;
-  border-bottom:1px solid #eef2f7; font-size:15px}
-.hon-ligne:last-child{border-bottom:none}
-/* Un numéro d'ordre, pas une médaille : aucune flèche, aucun « +3 places ». */
-.hon-place{flex:0 0 24px; text-align:center; font-weight:800; color:var(--doux)}
-.hon-nom{flex:1 1 auto; font-weight:700; overflow-wrap:anywhere}
-.hon-n{flex:0 0 auto; font-weight:800; color:#1d7a52; background:#eafaf2;
-  border:1px solid #bfe9da; border-radius:8px; padding:2px 8px}
-.hon-ma-place{margin:10px 0 0; font-size:14px; background:#eafaf2; color:#1d7a52;
-  border:1px solid #bfe9da; border-radius:10px; padding:8px 10px}
-.hon-attente{margin:0; font-size:14px; color:var(--doux)}
-.hon-optin{margin-top:12px; border-top:1px solid #eef2f7; padding-top:10px}
-.hon-optin-titre{margin:0 0 4px; font-size:15px; font-weight:700}
-.hon-pseudo-actuel{margin:6px 0; font-weight:800}
-.hon-optin .aj-val{width:100%; margin:6px 0}
 
 /* ---- La carte d'ami (à imprimer, à colorier, à donner) ---- */
 .carte-ami-hote{max-width:400px; position:relative}

@@ -3286,7 +3286,7 @@ test("parents : sous-plis et découpe des cartes de l'espace parents", () => {
   assert.ok(/montrerLienInvitation\(invit\.querySelector\("\.carte-pli-c"\) \|\| invit, lien\)/.test(corps),
     "le lien d'invitation doit s'afficher dans le corps déplié de la carte Invitations");
   // Ordre d'affichage : l'Arbre d'abord, puis Invitations, puis le nom de famille.
-  const ordre = ["c.appendChild(par);",
+  const ordre = ['c.appendChild(carteRepliable(par, "fam-arbre", false));',
                  'c.appendChild(carteRepliable(invit, "fam-invitations", false));',
                  'c.appendChild(carteRepliable(fam, "fam-nom", false));'];
   let pos = -1;
@@ -3676,13 +3676,16 @@ test("parents : la famille n'a plus de cadre, la boîte à idées descend", () =
     "le cadre « Famille et invitations » ne doit plus envelopper les trois cartes");
   assert.ok(/^\s+sectionsFamille\(c\);$/m.test(ui),
     "sectionsFamille doit être appelée directement en mode simplifié");
-  // La boîte à idées n'ouvre plus l'onglet « Mon compte ».
+  // La boîte à idées n'habite plus l'onglet « Mon compte » du tout : elle est
+  // descendue en bas de l'onglet Soutien, après le don (facultatif lui aussi).
   const sc = ui.slice(ui.indexOf("function sectionsCompte"));
   const corps = sc.slice(0, sc.indexOf("\n}\n"));
-  const iRecup = corps.indexOf("blocRecuperation()");
-  const iFeed = corps.lastIndexOf("blocFeedback()");
-  assert.ok(iRecup > -1 && iFeed > iRecup,
-    "la boîte à idées doit venir après la récupération de données, pas en tête d'onglet");
+  assert.ok(!/blocFeedback\(\)/.test(corps),
+    "la boîte à idées ne doit plus être rendue dans « Mon compte »");
+  const iDon = ui.indexOf("c.appendChild(blocDon());");
+  const iFeed = ui.indexOf("c.appendChild(blocFeedback());");
+  assert.ok(iDon > -1 && iFeed > iDon,
+    "la boîte à idées doit venir après le don, en bas de l'onglet Soutien");
 });
 
 test("carte d'ami : le partage produit une image, avec le lien en légende", () => {

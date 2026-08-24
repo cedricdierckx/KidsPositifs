@@ -254,7 +254,7 @@ Object.assign(I18N.de, {
   "suppr.ok": "Familienkonto gelöscht. Bis bald!",
   "suppr.erreur": "Löschung fehlgeschlagen: {msg}",
   "sync.conflit": "🔄 Zwei Geräte spielten gleichzeitig: die neueste Version wurde behalten. Nichts geht verloren — die andere liegt unter Eltern → Wiederherstellung.",
-  "recup.titre": "🛟 Datenwiederherstellung",
+  "recup.titre": "💾 Datenwiederherstellung",
   "recup.note": "Falls Kinder verschwunden sind, findest du hier die <strong>lokalen Sicherungen</strong> dieses Geräts und kannst die richtige in der <strong>aktuell geöffneten Familie</strong> ({nom}) wiederherstellen.",
   "recup.aucune_locale": "Keine lokale Sicherung auf diesem Gerät gefunden.",
   "recup.restaurer": "♻️ Wiederherstellen",

@@ -254,7 +254,7 @@ Object.assign(I18N.en, {
   "suppr.ok": "Family account deleted. See you soon!",
   "suppr.erreur": "Deletion failed: {msg}",
   "sync.conflit": "🔄 Two devices were playing at the same time: the most recent version was kept. Nothing is lost — the other one is under Parents → Recovery.",
-  "recup.titre": "🛟 Data recovery",
+  "recup.titre": "💾 Data recovery",
   "recup.note": "If children have disappeared, find the <strong>local backups</strong> of this device here and restore the right one into the <strong>currently open family</strong> ({nom}).",
   "recup.aucune_locale": "No local backup found on this device.",
   "recup.restaurer": "♻️ Restore",

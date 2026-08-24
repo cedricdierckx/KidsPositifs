@@ -254,7 +254,7 @@ Object.assign(I18N.nl, {
   "suppr.ok": "Gezinsaccount verwijderd. Tot ziens!",
   "suppr.erreur": "Verwijderen mislukt: {msg}",
   "sync.conflit": "🔄 Twee toestellen speelden tegelijk: de meest recente versie is bewaard. Er gaat niets verloren — de andere staat bij Ouders → Herstel.",
-  "recup.titre": "🛟 Gegevens herstellen",
+  "recup.titre": "💾 Gegevens herstellen",
   "recup.note": "Als kinderen verdwenen zijn, vind je hier de <strong>lokale backups</strong> van dit toestel en kan je de juiste herstellen in de <strong>nu geopende familie</strong> ({nom}).",
   "recup.aucune_locale": "Geen lokale backup gevonden op dit toestel.",
   "recup.restaurer": "♻️ Herstellen",
