@@ -142,7 +142,7 @@ function construireContexte(options) {
       verifierBadges, acheterOption, estDebloque, age, ageDepuis,
       // humour (touches bon enfant, désactivables)
       humourActif, messageVide, blagueDuJour, MESSAGES_VIDES, avisBlague, definirAvisBlague,
-      BLAGUES_ACTIVEES, blagueDuJourVisible,
+      blaguesActivees, blagueDuJourVisible,
       // compliment du jour (espace parent)
       complimentDuJour, streakMission, comptageMissionPeriode, joursActifsPeriode, aujourdHui,
       blaguesDe, langueCourante, BLAGUES_DEFAUT,

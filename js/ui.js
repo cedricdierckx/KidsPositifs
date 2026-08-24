@@ -1688,9 +1688,26 @@ let blgLangAdmin = "fr";
 function blocAdminBlagues() {
   const sec = el("section", "carte");
   sec.innerHTML = `<h2>🃏 ${t("admin.blg_titre")}</h2><p class="note">${t("admin.blg_note")}</p>`;
-  if (typeof BLAGUES_ACTIVEES !== "undefined" && !BLAGUES_ACTIVEES) {
-    sec.appendChild(el("p", "admin-bientot-badge", "⏸️ " + t("admin.blg_desactivees")));
-  }
+
+  // Interrupteur global : la case décide seule si le corpus s'affiche sur
+  // l'accueil des familles (même celles ayant activé l'humour). Éteinte par
+  // défaut — voir la mise en garde sur le corpus actuel au § 3 chantier 7 de
+  // COORDINATION.md avant de l'allumer.
+  const active = (typeof blaguesActivees === "function") && blaguesActivees();
+  const lAct = el("label", "switch-ligne");
+  const iAct = el("input"); iAct.type = "checkbox"; iAct.checked = active;
+  iAct.onchange = async () => {
+    iAct.disabled = true;
+    await adminDefinirConfig("blagues_actives", iAct.checked ? "on" : "off");
+    if (!configApp) configApp = {};
+    configApp.blagues_actives = iAct.checked ? "on" : "off";
+    iAct.disabled = false;
+    majSansSaut(() => rendre());
+  };
+  lAct.appendChild(iAct);
+  lAct.appendChild(el("span", null, t("admin.blg_activer")));
+  sec.appendChild(lAct);
+  if (!active) sec.appendChild(el("p", "admin-bientot-badge", "⏸️ " + t("admin.blg_desactivees")));
 
   // Choix de la langue (onglets)
   const onglets = el("div", "blg-langues");
@@ -1751,7 +1768,7 @@ function blocDashboardScience() {
 
   // --- 1. Temps d'écran (neurologie) ---
   {
-    const { details, corps } = blocPliable(`🧠 ${t("sci.ecran")}`, true);
+    const { details, corps } = blocPliable(`🧠 ${t("sci.ecran")}`, false);
     const lBudget = el("label", "champ", t("sci.budget_min"));
     refs.budget = el("input", "perso-num"); refs.budget.type = "number"; refs.budget.min = "1"; refs.budget.max = "60";
     refs.budget.value = cfg.budgetMinJour; lBudget.appendChild(refs.budget); corps.appendChild(lBudget);
@@ -1882,13 +1899,11 @@ function blocAdminFamilles() {
         await adminMajPlan(f.id, f.plan === "premium" ? "free" : "premium");
         b.onclick();
       };
-      ligne.appendChild(plan); ligne.appendChild(open);
 
       // --- Catégorisation / modération du compte (par e-mail du propriétaire) ---
       const email = f.owner_email || "";
       const estEA = dansListeConfig("early_adopters", email);
       const estBloq = dansListeConfig("comptes_bloques", email);
-      const actions2 = el("div", "adm-actions2");
       const bEA = el("button", "mini-btn" + (estEA ? " ok" : ""), estEA ? t("admin.ea_oui") : t("admin.ea_non"));
       bEA.title = t("admin.ea_aide");
       bEA.disabled = !email;
@@ -1907,7 +1922,10 @@ function blocAdminFamilles() {
         if (prompt(t("admin.confirm_suppr_nom", { nom: f.name })) !== f.name) { toast(t("admin.nom_incorrect"), "info"); return; }
         if (await adminSupprimerFamille(f.id)) { toast(t("admin.supprime_ok", { nom: f.name }), "info"); b.onclick(); }
       };
-      actions2.appendChild(bEA); actions2.appendChild(bBloc); actions2.appendChild(bDel);
+      // Une seule rangée de boutons : infos sur une ligne, actions sur l'autre —
+      // deux lignes par famille au lieu de trois.
+      const actions2 = el("div", "adm-actions2");
+      [plan, open, bEA, bBloc, bDel].forEach(x => actions2.appendChild(x));
       ligne.appendChild(actions2);
       if (estBloq) ligne.classList.add("bloque");
       liste.appendChild(ligne);
@@ -1989,12 +2007,12 @@ function blocConnexionParents() {
   return sec;
 }
 
-function blocAdminConfig() {
+// ----- Test d'envoi d'e-mail (via la fonction commune send-mail / SMTP OVH) -----
+// Envoie un vrai e-mail de test depuis hello@fami.team — même chemin que les
+// invitations et les retours. Carte à part : aucun rapport avec les dons
+// Stripe, avec qui elle partageait autrefois une seule carte.
+function blocAdminMailTest() {
   const sec = el("section", "carte");
-
-  // ----- Test d'envoi d'e-mail (via la fonction commune send-mail / SMTP OVH) -----
-  // Envoie un vrai e-mail de test depuis hello@fami.team — même chemin que les
-  // invitations et les retours.
   sec.appendChild(el("h2", null, t("admin.mailtest_titre")));
   sec.appendChild(el("p", "note", t("admin.mailtest_note")));
   const lDest = el("label", "champ", t("admin.mailtest_dest"));
@@ -2029,8 +2047,12 @@ function blocAdminConfig() {
     }
   };
   sec.appendChild(bMail); sec.appendChild(msgMail);
+  return sec;
+}
 
-  // ----- Configuration des dons Stripe (un Payment Link par montant) -----
+// ----- Configuration des dons Stripe (un Payment Link par montant) -----
+function blocAdminDonConfig() {
+  const sec = el("section", "carte");
   sec.appendChild(el("h2", null, t("admin.don_titre")));
   sec.appendChild(el("p", "note", t("admin.don_note")));
   const aide = el("a", "btn-secondaire don-aide", t("admin.don_aide"));
@@ -2084,7 +2106,9 @@ function blocAdminConfig() {
  * Les sous-sections Stats / Retours / Système accueilleront les lots B→F. */
 
 // Sous-section active de l'onglet Admin (session, non synchronisée).
-let sousOngletAdmin = "familles";
+// « Stats » par défaut : les chiffres se chargent seuls à l'ouverture, sans
+// qu'il faille d'abord choisir un sous-onglet puis cliquer pour charger.
+let sousOngletAdmin = "stats";
 const SOUS_ONGLETS_ADMIN = [
   ["stats",      "admin.nav_stats"],
   ["croissance", "admin.nav_croissance"],
@@ -2093,6 +2117,7 @@ const SOUS_ONGLETS_ADMIN = [
   ["contenu",    "admin.nav_contenu"],
   ["config",     "admin.nav_config"],
   ["systeme",    "admin.nav_systeme"],
+  ["mobile",     "admin.nav_mobile"],
 ];
 
 // Carte « bientôt disponible » pour les sous-sections encore à construire.
@@ -2100,6 +2125,68 @@ function blocAdminBientot(titre, desc) {
   const sec = el("section", "carte admin-bientot");
   sec.innerHTML = `<h2>${titre}</h2><p class="note">${desc}</p>
     <p class="admin-bientot-badge">🚧 ${t("admin.bientot")}</p>`;
+  return sec;
+}
+
+/* ---------- Sous-section « Mobile » : publier sur Google Play / App Store ----------
+ * Guide autoporté pour le fondateur, pas pour un développeur : chaque étape
+ * dit QUOI faire, OÙ, et POURQUOI, avec une case à cocher qui se souvient de
+ * ce qui est déjà fait (app_config.mobile_ck_<id>). Rédigé en français
+ * uniquement (à la différence du reste de l'app) : c'est un outil interne à
+ * un seul lecteur, le fondateur — pas un écran vu par les familles. Le détail
+ * technique (commandes, dépannage) reste dans PLAN-MOBILE.md ; cette carte
+ * est la carte au trésor, pas le manuel du moteur. */
+const MOBILE_ETAPES = [
+  { id: "logo", titre: "1. Un vrai logo", texte:
+    "Aujourd'hui, l'icône de l'app est une étoile dorée — un repli honnête, pas un logo dessiné exprès pour FamiTeam. Ce n'est PAS bloquant : on peut publier avec cette étoile, et la changer plus tard sans tout redéployer (commande : npm run icon:generer). À faire quand vous aurez une image qui vous plaît : un carré de 1024×1024 pixels suffit." },
+  { id: "google_compte", titre: "2. Un compte Google Play Console", lien: "https://play.google.com/console/signup", lienTexte: "Ouvrir l'inscription Google Play Console", texte:
+    "C'est la porte d'entrée pour mettre une app sur Google Play (les téléphones Android). Coûte 25 $, une seule fois, à vie. Étapes : ouvrir le lien ci-dessous, se connecter avec le compte Google qui doit posséder l'app pour toujours (pas un compte personnel qu'on pourrait perdre), payer les 25 $, remplir la fiche développeur. Une fois fait, il faudra aussi créer un « keystore » : un fichier secret qui sert de signature électronique de l'app — sans lui, impossible de publier une mise à jour un jour." },
+  { id: "sha256", titre: "3. Coller l'empreinte du keystore", texte:
+    "Une fois le keystore de l'étape 2 créé, il a une « empreinte » (une longue suite de lettres et de chiffres, le SHA-256). Elle doit être collée dans le fichier .well-known/assetlinks.json du site (aujourd'hui, un espace réservé). Sans elle, les liens reçus par e-mail (confirmation d'inscription, etc.) s'ouvriront dans le navigateur au lieu de l'app installée — gênant, mais rien ne casse en attendant." },
+  { id: "apple_compte", titre: "4. Un compte Apple Developer", lien: "https://developer.apple.com/programs/enroll/", lienTexte: "Ouvrir l'inscription Apple Developer Program", texte:
+    "La porte d'entrée pour l'App Store (les iPhone). Coûte 99 $ par an. Étapes : ouvrir le lien ci-dessous, se connecter avec un Apple ID (idem, un compte qui restera à l'app pour toujours), payer, patienter — Apple vérifie chaque inscription, ça peut prendre un jour ou deux." },
+  { id: "apple_team_id", titre: "5. Coller le Team ID Apple", texte:
+    "Une fois le compte de l'étape 4 actif, Apple donne un « Team ID » (un code court). Il doit être collé dans .well-known/apple-app-site-association (aujourd'hui, un espace réservé) — même rôle que l'étape 3, côté Apple." },
+  { id: "associated_domains", titre: "6. Activer « Associated Domains » dans Xcode", texte:
+    "La dernière case à cocher, une fois les étapes 4 et 5 faites. Sur un Mac, dans Xcode : ouvrir le projet ios/, onglet Signing & Capabilities, bouton + Capability, choisir Associated Domains, ajouter applinks:fami.team et applinks:famiteam.com. Deux clics, mais réservé à un Mac avec Xcode — c'est la seule étape que je ne peux pas préparer à l'avance sans risquer de corrompre le projet." },
+];
+
+function blocAdminMobile() {
+  const sec = el("section", "carte");
+  sec.innerHTML = `<h2>📱 Publier l'app sur Android et iOS</h2>
+    <p class="note">Ce qu'il reste à faire pour que FamiTeam existe sur Google Play et l'App Store — écrit pour vous, pas pour un développeur. La coquille technique (l'app elle-même) est déjà prête et fonctionne ; ce qui suit ne dépend plus que de comptes et de paiements que seul vous pouvez faire.</p>`;
+
+  const cfg = (typeof configApp !== "undefined") ? configApp : {};
+  MOBILE_ETAPES.forEach(e => {
+    const cle = "mobile_ck_" + e.id;
+    const fait = cfg[cle] === "on";
+    const bloc = el("div", "mobile-etape" + (fait ? " fait" : ""));
+    const lbl = el("label", "switch-ligne");
+    const cb = el("input"); cb.type = "checkbox"; cb.checked = fait;
+    cb.onchange = async () => {
+      cb.disabled = true;
+      await adminDefinirConfig(cle, cb.checked ? "on" : "off");
+      if (!configApp) configApp = {};
+      configApp[cle] = cb.checked ? "on" : "off";
+      cb.disabled = false;
+      majSansSaut(() => rendre());
+    };
+    lbl.appendChild(cb);
+    lbl.appendChild(el("strong", null, e.titre));
+    bloc.appendChild(lbl);
+    bloc.appendChild(el("p", "reglage-aide", e.texte));
+    if (e.lien) {
+      const a = el("a", "btn-secondaire don-aide", "🔗 " + e.lienTexte);
+      a.href = e.lien; a.target = "_blank"; a.rel = "noopener";
+      bloc.appendChild(a);
+    }
+    sec.appendChild(bloc);
+  });
+
+  const fini = MOBILE_ETAPES.filter(e => cfg["mobile_ck_" + e.id] === "on").length;
+  sec.appendChild(el("p", "note", `${fini} / ${MOBILE_ETAPES.length} étapes cochées.`));
+  sec.appendChild(el("p", "reglage-aide",
+    "Le détail technique (comment reconstruire l'app, la mettre à jour sur un téléphone, dépanner un message d'erreur) est dans le fichier PLAN-MOBILE.md du projet — cette carte ne remplace pas ce guide, elle dit seulement où en sont les comptes et paiements."));
   return sec;
 }
 
@@ -2141,20 +2228,32 @@ function carteStat(emoji, valeur, label, precision) {
   </div>`;
 }
 
+// Cache de session : évite de recharger les statistiques à chaque rendu
+// (l'admin peut rouvrir cet onglet, ou déclencher un rendu ailleurs, sans
+// relancer huit requêtes pour rien) — voir blocAdminStats.
+let adminStatsCache = null;
+
 // Sous-section « Stats » : chiffres clés + évolution (inscriptions & activité)
 // + derniers arrivants. Toutes les données proviennent de RPC en lecture seule.
+// Chargée automatiquement à l'ouverture : c'est l'onglet par défaut d'Admin,
+// il n'y a plus de geste à faire pour voir les chiffres.
 function blocAdminStats() {
   const sec = el("section", "carte");
   sec.innerHTML = `<h2>📊 ${t("admin.nav_stats")}</h2><p class="note">${t("admin.stats_desc")}</p>`;
-  const b = el("button", "btn-secondaire", t("stats.charger"));
+  const b = el("button", "btn-secondaire", t(adminStatsCache ? "stats.recharger" : "stats.charger"));
   const corps = el("div", "admin-stats-corps");
-  b.onclick = async () => {
+  const charger = async () => {
     b.disabled = true; b.textContent = t("common.chargement");
     const [s, insc, act, recentes, usage, usageSerie, dons, donsRecents] = await Promise.all([
       adminStats(), adminSerieInscriptions(), adminSerieActivite(), adminFamillesRecentes(8),
       adminUsageStats(), adminSerieUsage(), adminDonationsStats(), adminListerDons(6)
     ]);
+    adminStatsCache = { s, insc, act, recentes, usage, usageSerie, dons, donsRecents };
     b.disabled = false; b.textContent = t("stats.recharger");
+    afficher();
+  };
+  const afficher = () => {
+    const { s, insc, act, recentes, usage, usageSerie, dons, donsRecents } = adminStatsCache || {};
     corps.innerHTML = "";
     if (!s) { corps.appendChild(el("p", "note", t("stats.aucune_donnee"))); return; }
 
@@ -2248,8 +2347,10 @@ function blocAdminStats() {
       corps.appendChild(liste);
     }
   };
+  b.onclick = charger;
   sec.appendChild(b);
   sec.appendChild(corps);
+  if (adminStatsCache) afficher(); else charger();
   return sec;
 }
 
@@ -3369,15 +3470,19 @@ function vueAdmin(c) {
       c.appendChild(blocAdminRetours());
       break;
     case "contenu":
-      c.appendChild(blocAdminBlagues());
+      c.appendChild(carteRepliable(blocAdminBlagues(), "admin-blagues", false));
       c.appendChild(blocDashboardScience());
       break;
     case "config":
       c.appendChild(blocConnexionParents());
-      c.appendChild(blocAdminConfig());
+      c.appendChild(blocAdminMailTest());
+      c.appendChild(blocAdminDonConfig());
       break;
     case "systeme":
       c.appendChild(blocAdminSysteme());
+      break;
+    case "mobile":
+      c.appendChild(blocAdminMobile());
       break;
   }
 }

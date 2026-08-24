@@ -85,7 +85,9 @@ peut le certifier avec certitude absolue. Recommandation : préférer des
 devinettes/blagues traditionnelles et anonymes (domaine public avéré),
 écarter tout ce qui est attribuable à un humoriste ou une source
 contemporaine identifiable, et prévoir une relecture humaine avant de
-réactiver `BLAGUES_ACTIVEES` (voir `js/app.js`).*
+cocher la case « Contenu blagues » (Admin → Contenu, `app_config.blagues_actives`
+— voir `blaguesActivees()` dans `js/app.js`, ancien commutateur figé
+`BLAGUES_ACTIVEES`).*
 
 ### Pourquoi Opus 5 pour les chantiers 9 et 12
 
