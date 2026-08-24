@@ -2439,6 +2439,29 @@ test("impression : seuls les documents destinés au papier s'impriment", () => {
       cls + " ne se déclare pas comme cible d'impression"));
 });
 
+test("en-tête ≥820px : le sélecteur d'enfants garde toute la largeur, pas de colonne confinée", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const css = fs.readFileSync(path.join(__dirname, "..", "css/style.css"), "utf8");
+  const iMedia = css.indexOf("@media(min-width:820px)");
+  assert.ok(iMedia >= 0, "règle @media(min-width:820px) introuvable");
+  const bloc = css.slice(iMedia, iMedia + 1200);
+  // Incident : une grille 3 colonnes confinait `.selecteur` à `grid-column:3`,
+  // réduite par un `padding-right:104px` réservé au minuteur — au-delà de 4
+  // enfants (ou même avec 4, entre 820 et ~1200px), il ne restait qu'une
+  // centaine de pixels utiles, et le débordement partait en défilement
+  // horizontal invisible : un parent ne voyait alors "que 2 enfants sur 4"
+  // sans comprendre qu'il fallait faire glisser la rangée.
+  assert.ok(!/\.topbar\{display:grid/.test(bloc),
+    "régression : le sélecteur est de nouveau confiné à une colonne de grille étroite");
+  assert.ok(!/\.topbar \.selecteur\{[^}]*grid-column/.test(bloc),
+    "régression : .selecteur est de nouveau assigné à une colonne de grille");
+  assert.ok(!/\.topbar \.selecteur\{[^}]*padding-right:104px/.test(bloc),
+    "régression : la réservation de 104px pour le minuteur confine de nouveau le sélecteur");
+  assert.ok(/\.topbar \.selecteur\{justify-content:center/.test(bloc),
+    "le sélecteur devrait occuper toute la largeur de l'en-tête, centré");
+});
+
 /* ---------- Le tableau d'honneur ---------- */
 test("tableau d'honneur : libellés complets et paramètres préservés (4 langues)", () => {
   const { api } = construireContexte();
@@ -5061,6 +5084,81 @@ test("admin : le numéro de version chargée survit au premier écran affiché",
   // Traductions toujours présentes (non-régression du texte affiché).
   Object.keys(api.LANGUES).forEach(lg =>
     assert.ok(api.I18N[lg]["sys.version_inconnue"], "sys.version_inconnue manquant en " + lg));
+});
+
+/* Store.charger() : le cloud fait foi, jamais l'horloge de l'appareil.
+ * Incident réel : un appareil rouvert n'affichait plus que 2 des 4 enfants
+ * de la famille, alors que family_state_history prouvait que le cloud
+ * n'était jamais descendu à 2. La cause : `charger()` comparait `etat.maj`
+ * (l'horloge LOCALE, non fiable) à celui du cloud, et poussait le cache
+ * local dès qu'il paraissait "plus récent" — y compris quand ce cache était
+ * en réalité un vieux miroir périmé, dont l'horloge d'origine avait
+ * simplement dérivé en avance. */
+test("Store.charger adopte le cloud même si le cache local paraît plus récent", async () => {
+  const { contexte, api } = construireContexte();
+  const appelsToast = [];
+  contexte.toast = (msg, type) => appelsToast.push({ msg, type });
+
+  api.familleId = "f1";
+  // Le cache local : 2 enfants seulement, mais une horloge en avance (clock
+  // skew) qui lui donne un `maj` numériquement supérieur à celui du cloud.
+  const local = api.etatVierge();
+  const idsLocal = Object.keys(local.enfants);
+  idsLocal.slice(2).forEach(id => delete local.enfants[id]);   // ne garde que 2 enfants
+  local.maj = 9000;
+  api.lierEtat(local);
+
+  // Le cloud : les 4 enfants d'origine, réellement plus ancien numériquement,
+  // mais c'est la seule version qui ait jamais existé côté serveur.
+  const distant = api.etatVierge();
+  distant.maj = 5000;
+  const serveur = { row: { data: distant } };
+  const client = clientFactice(serveur);
+  api.Store.init(client);
+
+  await api.Store.charger();
+
+  assert.strictEqual(Object.keys(api.etat.enfants).length, 4,
+    "le cloud (4 enfants) doit être adopté, pas le cache local périmé (2 enfants)");
+  assert.strictEqual(client.appels.ecritures.length, 0,
+    "rien ne doit être écrit sur le cloud : on ne fait qu'adopter sa version");
+  assert.strictEqual(appelsToast.length, 0, "ce n'est pas un conflit entre appareils, juste une ouverture normale");
+});
+
+test("feuille papier imprimée : la mise en page ne force plus une page presque vide", () => {
+  // Signale avec capture : impression a 3 pages, la premiere quasiment
+  // blanche (seulement l'entete), les 4 enfants repartis 2 par page suivante.
+  //
+  // Cause : `display:grid` pour les deux colonnes ne se pagine pas
+  // proprement a l'impression sous Chrome (limitation ancienne et connue du
+  // moteur), et `break-inside:avoid` posee sur LA CARTE ENTIERE forçait tout
+  // le bloc — mission, humeur, totaux — a rester ensemble. Des qu'une carte,
+  // avec une longue liste de missions, ne tenait plus a cote de l'entete
+  // (mais tenait seule sur une page), tout le bloc basculait a la page
+  // suivante en laissant l'entete seul.
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  // Le CSS vit dans htmlFeuilleSemaine (construction du document HTML,
+  // partagée par la voie web et la voie native de l'app installée) — pas
+  // dans imprimerFeuilleSemaine, qui ne fait plus que choisir entre les deux.
+  const bloc = ui.slice(ui.indexOf("function htmlFeuilleSemaine"),
+                        ui.indexOf("function htmlFeuilleSemaine") + 9000);
+
+  assert.ok(!/\.grille\{display:grid/.test(bloc),
+    "CSS Grid ne se pagine pas proprement à l'impression sous Chrome : à éviter ici");
+  assert.ok(/\.enfant\{float:left/.test(bloc),
+    "un flottement se pagine correctement, contrairement à une grille");
+  assert.ok(!/\.enfant\{break-inside:avoid/.test(bloc),
+    "la carte entière ne doit plus être une seule unité insécable");
+  assert.ok(/\.enfant tr\{break-inside:avoid\}/.test(bloc),
+    "la césure doit porter sur les LIGNES du tableau, pas sur la carte entière — "
+    + "une longue liste doit pouvoir se répartir sur plusieurs pages");
+  assert.ok(/\.enfant h3\{[^}]*break-after:avoid/.test(bloc),
+    "le nom de l'enfant ne doit jamais se retrouver seul, séparé de son tableau");
+
+  // Vérifié empiriquement (hors suite, non reproductible ici sans moteur
+  // d'impression réel) : une carte de 22 lignes rend 3 pages dont une à
+  // 7 opérateurs de texte (l'ancien CSS) contre 2 pages pleines (le nouveau).
 });
 
 /* ---------- Exécution ----------

@@ -86,10 +86,28 @@ const Store = (() => {
     const { data, error } = await client.from("family_state")
       .select("data").eq("family_id", familleId).maybeSingle();
     if (!error && data && data.data && data.data.enfants) {
+      // Le cloud fait foi ; le cache local n'est qu'un miroir (ARCHITECTURE
+      // §2.1). Comparer les horodatages pour DÉCIDER qui gagne violait cet
+      // invariant : `etat.maj` est l'horloge de CET appareil, et rien ne
+      // garantit qu'elle soit juste. Un appareil resté fermé des semaines,
+      // dont l'horloge a dérivé ne serait-ce que de quelques minutes en
+      // avance, rouvre avec un cache PÉRIMÉ dont le `maj` paraît pourtant
+      // plus récent que celui, réel, du cloud — et cette fonction poussait
+      // alors ce cache en écrasant tout le travail effectué entretemps par
+      // les autres appareils. C'est exactement le mécanisme d'un incident
+      // constaté : deux enfants sur quatre disparus d'un appareil, sans
+      // qu'une seule ligne à deux enfants n'ait jamais existé sur le cloud
+      // (family_state_history en faisait foi) — la version cloud n'avait
+      // donc jamais été remplacée, mais rien ne l'avait adoptée non plus.
+      //
+      // Le cloud est désormais adopté sans condition dès qu'il existe et
+      // contient des enfants. Une édition locale qui n'aurait pas eu le
+      // temps de partir (fenêtre de 700 ms, ou perte réseau pendant l'envoi)
+      // peut se perdre dans ce cas très rare — c'est le prix assumé, écrit
+      // noir sur blanc dans l'invariant : le cache est un miroir, pas une
+      // source.
       const distant = normaliser(data.data);
-      if ((distant.maj || 0) >= (etat.maj || 0)) {
-        lierEtat(distant); ecrireCache(); derniereMajConnue = distant.maj || 0;
-      } else await sauver();
+      lierEtat(distant); ecrireCache(); derniereMajConnue = distant.maj || 0;
     } else {
       if (!etatNonVide(etat)) lierEtat(etatVierge());
       await sauver();                       // initialise la ligne distante
