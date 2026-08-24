@@ -2679,6 +2679,12 @@ Object.assign(I18N.en, { "eval.aujourdhui": "Today", "eval.hier": "Yesterday", "
 Object.assign(I18N.nl, { "eval.aujourdhui": "Vandaag", "eval.hier": "Gisteren", "eval.avant_hier": "Eergisteren" });
 Object.assign(I18N.de, { "eval.aujourdhui": "Heute", "eval.hier": "Gestern", "eval.avant_hier": "Vorgestern" });
 
+/* ---- Évaluation parent : carte simplifiée, historique replié sur 2 semaines ---- */
+Object.assign(I18N.fr, { "eval.historique": "Voir les 2 dernières semaines" });
+Object.assign(I18N.en, { "eval.historique": "See the last 2 weeks" });
+Object.assign(I18N.nl, { "eval.historique": "Laatste 2 weken bekijken" });
+Object.assign(I18N.de, { "eval.historique": "Letzte 2 Wochen anzeigen" });
+
 /* ---- Dons : ponctuels & mensuels ---- */
 Object.assign(I18N.fr, {
   "don.ponctuel": "Un geste ponctuel", "don.mensuel": "Soutien mensuel", "don.par_mois": "/mois", "don.mois": "mois",
@@ -3107,8 +3113,10 @@ Object.assign(I18N.fr, {
   "pp.e1_b": "Ouvrir « Mes enfants »",
   "pp.e2_t": "Choisis 2 ou 3 missions pour aujourd'hui",
   "pp.e2_d": "Juste en dessous ⬇️ Peu de missions = plus de réussites. Tu peux changer chaque jour.",
+  "pp.e2_b": "Voir les missions du jour",
   "pp.e3_t": "Ce soir, coche avec ton enfant",
   "pp.e3_d": "Sur son écran d'accueil : il coche ce qu'il a fait, gagne des 💛 et fait grandir son avatar.",
+  "pp.e3_b": "Aller à l'écran de mon enfant",
   "pp.masquer": "Masquer ces conseils"
 });
 Object.assign(I18N.en, {
@@ -3124,8 +3132,10 @@ Object.assign(I18N.en, {
   "pp.e1_b": "Open “My children”",
   "pp.e2_t": "Pick 2 or 3 missions for today",
   "pp.e2_d": "Right below ⬇️ Fewer missions means more wins. You can change them every day.",
+  "pp.e2_b": "See today's missions",
   "pp.e3_t": "Tonight, tick them off with your child",
   "pp.e3_d": "On their home screen: they tick what they did, earn 💛 and grow their avatar.",
+  "pp.e3_b": "Go to my child's screen",
   "pp.masquer": "Hide these tips"
 });
 Object.assign(I18N.nl, {
@@ -3141,8 +3151,10 @@ Object.assign(I18N.nl, {
   "pp.e1_b": "„Mijn kinderen” openen",
   "pp.e2_t": "Kies 2 of 3 opdrachten voor vandaag",
   "pp.e2_d": "Net hieronder ⬇️ Minder opdrachten = meer succes. Je mag elke dag wisselen.",
+  "pp.e2_b": "Opdrachten van vandaag bekijken",
   "pp.e3_t": "Vink vanavond samen met je kind af",
   "pp.e3_d": "Op zijn startscherm: het kind vinkt af wat het deed, verdient 💛 en laat zijn avatar groeien.",
+  "pp.e3_b": "Naar het scherm van mijn kind",
   "pp.masquer": "Deze tips verbergen"
 });
 Object.assign(I18N.de, {
@@ -3158,8 +3170,10 @@ Object.assign(I18N.de, {
   "pp.e1_b": "„Meine Kinder“ öffnen",
   "pp.e2_t": "Wähle 2 oder 3 Aufgaben für heute",
   "pp.e2_d": "Direkt darunter ⬇️ Weniger Aufgaben = mehr Erfolge. Du kannst sie täglich ändern.",
+  "pp.e2_b": "Heutige Aufgaben ansehen",
   "pp.e3_t": "Heute Abend gemeinsam abhaken",
   "pp.e3_d": "Auf dem Startbildschirm des Kindes: es hakt ab, was es geschafft hat, erhält 💛 und lässt seinen Avatar wachsen.",
+  "pp.e3_b": "Zum Bildschirm meines Kindes",
   "pp.masquer": "Diese Tipps ausblenden"
 });
 

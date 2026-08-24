@@ -3996,18 +3996,29 @@ function blocEval(enf, mode) {
 
   if (mode === "parent") {
     sec.innerHTML = `<h2>${t("eval.titre_parent", { prenom: echapper(enf.prenom) })}</h2>`;
-    // Aujourd'hui + les 2 jours précédents (pour compléter ce qui manque).
     const base = new Date(aujourdHui() + "T00:00:00");
-    const labels = [t("eval.aujourdhui"), t("eval.hier"), t("eval.avant_hier")];
-    for (let i = 0; i < 3; i++) {
+    // Carte simplifiée : seul « aujourd'hui » est en vue directe, en gros.
+    const cleAuj = dateCle(base);
+    const courantAuj = (enf.evalParent || {})[cleAuj];
+    const ligneAuj = el("div", "eval-jour eval-jour-aujourdhui");
+    ligneAuj.appendChild(el("span", "eval-jour-lbl", t("eval.aujourdhui") + (courantAuj ? " ✓" : "")));
+    ligneAuj.appendChild(ligneChoix(courantAuj, v => definirEvalParent(enf, v, cleAuj)));
+    sec.appendChild(ligneAuj);
+    // L'historique (jusqu'à 2 semaines, au lieu de 3 jours) reste disponible
+    // mais replié : on ne le consulte que rarement, pour comparer avec
+    // l'auto-évaluation dans les statistiques.
+    const { details, corps } = blocPliable(t("eval.historique"), false, "eval-hist-" + enf.id);
+    for (let i = 1; i < 14; i++) {
       const d = new Date(base); d.setDate(base.getDate() - i);
       const cle = dateCle(d);
       const courant = (enf.evalParent || {})[cle];
       const ligne = el("div", "eval-jour");
-      ligne.appendChild(el("span", "eval-jour-lbl", labels[i] + (courant ? " ✓" : "")));
+      const lbl = i === 1 ? t("eval.hier") : d.toLocaleDateString(langue, { day: "numeric", month: "short" });
+      ligne.appendChild(el("span", "eval-jour-lbl", lbl + (courant ? " ✓" : "")));
       ligne.appendChild(ligneChoix(courant, v => definirEvalParent(enf, v, cle)));
-      sec.appendChild(ligne);
+      corps.appendChild(ligne);
     }
+    sec.appendChild(details);
     return sec;
   }
 
@@ -6003,6 +6014,7 @@ function carteRepliable(sec, cle, ouvertParDefaut) {
   const titre = sec.querySelector("h2");
   if (!titre) return sec;              // sans titre, rien à quoi accrocher le pli
   const det = el("details", "carte-pli");
+  det.id = "pli-" + cle;
   det.open = plisParent.has(cle) ? plisParent.get(cle) : !!ouvertParDefaut;
   const som = el("summary", "carte-pli-t");
   som.appendChild(titre);              // le <h2> lui-même : on garde la sémantique de titre
@@ -6120,8 +6132,8 @@ function blocPremiersPas() {
   if (etat.reglages && etat.reglages.premiersPasVus) return null;
   const etapes = [
     { fait: profilsRenseignes(), titre: t("pp.e1_t"), desc: t("pp.e1_d"), onglet: "enfants", bouton: t("pp.e1_b") },
-    { fait: missionsChoisies(),  titre: t("pp.e2_t"), desc: t("pp.e2_d") },
-    { fait: journeeEntamee(),    titre: t("pp.e3_t"), desc: t("pp.e3_d") }
+    { fait: missionsChoisies(),  titre: t("pp.e2_t"), desc: t("pp.e2_d"), pli: "missions", bouton: t("pp.e2_b") },
+    { fait: journeeEntamee(),    titre: t("pp.e3_t"), desc: t("pp.e3_d"), sortir: true, bouton: t("pp.e3_b") }
   ];
   if (etapes.every(e => e.fait)) return null;      // plus rien à expliquer
 
@@ -6132,9 +6144,26 @@ function blocPremiersPas() {
     const li = el("li", "pp-etape" + (e.fait ? " fait" : ""));
     li.innerHTML = `<span class="pp-num">${e.fait ? "✅" : (i + 1)}</span>
       <span class="pp-corps"><strong>${e.titre}</strong><small>${e.desc}</small></span>`;
+    // Chaque étape a un bouton concret vers l'action exacte à faire, pas
+    // seulement la première : ouvrir l'onglet, déplier la carte des missions
+    // (même onglet, juste en dessous), ou quitter le mode parents pour
+    // retrouver l'écran où l'enfant coche vraiment ses missions.
     if (!e.fait && e.onglet) {
       const b = el("button", "mini-btn", e.bouton);
       b.onclick = () => { ongletParent = e.onglet; rendre(); };
+      li.querySelector(".pp-corps").appendChild(b);
+    } else if (!e.fait && e.pli) {
+      const b = el("button", "mini-btn", e.bouton);
+      b.onclick = () => {
+        plisParent.set(e.pli, true);
+        rendre();
+        const cible = document.getElementById("pli-" + e.pli);
+        if (cible) cible.scrollIntoView({ behavior: "smooth", block: "center" });
+      };
+      li.querySelector(".pp-corps").appendChild(b);
+    } else if (!e.fait && e.sortir) {
+      const b = el("button", "mini-btn", e.bouton);
+      b.onclick = () => quitterModeParents();
       li.querySelector(".pp-corps").appendChild(b);
     }
     liste.appendChild(li);
@@ -6591,51 +6620,48 @@ function vueReglages(c) {
 
   if (!exp) {
     // Mode simplifié : l'ordre suit le geste réel du parent — ce qu'il y a à
-    // faire d'abord, les encouragements ensuite.
+    // faire d'abord, les encouragements ensuite. Le compliment du jour passe
+    // avant le rendez-vous du soir : c'est le mot à dire à l'enfant, la
+    // première chose à voir. Pas de carte « Oups, ça arrive… » ici : elle
+    // fait double emploi avec la pastille arc-en-ciel, accessible depuis
+    // n'importe quel écran.
     const pp = blocPremiersPas();
     if (pp) c.appendChild(pp);
-    if (totalAttente) c.appendChild(blocAttente(totalAttente));
+    if (totalAttente) c.appendChild(carteRepliable(blocAttente(totalAttente), "attente", true));
     const bm = blocBonMoment();
-    if (bm) c.appendChild(bm);
+    if (bm) c.appendChild(carteRepliable(bm, "bonmoment", true));
     const j7 = blocArbreSeptiemeJour();
-    if (j7) c.appendChild(j7);
+    if (j7) c.appendChild(carteRepliable(j7, "septiemejour", true));
+    c.appendChild(carteRepliable(blocComplimentDuJour(enfantActif()), "compliment", true));
     // Ouvert tant que rien n'est réglé, replié ensuite : la carte se fait
     // discrète pour celui qui a déjà répondu, et reste visible pour l'autre.
     c.appendChild(carteRepliable(blocRituelSoir(), "rituel", !rituelReglage()));
     c.appendChild(carteRepliable(blocMissionsDuJour(enfantActif()), "missions", false));
-    // Pas d'évaluation du comportement ici : noter son enfant chaque soir est
-    // un geste d'outil avancé, et le champ est facultatif — il ne nourrit que
-    // la comparaison avec l'auto-évaluation, dans les statistiques. En mode
-    // standard il occupait une carte entière au-dessus des encouragements.
-    c.appendChild(blocReparation());
-    c.appendChild(blocComplimentDuJour(enfantActif()));
     c.appendChild(carteRepliable(blocJournalActions(), "journal", false));
   } else {
     // ----- Compliment du jour : un mot d'encouragement concret à dire à
     // l'enfant, basé sur sa régularité/progression réelle (parentalité
-    // positive). Tout en haut : c'est la première chose à voir chaque jour. -----
-    c.appendChild(blocComplimentDuJour(enfantActif()));
+    // positive). Tout en haut, au-dessus du rendez-vous du soir : c'est la
+    // première chose à voir chaque jour. -----
+    c.appendChild(carteRepliable(blocComplimentDuJour(enfantActif()), "compliment", true));
 
     // ----- Comportement de l'enfant (évaluation parent) -----
     // Sous le compliment, et en mode expert seulement : on lit d'abord ce
     // qu'on peut DIRE à l'enfant, on note ensuite — l'inverse installait la
     // notation comme le premier geste de la soirée.
-    c.appendChild(blocEval(enfantActif(), "parent"));
-
-    // ----- Défis réparation ("Oups, ça arrive…") : accès rapide -----
-    c.appendChild(blocReparation());
+    c.appendChild(carteRepliable(blocEval(enfantActif(), "parent"), "eval", true));
 
     // ----- Le rendez-vous du soir (rappel par l'agenda du parent) -----
     c.appendChild(carteRepliable(blocRituelSoir(), "rituel", !rituelReglage()));
 
     // ----- Le bon moment pour parler de l'app (après une carte débloquée) -----
     const bmExp = blocBonMoment();
-    if (bmExp) c.appendChild(bmExp);
+    if (bmExp) c.appendChild(carteRepliable(bmExp, "bonmoment", true));
     const j7Exp = blocArbreSeptiemeJour();
-    if (j7Exp) c.appendChild(j7Exp);
+    if (j7Exp) c.appendChild(carteRepliable(j7Exp, "septiemejour", true));
 
     // ----- Validations en attente (affichées seulement s'il y en a) -----
-    if (totalAttente) c.appendChild(blocAttente(totalAttente));
+    if (totalAttente) c.appendChild(carteRepliable(blocAttente(totalAttente), "attente", true));
 
     // ----- Sélection groupée & tournantes : outils avancés -----
     // Repliées : ce sont les plus longues de l'espace parents, et elles ne

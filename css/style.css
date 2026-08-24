@@ -207,9 +207,13 @@ body{
 
 /* ---- Contenu ---- */
 main{max-width:680px; margin:0 auto; padding:14px}
+/* Toute carte porte désormais la même signature visuelle qu'avait
+   « Missions proposées » : une ligne de couleur à gauche (la couleur de
+   l'enfant quand la carte lui est propre, une teinte par défaut sinon). */
 .carte{
   background:var(--carte); border-radius:var(--rayon); padding:16px;
   box-shadow:var(--ombre); margin-bottom:14px;
+  border-left:6px solid var(--c, #ccd3e0);
 }
 .carte h1{margin:.1em 0 .3em; font-size:24px}
 .carte h2{margin:.1em 0 .5em; font-size:19px}
@@ -605,9 +609,13 @@ main{max-width:680px; margin:0 auto; padding:14px}
   border-radius:10px; padding:6px 10px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit}
 .mission.fait .m-points{color:var(--planete)}
 .mission.rep{border-color:#d9d2f0}
-.reparation{border-top:6px solid #a78bfa}
+.reparation{--c:#a78bfa}
 /* Premiers pas : les 3 gestes à connaître quand on découvre l'app */
-.premiers-pas{border-top:6px solid var(--famille,#f6a623)}
+.premiers-pas{--c:var(--famille,#f6a623)}
+.rituel{--c:#5b8def}
+.compliment-carte{--c:#e78fb3}
+.journal-actions{--c:#8a8fa3}
+.bon-moment{--c:#39c0a0}
 .pp-liste{list-style:none; margin:10px 0 4px; padding:0; display:flex;
   flex-direction:column; gap:12px}
 .pp-etape{display:flex; gap:10px; align-items:flex-start}
@@ -1172,7 +1180,8 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .stat-dep-col{background:#a78bfa; display:flex; align-items:center; justify-content:center; min-width:fit-content; padding:0 6px; color:#fff; font-weight:800; font-size:12px}
 .stat-dep-ind{background:#5b8def; display:flex; align-items:center; justify-content:center; min-width:fit-content; padding:0 6px; color:#fff; font-weight:800; font-size:12px}
 /* ---- Auto-évaluation de la journée ---- */
-.eval-carte{background:linear-gradient(160deg,#f4f7ff,#fff4f8)}
+.eval-carte{background:linear-gradient(160deg,#f4f7ff,#fff4f8); --c:#f0a13e}
+.eval-jour-aujourdhui .eval-jour-lbl{font-size:15px}
 .eval-choix{display:flex; gap:8px}
 .eval-jour{margin-top:10px}
 .eval-jour-lbl{display:block; font-size:13px; font-weight:800; color:var(--doux); margin-bottom:4px}

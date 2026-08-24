@@ -3249,7 +3249,7 @@ test("parents : les cartes longues sont repliables et retiennent leur état", ()
   // et expert) apparaît deux fois dans la source alors qu'une seule est
   // rendue. Partager la clé est alors voulu — la préférence du parent
   // survit au changement de mode. Toute autre répétition est un défaut.
-  const DEUX_MODES = ["missions", "journal", "rituel"];
+  const DEUX_MODES = ["missions", "journal", "rituel", "compliment", "attente", "bonmoment", "septiemejour"];
   const cles = (ui.match(/carteRepliable\([^,]+, "([a-z]+)"/g) || [])
     .map(m => /"([a-z]+)"$/.exec(m)[1]);
   const doublons = cles.filter((c, i) => cles.indexOf(c) !== i && DEUX_MODES.indexOf(c) < 0);
