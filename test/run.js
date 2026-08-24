@@ -3249,7 +3249,7 @@ test("parents : les cartes longues sont repliables et retiennent leur état", ()
   // et expert) apparaît deux fois dans la source alors qu'une seule est
   // rendue. Partager la clé est alors voulu — la préférence du parent
   // survit au changement de mode. Toute autre répétition est un défaut.
-  const DEUX_MODES = ["missions", "journal", "rituel"];
+  const DEUX_MODES = ["missions", "journal", "rituel", "notif"];
   const cles = (ui.match(/carteRepliable\([^,]+, "([a-z]+)"/g) || [])
     .map(m => /"([a-z]+)"$/.exec(m)[1]);
   const doublons = cles.filter((c, i) => cles.indexOf(c) !== i && DEUX_MODES.indexOf(c) < 0);
@@ -4232,10 +4232,9 @@ test("écrans : le mode sans écran est annoncé avant l'inscription", () => {
   assert.ok(/[Tt]rois minutes|3 minutes/.test(rep), "la réponse doit chiffrer le temps d'écran");
 });
 
-/* Le rendez-vous du soir. L'application ne notifiera jamais : le rappel est
- * délégué à l'agenda du parent. Ce qui doit donc être garanti, c'est que le
- * fichier produit prévienne réellement (VALARM), qu'il ne dérive pas au
- * changement d'heure, et qu'aucune heure absurde ne le rende illisible. */
+/* Le rendez-vous du soir, voie agenda. Ce qui doit donc être garanti, c'est
+ * que le fichier produit prévienne réellement (VALARM), qu'il ne dérive pas
+ * au changement d'heure, et qu'aucune heure absurde ne le rende illisible. */
 test("rendez-vous du soir : l'heure hors plage est refusée, pas encodée", () => {
   const { api } = construireContexte();
   // HEURE_ISO ne contrôle que la forme. C'est ce piège qui produisait un
@@ -4306,7 +4305,7 @@ test("rendez-vous du soir : le premier rappel ne tombe jamais dans le passé", (
     { enfants: { a: { heureCoucher: "00:10" } } })), "heure de repli invalide");
 });
 
-test("rendez-vous du soir : l'app promet l'absence de notification, pas l'inverse", () => {
+test("rendez-vous du soir : la carte agenda existe dans les deux modes parents", () => {
   const { api } = construireContexte();
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
   const cles = ["rituel.titre", "rituel.intro", "rituel.rythme", "rituel.heure",
@@ -4316,13 +4315,13 @@ test("rendez-vous du soir : l'app promet l'absence de notification, pas l'invers
   Object.keys(api.LANGUES).forEach(lg =>
     cles.forEach(k => assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`)));
 
-  // L'introduction doit NIER la notification. C'est le seul argument qui
-  // rassure un parent méfiant, et une traduction distraite l'inverserait.
-  const nie = { fr: /jamais de notification/i, en: /never send you a notification/i,
+  // L'app envoie désormais une notification par défaut : l'intro ne doit plus
+  // prétendre le contraire dans aucune langue, sous peine de se contredire.
+  const dementi = { fr: /jamais de notification/i, en: /never send you a notification/i,
     nl: /nooit een melding/i, de: /niemals eine Benachrichtigung/i };
   Object.keys(api.LANGUES).forEach(lg =>
-    assert.ok(nie[lg].test(api.I18N[lg]["rituel.intro"]),
-      "l'intro doit nier la notification en " + lg));
+    assert.ok(!dementi[lg].test(api.I18N[lg]["rituel.intro"]),
+      "l'intro ne doit plus nier la notification en " + lg));
 
   // La carte existe dans les deux modes parents, et se replie une fois réglée.
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
@@ -4332,6 +4331,47 @@ test("rendez-vous du soir : l'app promet l'absence de notification, pas l'invers
   // sinon il reste collé à son libellé alors que le champ voisin s'aligne.
   const css = fs.readFileSync(path.join(r, "css/style.css"), "utf8");
   assert.ok(/\.champ select\{[^}]*width:100%/.test(css), "le menu déroulant doit occuper la ligne");
+});
+
+test("rappel du soir : la notification est activée par défaut, désactivable", () => {
+  const { api } = construireContexte();
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const cles = ["notif.titre", "notif.intro", "notif.activer", "notif.heure", "notif.resume",
+    "notif.jamais", "notif.note", "notif.titre_push", "notif.corps_push", "notif.ok",
+    "notif.off", "notif.refuse"];
+  Object.keys(api.LANGUES).forEach(lg =>
+    cles.forEach(k => assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`)));
+
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  // Le réglage par défaut, en l'absence de tout choix explicite, doit être actif.
+  const nf = ui.slice(ui.indexOf("function notifReglage"), ui.indexOf("function notifReglage") + 400);
+  assert.ok(/active:\s*true/.test(nf), "sans réglage enregistré, la notification doit être active par défaut");
+
+  // La programmation doit être en heure locale (cron-like on:{hour,minute}),
+  // jamais en instant UTC absolu — sinon le rappel dériverait au changement
+  // d'heure d'été/hiver, exactement le piège déjà évité pour l'agenda.
+  const ps = ui.slice(ui.indexOf("async function programmerNotificationSoir"),
+                      ui.indexOf("async function programmerNotificationSoir") + 800);
+  assert.ok(/schedule:\s*\{\s*on:\s*\{\s*hour/.test(ps), "la programmation doit utiliser on:{hour,minute}, pas un instant absolu");
+  assert.ok(/isExactNotification:\s*false/.test(ps), "un simple rappel ne doit pas exiger la permission « alarmes exactes »");
+
+  // La synchronisation ne doit jamais se déclencher avant le déverrouillage
+  // du mode parents : aucune demande de permission pendant qu'un enfant tient
+  // l'appareil.
+  const vr = ui.slice(ui.indexOf("function vueReglages"), ui.indexOf("function vueReglages") + 1500);
+  const iVerrou = vr.indexOf("if (!modeParents)");
+  const iSync = vr.indexOf("synchroniserNotificationSoir();");
+  assert.ok(iVerrou > 0 && iSync > iVerrou,
+    "dans vueReglages, la synchronisation doit avoir lieu après le contrôle du verrou parent");
+
+  // La carte figure dans les deux modes parents, comme celle de l'agenda.
+  const appelsNotif = ui.match(/carteRepliable\(blocNotificationSoir\(\), "notif", false\)/g) || [];
+  assert.strictEqual(appelsNotif.length, 2, "il faut la carte notification en mode simplifié ET en mode expert");
+
+  // Dépendance déclarée, jamais un ajout manuel du dossier natif.
+  const pkg = JSON.parse(fs.readFileSync(path.join(r, "package.json"), "utf8"));
+  assert.ok((pkg.dependencies || {})["@capacitor/local-notifications"],
+    "le greffon de notifications doit être une dépendance déclarée");
 });
 
 test("parents : l'action principale a partout la même taille", () => {

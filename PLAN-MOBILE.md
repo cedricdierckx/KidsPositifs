@@ -72,6 +72,23 @@ applications qui ne font que réafficher un site web.
   distingue les deux plateformes). Autorisation demandée une fois au premier
   usage ; le fichier `.ics` reste le repli si le greffon est absent ou la
   permission refusée.
+- **Rappel du soir par notification** (`@capacitor/local-notifications`) :
+  principe changé — FamiTeam promettait « jamais de notification »
+  (`SCIENCE_DEFAUT.neurologie` dans `js/data.js`) ; trop de familles
+  n'utilisaient jamais le rendez-vous agenda ci-dessus faute d'y penser.
+  L'app envoie désormais un rappel quotidien, activé par défaut à l'heure
+  conseillée (`heureRituelConseillee()`), désactivable en un geste dans
+  l'espace parents (`blocNotificationSoir()`, `js/ui.js`). L'esprit du repère
+  neurologique est tenu (un seul message calme par jour, pas de son
+  insistant, pas de badge, aucun score compétitif) ; sa lettre ne l'est plus.
+  Programmé en `schedule.on:{hour,minute}` (répétition quotidienne en heure
+  LOCALE, jamais en instant UTC absolu) — même logique flottante que
+  `icsRituelSoir`, insensible au changement d'heure d'été/hiver.
+  `isExactNotification:false` : un rappel de famille tolère quelques minutes
+  de dérive, ce qui évite d'exiger la permission Android « alarmes exactes ».
+  La synchronisation avec le système (`synchroniserNotificationSoir()`)
+  n'a lieu qu'après déverrouillage du mode parents — jamais de demande de
+  permission surprise pendant qu'un enfant tient l'appareil.
 - **Bibliothèque Supabase embarquée** (`js/vendor/supabase.js`) : elle venait
   d'un CDN, ce qui contredisait le hors-ligne annoncé au §0 — sans réseau, le
   script n'arrivait pas, la variable `supabase` restait indéfinie et l'app

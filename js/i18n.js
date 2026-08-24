@@ -2359,7 +2359,7 @@ Object.assign(I18N.fr, {
   "auth.feat2_t": "Des cartes FamiTeam", "auth.feat2_d": "Les enfants coopèrent pour débloquer ensemble de vraies activités en famille.",
   "auth.feat3_t": "Un écosystème vivant", "auth.feat3_d": "Leurs efforts font grandir un petit monde, des plantes jusqu'aux animaux.",
   "auth.feat4_t": "Que du positif", "auth.feat4_d": "Badges, encouragements et « défis réparation » : jamais de punition, on valorise l'effort.",
-  "auth.feat5_t": "Sans écran, si vous préférez", "auth.feat5_d": "La semaine se coche à la main sur une feuille imprimée, sur le frigo ; un parent l'encode en une fois. Objectif : 3 minutes d'app par jour, et jamais de notification.",
+  "auth.feat5_t": "Sans écran, si vous préférez", "auth.feat5_d": "La semaine se coche à la main sur une feuille imprimée, sur le frigo ; un parent l'encode en une fois. Objectif : 3 minutes d'app par jour, pas plus.",
   "auth.comment_titre": "Comment ça marche ?",
   "auth.etape1": "Crée ta famille et ajoute tes enfants.",
   "auth.etape2": "Les enfants réalisent leurs missions et gagnent des récompenses.",
@@ -2376,7 +2376,7 @@ Object.assign(I18N.en, {
   "auth.feat2_t": "FamiTeam cards", "auth.feat2_d": "Children cooperate to unlock real family activities together.",
   "auth.feat3_t": "A living ecosystem", "auth.feat3_d": "Their efforts grow a little world, from plants to animals.",
   "auth.feat4_t": "All positive", "auth.feat4_d": "Badges, encouragement and 'repair challenges': no punishment, we value effort.",
-  "auth.feat5_t": "Screen-free, if you prefer", "auth.feat5_d": "Tick the week by hand on a printed sheet on the fridge; a parent enters it all in one go. Target: 3 minutes of app a day, and never a notification.",
+  "auth.feat5_t": "Screen-free, if you prefer", "auth.feat5_d": "Tick the week by hand on a printed sheet on the fridge; a parent enters it all in one go. Target: 3 minutes of app a day, not a minute more.",
   "auth.comment_titre": "How does it work?",
   "auth.etape1": "Create your family and add your children.",
   "auth.etape2": "Children complete their missions and earn rewards.",
@@ -2393,7 +2393,7 @@ Object.assign(I18N.nl, {
   "auth.feat2_t": "FamiTeam-kaarten", "auth.feat2_d": "Kinderen werken samen om echte gezinsactiviteiten vrij te spelen.",
   "auth.feat3_t": "Een levend ecosysteem", "auth.feat3_d": "Hun inspanningen laten een kleine wereld groeien, van planten tot dieren.",
   "auth.feat4_t": "Alleen positief", "auth.feat4_d": "Badges, aanmoediging en 'herstel-uitdagingen': geen straf, we waarderen inzet.",
-  "auth.feat5_t": "Zonder scherm, als u dat verkiest", "auth.feat5_d": "De week wordt met de hand afgevinkt op een geprint blad aan de koelkast; één ouder voert alles in één keer in. Doel: 3 minuten app per dag, en nooit een melding.",
+  "auth.feat5_t": "Zonder scherm, als u dat verkiest", "auth.feat5_d": "De week wordt met de hand afgevinkt op een geprint blad aan de koelkast; één ouder voert alles in één keer in. Doel: 3 minuten app per dag, niet meer.",
   "auth.comment_titre": "Hoe werkt het?",
   "auth.etape1": "Maak je gezin aan en voeg je kinderen toe.",
   "auth.etape2": "Kinderen voltooien hun missies en verdienen beloningen.",
@@ -2410,7 +2410,7 @@ Object.assign(I18N.de, {
   "auth.feat2_t": "FamiTeam-Karten", "auth.feat2_d": "Kinder arbeiten zusammen, um echte Familienaktivitäten freizuschalten.",
   "auth.feat3_t": "Ein lebendiges Ökosystem", "auth.feat3_d": "Ihre Mühe lässt eine kleine Welt wachsen, von Pflanzen bis zu Tieren.",
   "auth.feat4_t": "Nur Positives", "auth.feat4_d": "Abzeichen, Ermutigung und 'Wiedergutmachungs-Challenges': keine Strafe, wir würdigen den Einsatz.",
-  "auth.feat5_t": "Ohne Bildschirm, wenn Sie möchten", "auth.feat5_d": "Die Woche wird von Hand auf einem ausgedruckten Blatt am Kühlschrank abgehakt; ein Elternteil trägt alles auf einmal ein. Ziel: 3 Minuten App pro Tag, und niemals eine Benachrichtigung.",
+  "auth.feat5_t": "Ohne Bildschirm, wenn Sie möchten", "auth.feat5_d": "Die Woche wird von Hand auf einem ausgedruckten Blatt am Kühlschrank abgehakt; ein Elternteil trägt alles auf einmal ein. Ziel: 3 Minuten App pro Tag, nicht mehr.",
   "auth.comment_titre": "Wie funktioniert es?",
   "auth.etape1": "Erstelle deine Familie und füge deine Kinder hinzu.",
   "auth.etape2": "Kinder erfüllen ihre Missionen und verdienen Belohnungen.",
@@ -4221,7 +4221,7 @@ Object.assign(I18N.de, {
  * l'inverse, et c'est le seul argument qui rassure un parent méfiant. */
 Object.assign(I18N.fr, {
   "rituel.titre": "⏰ Le rendez-vous du soir",
-  "rituel.intro": "FamiTeam ne vous enverra jamais de notification. Déposez plutôt un rendez-vous de cinq minutes dans <strong>votre</strong> agenda : c'est lui qui vous préviendra.",
+  "rituel.intro": "Vous préférez un rappel qui vous appartienne ? Déposez un rendez-vous de cinq minutes dans <strong>votre</strong> agenda : c'est lui qui vous préviendra, à votre rythme.",
   "rituel.rythme": "À quel rythme ?",
   "rituel.r_quotidien": "Chaque jour",
   "rituel.r_deux_jours": "Tous les deux jours",
@@ -4238,11 +4238,23 @@ Object.assign(I18N.fr, {
   "rituel.jamais": "Aucun rappel réglé",
   "rituel.note": "Le fichier va dans votre agenda, pas chez nous. Pour arrêter, supprimez l'événement.",
   "rituel.sujet": "🌟 FamiTeam — le petit moment",
-  "rituel.corps": "Deux minutes avec les enfants : cocher les missions du jour.\nfami.team"
+  "rituel.corps": "Deux minutes avec les enfants : cocher les missions du jour.\nfami.team",
+  "notif.titre": "🔔 Rappel du soir",
+  "notif.intro": "FamiTeam peut vous envoyer un petit rappel chaque soir, à l'heure que vous choisissez. Un seul message calme par jour — jamais de son insistant, jamais de badge.",
+  "notif.activer": "Activer le rappel",
+  "notif.heure": "À quelle heure ?",
+  "notif.resume": "Activé à {h}",
+  "notif.jamais": "Désactivé",
+  "notif.note": "Vous pouvez l'éteindre à tout moment, ici même.",
+  "notif.titre_push": "🌟 FamiTeam",
+  "notif.corps_push": "Deux minutes avec les enfants : cocher les missions du jour.",
+  "notif.ok": "Rappel activé ✅",
+  "notif.off": "Rappel désactivé",
+  "notif.refuse": "Autorisation refusée : activez les notifications dans les réglages du téléphone."
 });
 Object.assign(I18N.en, {
   "rituel.titre": "⏰ The evening appointment",
-  "rituel.intro": "FamiTeam will never send you a notification. Drop a five-minute appointment into <strong>your own</strong> calendar instead: your calendar reminds you.",
+  "rituel.intro": "Prefer a reminder that's truly yours? Drop a five-minute appointment into <strong>your own</strong> calendar instead: it reminds you, at your own pace.",
   "rituel.rythme": "How often?",
   "rituel.r_quotidien": "Every day",
   "rituel.r_deux_jours": "Every two days",
@@ -4259,11 +4271,23 @@ Object.assign(I18N.en, {
   "rituel.jamais": "No reminder set",
   "rituel.note": "The file goes into your calendar, not to us. To stop, delete the event.",
   "rituel.sujet": "🌟 FamiTeam — the little moment",
-  "rituel.corps": "Two minutes with the children: tick off today's missions.\nfami.team"
+  "rituel.corps": "Two minutes with the children: tick off today's missions.\nfami.team",
+  "notif.titre": "🔔 Evening reminder",
+  "notif.intro": "FamiTeam can send you a small reminder every evening, at the time you choose. One calm message a day — never an insistent sound, never a badge.",
+  "notif.activer": "Turn on the reminder",
+  "notif.heure": "At what time?",
+  "notif.resume": "On at {h}",
+  "notif.jamais": "Off",
+  "notif.note": "You can turn it off at any time, right here.",
+  "notif.titre_push": "🌟 FamiTeam",
+  "notif.corps_push": "Two minutes with the children: tick off today's missions.",
+  "notif.ok": "Reminder turned on ✅",
+  "notif.off": "Reminder turned off",
+  "notif.refuse": "Permission denied: enable notifications in your phone's settings."
 });
 Object.assign(I18N.nl, {
   "rituel.titre": "⏰ De afspraak van de avond",
-  "rituel.intro": "FamiTeam stuurt u nooit een melding. Zet liever een afspraak van vijf minuten in <strong>uw eigen</strong> agenda: die verwittigt u.",
+  "rituel.intro": "Liever een herinnering die van u is? Zet een afspraak van vijf minuten in <strong>uw eigen</strong> agenda: die verwittigt u, op uw eigen tempo.",
   "rituel.rythme": "Hoe vaak?",
   "rituel.r_quotidien": "Elke dag",
   "rituel.r_deux_jours": "Om de twee dagen",
@@ -4280,11 +4304,23 @@ Object.assign(I18N.nl, {
   "rituel.jamais": "Geen herinnering ingesteld",
   "rituel.note": "Het bestand gaat naar uw agenda, niet naar ons. Om te stoppen verwijdert u het item.",
   "rituel.sujet": "🌟 FamiTeam — het kleine moment",
-  "rituel.corps": "Twee minuten met de kinderen: de missies van vandaag aanvinken.\nfami.team"
+  "rituel.corps": "Twee minuten met de kinderen: de missies van vandaag aanvinken.\nfami.team",
+  "notif.titre": "🔔 Avondherinnering",
+  "notif.intro": "FamiTeam kan u elke avond een klein herinneringsbericht sturen, op het uur dat u kiest. Eén rustig bericht per dag — nooit een opdringerig geluid, nooit een badge.",
+  "notif.activer": "Herinnering inschakelen",
+  "notif.heure": "Op welk uur?",
+  "notif.resume": "Aan om {h}",
+  "notif.jamais": "Uit",
+  "notif.note": "U kunt het op elk moment uitzetten, hier zelf.",
+  "notif.titre_push": "🌟 FamiTeam",
+  "notif.corps_push": "Twee minuten met de kinderen: de missies van vandaag aanvinken.",
+  "notif.ok": "Herinnering ingeschakeld ✅",
+  "notif.off": "Herinnering uitgeschakeld",
+  "notif.refuse": "Toestemming geweigerd: schakel meldingen in via de instellingen van uw telefoon."
 });
 Object.assign(I18N.de, {
   "rituel.titre": "⏰ Der Abendtermin",
-  "rituel.intro": "FamiTeam schickt Ihnen niemals eine Benachrichtigung. Legen Sie stattdessen einen Fünf-Minuten-Termin in <strong>Ihren eigenen</strong> Kalender: dieser erinnert Sie.",
+  "rituel.intro": "Lieber eine Erinnerung, die wirklich Ihre ist? Legen Sie einen Fünf-Minuten-Termin in <strong>Ihren eigenen</strong> Kalender: er erinnert Sie, in Ihrem eigenen Rhythmus.",
   "rituel.rythme": "Wie oft?",
   "rituel.r_quotidien": "Jeden Tag",
   "rituel.r_deux_jours": "Alle zwei Tage",
@@ -4301,7 +4337,19 @@ Object.assign(I18N.de, {
   "rituel.jamais": "Keine Erinnerung eingestellt",
   "rituel.note": "Die Datei geht in Ihren Kalender, nicht zu uns. Zum Beenden löschen Sie den Termin.",
   "rituel.sujet": "🌟 FamiTeam — der kleine Moment",
-  "rituel.corps": "Zwei Minuten mit den Kindern: die Missionen von heute abhaken.\nfami.team"
+  "rituel.corps": "Zwei Minuten mit den Kindern: die Missionen von heute abhaken.\nfami.team",
+  "notif.titre": "🔔 Abenderinnerung",
+  "notif.intro": "FamiTeam kann Ihnen jeden Abend eine kleine Erinnerung schicken, zur Uhrzeit Ihrer Wahl. Eine ruhige Nachricht pro Tag — nie ein aufdringlicher Ton, nie ein Badge.",
+  "notif.activer": "Erinnerung aktivieren",
+  "notif.heure": "Um welche Uhrzeit?",
+  "notif.resume": "Aktiv um {h}",
+  "notif.jamais": "Deaktiviert",
+  "notif.note": "Sie können sie jederzeit hier wieder ausschalten.",
+  "notif.titre_push": "🌟 FamiTeam",
+  "notif.corps_push": "Zwei Minuten mit den Kindern: die Missionen von heute abhaken.",
+  "notif.ok": "Erinnerung aktiviert ✅",
+  "notif.off": "Erinnerung deaktiviert",
+  "notif.refuse": "Berechtigung verweigert: Aktivieren Sie Benachrichtigungen in den Telefoneinstellungen."
 });
 
 /* ---- Accueil public : barre de langues et liens de bas de carte ---- */
