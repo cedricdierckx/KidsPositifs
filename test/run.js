@@ -2439,6 +2439,29 @@ test("impression : seuls les documents destinés au papier s'impriment", () => {
       cls + " ne se déclare pas comme cible d'impression"));
 });
 
+test("en-tête ≥820px : le sélecteur d'enfants garde toute la largeur, pas de colonne confinée", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const css = fs.readFileSync(path.join(__dirname, "..", "css/style.css"), "utf8");
+  const iMedia = css.indexOf("@media(min-width:820px)");
+  assert.ok(iMedia >= 0, "règle @media(min-width:820px) introuvable");
+  const bloc = css.slice(iMedia, iMedia + 1200);
+  // Incident : une grille 3 colonnes confinait `.selecteur` à `grid-column:3`,
+  // réduite par un `padding-right:104px` réservé au minuteur — au-delà de 4
+  // enfants (ou même avec 4, entre 820 et ~1200px), il ne restait qu'une
+  // centaine de pixels utiles, et le débordement partait en défilement
+  // horizontal invisible : un parent ne voyait alors "que 2 enfants sur 4"
+  // sans comprendre qu'il fallait faire glisser la rangée.
+  assert.ok(!/\.topbar\{display:grid/.test(bloc),
+    "régression : le sélecteur est de nouveau confiné à une colonne de grille étroite");
+  assert.ok(!/\.topbar \.selecteur\{[^}]*grid-column/.test(bloc),
+    "régression : .selecteur est de nouveau assigné à une colonne de grille");
+  assert.ok(!/\.topbar \.selecteur\{[^}]*padding-right:104px/.test(bloc),
+    "régression : la réservation de 104px pour le minuteur confine de nouveau le sélecteur");
+  assert.ok(/\.topbar \.selecteur\{justify-content:center/.test(bloc),
+    "le sélecteur devrait occuper toute la largeur de l'en-tête, centré");
+});
+
 /* ---------- Le tableau d'honneur ---------- */
 test("tableau d'honneur : libellés complets et paramètres préservés (4 langues)", () => {
   const { api } = construireContexte();
