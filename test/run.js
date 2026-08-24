@@ -577,16 +577,20 @@ test("blagues: liste par langue + surcharge admin via configApp", () => {
   assert.strictEqual(b.q, "Q?");
 });
 
-test("blagues : désactivées globalement (corpus en révision), même famille humour=true", () => {
+test("blagues : désactivées par défaut (corpus en révision), même famille humour=true", () => {
   const { api } = construireContexte();
   api.familleId = "f1";
   api.lierEtat(api.etatVierge());
-  assert.strictEqual(api.humourActif(), true);       // le réglage famille est actif...
-  assert.strictEqual(api.BLAGUES_ACTIVEES, false);   // ...mais le corpus est coupé globalement...
+  assert.strictEqual(api.humourActif(), true);         // le réglage famille est actif...
+  assert.strictEqual(api.blaguesActivees(), false);    // ...mais l'admin n'a pas coché la case globale...
   assert.strictEqual(api.blagueDuJourVisible(), null); // ...donc rien à afficher sur l'accueil.
   // blagueDuJour() (logique de sélection pure) reste disponible pour plus
   // tard, une fois un corpus éprouvé et libre de droits en place.
   assert.ok(api.blagueDuJour());
+  // L'admin coche la case (app_config.blagues_actives) : le corpus s'affiche.
+  api.configApp = { blagues_actives: "on" };
+  assert.strictEqual(api.blaguesActivees(), true);
+  assert.ok(api.blagueDuJourVisible());
 });
 
 /* ---------- Compliment du jour (espace parent) ---------- */
@@ -3238,18 +3242,26 @@ test("parents : les cartes longues sont repliables et retiennent leur état", ()
   // Le <h2> est déplacé dans le <summary> : le titre reste un titre.
   assert.ok(/som\.appendChild\(titre\)/.test(ui), "la sémantique de titre doit être conservée");
   [["blocSelectionGroupee\\(\\)", "selection"], ["blocTournantes\\(\\)", "tournantes"],
-   ["blocMissionsDuJour\\(enfantActif\\(\\)\\)", "missions"],
    ["blocCorrections\\(enfantActif\\(\\)\\)", "corrections"],
    ["blocJournalActions\\(\\)", "journal"]].forEach(([bloc, cle]) => {
     assert.ok(new RegExp(`carteRepliable\\(${bloc}, "${cle}"`).test(ui),
       "carte longue non repliée : " + cle);
   });
+  // « Missions proposées » : un pli PAR ENFANT, pas un seul pour toute la
+  // famille — passer de l'aîné au cadet ne doit pas hériter du pli laissé
+  // par l'autre. La clé porte donc l'id de l'enfant actif, jamais un
+  // littéral fixe.
+  assert.strictEqual(
+    (ui.match(/carteRepliable\(blocMissionsDuJour\(enfantActif\(\)\), "missions-" \+ enfantActif\(\)\.id, false\)/g) || []).length,
+    2, "carte Missions proposées non repliée par enfant, dans les deux modes parents");
   // Chaque clé de pli doit être unique, sinon deux cartes partagent leur état.
   // Exception : une carte présente dans les DEUX branches de mode (simplifié
   // et expert) apparaît deux fois dans la source alors qu'une seule est
   // rendue. Partager la clé est alors voulu — la préférence du parent
   // survit au changement de mode. Toute autre répétition est un défaut.
-  const DEUX_MODES = ["missions", "journal", "rituel", "notif"];
+  // (« missions » ne figure plus ici : sa clé n'est plus un littéral fixe,
+  // vérifiée séparément juste au-dessus.)
+  const DEUX_MODES = ["journal", "rituel", "compliment", "attente", "bonmoment", "septiemejour", "notif"];
   const cles = (ui.match(/carteRepliable\([^,]+, "([a-z]+)"/g) || [])
     .map(m => /"([a-z]+)"$/.exec(m)[1]);
   const doublons = cles.filter((c, i) => cles.indexOf(c) !== i && DEUX_MODES.indexOf(c) < 0);
@@ -3286,7 +3298,7 @@ test("parents : sous-plis et découpe des cartes de l'espace parents", () => {
   assert.ok(/montrerLienInvitation\(invit\.querySelector\("\.carte-pli-c"\) \|\| invit, lien\)/.test(corps),
     "le lien d'invitation doit s'afficher dans le corps déplié de la carte Invitations");
   // Ordre d'affichage : l'Arbre d'abord, puis Invitations, puis le nom de famille.
-  const ordre = ["c.appendChild(par);",
+  const ordre = ['c.appendChild(carteRepliable(par, "fam-arbre", false));',
                  'c.appendChild(carteRepliable(invit, "fam-invitations", false));',
                  'c.appendChild(carteRepliable(fam, "fam-nom", false));'];
   let pos = -1;
@@ -3676,13 +3688,16 @@ test("parents : la famille n'a plus de cadre, la boîte à idées descend", () =
     "le cadre « Famille et invitations » ne doit plus envelopper les trois cartes");
   assert.ok(/^\s+sectionsFamille\(c\);$/m.test(ui),
     "sectionsFamille doit être appelée directement en mode simplifié");
-  // La boîte à idées n'ouvre plus l'onglet « Mon compte ».
+  // La boîte à idées n'habite plus l'onglet « Mon compte » du tout : elle est
+  // descendue en bas de l'onglet Soutien, après le don (facultatif lui aussi).
   const sc = ui.slice(ui.indexOf("function sectionsCompte"));
   const corps = sc.slice(0, sc.indexOf("\n}\n"));
-  const iRecup = corps.indexOf("blocRecuperation()");
-  const iFeed = corps.lastIndexOf("blocFeedback()");
-  assert.ok(iRecup > -1 && iFeed > iRecup,
-    "la boîte à idées doit venir après la récupération de données, pas en tête d'onglet");
+  assert.ok(!/blocFeedback\(\)/.test(corps),
+    "la boîte à idées ne doit plus être rendue dans « Mon compte »");
+  const iDon = ui.indexOf("c.appendChild(blocDon());");
+  const iFeed = ui.indexOf("c.appendChild(blocFeedback());");
+  assert.ok(iDon > -1 && iFeed > iDon,
+    "la boîte à idées doit venir après le don, en bas de l'onglet Soutien");
 });
 
 test("carte d'ami : le partage produit une image, avec le lien en légende", () => {
@@ -4382,16 +4397,20 @@ test("rappel du soir : la notification se propose à l'heure conseillée, sans j
 
   // La carte propose un bouton explicite, comme celle de l'agenda — jamais
   // une case à cocher qui s'applique toute seule au changement.
-  const bn = ui.slice(ui.indexOf("function blocNotificationSoir"), ui.indexOf("function blocNotificationSoir") + 1600);
+  const bn = ui.slice(ui.indexOf("function blocNotificationSoir"), ui.indexOf("function blocNotificationSoir") + 1900);
   assert.ok(/t\("notif\.appliquer"\)/.test(bn), "il faut un bouton d'application explicite");
   assert.ok(/synchroniserNotificationSoir\(true\)/.test(bn),
     "le bouton de la carte doit appeler la synchronisation en mode interactif");
   assert.ok(!/caseActive\.onchange|inpH\.onchange/.test(bn),
     "la case et l'heure ne doivent plus s'appliquer seules au changement, sans le bouton");
 
-  // La carte figure dans les deux modes parents, comme celle de l'agenda, et
+  // La carte figure dans les deux modes parents, comme celle de l'agenda —
+  // mais seulement dans l'app installée : sur le web, aucun greffon de
+  // notification locale n'existe, et blocNotificationSoir renvoie null. Elle
   // reste ouverte tant que rien n'est choisi.
-  const appelsNotif = ui.match(/carteRepliable\(blocNotificationSoir\(\), "notif", !notifReglage\(\)\)/g) || [];
+  assert.ok(/if \(typeof estAppNative !== "function" \|\| !estAppNative\(\)\) return null;/.test(bn),
+    "blocNotificationSoir doit être absente sur le web (aucun greffon natif)");
+  const appelsNotif = ui.match(/const \w+ = blocNotificationSoir\(\);\s*\n\s*if \(\w+\) c\.appendChild\(carteRepliable\(\w+, "notif", !notifReglage\(\)\)\);/g) || [];
   assert.strictEqual(appelsNotif.length, 2, "il faut la carte notification en mode simplifié ET en mode expert");
 
   // Dépendance déclarée, jamais un ajout manuel du dossier natif.
@@ -5193,17 +5212,29 @@ test("Store.charger adopte le cloud même si le cache local paraît plus récent
   assert.strictEqual(appelsToast.length, 0, "ce n'est pas un conflit entre appareils, juste une ouverture normale");
 });
 
-test("feuille papier imprimée : la mise en page ne force plus une page presque vide", () => {
-  // Signale avec capture : impression a 3 pages, la premiere quasiment
-  // blanche (seulement l'entete), les 4 enfants repartis 2 par page suivante.
+test("feuille papier imprimée : la mise en page ne force plus une page presque vide, ni de colonnes désalignées", () => {
+  // Signalé une première fois avec capture : impression à 3 pages, la
+  // première quasiment blanche (seulement l'entête), les 4 enfants répartis
+  // 2 par page suivante. Signalé une seconde fois (familles nombreuses,
+  // 4 enfants et plus) : cartes qui débordent ou se désalignent d'une
+  // colonne à l'autre en cours de pagination.
   //
-  // Cause : `display:grid` pour les deux colonnes ne se pagine pas
-  // proprement a l'impression sous Chrome (limitation ancienne et connue du
-  // moteur), et `break-inside:avoid` posee sur LA CARTE ENTIERE forçait tout
-  // le bloc — mission, humeur, totaux — a rester ensemble. Des qu'une carte,
-  // avec une longue liste de missions, ne tenait plus a cote de l'entete
-  // (mais tenait seule sur une page), tout le bloc basculait a la page
-  // suivante en laissant l'entete seul.
+  // Trois causes distinctes :
+  // 1) `display:grid` pour les colonnes ne se pagine pas proprement à
+  //    l'impression sous Chrome (limitation ancienne et connue du moteur).
+  // 2) Un flottement (`float`) en deux colonnes paginait mieux qu'une
+  //    grille, mais reste fragile dès que les enfants ont des listes de
+  //    longueurs différentes : la colonne la plus longue force un saut de
+  //    page qui désaligne l'autre colonne, un rendu qui différait même
+  //    d'un navigateur à l'autre. Une seule colonne (chaque enfant occupe
+  //    toute la largeur, l'un sous l'autre) supprime la classe de bug
+  //    entière — plus de colonnes à désynchroniser.
+  // 3) `break-inside:avoid` posée sur LA CARTE ENTIÈRE forçait tout le
+  //    bloc — mission, humeur, totaux — à rester ensemble. Dès qu'une
+  //    carte, avec une longue liste de missions, ne tenait plus à côté de
+  //    la précédente (mais tenait seule sur une page), tout le bloc
+  //    basculait à la page suivante en laissant la page courante quasiment
+  //    vide.
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
   // Le CSS vit dans htmlFeuilleSemaine (construction du document HTML,
@@ -5214,9 +5245,11 @@ test("feuille papier imprimée : la mise en page ne force plus une page presque 
 
   assert.ok(!/\.grille\{display:grid/.test(bloc),
     "CSS Grid ne se pagine pas proprement à l'impression sous Chrome : à éviter ici");
-  assert.ok(/\.enfant\{float:left/.test(bloc),
-    "un flottement se pagine correctement, contrairement à une grille");
-  assert.ok(!/\.enfant\{break-inside:avoid/.test(bloc),
+  assert.ok(!/\.enfant\{float:left/.test(bloc),
+    "un flottement en deux colonnes désaligne les cartes d'une page à l'autre : à éviter aussi");
+  assert.ok(/\.enfant\{width:100%/.test(bloc),
+    "chaque enfant doit occuper toute la largeur — une seule colonne, jamais de désalignement possible");
+  assert.ok(!/\.enfant\{[^}]*break-inside:avoid/.test(bloc),
     "la carte entière ne doit plus être une seule unité insécable");
   assert.ok(/\.enfant tr\{break-inside:avoid\}/.test(bloc),
     "la césure doit porter sur les LIGNES du tableau, pas sur la carte entière — "
@@ -5226,7 +5259,8 @@ test("feuille papier imprimée : la mise en page ne force plus une page presque 
 
   // Vérifié empiriquement (hors suite, non reproductible ici sans moteur
   // d'impression réel) : une carte de 22 lignes rend 3 pages dont une à
-  // 7 opérateurs de texte (l'ancien CSS) contre 2 pages pleines (le nouveau).
+  // 7 opérateurs de texte (l'ancien CSS grid) contre 2 pages pleines
+  // (flottement, puis une seule colonne).
 });
 
 /* ---------- Exécution ----------

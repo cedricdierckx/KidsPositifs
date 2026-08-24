@@ -207,14 +207,22 @@ body{
 
 /* ---- Contenu ---- */
 main{max-width:680px; margin:0 auto; padding:14px}
+/* Toute carte porte désormais la même signature visuelle qu'avait
+   « Missions proposées » : une ligne de couleur à gauche (la couleur de
+   l'enfant quand la carte lui est propre, une teinte par défaut sinon). */
 .carte{
   background:var(--carte); border-radius:var(--rayon); padding:16px;
   box-shadow:var(--ombre); margin-bottom:14px;
+  border-left:6px solid var(--c, #ccd3e0);
 }
 .carte h1{margin:.1em 0 .3em; font-size:24px}
 .carte h2{margin:.1em 0 .5em; font-size:19px}
 .carte p{margin:.3em 0; color:var(--doux); line-height:1.4}
 .note{font-size:13px; background:#f3f7fb; padding:10px; border-radius:12px}
+/* Bandeau « mode tous petits » (écosystème) : distinct d'une simple note,
+   pour qu'un tiroir vide se lise comme un état normal, pas une panne. */
+.eco-mode-simplifie{background:#fff6e6; color:#8a6a2c; margin-bottom:10px}
+.eco-tier-vide{margin-top:4px}
 /* Message de retour (succès / erreur) — pas de cadre si vide */
 .msg-retour{font-size:14px; font-weight:700; padding:10px 12px; border-radius:12px; margin-top:8px}
 .msg-ok{background:#eafaf2; color:#1d7a52; border:1px solid #bfe9da}
@@ -309,15 +317,10 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* Explication d'un réglage (petit texte gris sous l'option) */
 .reglage-aide{font-size:12px;color:var(--doux);margin:2px 0 12px;line-height:1.4}
 
-/* Mode parents : Standard / Expert */
-.mode-bloc{margin-top:12px}
-.mode-choix{display:flex;gap:8px;margin:6px 0}
-.mode-btn{flex:1;border:2px solid #e3edf5;background:#fff;border-radius:14px;padding:12px 8px;
-  font-weight:800;font-size:14px;color:#54616f;cursor:pointer;transition:transform .12s,border-color .15s,background .15s}
-.mode-btn:hover{transform:translateY(-2px)}
-.mode-btn:active{transform:scale(.95)}
-.mode-btn.on{border-color:#37b985;background:linear-gradient(135deg,#e7faf1,#dff3ff);color:#1d7a52}
-.mode-aide{margin:2px 0 0}
+/* Mode parents : Standard / Expert — toggle compact à côté du titre, plus de
+   carte séparée à chercher dans Réglages. */
+.mode-toggle-mini{margin:0; flex:0 0 auto}
+.mode-toggle-mini .seg{flex:0 0 auto; padding:6px 10px; font-size:13px}
 
 /* Tournantes de tâches */
 .rot-item{position:relative;border:2px solid #e9eef4;border-radius:14px;padding:12px 44px 12px 12px;margin-bottom:10px}
@@ -605,9 +608,13 @@ main{max-width:680px; margin:0 auto; padding:14px}
   border-radius:10px; padding:6px 10px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit}
 .mission.fait .m-points{color:var(--planete)}
 .mission.rep{border-color:#d9d2f0}
-.reparation{border-top:6px solid #a78bfa}
+.reparation{--c:#a78bfa}
 /* Premiers pas : les 3 gestes à connaître quand on découvre l'app */
-.premiers-pas{border-top:6px solid var(--famille,#f6a623)}
+.premiers-pas{--c:var(--famille,#f6a623)}
+.rituel{--c:#5b8def}
+.compliment-carte{--c:#e78fb3}
+.journal-actions{--c:#8a8fa3}
+.bon-moment{--c:#39c0a0}
 .pp-liste{list-style:none; margin:10px 0 4px; padding:0; display:flex;
   flex-direction:column; gap:12px}
 .pp-etape{display:flex; gap:10px; align-items:flex-start}
@@ -753,28 +760,6 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* La perte la plus coûteuse est signalée, pas noyée dans le tableau. */
 .ent-alerte{margin:8px 0 4px; font-size:13px; background:#fff5e6; color:#9a6a12;
   border:1px solid #ffe0b0; border-radius:10px; padding:8px 10px}
-
-/* ---- Le tableau d'honneur (mur de mercis, jamais un podium) ---- */
-.hon-onglets{display:flex; gap:6px; margin:4px 0 10px}
-.hon-onglet{flex:1 1 auto; border:1px solid #dbe4ee; background:#fff; border-radius:10px;
-  padding:8px 10px; font-size:14px; font-weight:700; cursor:pointer; color:var(--doux)}
-.hon-onglet.actif{background:#eafaf2; border-color:#bfe9da; color:#1d7a52}
-.hon-liste{list-style:none; margin:0; padding:0}
-.hon-ligne{display:flex; align-items:center; gap:10px; padding:8px 4px;
-  border-bottom:1px solid #eef2f7; font-size:15px}
-.hon-ligne:last-child{border-bottom:none}
-/* Un numéro d'ordre, pas une médaille : aucune flèche, aucun « +3 places ». */
-.hon-place{flex:0 0 24px; text-align:center; font-weight:800; color:var(--doux)}
-.hon-nom{flex:1 1 auto; font-weight:700; overflow-wrap:anywhere}
-.hon-n{flex:0 0 auto; font-weight:800; color:#1d7a52; background:#eafaf2;
-  border:1px solid #bfe9da; border-radius:8px; padding:2px 8px}
-.hon-ma-place{margin:10px 0 0; font-size:14px; background:#eafaf2; color:#1d7a52;
-  border:1px solid #bfe9da; border-radius:10px; padding:8px 10px}
-.hon-attente{margin:0; font-size:14px; color:var(--doux)}
-.hon-optin{margin-top:12px; border-top:1px solid #eef2f7; padding-top:10px}
-.hon-optin-titre{margin:0 0 4px; font-size:15px; font-weight:700}
-.hon-pseudo-actuel{margin:6px 0; font-weight:800}
-.hon-optin .aj-val{width:100%; margin:6px 0}
 
 /* ---- La carte d'ami (à imprimer, à colorier, à donner) ---- */
 .carte-ami-hote{max-width:400px; position:relative}
@@ -1084,8 +1069,8 @@ main{max-width:680px; margin:0 auto; padding:14px}
 @keyframes eco-vol{
   0%{transform:translateX(0) translateY(0) scale(1,1)}
   20%{transform:translateX(34vw) translateY(-14px) scale(1.1,.9)}
-  50%{transform:translateX(72vw) translateY(8px) scale(.95,1.05) scaleX(-1)}
-  80%{transform:translateX(34vw) translateY(-10px) scale(1.1,.9) scaleX(-1)}
+  50%{transform:translateX(72vw) translateY(8px) scale(.95,1.05)}
+  80%{transform:translateX(34vw) translateY(-10px) scale(1.1,.9)}
   100%{transform:translateX(0) translateY(0) scale(1,1)}}
 
 /* Sol : le décor change selon le niveau */
@@ -1121,15 +1106,16 @@ main{max-width:680px; margin:0 auto; padding:14px}
   filter:drop-shadow(0 4px 3px rgba(0,0,0,.22));
   animation:eco-saut calc(1.15s + (var(--i) * 0.13s)) cubic-bezier(.3,.05,.4,1) infinite;
   animation-delay:calc(var(--i) * -0.25s)}
-/* Déplacement au sol : va-et-vient, l'animal se retourne dans le sens de la
-   marche (flip instantané aux points de demi-tour). */
+/* Déplacement au sol : un simple va-et-vient, sans retournement. Un
+   retournement suppose une orientation de départ (l'animal « fait face à
+   gauche » par défaut) qui n'est vraie que sur certaines polices d'émoji —
+   sur d'autres (Samsung notamment), le dessin de base fait déjà face à
+   droite, et le flip envoyait alors l'animal à l'envers de sa marche. Sans
+   flip, aucune police ne peut se tromper de sens. */
 @keyframes eco-marche{
-  0%{transform:translateX(0) scaleX(-1)}
-  25%{transform:translateX(28px) scaleX(-1)}
-  25.01%{transform:translateX(28px) scaleX(1)}
-  75%{transform:translateX(-24px) scaleX(1)}
-  75.01%{transform:translateX(-24px) scaleX(-1)}
-  100%{transform:translateX(0) scaleX(-1)}}
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(28px)}
+  75%{transform:translateX(-24px)}}
 @keyframes eco-saut{
   0%,100%{transform:translateY(0) scale(1,1)}
   10%{transform:translateY(0) scale(1.14,.84)}     /* anticipation : on s'écrase */
@@ -1172,7 +1158,8 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .stat-dep-col{background:#a78bfa; display:flex; align-items:center; justify-content:center; min-width:fit-content; padding:0 6px; color:#fff; font-weight:800; font-size:12px}
 .stat-dep-ind{background:#5b8def; display:flex; align-items:center; justify-content:center; min-width:fit-content; padding:0 6px; color:#fff; font-weight:800; font-size:12px}
 /* ---- Auto-évaluation de la journée ---- */
-.eval-carte{background:linear-gradient(160deg,#f4f7ff,#fff4f8)}
+.eval-carte{background:linear-gradient(160deg,#f4f7ff,#fff4f8); --c:#f0a13e}
+.eval-jour-aujourdhui .eval-jour-lbl{font-size:15px}
 .eval-choix{display:flex; gap:8px}
 .eval-jour{margin-top:10px}
 .eval-jour-lbl{display:block; font-size:13px; font-weight:800; color:var(--doux); margin-bottom:4px}
@@ -1449,6 +1436,11 @@ main{max-width:680px; margin:0 auto; padding:14px}
   padding:14px; font-size:16px; font-weight:800; cursor:pointer; text-align:left; font-family:inherit}
 .famille-item small{display:block; font-weight:600; color:var(--doux); font-size:12px}
 .invite-box{margin-top:10px; display:flex; flex-direction:column; gap:8px}
+/* Guide de publication mobile (Admin) : une étape = un bloc, cochée = grisée */
+.mobile-etape{padding:12px 0; border-bottom:1px solid #eef2f7}
+.mobile-etape:last-of-type{border-bottom:none}
+.mobile-etape.fait{opacity:.55}
+.mobile-etape .don-aide{margin-top:6px}
 .admin-liste{margin-top:10px}
 .admin-item{display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:8px 0; border-bottom:1px solid #eef2f7}
 .admin-item.bloque{opacity:.6}

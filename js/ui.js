@@ -214,99 +214,6 @@ function blocArbreEnfant() {
   return sec;
 }
 
-/* ---------- Le tableau d'honneur ----------
- * Un mur de mercis, pas un podium. Trois règles tenues par construction :
- *   1. on n'y figure que sur consentement explicite, avec un pseudonyme
- *      d'équipe — jamais le nom de la famille, jamais un prénom d'enfant ;
- *   2. une famille non consentante voit le tableau mais ne reçoit AUCUN rang :
- *      « 47ᵉ sur 52 » ne se dit pas ;
- *   3. le tableau n'apparaît qu'au-delà d'un seuil de familles consentantes,
- *      réglable sans redéploiement (app_config.classement_seuil) : sur trois
- *      lignes, un classement humilie au lieu de motiver.
- * Saison annuelle, plus « tous les temps » : sans saison, la première famille
- * arrivée gagne à vie et démotive toutes les suivantes ; avec un mois, le
- * tableau repart de zéro avant que quiconque ait eu le temps de le remplir. */
-function blocTableauHonneur() {
-  const sec = el("section", "carte tableau-honneur");
-  sec.innerHTML = `<h2>${t("hon.titre")}</h2>
-    <div class="hon-onglets" role="tablist">
-      <button class="hon-onglet actif" data-saison="annee">${t("hon.annee")}</button>
-      <button class="hon-onglet" data-saison="tout">${t("hon.tout")}</button>
-    </div>
-    <div id="hon-corps"><p class="note">${t("arbre.attente")}</p></div>
-    <div id="hon-optin" class="hon-optin"></div>`;
-
-  const corps = sec.querySelector("#hon-corps");
-  const zoneOptin = sec.querySelector("#hon-optin");
-  let saisonAffichee = "annee";
-
-  const dessinerOptin = (etatCls) => {
-    const inscrite = !!(etatCls && etatCls.moi_inscrite);
-    const pseudo = (etatCls && etatCls.mon_pseudo) || "";
-    zoneOptin.innerHTML = `<p class="hon-optin-titre">${t(inscrite ? "hon.inscrite" : "hon.non_inscrite")}</p>
-      <p class="note">${t("hon.consentement")}</p>`;
-    if (inscrite) {
-      const b = el("button", "btn-secondaire", t("hon.retirer"));
-      b.onclick = async () => {
-        if (!confirm(t("hon.retirer_conf"))) return;
-        if (await definirClassementOptin(false, null)) { toast(t("hon.retiree"), "succes"); charger(); }
-      };
-      zoneOptin.appendChild(el("p", "hon-pseudo-actuel", pseudo));
-      zoneOptin.appendChild(b);
-    } else {
-      const inp = el("input", "aj-val");
-      inp.placeholder = t("hon.pseudo_ph"); inp.maxLength = 24; inp.value = pseudo;
-      const b = el("button", "gros-bouton planete", t("hon.rejoindre"));
-      b.onclick = async () => {
-        const v = (inp.value || "").trim();
-        if (!v) { inp.focus(); toast(t("hon.pseudo_requis"), "info"); return; }
-        if (await definirClassementOptin(true, v)) { toast(t("hon.inscrite_ok"), "succes"); charger(); }
-      };
-      zoneOptin.appendChild(inp);
-      zoneOptin.appendChild(b);
-    }
-  };
-
-  const dessiner = (cls) => {
-    if (!cls) { sec.remove(); return; }
-    if (!cls.visible) {
-      // Sous le seuil : on ne montre pas un tableau de trois lignes, mais on
-      // dit franchement à partir de quand il apparaîtra.
-      corps.innerHTML = `<p class="hon-attente">${t("hon.pas_encore", { n: cls.seuil, actuel: cls.consentantes })}</p>` +
-        (cls.mien > 0 ? `<p class="note">${t("hon.mien", { n: cls.mien })}</p>` : "");
-      dessinerOptin(cls);
-      return;
-    }
-    const lignes = (cls.top || []).map((r, i) =>
-      `<li class="hon-ligne"><span class="hon-place">${i + 1}</span>
-         <span class="hon-nom">${echapper(r.pseudo || "")}</span>
-         <span class="hon-n">${r.n}</span></li>`).join("");
-    corps.innerHTML = lignes
-      ? `<ol class="hon-liste">${lignes}</ol>`
-      : `<p class="note">${t("hon.vide")}</p>`;
-    // Le rang n'est affiché QUE si la famille a consenti à figurer.
-    if (cls.mon_rang) corps.innerHTML += `<p class="hon-ma-place">${t("hon.ma_place", { rang: cls.mon_rang })}</p>`;
-    else if (cls.mien > 0) corps.innerHTML += `<p class="note">${t("hon.mien", { n: cls.mien })}</p>`;
-    dessinerOptin(cls);
-  };
-
-  function charger() {
-    corps.innerHTML = `<p class="note">${t("arbre.attente")}</p>`;
-    classementParrainages(saisonAffichee === "annee" ? saisonCourante() : null)
-      .then(dessiner).catch(() => sec.remove());
-  }
-
-  sec.querySelectorAll(".hon-onglet").forEach(b => {
-    b.onclick = () => {
-      saisonAffichee = b.dataset.saison;
-      sec.querySelectorAll(".hon-onglet").forEach(x => x.classList.toggle("actif", x === b));
-      charger();
-    };
-  });
-  charger();
-  return sec;
-}
-
 /* Bascule les règles @media print le temps de l'impression : seule la cible
  * marquée `.impression-cible` part sur le papier. Partagé par la carte d'ami et
  * le dépliant des écoles. */
@@ -1082,6 +989,10 @@ async function synchroniserNotificationSoir(interactif) {
 // le parent n'a pas lui-même appuyé sur « Activer » : même geste que la
 // carte agenda ci-dessous, jamais d'action automatique au premier rendu.
 function blocNotificationSoir() {
+  // Réservé à l'app installée : sur le site web, aucun greffon de
+  // notification locale n'existe, et une carte interactive qui ne déclenche
+  // jamais rien serait trompeuse (le parent croirait le rappel actif).
+  if (typeof estAppNative !== "function" || !estAppNative()) return null;
   const r = notifReglage();
   const choix = r || { active: true, heure: heureRituelConseillee() };
   const sec = el("section", "carte notif-soir");
@@ -1203,7 +1114,16 @@ function initSquelette() {
 
   // Navigation : choix d'affichage local (non synchronisé entre appareils).
   document.querySelectorAll(".nav-btn").forEach(b =>
-    b.addEventListener("click", () => { etat.vue = b.dataset.vue; ecrireCache(); rendre(); }));
+    b.addEventListener("click", () => {
+      etat.vue = b.dataset.vue;
+      // L'espace parents s'ouvre toujours sur « Aujourd'hui » : sans ce
+      // réinitialisation, revenir sur cet onglet (sans repasser par le
+      // cadenas — le mode parents restait déverrouillé le temps de la
+      // session) laissait le sous-menu sur le dernier onglet consulté,
+      // parfois loin à droite dans la barre défilante.
+      if (b.dataset.vue === "reglages" && typeof ongletParent !== "undefined") ongletParent = "quotidien";
+      ecrireCache(); rendre();
+    }));
 
   // Pastille « inviter une autre famille » (parrainage rapide).
   const pInv = document.getElementById("pastille-inviter");
@@ -1806,9 +1726,26 @@ let blgLangAdmin = "fr";
 function blocAdminBlagues() {
   const sec = el("section", "carte");
   sec.innerHTML = `<h2>🃏 ${t("admin.blg_titre")}</h2><p class="note">${t("admin.blg_note")}</p>`;
-  if (typeof BLAGUES_ACTIVEES !== "undefined" && !BLAGUES_ACTIVEES) {
-    sec.appendChild(el("p", "admin-bientot-badge", "⏸️ " + t("admin.blg_desactivees")));
-  }
+
+  // Interrupteur global : la case décide seule si le corpus s'affiche sur
+  // l'accueil des familles (même celles ayant activé l'humour). Éteinte par
+  // défaut — voir la mise en garde sur le corpus actuel au § 3 chantier 7 de
+  // COORDINATION.md avant de l'allumer.
+  const active = (typeof blaguesActivees === "function") && blaguesActivees();
+  const lAct = el("label", "switch-ligne");
+  const iAct = el("input"); iAct.type = "checkbox"; iAct.checked = active;
+  iAct.onchange = async () => {
+    iAct.disabled = true;
+    await adminDefinirConfig("blagues_actives", iAct.checked ? "on" : "off");
+    if (!configApp) configApp = {};
+    configApp.blagues_actives = iAct.checked ? "on" : "off";
+    iAct.disabled = false;
+    majSansSaut(() => rendre());
+  };
+  lAct.appendChild(iAct);
+  lAct.appendChild(el("span", null, t("admin.blg_activer")));
+  sec.appendChild(lAct);
+  if (!active) sec.appendChild(el("p", "admin-bientot-badge", "⏸️ " + t("admin.blg_desactivees")));
 
   // Choix de la langue (onglets)
   const onglets = el("div", "blg-langues");
@@ -1869,7 +1806,7 @@ function blocDashboardScience() {
 
   // --- 1. Temps d'écran (neurologie) ---
   {
-    const { details, corps } = blocPliable(`🧠 ${t("sci.ecran")}`, true);
+    const { details, corps } = blocPliable(`🧠 ${t("sci.ecran")}`, false);
     const lBudget = el("label", "champ", t("sci.budget_min"));
     refs.budget = el("input", "perso-num"); refs.budget.type = "number"; refs.budget.min = "1"; refs.budget.max = "60";
     refs.budget.value = cfg.budgetMinJour; lBudget.appendChild(refs.budget); corps.appendChild(lBudget);
@@ -2000,13 +1937,11 @@ function blocAdminFamilles() {
         await adminMajPlan(f.id, f.plan === "premium" ? "free" : "premium");
         b.onclick();
       };
-      ligne.appendChild(plan); ligne.appendChild(open);
 
       // --- Catégorisation / modération du compte (par e-mail du propriétaire) ---
       const email = f.owner_email || "";
       const estEA = dansListeConfig("early_adopters", email);
       const estBloq = dansListeConfig("comptes_bloques", email);
-      const actions2 = el("div", "adm-actions2");
       const bEA = el("button", "mini-btn" + (estEA ? " ok" : ""), estEA ? t("admin.ea_oui") : t("admin.ea_non"));
       bEA.title = t("admin.ea_aide");
       bEA.disabled = !email;
@@ -2025,7 +1960,10 @@ function blocAdminFamilles() {
         if (prompt(t("admin.confirm_suppr_nom", { nom: f.name })) !== f.name) { toast(t("admin.nom_incorrect"), "info"); return; }
         if (await adminSupprimerFamille(f.id)) { toast(t("admin.supprime_ok", { nom: f.name }), "info"); b.onclick(); }
       };
-      actions2.appendChild(bEA); actions2.appendChild(bBloc); actions2.appendChild(bDel);
+      // Une seule rangée de boutons : infos sur une ligne, actions sur l'autre —
+      // deux lignes par famille au lieu de trois.
+      const actions2 = el("div", "adm-actions2");
+      [plan, open, bEA, bBloc, bDel].forEach(x => actions2.appendChild(x));
       ligne.appendChild(actions2);
       if (estBloq) ligne.classList.add("bloque");
       liste.appendChild(ligne);
@@ -2107,12 +2045,12 @@ function blocConnexionParents() {
   return sec;
 }
 
-function blocAdminConfig() {
+// ----- Test d'envoi d'e-mail (via la fonction commune send-mail / SMTP OVH) -----
+// Envoie un vrai e-mail de test depuis hello@fami.team — même chemin que les
+// invitations et les retours. Carte à part : aucun rapport avec les dons
+// Stripe, avec qui elle partageait autrefois une seule carte.
+function blocAdminMailTest() {
   const sec = el("section", "carte");
-
-  // ----- Test d'envoi d'e-mail (via la fonction commune send-mail / SMTP OVH) -----
-  // Envoie un vrai e-mail de test depuis hello@fami.team — même chemin que les
-  // invitations et les retours.
   sec.appendChild(el("h2", null, t("admin.mailtest_titre")));
   sec.appendChild(el("p", "note", t("admin.mailtest_note")));
   const lDest = el("label", "champ", t("admin.mailtest_dest"));
@@ -2147,8 +2085,12 @@ function blocAdminConfig() {
     }
   };
   sec.appendChild(bMail); sec.appendChild(msgMail);
+  return sec;
+}
 
-  // ----- Configuration des dons Stripe (un Payment Link par montant) -----
+// ----- Configuration des dons Stripe (un Payment Link par montant) -----
+function blocAdminDonConfig() {
+  const sec = el("section", "carte");
   sec.appendChild(el("h2", null, t("admin.don_titre")));
   sec.appendChild(el("p", "note", t("admin.don_note")));
   const aide = el("a", "btn-secondaire don-aide", t("admin.don_aide"));
@@ -2202,7 +2144,9 @@ function blocAdminConfig() {
  * Les sous-sections Stats / Retours / Système accueilleront les lots B→F. */
 
 // Sous-section active de l'onglet Admin (session, non synchronisée).
-let sousOngletAdmin = "familles";
+// « Stats » par défaut : les chiffres se chargent seuls à l'ouverture, sans
+// qu'il faille d'abord choisir un sous-onglet puis cliquer pour charger.
+let sousOngletAdmin = "stats";
 const SOUS_ONGLETS_ADMIN = [
   ["stats",      "admin.nav_stats"],
   ["croissance", "admin.nav_croissance"],
@@ -2211,6 +2155,7 @@ const SOUS_ONGLETS_ADMIN = [
   ["contenu",    "admin.nav_contenu"],
   ["config",     "admin.nav_config"],
   ["systeme",    "admin.nav_systeme"],
+  ["mobile",     "admin.nav_mobile"],
 ];
 
 // Carte « bientôt disponible » pour les sous-sections encore à construire.
@@ -2221,14 +2166,122 @@ function blocAdminBientot(titre, desc) {
   return sec;
 }
 
+/* ---------- Sous-section « Mobile » : publier sur Google Play / App Store ----------
+ * Guide autoporté pour le fondateur, pas pour un développeur : chaque étape
+ * dit QUOI faire, OÙ, et POURQUOI. Une piste par plateforme (Android/iOS),
+ * dans l'ordre chronologique réel — y compris les étapes déjà accomplies
+ * (fait:true, non décochables : ce sont des faits d'ingénierie, pas des
+ * choix de l'admin), pour que la carte raconte tout le chemin, pas
+ * seulement ce qu'il reste. Les étapes restantes (fait:false) gardent une
+ * case à cocher qui se souvient de l'avancement (app_config.mobile_ck_<id>).
+ * Rédigé en français uniquement (à la différence du reste de l'app) : outil
+ * interne à un seul lecteur, le fondateur — pas un écran vu par les
+ * familles. Le détail de dépannage (messages d'erreur, PowerShell…) reste
+ * dans PLAN-MOBILE.md, référencé en bas de chaque carte.  */
+const ANDROID_ETAPES = [
+  { id: "shell", fait: true, titre: "1. La coquille de l'app existe déjà", texte:
+    "Capacitor est installé et configuré (nom « FamiTeam », identifiant team.fami.app). Le dossier android/ est un projet Gradle complet — tout ce qu'Android Studio a besoin pour compiler l'app est déjà là. Rien à faire ici." },
+  { id: "icone", fait: true, titre: "2. Icône et écran de démarrage générés", texte:
+    "Une étoile blanche sur fond doré, dans le style déjà utilisé pour les récompenses de l'app — un repli honnête, pas un logo dessiné exprès. Changeable à tout moment, sans tout redéployer : commande npm run icon:generer, à lancer après avoir remplacé l'image source par un carré de 1024×1024 pixels." },
+  { id: "plomberie", fait: true, titre: "3. Calendrier, notifications, PDF : déjà câblés", texte:
+    "Trois choses qui ne marchent pas pareil dans une app installée que sur un site web sont déjà résolues : écrire un rendez-vous directement dans l'agenda du téléphone, envoyer le rappel du soir en notification, produire un vrai PDF pour la feuille à imprimer (une iframe ne suffit pas dans une WebView — voir PLAN-MOBILE.md si curieux du détail)." },
+  { id: "google_compte", fait: false, titre: "4. Ouvrir un compte Google Play Console", lien: "https://play.google.com/console/signup", lienTexte: "🔗 Ouvrir l'inscription Google Play Console", texte:
+    "La porte d'entrée pour publier sur Google Play. Coûte 25 $, une seule fois, à vie. Se connecter avec le compte Google qui doit posséder l'app POUR TOUJOURS — pas un compte personnel qu'on pourrait perdre — puis payer les 25 $ et remplir la fiche développeur." },
+  { id: "keystore", fait: false, titre: "5. Créer le keystore de signature", texte:
+    "Un keystore est un fichier secret qui sert de signature électronique de l'app : sans lui, impossible de publier une mise à jour un jour (Google refuse un fichier signé différemment). Il se crée une seule fois, dans Android Studio (Build → Generate Signed Bundle/APK → Create new…), et se garde précieusement — perdu, il n'y a aucun moyen de le récupérer, il faudrait republier l'app sous une nouvelle fiche." },
+  { id: "sha256", fait: false, titre: "6. Coller l'empreinte SHA-256 du keystore", texte:
+    "Une fois le keystore créé, il a une « empreinte » (une longue suite de lettres et de chiffres). Android Studio l'affiche pendant la création, ou plus tard via Gradle → Tasks → android → signingReport. Elle doit être collée dans le fichier .well-known/assetlinks.json du site (aujourd'hui, un espace réservé). Sans elle, les liens reçus par e-mail s'ouvrent dans le navigateur plutôt que dans l'app — gênant, mais rien ne casse en attendant." },
+  { id: "build_release", fait: false, titre: "7. Premier envoi sur Google Play", texte:
+    "Dans un terminal, à la racine du projet : npm run cap:sync (recopie le site dans android/). Puis dans Android Studio : Build → Generate Signed Bundle/APK, choisir le keystore de l'étape 5, produire un .aab (Android App Bundle, le format que Google Play demande). Ce fichier se dépose dans Google Play Console → votre app → Production → Créer une version. Avant chaque nouvel envoi : incrémenter versionCode dans android/app/build.gradle (Google refuse deux envois avec le même numéro)." },
+];
+
+const IOS_ETAPES = [
+  { id: "shell", fait: true, titre: "1. Le projet Xcode existe déjà", texte:
+    "Le dossier ios/ est un projet Xcode complet (Swift Package Manager, sans CocoaPods), prêt à ouvrir — mais seulement compilable sur un Mac, condition incontournable côté Apple." },
+  { id: "icone", fait: true, titre: "2. Icône et écran de démarrage générés", texte:
+    "La même étoile dorée que côté Android, générée pour toutes les tailles qu'iOS demande. Changeable avec la même commande, npm run icon:generer." },
+  { id: "plomberie", fait: true, titre: "3. Calendrier et notifications : déjà câblés", texte:
+    "Sur iOS, écrire dans l'agenda ne demande qu'une autorisation « écriture seule » (EventKit sait créer un événement dans l'agenda par défaut sans droit de lecture) ; le rappel du soir est programmé en heure locale, insensible au changement d'heure d'été/hiver." },
+  { id: "apple_compte", fait: false, titre: "4. Ouvrir un compte Apple Developer", lien: "https://developer.apple.com/programs/enroll/", lienTexte: "🔗 Ouvrir l'inscription Apple Developer Program", texte:
+    "La porte d'entrée pour l'App Store. Coûte 99 $ par an. Se connecter avec un Apple ID qui restera à l'app pour toujours, payer, puis patienter — Apple vérifie chaque inscription, ça peut prendre un jour ou deux." },
+  { id: "apple_team_id", fait: false, titre: "5. Coller le Team ID Apple", texte:
+    "Une fois le compte actif, Apple donne un « Team ID » (un code court, visible dans le compte développeur sous Membership). Il doit être collé dans .well-known/apple-app-site-association (aujourd'hui, un espace réservé) — même rôle que l'empreinte SHA-256 côté Android : sans lui, les liens reçus par e-mail s'ouvrent dans le navigateur plutôt que dans l'app." },
+  { id: "associated_domains", fait: false, titre: "6. Activer « Associated Domains » dans Xcode", texte:
+    "Sur un Mac, dans Xcode : ouvrir le projet ios/, onglet Signing & Capabilities, bouton + Capability, choisir Associated Domains, ajouter applinks:fami.team et applinks:famiteam.com. Deux clics, mais réservé à un Mac avec Xcode — la seule étape qui ne peut pas être préparée à l'avance sans risquer de corrompre le projet à l'aveugle." },
+  { id: "build_release", fait: false, titre: "7. Premier envoi sur l'App Store", texte:
+    "Dans un terminal, à la racine du projet : npm run cap:sync. Puis sur un Mac, dans Xcode : sélectionner « Any iOS Device » comme cible, Product → Archive, puis Distribute App → App Store Connect. La première fois, il faut aussi créer la fiche de l'app sur appstoreconnect.apple.com (nom, description, captures d'écran) avant qu'Apple accepte l'envoi." },
+];
+
+// Rend une piste (Android ou iOS) : une carte, une ligne par étape, case à
+// cocher uniquement pour les étapes qui dépendent d'un geste de l'admin.
+function blocMobiliePiste(titreCarte, etapes) {
+  const sec = el("section", "carte");
+  sec.innerHTML = `<h2>${titreCarte}</h2>`;
+  const cfg = (typeof configApp !== "undefined") ? configApp : {};
+  etapes.forEach(e => {
+    const cle = "mobile_ck_" + e.id;
+    const fait = e.fait || cfg[cle] === "on";
+    const bloc = el("div", "mobile-etape" + (fait ? " fait" : ""));
+    const lbl = el("label", "switch-ligne");
+    const cb = el("input"); cb.type = "checkbox"; cb.checked = fait;
+    if (e.fait) {
+      cb.disabled = true;
+      cb.title = "Déjà fait : ne dépend d'aucun réglage.";
+    } else {
+      cb.onchange = async () => {
+        cb.disabled = true;
+        await adminDefinirConfig(cle, cb.checked ? "on" : "off");
+        if (!configApp) configApp = {};
+        configApp[cle] = cb.checked ? "on" : "off";
+        cb.disabled = false;
+        majSansSaut(() => rendre());
+      };
+    }
+    lbl.appendChild(cb);
+    lbl.appendChild(el("strong", null, e.titre));
+    bloc.appendChild(lbl);
+    bloc.appendChild(el("p", "reglage-aide", e.texte));
+    if (e.lien) {
+      const a = el("a", "btn-secondaire don-aide", e.lienTexte);
+      a.href = e.lien; a.target = "_blank"; a.rel = "noopener";
+      bloc.appendChild(a);
+    }
+    sec.appendChild(bloc);
+  });
+  const restantes = etapes.filter(e => !e.fait);
+  const fini = restantes.filter(e => cfg["mobile_ck_" + e.id] === "on").length;
+  sec.appendChild(el("p", "note", `${fini} / ${restantes.length} étapes restantes cochées.`));
+  return sec;
+}
+
+function blocAdminMobileIntro() {
+  const sec = el("section", "carte");
+  sec.innerHTML = `<h2>📱 Publier l'app sur Android et iOS</h2>
+    <p class="note">Deux pistes séparées ci-dessous — Android et iOS n'ont presque rien en commun côté comptes et outils. Chaque étape dit quoi faire, où, et pourquoi ; les étapes déjà accomplies sont cochées et grisées, pour que la carte raconte tout le chemin, pas seulement ce qu'il reste. Le détail de dépannage (messages d'erreur exacts, installation sur un PC Windows pas à pas) reste dans le fichier PLAN-MOBILE.md du projet — cette carte en est le résumé, pas le remplaçant.</p>`;
+  return sec;
+}
+
+function blocAdminMobile(c) {
+  c.appendChild(blocAdminMobileIntro());
+  c.appendChild(blocMobiliePiste("🤖 Android (Google Play)", ANDROID_ETAPES));
+  c.appendChild(blocMobiliePiste("🍏 iOS (App Store)", IOS_ETAPES));
+}
+
 // Graphique en barres minimaliste (SVG vanilla, sans dépendance externe).
 // `serie` = [{ semaine: "AAAA-MM-JJ", n: nombre }]. Échappe les valeurs.
+// Axes : sans eux, une hauteur de barre ne veut rien dire (est-ce 3 ou 30 ?)
+// et un mini-graphe isolé de sa légende n'est lisible que par celui qui l'a
+// fait. Un axe Y à trois repères (0, la moitié, le maximum) et l'axe X déjà
+// présent (mois) suffisent — pas une grille complète, qui alourdirait un
+// graphe pensé pour tenir en un coup d'œil.
 function miniGraphBarres(serie, couleur) {
   if (!serie || !serie.length) return `<p class="note">${t("stats.aucune_donnee")}</p>`;
-  const W = 520, H = 140, padB = 22, padL = 6, padT = 8;
+  const W = 520, H = 140, padB = 22, padL = 30, padR = 6, padT = 8;
   const n = serie.length;
   const maxV = Math.max(1, ...serie.map(p => p.n || 0));
-  const bw = (W - padL * 2) / n;
+  const zoneW = W - padL - padR;
+  const bw = zoneW / n;
+  const yDe = (v) => H - padB - Math.round((v / maxV) * (H - padB - padT));
   const barres = serie.map((p, i) => {
     const h = Math.round(((p.n || 0) / maxV) * (H - padB - padT));
     const x = padL + i * bw;
@@ -2246,7 +2299,16 @@ function miniGraphBarres(serie, couleur) {
       + (lbl ? `<text x="${x + w / 2}" y="${H - 6}" font-size="10" fill="#8aa0b0" text-anchor="middle">${echapper(lbl)}</text>` : "")
       + `</g>`;
   }).join("");
-  return `<svg class="mini-graph" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img">${barres}</svg>`;
+  // Axe Y : la ligne, et trois repères (0, moitié, maximum arrondis).
+  const repereY = (v) => {
+    const y = yDe(v);
+    return `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#e9eef4" stroke-width="1"/>`
+      + `<text x="${padL - 4}" y="${y}" font-size="10" fill="#8aa0b0" text-anchor="end" dominant-baseline="middle">${Math.round(v)}</text>`;
+  };
+  const axes = `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H - padB}" stroke="#c7d2de" stroke-width="1"/>`
+    + `<line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#c7d2de" stroke-width="1"/>`
+    + repereY(0) + repereY(maxV / 2) + repereY(maxV);
+  return `<svg class="mini-graph" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img">${axes}${barres}</svg>`;
 }
 
 // Une carte « chiffre clé » (grande valeur + libellé + précision facultative).
@@ -2259,24 +2321,40 @@ function carteStat(emoji, valeur, label, precision) {
   </div>`;
 }
 
+// Cache de session : évite de recharger les statistiques à chaque rendu
+// (l'admin peut rouvrir cet onglet, ou déclencher un rendu ailleurs, sans
+// relancer huit requêtes pour rien) — voir blocAdminStats.
+let adminStatsCache = null;
+
 // Sous-section « Stats » : chiffres clés + évolution (inscriptions & activité)
 // + derniers arrivants. Toutes les données proviennent de RPC en lecture seule.
+// Chargée automatiquement à l'ouverture : c'est l'onglet par défaut d'Admin,
+// il n'y a plus de geste à faire pour voir les chiffres.
 function blocAdminStats() {
   const sec = el("section", "carte");
-  sec.innerHTML = `<h2>📊 ${t("admin.nav_stats")}</h2><p class="note">${t("admin.stats_desc")}</p>`;
-  const b = el("button", "btn-secondaire", t("stats.charger"));
+  sec.innerHTML = `<h2>${t("admin.nav_stats")}</h2><p class="note">${t("admin.stats_desc")}</p>`;
+  const b = el("button", "btn-secondaire", t(adminStatsCache ? "stats.recharger" : "stats.charger"));
   const corps = el("div", "admin-stats-corps");
-  b.onclick = async () => {
+  const charger = async () => {
     b.disabled = true; b.textContent = t("common.chargement");
-    const [s, insc, act, recentes, usage, usageSerie, dons, donsRecents] = await Promise.all([
+    const [s, insc, act, recentes, usage, usageSerie, dons, donsRecents, activation] = await Promise.all([
       adminStats(), adminSerieInscriptions(), adminSerieActivite(), adminFamillesRecentes(8),
-      adminUsageStats(), adminSerieUsage(), adminDonationsStats(), adminListerDons(6)
+      adminUsageStats(), adminSerieUsage(), adminDonationsStats(), adminListerDons(6),
+      (typeof adminActivation === "function") ? adminActivation() : null
     ]);
+    adminStatsCache = { s, insc, act, recentes, usage, usageSerie, dons, donsRecents, activation };
     b.disabled = false; b.textContent = t("stats.recharger");
+    afficher();
+  };
+  const afficher = () => {
+    const { s, insc, act, recentes, usage, usageSerie, dons, donsRecents, activation } = adminStatsCache || {};
     corps.innerHTML = "";
     if (!s) { corps.appendChild(el("p", "note", t("stats.aucune_donnee"))); return; }
 
     // --- Chiffres clés ---
+    // Réunit ici les deux jeux de chiffres qui vivaient sur deux pages
+    // différentes (Stats, et « Les chiffres du moment » de Croissance) :
+    // même nature de donnée, une seule grille à consulter.
     const grille = el("div", "stat-grille");
     grille.innerHTML = [
       carteStat("👨‍👩‍👧", s.familles_total, t("stats.familles"),
@@ -2291,8 +2369,40 @@ function blocAdminStats() {
       carteStat("⏳", s.waitlist_total, t("stats.attente")),
       carteStat("💬", s.feedback_total, t("stats.retours"),
         t("stats.retours_detail", { bugs: s.feedback_bugs, sugg: s.feedback_suggestions })),
+      carteStat("🚀", (activation && activation.taux != null) ? activation.taux + " %" : "—",
+        t("croiss.kpi_activation"),
+        (activation && activation.eligibles != null) ? t("croiss.kpi_activation_p", { n: activation.eligibles }) : ""),
+      carteStat("🔁", coefficientViral(s, usage), t("croiss.kpi_k"), t("croiss.kpi_k_p")),
     ].join("");
     corps.appendChild(grille);
+
+    // --- Dons (mesure réelle, via le webhook Stripe) : en premier après les
+    // chiffres clés, avant les graphiques d'évolution. ---
+    corps.appendChild(el("h3", "stat-titre", "💛 " + t("stats.dons_titre")));
+    if (dons) {
+      const gd = el("div", "stat-grille");
+      gd.innerHTML = [
+        carteStat("💛", montantLisible(dons.total_cents), t("stats.dons_total")),
+        carteStat("🗓️", montantLisible(dons.total_30j_cents), t("stats.dons_30j")),
+        carteStat("🔁", montantLisible(dons.recurrent_30j_cents), t("stats.dons_recurrent")),
+        carteStat("🙋", dons.donateurs_uniques, t("stats.dons_uniques"),
+          t("stats.dons_nb", { n: dons.nb_dons })),
+      ].join("");
+      corps.appendChild(gd);
+    }
+    if (!donsRecents.length) {
+      corps.appendChild(el("p", "note", t("stats.dons_aucun")));
+    } else {
+      const listeDons = el("div", "admin-liste");
+      donsRecents.forEach(d => {
+        const date = d.created_at ? new Date(d.created_at).toLocaleDateString(langue) : "—";
+        const ligne = el("div", "admin-item");
+        ligne.innerHTML = `<div class="adm-info"><strong>${montantLisible(d.amount_cents, d.currency)}</strong>
+          <small>${echapper(d.email || "?")} · ${d.kind === "subscription" ? t("stats.dons_recurrent_court") : t("stats.dons_ponctuel")} · ${echapper(date)}</small></div>`;
+        listeDons.appendChild(ligne);
+      });
+      corps.appendChild(listeDons);
+    }
 
     // --- Évolution : inscriptions par semaine ---
     corps.appendChild(el("h3", "stat-titre", "📈 " + t("stats.inscriptions")));
@@ -2323,33 +2433,6 @@ function blocAdminStats() {
     corps.appendChild(gu2);
     corps.appendChild(el("p", "note", t("stats.usage_note")));
 
-    // --- Dons (mesure réelle, via le webhook Stripe) ---
-    corps.appendChild(el("h3", "stat-titre", "💛 " + t("stats.dons_titre")));
-    if (dons) {
-      const gd = el("div", "stat-grille");
-      gd.innerHTML = [
-        carteStat("💛", montantLisible(dons.total_cents), t("stats.dons_total")),
-        carteStat("🗓️", montantLisible(dons.total_30j_cents), t("stats.dons_30j")),
-        carteStat("🔁", montantLisible(dons.recurrent_30j_cents), t("stats.dons_recurrent")),
-        carteStat("🙋", dons.donateurs_uniques, t("stats.dons_uniques"),
-          t("stats.dons_nb", { n: dons.nb_dons })),
-      ].join("");
-      corps.appendChild(gd);
-    }
-    if (!donsRecents.length) {
-      corps.appendChild(el("p", "note", t("stats.dons_aucun")));
-    } else {
-      const listeDons = el("div", "admin-liste");
-      donsRecents.forEach(d => {
-        const date = d.created_at ? new Date(d.created_at).toLocaleDateString(langue) : "—";
-        const ligne = el("div", "admin-item");
-        ligne.innerHTML = `<div class="adm-info"><strong>${montantLisible(d.amount_cents, d.currency)}</strong>
-          <small>${echapper(d.email || "?")} · ${d.kind === "subscription" ? t("stats.dons_recurrent_court") : t("stats.dons_ponctuel")} · ${echapper(date)}</small></div>`;
-        listeDons.appendChild(ligne);
-      });
-      corps.appendChild(listeDons);
-    }
-
     // --- Derniers arrivants ---
     corps.appendChild(el("h3", "stat-titre", "🆕 " + t("stats.recentes")));
     if (!recentes.length) {
@@ -2366,8 +2449,10 @@ function blocAdminStats() {
       corps.appendChild(liste);
     }
   };
+  b.onclick = charger;
   sec.appendChild(b);
   sec.appendChild(corps);
+  if (adminStatsCache) afficher(); else charger();
   return sec;
 }
 
@@ -3263,34 +3348,27 @@ function blocAdminCroissance(c) {
   sem.appendChild(rit);
   c.appendChild(sem);
 
-  /* ----- Chiffres réels (étoile du Nord et compagnie) ----- */
+  /* ----- Entonnoir d'activation & origine des inscriptions -----
+   * Les chiffres clés (familles, activation, coefficient viral…) ont rejoint
+   * la grille « Chiffres clés » de l'onglet Stats FamiTeam — les deux pages
+   * portaient exactement les mêmes nombres. Ce qui reste ici est propre à
+   * Croissance : où les familles décrochent, et d'où elles viennent. */
   const kpi = el("section", "carte");
-  kpi.innerHTML = `<h2>${t("croiss.kpi_titre")}</h2>
-    <p class="note">${t("croiss.kpi_sous")}</p>
-    <div id="croiss-kpi" class="stat-grille"><p class="note">${t("common.chargement")}</p></div>`;
+  kpi.innerHTML = `<h2>${t("ent.titre")}</h2>
+    <div id="croiss-kpi"><p class="note">${t("common.chargement")}</p></div>`;
   c.appendChild(kpi);
   (async () => {
-    const [s, u, a, src, ent] = await Promise.all([
-      adminStats(), adminUsageStats(),
-      (typeof adminActivation === "function") ? adminActivation() : null,
+    const [src, ent] = await Promise.all([
       (typeof adminSources === "function") ? adminSources() : [],
       (typeof adminEntonnoir === "function") ? adminEntonnoir() : null
     ]);
     const grille = kpi.querySelector("#croiss-kpi");
     if (!grille) return;
-    if (!s && !u) { grille.innerHTML = `<p class="note">${t("croiss.kpi_ko")}</p>`; return; }
-    const v = (o, k) => (o && o[k] != null) ? o[k] : "—";
-    grille.innerHTML =
-      carteStat("⭐", v(u, "actifs_7j"), t("croiss.kpi_actives"), t("croiss.kpi_actives_p")) +
-      carteStat("🚀", (a && a.taux != null) ? a.taux + " %" : "—", t("croiss.kpi_activation"),
-                (a && a.eligibles != null) ? t("croiss.kpi_activation_p", { n: a.eligibles }) : "") +
-      carteStat("👪", v(s, "familles_total"), t("croiss.kpi_familles")) +
-      carteStat("🌱", v(s, "familles_30j"), t("croiss.kpi_nouvelles")) +
-      carteStat("🎁", v(s, "referrals_acceptes"), t("croiss.kpi_parrainages"),
-                (s && s.referrals_30j != null) ? t("croiss.kpi_parrainages_p", { n: s.referrals_30j }) : "") +
-      carteStat("🔁", coefficientViral(s, u), t("croiss.kpi_k"), t("croiss.kpi_k_p")) +
-      carteStat("📋", v(s, "waitlist_total"), t("croiss.kpi_attente")) +
-      carteStat("📈", v(u, "ouvertures_30j"), t("croiss.kpi_ouvertures"));
+    grille.innerHTML = "";
+    if (!ent && !(Array.isArray(src) && src.length)) {
+      grille.innerHTML = `<p class="note">${t("croiss.kpi_ko")}</p>`;
+      return;
+    }
 
     // L'entonnoir d'activation : où les familles décrochent réellement.
     // Un taux J+1 seul cachait l'essentiel — c'est entre le premier et le
@@ -3305,7 +3383,7 @@ function blocAdminCroissance(c) {
         ["⭐", t("ent.actives_30j"), ent.actives_30j]
       ];
       const bloc = el("div", "croiss-entonnoir");
-      bloc.innerHTML = `<p class="stat-graph-titre">${t("ent.titre")}</p>` +
+      bloc.innerHTML =
         etapes.map(([emo, lib, n]) => {
           const part = Math.max(0, Math.min(100, Math.round((n / ent.familles) * 100)));
           return `<div class="ent-ligne"><span class="ent-emo">${emo}</span>
@@ -3319,7 +3397,7 @@ function blocAdminCroissance(c) {
           ? `<p class="ent-alerte">${t("ent.perte", { n: ent.essaye_puis_parti })}</p>` : "") +
         (ent.endormies_30j
           ? `<p class="note">${t("ent.endormies", { n: ent.endormies_30j })}</p>` : "");
-      kpi.appendChild(bloc);
+      grille.appendChild(bloc);
     }
 
     // Origine des inscriptions : ce qui amène réellement des familles.
@@ -3328,7 +3406,7 @@ function blocAdminCroissance(c) {
       tbl.innerHTML = `<p class="stat-graph-titre">${t("croiss.sources")}</p>` +
         src.map(r => `<div class="croiss-source-l"><span>${echapper(r.source)}</span>
           <span><strong>${r.familles}</strong> ${t("croiss.sources_fam")}${r.attente ? ` · ${r.attente} ${t("croiss.sources_att")}` : ""}</span></div>`).join("");
-      kpi.appendChild(tbl);
+      grille.appendChild(tbl);
     }
   })();
 
@@ -3487,15 +3565,19 @@ function vueAdmin(c) {
       c.appendChild(blocAdminRetours());
       break;
     case "contenu":
-      c.appendChild(blocAdminBlagues());
+      c.appendChild(carteRepliable(blocAdminBlagues(), "admin-blagues", false));
       c.appendChild(blocDashboardScience());
       break;
     case "config":
       c.appendChild(blocConnexionParents());
-      c.appendChild(blocAdminConfig());
+      c.appendChild(blocAdminMailTest());
+      c.appendChild(blocAdminDonConfig());
       break;
     case "systeme":
       c.appendChild(blocAdminSysteme());
+      break;
+    case "mobile":
+      blocAdminMobile(c);
       break;
   }
 }
@@ -3685,6 +3767,46 @@ function repeterEmoji(n, emoji, cap) {
   return s || "·";
 }
 
+/* ---------- Repli pour les emoji non pris en charge (case vide / tofu) ----------
+ * Certains emoji récents (ex. 🪥 la brosse à dents, Unicode 13.0) ne sont pas
+ * encore dessinés par toutes les polices système — Windows non mis à jour,
+ * vieil Android — et s'affichent comme une case vide. Détection : on compare
+ * le rendu réel du caractère, sur un <canvas> hors écran, à celui d'un
+ * caractère de la zone d'usage privé Unicode — qui n'est JAMAIS un vrai
+ * emoji et échoue donc toujours. Deux rendus identiques = l'emoji testé
+ * n'est pas mieux traité que ce caractère bidon, donc pas fiable. Résultat
+ * mis en cache (le test ne se refait jamais deux fois pour un même
+ * caractère). Absence de <canvas> (tests Node, contexte restreint) : on
+ * suppose l'emoji correct plutôt que de risquer un faux repli. */
+const _emojiSupporteCache = {};
+function emojiSupporte(emoji) {
+  if (emoji in _emojiSupporteCache) return _emojiSupporteCache[emoji];
+  let ok = true;
+  try {
+    if (typeof document === "undefined" || !document.createElement) return (_emojiSupporteCache[emoji] = true);
+    const cv = document.createElement("canvas");
+    cv.width = 28; cv.height = 28;
+    const ctx = cv.getContext("2d");
+    if (!ctx || !ctx.fillText) return (_emojiSupporteCache[emoji] = true);
+    ctx.textBaseline = "top";
+    ctx.font = "22px sans-serif";
+    const dessiner = (txt) => {
+      ctx.clearRect(0, 0, 28, 28);
+      ctx.fillText(txt, 0, 0);
+      return ctx.getImageData(0, 0, 28, 28).data;
+    };
+    const rendu = dessiner(emoji);
+    const inconnu = dessiner(""); // zone d'usage privé : jamais un vrai emoji
+    ok = rendu.some((v, i) => v !== inconnu[i]);
+  } catch (e) { ok = true; }
+  return (_emojiSupporteCache[emoji] = ok);
+}
+// Emoji à afficher pour `principal`, avec un repli sûr (jamais de case vide)
+// si le système ne sait pas le dessiner.
+function emojiOuRepli(principal, repli) {
+  return emojiSupporte(principal) ? principal : (repli || "⭐");
+}
+
 // Récompense d'une mission : chiffre pour les grands, emojis pour les petits
 // (ex. +2 💛 → 💛💛). Plafonné pour rester lisible.
 function pointsVisuels(points, emoji, jeune) {
@@ -3853,14 +3975,22 @@ function blocSemainePapier() {
   nav.appendChild(prev); nav.appendChild(lbl); nav.appendChild(next);
   sec.appendChild(nav);
 
-  // Deux mises en page possibles (choix à l'impression).
+  // Deux mises en page possibles (choix à l'impression) — mêmes deux mots
+  // (Détaillé / Rapide) et la même présentation « icône + titre + précision »
+  // que le choix de mode plus bas, pour qu'imprimer et encoder se lisent
+  // comme un seul et même choix, pas deux vocabulaires différents.
   sec.appendChild(el("p", "planif-sous", t("papier.format")));
-  const b1 = el("button", "gros-bouton planete", t("papier.imprimer_jours"));
-  b1.onclick = () => imprimerFeuilleSemaine("jours");
-  const b2 = el("button", "btn-secondaire", t("papier.imprimer_total"));
-  b2.onclick = () => imprimerFeuilleSemaine("total");
-  sec.appendChild(b1);
-  sec.appendChild(b2);
+  const impressions = el("div", "enc-modes segmente");
+  [["jours", "📋", t("papier.imprimer_jours")], ["total", "⚡", t("papier.imprimer_total")]].forEach(([val, ico, lab]) => {
+    const m = /^(.*?)\s*\((.*)\)\s*$/.exec(lab);
+    const titre = m ? m[1] : lab;
+    const hint = m ? m[2] : "";
+    const b = el("button", "seg seg-mode");
+    b.innerHTML = `<span class="seg-ico">${ico}</span><span class="seg-txt"><span class="seg-titre">${echapper(titre)}</span>${hint ? `<span class="seg-hint">${echapper(hint)}</span>` : ""}</span>`;
+    b.onclick = () => imprimerFeuilleSemaine(val);
+    impressions.appendChild(b);
+  });
+  sec.appendChild(impressions);
   return sec;
 }
 
@@ -4051,6 +4181,11 @@ function htmlFeuilleSemaine(mode) {
         }
       });
     });
+    // Répétée sur chaque page où la carte se poursuit (voir <thead> plus
+    // bas) : sans elle, une liste assez longue pour déborder sur une
+    // deuxième page y perdait le nom de l'enfant ET l'en-tête des jours —
+    // rien ne disait alors à qui appartenait la suite du tableau.
+    const nomRepete = `<tr class="cat nom-repete"><th colspan="${mode === "jours" ? 8 : 2}">${vignetteEnfant(enf, "mini")} ${echapper(enf.prenom)}</th></tr>`;
     const entete = (mode === "jours")
       ? `<tr class="head"><th></th>${lettres.map(l => `<th>${l}</th>`).join("")}</tr>`
       : `<tr class="head"><th></th><th>${t("papier.total")}</th></tr>`;
@@ -4071,7 +4206,7 @@ function htmlFeuilleSemaine(mode) {
     const tG = gouttesSem ? `<strong>${gouttesSem}</strong>` : `<span class="trait"></span>`;
     return `<div class="enfant enf-${k}" style="--c:${coul}">
         <h3>${vignetteEnfant(enf, "mini")} ${echapper(enf.prenom)} <span class="stars">★ ★ ★</span></h3>
-        <table>${entete}${lignes}</table>
+        <table><thead>${nomRepete}${entete}</thead><tbody>${lignes}</tbody></table>
         ${humeur}
         <div class="totaux">💛 ${t("money.coeurs")} : ${tC}&nbsp;&nbsp; 💧 ${t("money.gouttes")} : ${tG}</div>
       </div>`;
@@ -4089,35 +4224,42 @@ function htmlFeuilleSemaine(mode) {
       .tete .logo{font-size:19px;font-weight:800}
       .tete .sem{font-size:13px;color:#5a6b7a;font-weight:700}
       .intro{font-size:11px;color:#6a7a88;margin:0 0 12px;text-align:center}
-      /* Deux problemes distincts corrigeaient la meme capture d'ecran :
-         page 1 quasi blanche (juste l'entete), puis une paire d'enfants par
-         page suivante au lieu de repartir le contenu au mieux.
+      /* Trois problemes distincts corrigeaient la meme capture d'ecran :
+         page 1 quasi blanche (juste l'entete), une paire d'enfants par page
+         au lieu de repartir le contenu au mieux, puis (familles nombreuses,
+         4 enfants et plus) des cartes qui debordent ou se desalignent d'une
+         page a l'autre.
 
          1) "display:grid" ne se pagine PAS correctement a l'impression sous
          Chrome (limitation connue et ancienne du moteur : les pistes d'une
-         grille ne se fragmentent pas proprement entre les pages). Remplace
-         par un flottement ("float"), qui se pagine normalement — c'est le
-         contournement standard pour un imprime multi-colonnes.
+         grille ne se fragmentent pas proprement entre les pages).
 
-         2) "break-inside:avoid" posee sur LA CARTE ENTIERE forcait chaque
-         enfant a rester d'un bloc. Avec une longue liste de missions (le cas
-         signale : plusieurs categories, beaucoup de lignes), une carte a elle
-         seule peut approcher la hauteur d'une page A4 imprimable (~277 mm).
-         Des qu'elle ne tient plus a cote de l'entete, tout le bloc bascule
-         sur la page suivante — laissant l'entete SEUL sur la premiere page,
-         qui apparait alors quasiment blanche dans un apercu d'impression.
-         La regle passe donc du bloc entier aux seules LIGNES du tableau
-         ("tr"), qui ne se coupent jamais en leur milieu de toute facon : une
-         longue liste se repartit desormais sur autant de pages que
-         necessaire, en utilisant le bas de la premiere page au lieu de le
-         laisser vide. Le nom de l'enfant reste coince au debut de son
-         tableau ("h3" avec "break-after:avoid"), pour ne jamais se retrouver
-         seul en bas d'une page, separe de son contenu. */
-      .grille{overflow:hidden}
-      .grille::after{content:"";display:table;clear:both}
-      .enfant{float:left; width:calc(50% - 8px); margin:0 16px 12px 0;
+         2) Un flottement ("float") en deux colonnes paginait mieux qu'une
+         grille, mais reste fragile des que les enfants ont des listes de
+         longueurs differentes : la colonne la plus longue force un saut de
+         page qui laisse l'autre colonne desalignee, voire coupee au milieu —
+         le rendu differait meme d'un navigateur a l'autre. Une seule colonne
+         (chaque enfant occupe toute la largeur, l'un sous l'autre) supprime
+         la classe de bug entiere : plus de colonnes a desynchroniser, chaque
+         carte se pagine independamment des autres. Le cout — un peu plus de
+         pages pour une famille nombreuse — est le prix d'un rendu fiable
+         partout, y compris a la maison sur une imprimante quelconque.
+
+         3) "break-inside:avoid" pose sur LA CARTE ENTIERE forcait chaque
+         enfant a rester d'un bloc. Avec une longue liste de missions, une
+         carte a elle seule peut approcher la hauteur d'une page A4
+         imprimable (~277 mm) : des qu'elle ne tient plus a cote de l'entete
+         ou de la carte precedente, tout le bloc bascule sur la page
+         suivante — laissant la page courante quasiment blanche. La regle
+         passe donc du bloc entier aux seules LIGNES du tableau ("tr"), qui
+         ne se coupent jamais en leur milieu de toute facon : une longue
+         liste se repartit desormais sur autant de pages que necessaire, en
+         utilisant le bas de la page courante au lieu de le laisser vide. Le
+         nom de l'enfant reste coince au debut de son tableau ("h3" avec
+         "break-after:avoid"), pour ne jamais se retrouver seul en bas d'une
+         page, separe de son contenu. */
+      .enfant{width:100%; margin:0 0 12px;
         border:2px solid var(--c);border-radius:16px;padding:9px 11px;background:#fff}
-      .enfant:nth-child(2n){margin-right:0}
       .enfant tr{break-inside:avoid}
       .enfant h3{margin:0 0 7px;font-size:15px;display:flex;align-items:center;gap:6px;break-after:avoid}
       .enfant h3 .em{font-size:19px}
@@ -4125,7 +4267,8 @@ function htmlFeuilleSemaine(mode) {
       table{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
       th,td{border:1px solid #e0e6ec;padding:3px 4px;text-align:center}
       td.m{text-align:left;font-size:10.5px;line-height:1.2} td.m small{color:#9aa7b3}
-      tr.cat td{background:var(--c);color:#fff;text-align:left;font-weight:800;font-size:10.5px;border-color:var(--c)}
+      tr.cat td,tr.cat th{background:var(--c);color:#fff;text-align:left;font-weight:800;font-size:10.5px;border-color:var(--c)}
+      tr.nom-repete th{font-size:12px}
       tr.head th{background:#f3f6fa;font-size:10px;width:23px;font-weight:800}
       td.c{width:23px;height:19px;color:#cfd8e0;font-size:12px} td.c.large{width:62px;color:#fff}
       td.c.hors{background:repeating-linear-gradient(45deg,#f4f4f4,#f4f4f4 3px,#eaeaea 3px,#eaeaea 6px);color:#c8c8c8}
@@ -4272,18 +4415,29 @@ function blocEval(enf, mode) {
 
   if (mode === "parent") {
     sec.innerHTML = `<h2>${t("eval.titre_parent", { prenom: echapper(enf.prenom) })}</h2>`;
-    // Aujourd'hui + les 2 jours précédents (pour compléter ce qui manque).
     const base = new Date(aujourdHui() + "T00:00:00");
-    const labels = [t("eval.aujourdhui"), t("eval.hier"), t("eval.avant_hier")];
-    for (let i = 0; i < 3; i++) {
+    // Carte simplifiée : seul « aujourd'hui » est en vue directe, en gros.
+    const cleAuj = dateCle(base);
+    const courantAuj = (enf.evalParent || {})[cleAuj];
+    const ligneAuj = el("div", "eval-jour eval-jour-aujourdhui");
+    ligneAuj.appendChild(el("span", "eval-jour-lbl", t("eval.aujourdhui") + (courantAuj ? " ✓" : "")));
+    ligneAuj.appendChild(ligneChoix(courantAuj, v => definirEvalParent(enf, v, cleAuj)));
+    sec.appendChild(ligneAuj);
+    // L'historique (jusqu'à 2 semaines, au lieu de 3 jours) reste disponible
+    // mais replié : on ne le consulte que rarement, pour comparer avec
+    // l'auto-évaluation dans les statistiques.
+    const { details, corps } = blocPliable(t("eval.historique"), false, "eval-hist-" + enf.id);
+    for (let i = 1; i < 14; i++) {
       const d = new Date(base); d.setDate(base.getDate() - i);
       const cle = dateCle(d);
       const courant = (enf.evalParent || {})[cle];
       const ligne = el("div", "eval-jour");
-      ligne.appendChild(el("span", "eval-jour-lbl", labels[i] + (courant ? " ✓" : "")));
+      const lbl = i === 1 ? t("eval.hier") : d.toLocaleDateString(langue, { day: "numeric", month: "short" });
+      ligne.appendChild(el("span", "eval-jour-lbl", lbl + (courant ? " ✓" : "")));
       ligne.appendChild(ligneChoix(courant, v => definirEvalParent(enf, v, cle)));
-      sec.appendChild(ligne);
+      corps.appendChild(ligne);
     }
+    sec.appendChild(details);
     return sec;
   }
 
@@ -4398,7 +4552,7 @@ function grilleMissions(catId) {
     const recompense = pointsVisuels(pointsMission(enf, m), cat.monnaieEmoji, jeune);
     carte.innerHTML = `
       ${rotM ? `<span class="m-tour" aria-label="${t("rot.badge")}">🔁</span>` : ""}
-      <span class="m-emoji">${m.emoji}</span>
+      <span class="m-emoji">${emojiOuRepli(m.emoji, m.emojiRepli)}</span>
       <span class="m-titre">${titreMission(m)}</span>
       <span class="m-points">${fait ? "✅" : (enAttente ? "⏳" : recompense)}</span>`;
     // En révision (parent) : un tap (dé)valide directement pour le jour affiché.
@@ -5244,7 +5398,7 @@ function blocReparation() {
   DEFIS_REPARATION.forEach(d => {
     const actif = reparationActive(enf, d.id);
     const b = el("button", "mission rep" + (actif ? " fait" : ""));
-    b.innerHTML = `<span class="m-emoji">${d.emoji}</span>
+    b.innerHTML = `<span class="m-emoji">${emojiOuRepli(d.emoji, d.emojiRepli)}</span>
       <span class="m-titre">${trData("defi", d.id, d.titre)}</span>
       <span class="m-points">${actif ? "✅" : pointsVisuels(d.bonus, "💛", jeune)}</span>`;
     b.onclick = () => defiReparation(d);
@@ -5296,7 +5450,7 @@ function modaleReparation() {
   DEFIS_REPARATION.forEach(d => {
     const actif = reparationActive(enf, d.id);
     const b = el("button", "mission rep" + (actif ? " fait" : ""));
-    b.innerHTML = `<span class="m-emoji">${d.emoji}</span>
+    b.innerHTML = `<span class="m-emoji">${emojiOuRepli(d.emoji, d.emojiRepli)}</span>
       <span class="m-titre">${trData("defi", d.id, d.titre)}</span>
       <span class="m-points">${actif ? "✅" : pointsVisuels(d.bonus, "💛", jeune)}</span>`;
     b.onclick = () => { defiReparation(d); fermer(); };
@@ -5352,17 +5506,28 @@ function sceneVivante(enf) {
   // On rassemble tous les êtres créés, en distinguant ceux "du ciel".
   const VOLANTS = ["coccinelle", "abeille", "papillon", "hibou", "aigle"];
   const ciel = [], plantes = [], animaux = [];
+  let total = 0;
+  // Au-delà de ce plafond PAR ESPÈCE, la scène s'arrête d'ajouter des
+  // individus supplémentaires (sans le dire) : sans lui, une espèce
+  // nombreuse (des dizaines d'escargots, par exemple) devient un amas
+  // indistinct, et de plus en plus lourd à animer. Le compte exact reste
+  // toujours visible ailleurs — le total sous la scène, et le nombre
+  // possédé sur la carte d'achat de chaque espèce (voir carteEspece) — la
+  // scène elle-même est une illustration, pas un compteur : pas de badge
+  // « +N » ici.
+  const CAP_SCENE = 8;
   TIERS_ECO.forEach(tier => {
     tier.especes.forEach(sp => {
       const n = (enf.ecosysteme[tier.id] || {})[sp.id] || 0;
-      for (let k = 0; k < n; k++) {
-        if (VOLANTS.includes(sp.id)) ciel.push(sp.emoji);          // vole dans le ciel
-        else if (tier.id === "plantes") plantes.push(sp.emoji);    // immobile au sol
-        else animaux.push(sp.emoji);                               // se déplace au sol
-      }
+      if (!n) return;
+      total += n;
+      const cible = VOLANTS.includes(sp.id) ? ciel                 // vole dans le ciel
+        : (tier.id === "plantes" ? plantes                         // immobile au sol
+        : animaux);                                                // se déplace au sol
+      const affiches = Math.min(n, CAP_SCENE);
+      for (let k = 0; k < affiches; k++) cible.push(emojiOuRepli(sp.emoji, sp.emojiRepli));
     });
   });
-  const total = ciel.length + plantes.length + animaux.length;
   // Le décor (couleurs uniquement) évolue : désert → prairie → forêt.
   let niveau = "desert";
   if (total >= 20) niveau = "foret"; else if (total >= 8) niveau = "prairie";
@@ -5399,7 +5564,7 @@ function renduSceneEco(enf) {
     t.especes.forEach(sp => {
       const n = (enf.ecosysteme[t.id] || {})[sp.id] || 0;
       for (let i = 0; i < n; i++)
-        html += `<span class="eco-item" title="${trData("espece", sp.id, sp.nom)}">${sp.emoji}</span>`;
+        html += `<span class="eco-item" title="${trData("espece", sp.id, sp.nom)}">${emojiOuRepli(sp.emoji, sp.emojiRepli)}</span>`;
     });
   });
   return html;
@@ -5408,10 +5573,15 @@ function renduSceneEco(enf) {
 /* ---------- Écosystème détaillé (chaîne alimentaire, cartes) ---------- */
 function vueEcosysteme(enf) {
   const sec = el("section", "carte eco-carte");
+  const jeune = estJeune(enf);
   sec.innerHTML = `<h2>${t("eco.titre")}</h2>
     <p class="note">${t("eco.intro")}</p>`;
+  // Le mode « tous petits » masque les cartes non atteignables — sans le
+  // dire, une catégorie entière peut sembler avoir disparu (signalé comme un
+  // bug par une famille : « les carnivores ont disparu chez Pauline »).
+  // Un mot au parent suffit à couper court à l'inquiétude.
+  if (jeune) sec.appendChild(el("p", "note eco-mode-simplifie", t("eco.mode_simplifie", { prenom: echapper(enf.prenom) })));
 
-  const jeune = estJeune(enf);
   TIERS_ECO.forEach(tier => {
     const bloc = el("div", "eco-tier");
     const compte = nbTier(enf, tier.id);
@@ -5421,10 +5591,19 @@ function vueEcosysteme(enf) {
       <p class="t-lecon">${trData("lecon", tier.id, tier.lecon)}</p>`;
 
     const grille = el("div", "eco-cartes");
-    tier.especes.filter(sp => especeActivePourEnfant(enf, sp.id)).forEach(sp => {
-      grille.appendChild(carteEspece(enf, tier, sp));
-    });
+    // Mode « tous petits » (estJeune) : pas de cartes verrouillées à
+    // déchiffrer — juste celles qu'on peut créer là, tout de suite. Passé le
+    // seuil d'âge, la carte verrouillée reste utile : elle dit quoi viser.
+    const especesVisibles = tier.especes
+      .filter(sp => especeActivePourEnfant(enf, sp.id))
+      .filter(sp => !jeune || (especeDebloquee(enf, sp) && enf.gouttes >= coutEspece(enf, sp)));
+    especesVisibles.forEach(sp => grille.appendChild(carteEspece(enf, tier, sp)));
     bloc.appendChild(grille);
+    // Catégorie entièrement filtrée (rien d'atteignable pour l'instant) :
+    // le dire plutôt que de laisser un vide muet sous le titre.
+    if (jeune && !especesVisibles.length) {
+      bloc.appendChild(el("p", "note eco-tier-vide", t("eco.tier_vide")));
+    }
     sec.appendChild(bloc);
   });
 
@@ -5466,7 +5645,7 @@ function carteEspece(enf, tier, sp) {
   const coutAff = jeune ? repeterEmoji(cout, "💧", 6) : `${cout} 💧`;
   carte.innerHTML = `
     <span class="ec-coin${jeune ? " imgs" : ""}">${possede ? coinAff : ""}</span>
-    <span class="ec-emoji">${sp.emoji}</span>
+    <span class="ec-emoji">${emojiOuRepli(sp.emoji, sp.emojiRepli)}</span>
     <span class="ec-nom">${trData("espece", sp.id, sp.nom)}</span>
     <span class="ec-cout ${assezGouttes ? "" : "manque"}">${coutAff}</span>
     ${prereqHtml}
@@ -6070,20 +6249,24 @@ function blocCorrections(enf) {
   lDate.appendChild(iDate);
   sec.appendChild(lDate);
 
+  // Une case à cocher par mission : validée ou pas, jamais plus — comme sur
+  // l'écran de l'enfant, une mission ne se valide qu'une fois par jour. Les
+  // anciens boutons −/+ laissaient croire qu'on pouvait aller au-delà de 1,
+  // un état que le reste de l'app ne prévoit nulle part ailleurs.
   const journalJour = enf.journal[jour] || {};
+  const listeHist = el("div", "hist-liste");
   toutesMissions().filter(m => age(enf) >= m.ageMin).forEach(m => {
-    const n = journalJour[m.id] || 0;
-    const ligne = el("div", "hist-ligne" + (n ? " valide" : ""));
+    const fait = (journalJour[m.id] || 0) > 0;
+    const ligne = el("label", "hist-ligne switch-ligne" + (fait ? " valide" : ""));
     const cat = CATEGORIES[m.cat];
-    ligne.innerHTML = `<span class="h-info">${m.emoji} ${titreMission(m)} <small>${cat.monnaieEmoji}${pointsMission(enf, m)}</small></span>
-      <span class="h-compte">${n}</span>`;
-    const moins = el("button", "mini-btn", "−"); moins.setAttribute("aria-label", t("a11y.retirer_un"));
-    moins.onclick = () => modifierHistorique(enf, jour, m, -1);
-    const plus = el("button", "mini-btn", "+"); plus.setAttribute("aria-label", t("a11y.ajouter_un"));
-    plus.onclick = () => modifierHistorique(enf, jour, m, +1);
-    ligne.appendChild(moins); ligne.appendChild(plus);
-    sec.appendChild(ligne);
+    const cb = el("input"); cb.type = "checkbox"; cb.checked = fait;
+    cb.onchange = () => modifierHistorique(enf, jour, m, cb.checked ? +1 : -1);
+    ligne.appendChild(cb);
+    ligne.appendChild(el("span", "h-info", `${emojiOuRepli(m.emoji, m.emojiRepli)} ${titreMission(m)} `
+      + `<small>${cat.monnaieEmoji}${pointsMission(enf, m)}</small>`));
+    listeHist.appendChild(ligne);
   });
+  sec.appendChild(listeHist);
 
   // -- Badges --
   const hBadges = el("h2", null, t("cor.badges")); hBadges.style.marginTop = "12px";
@@ -6279,6 +6462,7 @@ function carteRepliable(sec, cle, ouvertParDefaut) {
   const titre = sec.querySelector("h2");
   if (!titre) return sec;              // sans titre, rien à quoi accrocher le pli
   const det = el("details", "carte-pli");
+  det.id = "pli-" + cle;
   det.open = plisParent.has(cle) ? plisParent.get(cle) : !!ouvertParDefaut;
   const som = el("summary", "carte-pli-t");
   som.appendChild(titre);              // le <h2> lui-même : on garde la sémantique de titre
@@ -6315,14 +6499,27 @@ function ongletsParents() {
   // le parent qui le cherche sait où le trouver. L'onglet n'existe pas tant que
   // le don n'est pas proposé à cette famille (early adopters, première semaine).
   const soutien = (typeof donDisponible !== "function" || donDisponible());
+  // « Mes enfants » est décisif à la création du compte (prénom, date de
+  // naissance…) puis rarement rouvert : une fois les profils renseignés, il
+  // quitte la barre d'onglets — un bouton dans Réglages et le lien de
+  // « Premiers pas » restent la voie d'accès.
+  const enfants = !profilsRenseignes();
   if (!estModeExpert()) {
-    const ids = ["quotidien", "enfants", "activites", "compte"];
+    const ids = ["quotidien"];
+    if (enfants) ids.push("enfants");
+    ids.push("activites", "compte");
     if (soutien) ids.push("soutien");
+    // Semaine papier : menu à part entière, juste avant Admin — jamais un
+    // dépliant caché sous un autre onglet.
+    ids.push("papier");
     if (admin) ids.push("admin");
     return ids;
   }
-  const ids = ["quotidien", "papier", "activites", "enfants", "famille", "compte", "stats"];
+  const ids = ["quotidien", "activites"];
+  if (enfants) ids.push("enfants");
+  ids.push("famille", "compte", "stats");
   if (soutien) ids.push("soutien");
+  ids.push("papier");
   if (admin) ids.push("admin");
   return ids;
 }
@@ -6342,8 +6539,7 @@ function libelleOnglet(id) {
 function sectionVisible(section) {
   const exp = estModeExpert();
   switch (section) {
-    // Semaine papier : onglet dédié en expert, dépliant sous « Activités » sinon.
-    case "papier":  return ongletParent === (exp ? "papier" : "activites");
+    case "papier":  return ongletParent === "papier";  // onglet à part entière, dans les deux modes
     // Famille & invitations : onglet dédié en expert, dans « Réglages » sinon.
     case "famille": return ongletParent === (exp ? "famille" : "compte");
     case "stats":   return exp && ongletParent === "stats";  // outil avancé
@@ -6386,18 +6582,23 @@ function missionsChoisies() {
   return Object.values(etat.enfants).some(e => planEffectif(e, aujourdHui()) !== null);
 }
 // Une mission a-t-elle déjà été validée aujourd'hui (la boucle tourne) ?
+// Une mission a-t-elle DÉJÀ été validée un jour, n'importe lequel — pas
+// seulement aujourd'hui. Ce pas de « Premiers pas » atteste que le geste du
+// soir a déjà eu lieu au moins une fois : comme les deux précédents (profils
+// renseignés, missions choisies), une fois vrai ça le reste, et la carte
+// entière peut disparaître pour de bon plutôt que de ressurgir chaque
+// matin tant que rien n'a encore été coché ce jour-là.
 function journeeEntamee() {
-  const auj = aujourdHui();
   return Object.values(etat.enfants).some(e =>
-    e.journal && e.journal[auj] && Object.keys(e.journal[auj]).length > 0);
+    e.journal && Object.values(e.journal).some(jour => Object.keys(jour || {}).length > 0));
 }
 
 function blocPremiersPas() {
   if (etat.reglages && etat.reglages.premiersPasVus) return null;
   const etapes = [
     { fait: profilsRenseignes(), titre: t("pp.e1_t"), desc: t("pp.e1_d"), onglet: "enfants", bouton: t("pp.e1_b") },
-    { fait: missionsChoisies(),  titre: t("pp.e2_t"), desc: t("pp.e2_d") },
-    { fait: journeeEntamee(),    titre: t("pp.e3_t"), desc: t("pp.e3_d") }
+    { fait: missionsChoisies(),  titre: t("pp.e2_t"), desc: t("pp.e2_d"), pli: "missions", bouton: t("pp.e2_b") },
+    { fait: journeeEntamee(),    titre: t("pp.e3_t"), desc: t("pp.e3_d"), sortir: true, bouton: t("pp.e3_b") }
   ];
   if (etapes.every(e => e.fait)) return null;      // plus rien à expliquer
 
@@ -6408,9 +6609,29 @@ function blocPremiersPas() {
     const li = el("li", "pp-etape" + (e.fait ? " fait" : ""));
     li.innerHTML = `<span class="pp-num">${e.fait ? "✅" : (i + 1)}</span>
       <span class="pp-corps"><strong>${e.titre}</strong><small>${e.desc}</small></span>`;
+    // Chaque étape a un bouton concret vers l'action exacte à faire, pas
+    // seulement la première : ouvrir l'onglet, déplier la carte des missions
+    // (même onglet, juste en dessous), ou quitter le mode parents pour
+    // retrouver l'écran où l'enfant coche vraiment ses missions.
     if (!e.fait && e.onglet) {
       const b = el("button", "mini-btn", e.bouton);
       b.onclick = () => { ongletParent = e.onglet; rendre(); };
+      li.querySelector(".pp-corps").appendChild(b);
+    } else if (!e.fait && e.pli) {
+      const b = el("button", "mini-btn", e.bouton);
+      b.onclick = () => {
+        plisParent.set(e.pli, true);
+        rendre();
+        const cible = document.getElementById("pli-" + e.pli);
+        if (cible) cible.scrollIntoView({ behavior: "smooth", block: "center" });
+      };
+      li.querySelector(".pp-corps").appendChild(b);
+    } else if (!e.fait && e.sortir) {
+      const b = el("button", "mini-btn", e.bouton);
+      // quitterModeParents() seul ne fait que reverrouiller l'espace parents
+      // — sur l'onglet Réglages, l'écran suivant restait celui du cadenas,
+      // pas l'accueil de l'enfant que ce bouton promet.
+      b.onclick = () => { etat.vue = "accueil"; quitterModeParents(); };
       li.querySelector(".pp-corps").appendChild(b);
     }
     liste.appendChild(li);
@@ -6585,20 +6806,19 @@ function blocProgramme() {
   return prog;
 }
 
-// ----- Choix Standard / Expert (deux gros boutons + explication) -----
-function blocModeParents() {
+// ----- Choix Standard / Expert : toggle compact, à côté du titre « Mode
+// parents » — plus de carte séparée à chercher dans l'onglet Réglages. -----
+function toggleModeParents() {
   const exp = estModeExpert();
-  const modeBloc = el("div", "mode-bloc");
-  modeBloc.innerHTML = `<span class="langue-titre">🧭 ${t("mode.titre")}</span>`;
-  const choix = el("div", "mode-choix");
-  const bStd = el("button", "mode-btn" + (!exp ? " on" : ""), `🌿 ${t("mode.standard")}`);
+  const wrap = el("div", "segmente mode-toggle-mini");
+  const bStd = el("button", "seg" + (!exp ? " actif" : ""), `🌿 ${t("mode.standard")}`);
+  bStd.type = "button";
   bStd.onclick = () => { if (exp) majSansSaut(() => definirModeExpert(false)); };
-  const bExp = el("button", "mode-btn" + (exp ? " on" : ""), `🧪 ${t("mode.expert")}`);
+  const bExp = el("button", "seg" + (exp ? " actif" : ""), `🧪 ${t("mode.expert")}`);
+  bExp.type = "button";
   bExp.onclick = () => { if (!exp) majSansSaut(() => definirModeExpert(true)); };
-  choix.appendChild(bStd); choix.appendChild(bExp);
-  modeBloc.appendChild(choix);
-  modeBloc.appendChild(el("p", "note mode-aide", t(exp ? "mode.aide_expert" : "mode.aide_standard")));
-  return modeBloc;
+  wrap.appendChild(bStd); wrap.appendChild(bExp);
+  return wrap;
 }
 
 // ----- Famille, invitations, parrainage, abonnement -----
@@ -6641,7 +6861,7 @@ function sectionsFamille(c) {
     <p class="note">${t("arbre.modale_note")}</p>
     <div id="par-code" class="arbre-code-bloc"><p class="note">${t("arbre.attente")}</p></div>
     <div id="par-jauge" class="arbre-jauge-bloc"></div>`;
-  c.appendChild(par);
+  c.appendChild(carteRepliable(par, "fam-arbre", false));
   c.appendChild(carteRepliable(invit, "fam-invitations", false));
   c.appendChild(carteRepliable(fam, "fam-nom", false));
 
@@ -6714,9 +6934,6 @@ function sectionsFamille(c) {
     par.appendChild(bCarte);
   }
 
-  // ----- Le tableau d'honneur (mur de mercis, sur consentement) -----
-  if (!(typeof modeDemo !== "undefined" && modeDemo)) c.appendChild(blocTableauHonneur());
-
   // ----- Abonnement (masqué provisoirement : early adopters = gratuit) -----
   if (AFFICHER_ABONNEMENT) {
     const abo = el("section", "carte");
@@ -6731,10 +6948,12 @@ function sectionsFamille(c) {
 }
 
 // ----- Compte, données, récupération, suppression -----
+// Toutes les cartes démarrent repliées : Réglages n'affiche que des titres
+// tant qu'on n'a pas cliqué, et « Se déconnecter » vit tout en bas, dernier
+// geste de l'onglet plutôt que noyé en tête de « Mon compte ».
 function sectionsCompte(c) {
   if (typeof modeDemo !== "undefined" && modeDemo) {
     c.appendChild(bandeauDemo());
-    c.appendChild(blocFeedback());
     return;
   }
 
@@ -6742,15 +6961,12 @@ function sectionsCompte(c) {
   const u = typeof utilisateurCourant === "function" ? utilisateurCourant() : null;
   cpt.innerHTML = `<h2>${t("compte.titre")}</h2>
     <p>${t("compte.connecte", { email: u ? echapper(u.email) : "—" })}</p>`;
-  const bDeco = el("button", "btn-secondaire", t("compte.deconnexion"));
-  bDeco.onclick = deconnexion;
-  cpt.appendChild(bDeco);
   const liensLegaux = el("p", "note");
   liensLegaux.innerHTML = `<a href="faq.html">Questions fréquentes</a> ·
     <a href="mentions-legales.html">Mentions légales</a> ·
     <a href="confidentialite.html">Politique de confidentialité</a>`;
   cpt.appendChild(liensLegaux);
-  c.appendChild(cpt);
+  c.appendChild(carteRepliable(cpt, "cpt-compte", false));
 
   const actions = el("section", "carte");
   actions.innerHTML = `<h2>${t("donnees.titre")}</h2>`;
@@ -6760,16 +6976,10 @@ function sectionsCompte(c) {
   bRaz.onclick = reinitialiser;
   actions.appendChild(bExp);
   actions.appendChild(bRaz);
-  c.appendChild(actions);
+  c.appendChild(carteRepliable(actions, "cpt-donnees", false));
 
-  // ----- 🛟 Récupération de données -----
-  c.appendChild(blocRecuperation());
-
-  // ----- 💡 Boîte à idées : ouverte à toutes les familles. Un retour qu'on ne
-  // peut pas donner est un retour perdu. Placée ici, et non plus en tête de
-  // l'onglet : personne n'ouvre « Mon compte » pour signaler un bug, et un
-  // formulaire de retour au-dessus de son propre e-mail n'a pas de sens. -----
-  c.appendChild(blocFeedback());
+  // ----- 💾 Récupération de données -----
+  c.appendChild(carteRepliable(blocRecuperation(), "cpt-recup", false));
 
   // ----- ⚠️ Zone de danger : suppression du compte famille (propriétaire) -----
   if (familleActive && familleActive.role === "owner") {
@@ -6779,8 +6989,13 @@ function sectionsCompte(c) {
     const bDel = el("button", "btn-danger", t("suppr.bouton"));
     bDel.onclick = () => supprimerCompteFamille();
     danger.appendChild(bDel);
-    c.appendChild(danger);
+    c.appendChild(carteRepliable(danger, "cpt-danger", false));
   }
+
+  // ----- Se déconnecter : dernier geste de l'onglet Réglages. -----
+  const bDeco = el("button", "btn-secondaire deconnexion-pied", t("compte.deconnexion"));
+  bDeco.onclick = deconnexion;
+  c.appendChild(bDeco);
 }
 
 function vueReglages(c) {
@@ -6823,6 +7038,9 @@ function vueReglages(c) {
   // bouton « Quitter » juste à côté — elle ne disait rien de neuf, et c'est
   // elle qui empêchait le titre et la sortie de tenir sur une seule ligne.
   entete.innerHTML = `<h1>${t("par.actif.titre")}</h1>`;
+  // Toggle Standard/Expert juste à côté du titre : plus de carte séparée,
+  // le réglage le plus consulté de l'espace parents tient sur cette ligne.
+  entete.appendChild(toggleModeParents());
   const bq = el("button", "btn-secondaire", t("par.actif.quitter"));
   bq.onclick = quitterModeParents;
   entete.appendChild(bq);
@@ -6832,15 +7050,15 @@ function vueReglages(c) {
   blocLang.innerHTML = `<span class="langue-titre">🌐 ${t("langue")}</span>`;
   blocLang.appendChild(selecteurLangueFun(() => rendre()));
   banniere.appendChild(blocLang);
-  // Le choix Standard / Expert n'encombre l'entrée qu'en mode expert ; en mode
-  // simplifié il vit tout en bas de l'onglet « Réglages ».
-  if (exp) banniere.appendChild(blocModeParents());
   c.appendChild(banniere);
 
   // ----- Sous-menu (onglets) pour organiser l'espace parents -----
   const onglets = ongletsParents().map(id => [id, libelleOnglet(id)]);
-  // Si l'onglet courant n'est plus visible (ex. passage en Standard), on revient au 1ᵉʳ.
-  if (!onglets.some(([id]) => id === ongletParent)) ongletParent = onglets[0][0];
+  // Si l'onglet courant n'est plus visible (ex. passage en Standard), on revient
+  // au 1ᵉʳ — sauf « enfants » : ce n'est plus un onglet de la barre une fois les
+  // profils renseignés, mais on y accède quand même via un lien concret
+  // (Premiers pas, bouton dans Réglages), sans jamais rebondir dessus.
+  if (ongletParent !== "enfants" && !onglets.some(([id]) => id === ongletParent)) ongletParent = onglets[0][0];
   const nav = el("nav", "sous-nav");
   let btnActif = null;
   onglets.forEach(([id, label]) => {
@@ -6879,57 +7097,62 @@ function vueReglages(c) {
 
   if (!exp) {
     // Mode simplifié : l'ordre suit le geste réel du parent — ce qu'il y a à
-    // faire d'abord, les encouragements ensuite.
+    // faire d'abord, les encouragements ensuite. Le compliment du jour passe
+    // avant le rendez-vous du soir : c'est le mot à dire à l'enfant, la
+    // première chose à voir. Pas de carte « Oups, ça arrive… » ici : elle
+    // fait double emploi avec la pastille arc-en-ciel, accessible depuis
+    // n'importe quel écran.
     const pp = blocPremiersPas();
     if (pp) c.appendChild(pp);
-    if (totalAttente) c.appendChild(blocAttente(totalAttente));
+    if (totalAttente) c.appendChild(carteRepliable(blocAttente(totalAttente), "attente", true));
     const bm = blocBonMoment();
-    if (bm) c.appendChild(bm);
+    if (bm) c.appendChild(carteRepliable(bm, "bonmoment", true));
     const j7 = blocArbreSeptiemeJour();
-    if (j7) c.appendChild(j7);
+    if (j7) c.appendChild(carteRepliable(j7, "septiemejour", true));
     // Ouverte tant que rien n'est choisi, repliée ensuite — même logique que
-    // la carte agenda juste en dessous.
-    c.appendChild(carteRepliable(blocNotificationSoir(), "notif", !notifReglage()));
+    // la carte agenda juste en dessous. (Absente sur le web : réservée à
+    // l'app installée.)
+    const notif = blocNotificationSoir();
+    if (notif) c.appendChild(carteRepliable(notif, "notif", !notifReglage()));
+    c.appendChild(carteRepliable(blocComplimentDuJour(enfantActif()), "compliment", true));
     // Ouvert tant que rien n'est réglé, replié ensuite : la carte se fait
     // discrète pour celui qui a déjà répondu, et reste visible pour l'autre.
     c.appendChild(carteRepliable(blocRituelSoir(), "rituel", !rituelReglage()));
-    c.appendChild(carteRepliable(blocMissionsDuJour(enfantActif()), "missions", false));
-    // Pas d'évaluation du comportement ici : noter son enfant chaque soir est
-    // un geste d'outil avancé, et le champ est facultatif — il ne nourrit que
-    // la comparaison avec l'auto-évaluation, dans les statistiques. En mode
-    // standard il occupait une carte entière au-dessus des encouragements.
-    c.appendChild(blocReparation());
-    c.appendChild(blocComplimentDuJour(enfantActif()));
+    // Pli par enfant : le sélecteur d'enfants ne fait pas partie de l'onglet
+    // Aujourd'hui, mais reste accessible en permanence tout en haut de
+    // l'écran — passer de Maria à Jojo ne doit donc pas hériter du pli que
+    // Maria avait choisi.
+    c.appendChild(carteRepliable(blocMissionsDuJour(enfantActif()), "missions-" + enfantActif().id, false));
     c.appendChild(carteRepliable(blocJournalActions(), "journal", false));
   } else {
     // ----- Compliment du jour : un mot d'encouragement concret à dire à
     // l'enfant, basé sur sa régularité/progression réelle (parentalité
-    // positive). Tout en haut : c'est la première chose à voir chaque jour. -----
-    c.appendChild(blocComplimentDuJour(enfantActif()));
+    // positive). Tout en haut, au-dessus du rendez-vous du soir : c'est la
+    // première chose à voir chaque jour. -----
+    c.appendChild(carteRepliable(blocComplimentDuJour(enfantActif()), "compliment", true));
 
     // ----- Comportement de l'enfant (évaluation parent) -----
     // Sous le compliment, et en mode expert seulement : on lit d'abord ce
     // qu'on peut DIRE à l'enfant, on note ensuite — l'inverse installait la
     // notation comme le premier geste de la soirée.
-    c.appendChild(blocEval(enfantActif(), "parent"));
-
-    // ----- Défis réparation ("Oups, ça arrive…") : accès rapide -----
-    c.appendChild(blocReparation());
+    c.appendChild(carteRepliable(blocEval(enfantActif(), "parent"), "eval", true));
 
     // ----- Rappel du soir (notification) -----
-    c.appendChild(carteRepliable(blocNotificationSoir(), "notif", !notifReglage()));
+    // (Absente sur le web : réservée à l'app installée.)
+    const notifExp = blocNotificationSoir();
+    if (notifExp) c.appendChild(carteRepliable(notifExp, "notif", !notifReglage()));
 
     // ----- Le rendez-vous du soir (rappel par l'agenda du parent) -----
     c.appendChild(carteRepliable(blocRituelSoir(), "rituel", !rituelReglage()));
 
     // ----- Le bon moment pour parler de l'app (après une carte débloquée) -----
     const bmExp = blocBonMoment();
-    if (bmExp) c.appendChild(bmExp);
+    if (bmExp) c.appendChild(carteRepliable(bmExp, "bonmoment", true));
     const j7Exp = blocArbreSeptiemeJour();
-    if (j7Exp) c.appendChild(j7Exp);
+    if (j7Exp) c.appendChild(carteRepliable(j7Exp, "septiemejour", true));
 
     // ----- Validations en attente (affichées seulement s'il y en a) -----
-    if (totalAttente) c.appendChild(blocAttente(totalAttente));
+    if (totalAttente) c.appendChild(carteRepliable(blocAttente(totalAttente), "attente", true));
 
     // ----- Sélection groupée & tournantes : outils avancés -----
     // Repliées : ce sont les plus longues de l'espace parents, et elles ne
@@ -6938,7 +7161,11 @@ function vueReglages(c) {
     c.appendChild(carteRepliable(blocTournantes(), "tournantes", false));
 
     // ----- Missions du jour (sélection par les parents) -----
-    c.appendChild(carteRepliable(blocMissionsDuJour(enfantActif()), "missions", false));
+    // Pli par enfant : le sélecteur d'enfants ne fait pas partie de l'onglet
+    // Aujourd'hui, mais reste accessible en permanence tout en haut de
+    // l'écran — passer de Maria à Jojo ne doit donc pas hériter du pli que
+    // Maria avait choisi.
+    c.appendChild(carteRepliable(blocMissionsDuJour(enfantActif()), "missions-" + enfantActif().id, false));
 
     // ----- Corrections fines (ajustements/badges) -----
     c.appendChild(carteRepliable(blocCorrections(enfantActif()), "corrections", false));
@@ -6955,9 +7182,11 @@ function vueReglages(c) {
   }
 
   /* ===== ONGLET : Soutien ===== */
-  // Un seul sujet, entièrement facultatif, hors du chemin quotidien.
+  // Le don d'abord, entièrement facultatif ; la boîte à idées en bas — un
+  // autre geste facultatif, tourné vers l'app plutôt que vers la famille.
   if (sectionVisible("soutien")) {
     c.appendChild(blocDon());
+    c.appendChild(blocFeedback());
   }
 
   /* ===== ONGLET : Activités & récompenses ===== */
@@ -6972,18 +7201,11 @@ function vueReglages(c) {
     }
   }
 
-  /* ===== Semaine papier : onglet dédié en expert, dépliant en simplifié ===== */
+  /* ===== ONGLET : Semaine papier (à part entière, dans les deux modes) ===== */
   if (sectionVisible("papier")) {
-    if (exp) {
-      c.appendChild(blocSemainePapier());
-      c.appendChild(blocEncoderSemaine());
-    } else {
-      const { details, corps } = blocPliable(t("grp.papier"), false, "std-papier");
-      corps.appendChild(el("p", "note", t("papier.pour_quoi")));
-      corps.appendChild(blocSemainePapier());
-      corps.appendChild(blocEncoderSemaine());
-      c.appendChild(details);
-    }
+    c.appendChild(el("p", "note", t("papier.pour_quoi")));
+    c.appendChild(blocSemainePapier());
+    c.appendChild(blocEncoderSemaine());
   }
 
   /* ===== ONGLET : Mes enfants ===== */
@@ -7074,20 +7296,29 @@ function vueReglages(c) {
     if (sectionVisible("famille")) sectionsFamille(c);
     if (ongletParent === "compte") sectionsCompte(c);
   } else if (ongletParent === "compte") {
-    const dep = (titre, cle, remplir, ouvert) => {
-      const { details, corps } = blocPliable(titre, !!ouvert, cle);
-      remplir(corps);
-      c.appendChild(details);
-    };
-    dep(t("regl.programme"), "std-prog", (x) => x.appendChild(blocProgramme()), true);
+    // Toutes les sections de Réglages portent la même signature visuelle
+    // qu'ailleurs dans l'espace parents : une carte blanche, une ligne de
+    // couleur à gauche, repliée par défaut (carteRepliable) — jamais la barre
+    // plate de blocPliable, réservée aux sous-dépliants À L'INTÉRIEUR d'une
+    // carte (« Comment ça marche ? », catégories de missions…), pas à un
+    // sommaire de premier niveau.
+    c.appendChild(carteRepliable(blocProgramme(), "std-prog", false));
+    // « Mes enfants » : décisif à la création du compte (un lien concret vit
+    // dans « Premiers pas »), puis rarement rouvert — une carte minimale,
+    // pas un bouton isolé qui romprait le rythme des cartes voisines.
+    const carteEnfants = el("section", "carte");
+    carteEnfants.innerHTML = `<h2>${t("grp.enfants")}</h2><p class="note">${t("regl.enfants_note")}</p>`;
+    const bEnfants = el("button", "btn-secondaire", t("regl.enfants_ouvrir"));
+    bEnfants.onclick = () => { ongletParent = "enfants"; rendre(); };
+    carteEnfants.appendChild(bEnfants);
+    c.appendChild(carteEnfants);
     // Famille : pas de dépliant englobant. Ses trois cartes se présentent
-    // elles-mêmes, et deux d'entre elles se replient déjà — un pli dans un pli
-    // demandait deux gestes pour arriver au premier bouton.
+    // elles-mêmes, et se replient déjà — un pli dans un pli demanderait deux
+    // gestes pour arriver au premier bouton.
     sectionsFamille(c);
-    dep(t("regl.compte"), "std-cpt", (x) => sectionsCompte(x));
-    const modeCarte = el("section", "carte");
-    modeCarte.appendChild(blocModeParents());
-    c.appendChild(modeCarte);
+    // Mon compte : même raison — ses propres cartes (compte, données,
+    // récupération, zone de danger) sont déjà repliées individuellement.
+    sectionsCompte(c);
   }
 }
 

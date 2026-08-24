@@ -1761,17 +1761,20 @@ function definirEvalParent(enf, valeur, jour) {
 function humourActif() {
   return !!(etat && etat.reglages && etat.reglages.humour);
 }
-// Interrupteur GLOBAL de la « blague du jour » : désactivé pour l'instant, le
-// temps de remplacer le corpus actuel par des blagues éprouvées et libres de
-// droits (certaines blagues du corpus actuel ne font pas mouche). Indépendant
-// du réglage « humour » par famille : même une famille qui a activé l'humour
-// ne verra aucune blague tant que ce commutateur est à false. Le reste du
-// corpus (messages d'état vide) n'est pas concerné.
-const BLAGUES_ACTIVEES = false;
+// Interrupteur GLOBAL de la « blague du jour », réglable par l'admin
+// (app_config.blagues_actives) plutôt que figé dans le code : le corpus
+// actuel contient des blagues qui ne font pas mouche, d'où un défaut à
+// « off » tant que l'admin n'a pas coché la case dans Admin → Contenu.
+// Indépendant du réglage « humour » par famille : même une famille qui a
+// activé l'humour ne verra aucune blague tant que ce commutateur est éteint.
+// Le reste du corpus (messages d'état vide) n'est pas concerné.
+function blaguesActivees() {
+  return !!(typeof configApp !== "undefined" && configApp && configApp.blagues_actives === "on");
+}
 // Blague du jour à afficher (accueil) : null si désactivée globalement ou
 // si la famille a coupé l'humour ; sinon la blague du jour (voir blagueDuJour).
 function blagueDuJourVisible() {
-  if (!BLAGUES_ACTIVEES || !humourActif()) return null;
+  if (!blaguesActivees() || !humourActif()) return null;
   return blagueDuJour();
 }
 // Mémoire anti-répétition du dernier index tiré par préfixe.
@@ -2016,17 +2019,26 @@ function confettis() {
 }
 
 /* ---------- Mode parents ---------- */
+// Chaque entrée démarre sur « Aujourd'hui », jamais sur le dernier onglet
+// visité lors d'une session précédente : `ongletParent` est une variable de
+// session qui ne se réinitialisait jamais toute seule, si bien que rouvrir
+// l'espace parents pouvait faire apparaître la barre d'onglets déjà défilée
+// vers la droite, sur un onglet qu'on avait fini par oublier avoir consulté.
+function debuterSessionModeParents() {
+  modeParents = true;
+  if (typeof ongletParent !== "undefined") ongletParent = "quotidien";
+  rendre();
+}
 function activerModeParents() {
   const code = etat.reglages.codeParent;
-  if (!code) { modeParents = true; rendre(); return; }
+  if (!code) { debuterSessionModeParents(); return; }
   demanderPin({
     titre: "🔒 Code PIN parent",
     permettreOubli: true,
-    onReset: () => { modeParents = true; rendre(); },
+    onReset: () => debuterSessionModeParents(),
     onOk: (saisi) => {
       if (saisi.trim() !== code) return false;   // garde la modale + message d'erreur
-      modeParents = true;
-      rendre();
+      debuterSessionModeParents();
     }
   });
 }
