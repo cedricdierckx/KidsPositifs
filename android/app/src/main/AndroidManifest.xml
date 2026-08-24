@@ -46,8 +46,15 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Écriture seule : FamiTeam ajoute un rendez-vous quand le parent le
-         demande (bouton « Ajouter à mon agenda »), jamais ne lit ni ne
-         parcourt le calendrier existant. -->
+    <!-- FamiTeam ajoute un rendez-vous quand le parent le demande (bouton
+         « Ajouter à mon agenda »), jamais ne parcourt ni n'affiche le
+         calendrier existant. READ_CALENDAR est néanmoins requis : sur
+         Android, CalendarContract.Calendars (la liste des agendas, utilisée
+         pour trouver l'agenda par défaut où écrire) est protégée par cette
+         permission, même pour une simple création d'événement — contrairement
+         à iOS, qui autorise un accès « écriture seule » au niveau du système.
+         Sans elle, la création échoue silencieusement et l'app retombe sur
+         le fichier .ics. -->
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
 </manifest>

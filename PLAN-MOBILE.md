@@ -42,6 +42,16 @@ applications qui ne font que réafficher un site web.
   ligne qui modifient l'état en même temps ne s'écrasent plus en silence
   (voir commit dédié) — pertinent ici car les coupures prolongées
   deviennent courantes sur mobile.
+- **Impression → PDF dans l'app installée** (`js/vendor/jspdf.js`,
+  `js/vendor/html2canvas.js`) : ni `window.print()` ni `window.open()` ne
+  fonctionnent dans la WebView — le second bloquait même l'app entière (voir
+  plus haut). Un vrai PDF est désormais construit côté client puis envoyé par
+  le même mécanisme que l'agenda (écriture + partage natif). Chargées à la
+  demande seulement (~600 Ko, npm run vendor:pdf pour les régénérer).
+  ⚠️ Piège vérifié en conditions réelles : html2canvas échoue systématiquement
+  si la cible vit dans une iframe (« Error parsing CSS component value »,
+  même sur un contenu minimal) — le rendu se fait donc dans un `<div>` du
+  document principal, jamais dans une iframe hors écran.
 - **Écriture directe dans le calendrier du système** (`@ebarooni/capacitor-calendar`) :
   l'export `.ics` ouvert par une application tierce s'est révélé peu fiable
   — Google Agenda refuse l'import sur un Samsung Galaxy testé, quand Outlook
@@ -49,10 +59,36 @@ applications qui ne font que réafficher un site web.
   calendrier du système (`CalendarContract` Android / `EventKit` iOS), le
   même mécanisme que Facebook ou Eventbrite pour un bouton « Ajouter à mon
   agenda » : toute application synchronisée le voit, Google Agenda compris.
-  Nécessite une autorisation système en écriture seule (`WRITE_CALENDAR` /
-  `NSCalendarsWriteOnlyAccessUsageDescription`), demandée une fois au premier
-  usage. Le fichier `.ics` reste le repli si le greffon est absent ou la
+  Sur iOS, une autorisation « écriture seule » suffit
+  (`NSCalendarsWriteOnlyAccessUsageDescription`) : EventKit sait créer un
+  événement dans l'agenda par défaut sans droit de lecture. Sur Android en
+  revanche, `createEvent()` doit d'abord interroger `CalendarContract.Calendars`
+  pour trouver cet agenda par défaut — une LECTURE, que `WRITE_CALENDAR` seul
+  n'autorise pas. ⚠️ Piège vérifié en lisant le code natif du greffon (pas de
+  logcat nécessaire) : avec `WRITE_CALENDAR` seul sur Android, cette requête
+  lève une `SecurityException` que le bloc `try/catch` JS avale, et l'app
+  retombe silencieusement sur le fichier `.ics` — d'où `READ_CALENDAR` en plus
+  sur Android uniquement (`permissionCalendrierEcriture()` dans `js/ui.js`
+  distingue les deux plateformes). Autorisation demandée une fois au premier
+  usage ; le fichier `.ics` reste le repli si le greffon est absent ou la
   permission refusée.
+- **Rappel du soir par notification** (`@capacitor/local-notifications`) :
+  principe changé — FamiTeam promettait « jamais de notification »
+  (`SCIENCE_DEFAUT.neurologie` dans `js/data.js`) ; trop de familles
+  n'utilisaient jamais le rendez-vous agenda ci-dessus faute d'y penser.
+  L'app envoie désormais un rappel quotidien, activé par défaut à l'heure
+  conseillée (`heureRituelConseillee()`), désactivable en un geste dans
+  l'espace parents (`blocNotificationSoir()`, `js/ui.js`). L'esprit du repère
+  neurologique est tenu (un seul message calme par jour, pas de son
+  insistant, pas de badge, aucun score compétitif) ; sa lettre ne l'est plus.
+  Programmé en `schedule.on:{hour,minute}` (répétition quotidienne en heure
+  LOCALE, jamais en instant UTC absolu) — même logique flottante que
+  `icsRituelSoir`, insensible au changement d'heure d'été/hiver.
+  `isExactNotification:false` : un rappel de famille tolère quelques minutes
+  de dérive, ce qui évite d'exiger la permission Android « alarmes exactes ».
+  La synchronisation avec le système (`synchroniserNotificationSoir()`)
+  n'a lieu qu'après déverrouillage du mode parents — jamais de demande de
+  permission surprise pendant qu'un enfant tient l'appareil.
 - **Bibliothèque Supabase embarquée** (`js/vendor/supabase.js`) : elle venait
   d'un CDN, ce qui contredisait le hors-ligne annoncé au §0 — sans réseau, le
   script n'arrivait pas, la variable `supabase` restait indéfinie et l'app

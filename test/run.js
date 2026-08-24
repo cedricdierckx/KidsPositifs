@@ -3249,7 +3249,7 @@ test("parents : les cartes longues sont repliables et retiennent leur état", ()
   // et expert) apparaît deux fois dans la source alors qu'une seule est
   // rendue. Partager la clé est alors voulu — la préférence du parent
   // survit au changement de mode. Toute autre répétition est un défaut.
-  const DEUX_MODES = ["missions", "journal", "rituel", "compliment", "attente", "bonmoment", "septiemejour"];
+  const DEUX_MODES = ["missions", "journal", "rituel", "compliment", "attente", "bonmoment", "septiemejour", "notif"];
   const cles = (ui.match(/carteRepliable\([^,]+, "([a-z]+)"/g) || [])
     .map(m => /"([a-z]+)"$/.exec(m)[1]);
   const doublons = cles.filter((c, i) => cles.indexOf(c) !== i && DEUX_MODES.indexOf(c) < 0);
@@ -3499,9 +3499,11 @@ test("agenda natif : le calendrier est tenté avant le fichier, avec permission 
   const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
 
   const pc = ui.slice(ui.indexOf("async function permissionCalendrierEcriture"),
-                      ui.indexOf("async function permissionCalendrierEcriture") + 700);
-  assert.ok(/scope: "writeCalendar"/.test(pc),
-    "seule l'autorisation d'écriture doit être demandée — jamais la lecture");
+                      ui.indexOf("async function permissionCalendrierEcriture") + 1000);
+  assert.ok(/requestWriteOnlyCalendarAccess/.test(pc),
+    "iOS doit se contenter d'une autorisation d'écriture seule");
+  assert.ok(/requestFullCalendarAccess/.test(pc) && /readCalendar/.test(pc),
+    "Android doit aussi demander la lecture : createEvent() interroge la liste des agendas pour trouver celui par défaut");
 
   const ec = ui.slice(ui.indexOf("async function ecrireEvenementCalendrier"),
                       ui.indexOf("async function ecrireEvenementCalendrier") + 1400);
@@ -3542,14 +3544,92 @@ test("agenda natif : permissions et dépendance déclarées côté natif", () =>
 
   const manifest = fs.readFileSync(path.join(r, "android/app/src/main/AndroidManifest.xml"), "utf8");
   assert.ok(/WRITE_CALENDAR/.test(manifest), "permission Android manquante");
-  assert.strictEqual(/READ_CALENDAR/.test(manifest), false,
-    "FamiTeam n'écrit qu'un rendez-vous demandé : la lecture du calendrier n'a pas lieu d'être");
+  assert.ok(/READ_CALENDAR/.test(manifest),
+    "sur Android, createEvent() interroge CalendarContract.Calendars (une lecture) pour trouver l'agenda par défaut : sans READ_CALENDAR la création échoue toujours, même avec WRITE_CALENDAR seul");
 
   const plist = fs.readFileSync(path.join(r, "ios/App/App/Info.plist"), "utf8");
   assert.ok(/NSCalendarsWriteOnlyAccessUsageDescription/.test(plist), "clé iOS 17+ manquante");
   assert.ok(/NSCalendarsUsageDescription/.test(plist), "repli iOS 13-16 manquant");
   assert.strictEqual(/NSCalendarsFullAccessUsageDescription/.test(plist), false,
     "aucune clé d'accès complet : FamiTeam ne lit jamais le calendrier");
+});
+
+/* ---------- Impression → PDF (app installée) ----------
+ * window.print() ne fait rien dans la WebView Android, et window.open()
+ * (feuille de la semaine) a fini par bloquer l'app entière — sans bouton
+ * retour, fermeture forcée nécessaire (voir le commit qui a corrigé ce
+ * second point). Dans l'app, un vrai PDF est désormais construit côté
+ * client (jsPDF + html2canvas), chargés à la demande, puis envoyé par le
+ * même mécanisme que l'agenda. */
+test("impression : les bibliothèques PDF ne sont chargées qu'à la demande", () => {
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+
+  // Vendorisées comme Supabase (js/vendor/) : jamais un CDN, sinon le
+  // hors-ligne casserait — et jamais chargées au démarrage : ~600 Ko à
+  // elles deux pour une fonction que la plupart des familles n'utilisent
+  // jamais pénaliserait tout le monde.
+  ["index.html", "defi.html", "challenge.html"].forEach(nom => {
+    const html = fs.readFileSync(path.join(r, nom), "utf8");
+    assert.strictEqual(/jspdf|html2canvas/i.test(html), false,
+      nom + " ne doit pas charger les bibliothèques d'impression au démarrage");
+  });
+  assert.ok(fs.existsSync(path.join(r, "js/vendor/jspdf.js")), "js/vendor/jspdf.js doit être dans le dépôt");
+  assert.ok(fs.existsSync(path.join(r, "js/vendor/html2canvas.js")), "js/vendor/html2canvas.js doit être dans le dépôt");
+  assert.ok(fs.existsSync(path.join(r, "scripts/vendorer-pdf.mjs")), "le script de recopie doit exister");
+  const pkg = JSON.parse(fs.readFileSync(path.join(r, "package.json"), "utf8"));
+  assert.ok(pkg.scripts["vendor:pdf"], "npm run vendor:pdf doit être déclaré");
+  assert.ok((pkg.devDependencies || {}).jspdf && (pkg.devDependencies || {}).html2canvas,
+    "la source de la recopie doit être une dépendance, pas un téléchargement manuel");
+
+  const cli = ui.slice(ui.indexOf("function chargerLibsImpression"),
+                       ui.indexOf("function chargerLibsImpression") + 700);
+  assert.ok(/js\/vendor\/html2canvas\.js/.test(cli) && /js\/vendor\/jspdf\.js/.test(cli),
+    "le chargement à la demande doit cibler les fichiers vendorisés, pas un CDN");
+});
+
+test("impression : le PDF part par le même mécanisme que l'agenda, jamais par un window.print silencieux", () => {
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+
+  const ic = ui.slice(ui.indexOf("async function imprimerCible"),
+                      ui.indexOf("async function imprimerCible") + 1300);
+  assert.ok(/greffonNatif\("Filesystem"\)/.test(ic), "la branche native doit être choisie en premier");
+  const iNatif = ic.indexOf("pdfDepuisElement");
+  const iWebPrint = ic.indexOf("window.print()");
+  assert.ok(iNatif > 0 && iWebPrint > 0 && iNatif < iWebPrint,
+    "dans l'app, le PDF doit être tenté avant tout window.print()");
+  assert.ok(/enregistrerOuPartager\(blob/.test(ic),
+    "le PDF doit partir par le même chemin que les autres fichiers (écriture + partage natif)");
+
+  // La feuille de la semaine : même exigence, et html construit UNE FOIS
+  // (htmlFeuilleSemaine), réutilisé par les deux voies — sinon un correctif
+  // apporté à l'une des deux pourrait ne jamais atteindre l'autre.
+  assert.ok(/function htmlFeuilleSemaine\(mode\)/.test(ui), "la construction du HTML doit être isolée, réutilisable");
+  const ifs = ui.slice(ui.indexOf("async function imprimerFeuilleSemaine"),
+                       ui.indexOf("async function imprimerFeuilleSemaine") + 1300);
+  assert.ok(/greffonNatif\("Filesystem"\)/.test(ifs), "la feuille doit aussi tenter le PDF en premier dans l'app");
+  const iCal2 = ifs.indexOf("pdfDepuisHtmlEtEnvoyer");
+  const iOpen = ifs.indexOf("window.open(");
+  assert.ok(iCal2 > 0 && iOpen > 0 && iCal2 < iOpen,
+    "dans l'app, le PDF doit être tenté avant tout window.open() — celui-ci a déjà bloqué l'app");
+  assert.ok(/pdfDepuisHtmlEtEnvoyer\(htmlFeuilleSemaine\(mode\)/.test(ifs),
+    "la voie native doit utiliser le même HTML que la voie web, pas une copie");
+
+  // Un cadre hors écran oublié resterait invisible mais réel : il doit être
+  // retiré même quand la génération échoue.
+  const pf = ui.slice(ui.indexOf("async function pdfDepuisHtmlEtEnvoyer"),
+                      ui.indexOf("async function pdfDepuisHtmlEtEnvoyer") + 500);
+  assert.ok(/finally/.test(pf) && /conteneur\.remove\(\)/.test(pf),
+    "le conteneur hors écran doit être retiré même si la génération du PDF échoue");
+  // Jamais une iframe : html2canvas échoue systématiquement dès que la cible
+  // y vit (vérifié en conditions réelles), même sur un fragment minimal.
+  assert.strictEqual(/createElement\("iframe"\)/.test(ui.slice(ui.indexOf("function elementDepuisHtml"), ui.indexOf("function elementDepuisHtml") + 900)), false,
+    "elementDepuisHtml ne doit jamais utiliser d'iframe — html2canvas y échoue systématiquement");
+
+  Object.keys(construireContexte().api.LANGUES).forEach(lg =>
+    ["impr.pdf_pret", "impr.echec"].forEach(cle =>
+      assert.ok(construireContexte().api.I18N[lg][cle], cle + " manquant en " + lg)));
 });
 
 test("carte surprise : les familles existantes reçoivent les champs de rendez-vous", () => {
@@ -4152,10 +4232,9 @@ test("écrans : le mode sans écran est annoncé avant l'inscription", () => {
   assert.ok(/[Tt]rois minutes|3 minutes/.test(rep), "la réponse doit chiffrer le temps d'écran");
 });
 
-/* Le rendez-vous du soir. L'application ne notifiera jamais : le rappel est
- * délégué à l'agenda du parent. Ce qui doit donc être garanti, c'est que le
- * fichier produit prévienne réellement (VALARM), qu'il ne dérive pas au
- * changement d'heure, et qu'aucune heure absurde ne le rende illisible. */
+/* Le rendez-vous du soir, voie agenda. Ce qui doit donc être garanti, c'est
+ * que le fichier produit prévienne réellement (VALARM), qu'il ne dérive pas
+ * au changement d'heure, et qu'aucune heure absurde ne le rende illisible. */
 test("rendez-vous du soir : l'heure hors plage est refusée, pas encodée", () => {
   const { api } = construireContexte();
   // HEURE_ISO ne contrôle que la forme. C'est ce piège qui produisait un
@@ -4226,7 +4305,7 @@ test("rendez-vous du soir : le premier rappel ne tombe jamais dans le passé", (
     { enfants: { a: { heureCoucher: "00:10" } } })), "heure de repli invalide");
 });
 
-test("rendez-vous du soir : l'app promet l'absence de notification, pas l'inverse", () => {
+test("rendez-vous du soir : la carte agenda existe dans les deux modes parents", () => {
   const { api } = construireContexte();
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
   const cles = ["rituel.titre", "rituel.intro", "rituel.rythme", "rituel.heure",
@@ -4236,13 +4315,13 @@ test("rendez-vous du soir : l'app promet l'absence de notification, pas l'invers
   Object.keys(api.LANGUES).forEach(lg =>
     cles.forEach(k => assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`)));
 
-  // L'introduction doit NIER la notification. C'est le seul argument qui
-  // rassure un parent méfiant, et une traduction distraite l'inverserait.
-  const nie = { fr: /jamais de notification/i, en: /never send you a notification/i,
+  // L'app envoie désormais une notification par défaut : l'intro ne doit plus
+  // prétendre le contraire dans aucune langue, sous peine de se contredire.
+  const dementi = { fr: /jamais de notification/i, en: /never send you a notification/i,
     nl: /nooit een melding/i, de: /niemals eine Benachrichtigung/i };
   Object.keys(api.LANGUES).forEach(lg =>
-    assert.ok(nie[lg].test(api.I18N[lg]["rituel.intro"]),
-      "l'intro doit nier la notification en " + lg));
+    assert.ok(!dementi[lg].test(api.I18N[lg]["rituel.intro"]),
+      "l'intro ne doit plus nier la notification en " + lg));
 
   // La carte existe dans les deux modes parents, et se replie une fois réglée.
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
@@ -4252,6 +4331,47 @@ test("rendez-vous du soir : l'app promet l'absence de notification, pas l'invers
   // sinon il reste collé à son libellé alors que le champ voisin s'aligne.
   const css = fs.readFileSync(path.join(r, "css/style.css"), "utf8");
   assert.ok(/\.champ select\{[^}]*width:100%/.test(css), "le menu déroulant doit occuper la ligne");
+});
+
+test("rappel du soir : la notification est activée par défaut, désactivable", () => {
+  const { api } = construireContexte();
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const cles = ["notif.titre", "notif.intro", "notif.activer", "notif.heure", "notif.resume",
+    "notif.jamais", "notif.note", "notif.titre_push", "notif.corps_push", "notif.ok",
+    "notif.off", "notif.refuse"];
+  Object.keys(api.LANGUES).forEach(lg =>
+    cles.forEach(k => assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`)));
+
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  // Le réglage par défaut, en l'absence de tout choix explicite, doit être actif.
+  const nf = ui.slice(ui.indexOf("function notifReglage"), ui.indexOf("function notifReglage") + 400);
+  assert.ok(/active:\s*true/.test(nf), "sans réglage enregistré, la notification doit être active par défaut");
+
+  // La programmation doit être en heure locale (cron-like on:{hour,minute}),
+  // jamais en instant UTC absolu — sinon le rappel dériverait au changement
+  // d'heure d'été/hiver, exactement le piège déjà évité pour l'agenda.
+  const ps = ui.slice(ui.indexOf("async function programmerNotificationSoir"),
+                      ui.indexOf("async function programmerNotificationSoir") + 800);
+  assert.ok(/schedule:\s*\{\s*on:\s*\{\s*hour/.test(ps), "la programmation doit utiliser on:{hour,minute}, pas un instant absolu");
+  assert.ok(/isExactNotification:\s*false/.test(ps), "un simple rappel ne doit pas exiger la permission « alarmes exactes »");
+
+  // La synchronisation ne doit jamais se déclencher avant le déverrouillage
+  // du mode parents : aucune demande de permission pendant qu'un enfant tient
+  // l'appareil.
+  const vr = ui.slice(ui.indexOf("function vueReglages"), ui.indexOf("function vueReglages") + 1500);
+  const iVerrou = vr.indexOf("if (!modeParents)");
+  const iSync = vr.indexOf("synchroniserNotificationSoir();");
+  assert.ok(iVerrou > 0 && iSync > iVerrou,
+    "dans vueReglages, la synchronisation doit avoir lieu après le contrôle du verrou parent");
+
+  // La carte figure dans les deux modes parents, comme celle de l'agenda.
+  const appelsNotif = ui.match(/carteRepliable\(blocNotificationSoir\(\), "notif", false\)/g) || [];
+  assert.strictEqual(appelsNotif.length, 2, "il faut la carte notification en mode simplifié ET en mode expert");
+
+  // Dépendance déclarée, jamais un ajout manuel du dossier natif.
+  const pkg = JSON.parse(fs.readFileSync(path.join(r, "package.json"), "utf8"));
+  assert.ok((pkg.dependencies || {})["@capacitor/local-notifications"],
+    "le greffon de notifications doit être une dépendance déclarée");
 });
 
 test("parents : l'action principale a partout la même taille", () => {
@@ -4888,11 +5008,13 @@ test("app installée : aucun bouton ne peut échouer en silence", () => {
   assert.ok(iNatif > 0 && iWeb > 0 && iNatif < iWeb,
     "le partage natif doit être tenté avant navigator.share");
 
-  // 3. L'impression n'existe pas dans la WebView : il faut le dire.
-  const ic = ui.slice(ui.indexOf("function imprimerCible"),
-                      ui.indexOf("function imprimerCible") + 800);
-  assert.ok(/greffonNatif\("Filesystem"\)/.test(ic) && /impr\.indispo/.test(ic),
-    "imprimerCible doit prévenir au lieu de ne rien faire");
+  // 3. window.print() n'existe pas vraiment dans la WebView : dans l'app,
+  // imprimerCible construit un PDF plutôt que de se contenter de le dire
+  // (voir le test dédié à l'impression, plus loin, pour le détail).
+  const ic = ui.slice(ui.indexOf("async function imprimerCible"),
+                      ui.indexOf("async function imprimerCible") + 1300);
+  assert.ok(/greffonNatif\("Filesystem"\)/.test(ic) && /pdfDepuisElement/.test(ic),
+    "imprimerCible doit construire un PDF dans l'app, pas seulement prévenir");
   Object.keys(api.LANGUES).forEach(lg =>
     assert.ok(api.I18N[lg]["impr.indispo"], "impr.indispo manquant en " + lg));
 
@@ -4910,20 +5032,16 @@ test("app installée : aucun bouton ne peut échouer en silence", () => {
   assert.ok(/function greffonNatif/.test(ui) && /isNativePlatform/.test(ui));
 
   // 6. La feuille de la semaine imprime autrement (window.open + fenêtre à
-  //    part) et n'avait pas hérité du même garde-fou : dans l'app installée,
-  //    ce chemin ouvrait l'aperçu d'impression natif du système puis restait
-  //    coincé derrière, sans retour possible — pire qu'un échec silencieux.
-  const ifs = ui.slice(ui.indexOf("function imprimerFeuilleSemaine"),
-                       ui.indexOf("function imprimerFeuilleSemaine") + 700);
-  assert.ok(/greffonNatif\("Filesystem"\)/.test(ifs) && /papier\.indispo/.test(ifs),
-    "imprimerFeuilleSemaine doit refuser AVANT window.open, pas seulement échouer dedans");
-  // Le refus doit précéder toute tentative d'ouverture de fenêtre.
-  const iGarde = ifs.indexOf('greffonNatif("Filesystem")');
-  const iOuvre = ui.indexOf("window.open(", ui.indexOf("function imprimerFeuilleSemaine"));
-  assert.ok(iGarde > 0 && iOuvre > 0 && (ui.indexOf("function imprimerFeuilleSemaine") + iGarde) < iOuvre,
-    "le garde-fou doit venir avant window.open, pas après");
-  Object.keys(api.LANGUES).forEach(lg =>
-    assert.ok(api.I18N[lg]["papier.indispo"], "papier.indispo manquant en " + lg));
+  //    part), qui a fini par bloquer l'app installée sans retour possible.
+  //    Dans l'app, un PDF doit être tenté AVANT tout window.open — jamais
+  //    un chemin qui y retomberait. Le détail complet (même HTML pour les
+  //    deux voies, iframe toujours retirée) est couvert par le test dédié
+  //    à l'impression, plus haut dans ce fichier.
+  const iDebutFeuille = ui.indexOf("async function imprimerFeuilleSemaine");
+  const iGarde = ui.indexOf('greffonNatif("Filesystem")', iDebutFeuille);
+  const iOuvre = ui.indexOf("window.open(", iDebutFeuille);
+  assert.ok(iDebutFeuille > 0 && iGarde > 0 && iOuvre > 0 && iGarde < iOuvre,
+    "dans l'app, le PDF doit être tenté avant tout window.open, jamais après");
 });
 
 /* ---------- Repère de version dans l'espace admin ----------
@@ -5062,8 +5180,11 @@ test("feuille papier imprimée : la mise en page ne force plus une page presque 
   // suivante en laissant l'entete seul.
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
-  const bloc = ui.slice(ui.indexOf("function imprimerFeuilleSemaine"),
-                        ui.indexOf("function imprimerFeuilleSemaine") + 9000);
+  // Le CSS vit dans htmlFeuilleSemaine (construction du document HTML,
+  // partagée par la voie web et la voie native de l'app installée) — pas
+  // dans imprimerFeuilleSemaine, qui ne fait plus que choisir entre les deux.
+  const bloc = ui.slice(ui.indexOf("function htmlFeuilleSemaine"),
+                        ui.indexOf("function htmlFeuilleSemaine") + 9000);
 
   assert.ok(!/\.grille\{display:grid/.test(bloc),
     "CSS Grid ne se pagine pas proprement à l'impression sous Chrome : à éviter ici");

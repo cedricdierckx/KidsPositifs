@@ -1463,17 +1463,15 @@ function champsCarteSurprise(carte, titreLisible, activiteLisible) {
 
 /* ---------- Le rendez-vous du soir (rappel par l'agenda du parent) ----------
  * La raison d'arrêt la plus citée par les familles est « on n'y pense pas ».
- * La réponse habituelle serait une notification ; elle nous est interdite par
- * nos propres repères (« pas de notifications », SCIENCE_DEFAUT.neurologie),
- * et cette contrainte est tenue.
- *
- * On délègue donc le rappel à l'agenda DU PARENT : il choisit son rythme et
- * son heure, l'événement part chez lui, et c'est son agenda qui le prévient.
- * Rien n'est poussé depuis l'application, aucune permission n'est demandée,
- * aucun service worker n'est nécessaire — donc cela fonctionne aussi sur
- * iPhone, où la notification web exige d'ajouter le site à l'écran d'accueil.
- * Et le parent garde la main : supprimer l'événement dans son agenda suffit,
- * il n'a pas à venir nous le demander.
+ * FamiTeam y répond désormais par une notification quotidienne (activée par
+ * défaut, voir synchroniserNotificationSoir dans js/ui.js) — mais celle-ci
+ * dépend du système et disparaît si le parent désinstalle l'app ou change de
+ * téléphone. Cette fonction-ci reste donc utile : un rendez-vous déposé dans
+ * l'agenda DU PARENT lui survit, se règle à son propre rythme et à sa propre
+ * heure, et fonctionne même sur un vieux téléphone sans notifications
+ * fiables. Les deux mécanismes coexistent ; le parent choisit l'un, l'autre,
+ * ou les deux. Et il garde toujours la main : supprimer l'événement dans son
+ * agenda suffit, il n'a pas à venir nous le demander.
  * ------------------------------------------------------------------- */
 const RITUEL_RYTHMES = ["quotidien", "deux_jours", "trois_jours", "hebdo"];
 const RITUEL_DUREE_MIN = 5;      // l'objectif est de 3 minutes ; 5 reste honnête

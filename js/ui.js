@@ -310,12 +310,22 @@ function blocTableauHonneur() {
 /* Bascule les règles @media print le temps de l'impression : seule la cible
  * marquée `.impression-cible` part sur le papier. Partagé par la carte d'ami et
  * le dépliant des écoles. */
-function imprimerCible() {
-  // La WebView Android n'implémente pas window.print() : le bouton ne faisait
-  // rien du tout dans l'app installée. On ne peut pas imprimer d'ici, alors on
-  // le dit et on indique où c'est possible, plutôt que de laisser croire à une
-  // panne.
-  if (greffonNatif("Filesystem") || typeof window.print !== "function") {
+async function imprimerCible() {
+  // L'impression du navigateur n'existe pas dans la WebView Android : le
+  // bouton ne faisait rien du tout dans l'app installée. On y construit
+  // donc un vrai PDF (voir pdfDepuisElement plus haut), tenté avant toute
+  // autre voie, plutôt que de se contenter de le dire.
+  if (greffonNatif("Filesystem")) {
+    const cible = document.querySelector(".impression-cible");
+    if (!cible) { toast(t("impr.echec"), "info"); return false; }
+    try {
+      const blob = await pdfDepuisElement(cible);
+      const ok = await enregistrerOuPartager(blob, "famiteam-" + aujourdHui() + ".pdf", APP_NOM);
+      toast(ok ? t("impr.pdf_pret") : t("impr.echec"), ok ? "ok" : "info");
+      return !!ok;
+    } catch (e) { toast(t("impr.echec"), "info"); return false; }
+  }
+  if (typeof window.print !== "function") {
     if (typeof toast === "function") toast(t("impr.indispo", { hote: "fami.team" }), "info");
     return false;
   }
@@ -778,6 +788,101 @@ async function enregistrerOuPartager(blob, nomFichier, titre, texte) {
   return telechargerBlob(blob, nomFichier);
 }
 
+/* ---------- Impression → PDF (app installée) ----------
+ * window.print() et window.open() se comportent mal dans la WebView Android
+ * (voir imprimerCible et imprimerFeuilleSemaine plus bas) : l'un ne fait
+ * rien, l'autre a fini par bloquer l'app entière. Dans l'app, on construit
+ * donc un vrai fichier PDF côté client, puis on le confie au même mécanisme
+ * déjà éprouvé pour l'agenda (écriture + ouverture/partage natif).
+ *
+ * jsPDF + html2canvas ne sont chargés qu'à cet instant précis (~600 Ko à eux
+ * deux) : la plupart des familles n'impriment jamais, les charger au
+ * démarrage pénaliserait tout le monde pour un usage rare. Vendorisés
+ * (js/vendor/), jamais un CDN — même raison que pour Supabase : le
+ * hors-ligne ne doit dépendre d'aucun serveur tiers.
+ */
+let _libsImpressionPromesse = null;
+function chargerScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = () => resolve(); s.onerror = () => reject(new Error("échec de chargement : " + src));
+    document.head.appendChild(s);
+  });
+}
+function chargerLibsImpression() {
+  if (window.jspdf && window.html2canvas) return Promise.resolve();
+  if (!_libsImpressionPromesse) {
+    // Les deux fois : un échec ne doit pas laisser la promesse « grillée »
+    // en mémoire pour le reste de la session — retenter doit rester possible.
+    _libsImpressionPromesse = Promise.all([
+      chargerScript("js/vendor/html2canvas.js?v=158"),
+      chargerScript("js/vendor/jspdf.js?v=158")
+    ]).catch(e => { _libsImpressionPromesse = null; throw e; });
+  }
+  return _libsImpressionPromesse;
+}
+
+// Rend un élément DÉJÀ DANS LE DOM (visible ou non) en PDF A4 portrait,
+// réparti sur plusieurs pages si le contenu dépasse une page. Renvoie un Blob.
+async function pdfDepuisElement(element) {
+  await chargerLibsImpression();
+  const canvas = await window.html2canvas(element, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  const pageW = pdf.internal.pageSize.getWidth(), pageH = pdf.internal.pageSize.getHeight();
+  const imgW = pageW, imgH = (canvas.height * imgW) / canvas.width;
+  const donnees = canvas.toDataURL("image/jpeg", 0.92);
+  pdf.addImage(donnees, "JPEG", 0, 0, imgW, imgH);
+  // Une seule grande image, redécoupée à chaque page par un décalage négatif :
+  // plus simple et plus fidèle qu'une pagination du contenu HTML d'origine.
+  for (let y = pageH; y < imgH; y += pageH) {
+    pdf.addPage();
+    pdf.addImage(donnees, "JPEG", 0, -y, imgW, imgH);
+  }
+  return pdf.output("blob");
+}
+
+// Construit un <div> hors écran, DANS LE DOCUMENT PRINCIPAL, à partir d'un
+// document HTML autonome (voir htmlFeuilleSemaine) : évite de dupliquer les
+// styles pour l'écran et pour le PDF — le même HTML sert aux deux, ouvert en
+// fenêtre sur le web, rendu ici pour l'app installée.
+//
+// PAS d'iframe : essayé d'abord, html2canvas échoue systématiquement dès que
+// la cible vit dans une iframe — même un fragment minimal, sans rapport avec
+// le contenu réel — en levant « Error parsing CSS component value, unexpected
+// EOF » (vérifié en conditions réelles avant d'écrire ce commentaire). Sur le
+// document principal, le même contenu se rend sans encombre.
+function elementDepuisHtml(html) {
+  const conteneur = document.createElement("div");
+  // Largeur d'un A4 à 96 dpi (210 mm) : la mise en page (grille, tableaux)
+  // se calcule alors comme sur l'aperçu d'impression du navigateur.
+  conteneur.style.cssText = "position:fixed; left:-9999px; top:0; width:794px";
+  const style = /<style>([\s\S]*?)<\/style>/.exec(html);
+  const corps = /<body>([\s\S]*?)<\/body>/.exec(html);
+  if (style) {
+    const s = document.createElement("style");
+    s.textContent = style[1];
+    conteneur.appendChild(s);
+  }
+  const contenu = document.createElement("div");
+  contenu.innerHTML = corps ? corps[1] : html;
+  conteneur.appendChild(contenu);
+  document.body.appendChild(conteneur);
+  return conteneur;
+}
+
+// Génère le PDF, l'envoie (écriture + partage natif) et retire le conteneur
+// dans tous les cas — un échec ne doit pas laisser un bloc invisible traîner.
+async function pdfDepuisHtmlEtEnvoyer(html, nomFichier, titre) {
+  const conteneur = elementDepuisHtml(html);
+  try {
+    const blob = await pdfDepuisElement(conteneur);
+    return await enregistrerOuPartager(blob, nomFichier, titre);
+  } finally {
+    conteneur.remove();
+  }
+}
+
 /* ---------- Écriture directe dans le calendrier du système ----------
  * Le fichier .ics ci-dessus reste le repli, mais s'est révélé peu fiable :
  * Google Agenda refuse d'importer un .ics reçu par un intent de fichier
@@ -788,15 +893,30 @@ async function enregistrerOuPartager(blob, nomFichier, titre, texte) {
  * agenda ». Toute application synchronisée avec ce magasin voit l'événement,
  * Google Agenda compris, sans dépendre de sa capacité à lire un fichier.
  *
- * Contrepartie : une autorisation système, demandée une fois (écriture
- * seule — FamiTeam ne lit jamais le calendrier existant). Si le parent la
- * refuse, ou si le greffon est absent (app trop ancienne), la fonction rend
- * la main sans rien faire : c'est à l'appelant de retomber sur le fichier.
+ * Contrepartie : une autorisation système, demandée une fois. Sur iOS,
+ * écriture seule (FamiTeam ne lit jamais le calendrier existant) — le
+ * système sait y créer un événement sans accès en lecture. Sur Android en
+ * revanche, CapacitorCalendar.createEvent() doit interroger la table des
+ * agendas (CalendarContract.Calendars) pour trouver celui par défaut, une
+ * LECTURE que WRITE_CALENDAR seul n'autorise pas : sans READ_CALENDAR en
+ * plus, la création échouerait silencieusement à chaque fois. D'où la
+ * demande complète sur Android uniquement. Si le parent refuse, ou si le
+ * greffon est absent (app trop ancienne), la fonction rend la main sans
+ * rien faire : c'est à l'appelant de retomber sur le fichier.
  */
 async function permissionCalendrierEcriture() {
   const cal = greffonNatif("CapacitorCalendar");
   if (!cal) return false;
+  const android = window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === "android";
   try {
+    if (android) {
+      const deja = await cal.checkAllPermissions();
+      const jaAcquis = deja && deja.result
+        && deja.result.readCalendar === "granted" && deja.result.writeCalendar === "granted";
+      if (jaAcquis) return true;
+      const demande = await cal.requestFullCalendarAccess();
+      return !!(demande && demande.result === "granted");
+    }
     const deja = await cal.checkPermission({ scope: "writeCalendar" });
     if (deja && deja.result === "granted") return true;
     const demande = await cal.requestWriteOnlyCalendarAccess();
@@ -860,6 +980,123 @@ async function envoyerVersAgenda(champsCalendrier, ics, nomFichier, titre) {
   return telechargerBlob(blob, nomFichier) ? { voie: "fichier" } : null;
 }
 
+/* ---------- Rappel du soir : notification locale ----------
+ * Longtemps, FamiTeam n'a jamais notifié — nos repères neurologiques
+ * l'excluaient (SCIENCE_DEFAUT.neurologie). Contrepartie assumée : le rappel
+ * ne dépendait que de l'agenda du parent (ci-dessus), ou de sa mémoire.
+ * Trop de familles n'y pensaient tout simplement jamais.
+ *
+ * FamiTeam envoie donc désormais UN rappel, une fois par jour, à une heure
+ * choisie par le parent — activé par défaut, désactivable en un geste. Ce
+ * n'est ni une boucle addictive ni un score : pas de son insistant, pas de
+ * badge qui donne envie de rouvrir l'app, un seul message calme par jour.
+ * L'esprit du repère neurologique (éviter la sollicitation permanente) est
+ * tenu ; sa lettre (aucune notification, jamais) ne l'est plus. */
+let _notifSoirSyncFaite = false;   // voir vueReglages : jamais avant le déverrouillage parent
+const NOTIF_SOIR_ID = 4171;        // identifiant stable : reprogrammer réutilise le même, sans doublon
+
+function notifReglage() {
+  const r = etat.reglages && etat.reglages.notifSoir;
+  if (r && typeof r.active === "boolean" && heureValide(r.heure)) return r;
+  return { active: true, heure: heureRituelConseillee() };   // défaut : activé, à l'heure conseillée
+}
+
+async function permissionNotification() {
+  const notif = greffonNatif("LocalNotifications");
+  if (!notif) return false;
+  try {
+    const deja = await notif.checkPermissions();
+    if (deja && deja.display === "granted") return true;
+    const demande = await notif.requestPermissions();
+    return !!(demande && demande.display === "granted");
+  } catch (e) { return false; }
+}
+
+async function annulerNotificationSoir() {
+  const notif = greffonNatif("LocalNotifications");
+  if (!notif) return;
+  try { await notif.cancel({ notifications: [{ id: NOTIF_SOIR_ID }] }); } catch (e) { /* pas grave */ }
+}
+
+// Programme le rappel quotidien. `on: {hour, minute}` (sans jour ni mois) se
+// répète chaque jour à cette heure LOCALE — même logique « flottante » que
+// icsRituelSoir, donc rien à recalculer au changement d'heure d'été/hiver.
+// isExactNotification:false : quelques minutes de dérive sont sans
+// conséquence ici, et cela évite d'exiger la permission « alarmes exactes »
+// pour un simple rappel de famille.
+async function programmerNotificationSoir(heure) {
+  const notif = greffonNatif("LocalNotifications");
+  if (!notif || !heureValide(heure)) return false;
+  const h = /^(\d{1,2}):(\d{2})$/.exec(heure);
+  try {
+    await notif.schedule({
+      notifications: [{
+        id: NOTIF_SOIR_ID,
+        title: t("notif.titre_push"),
+        body: t("notif.corps_push"),
+        schedule: { on: { hour: parseInt(h[1], 10), minute: parseInt(h[2], 10) }, allowWhileIdle: true },
+        isExactNotification: false
+      }]
+    });
+    return true;
+  } catch (e) { return false; }
+}
+
+// Applique le réglage courant au système : programme ou annule. Appelée à
+// chaque changement explicite ET une fois par session (voir vueReglages) pour
+// rattraper un réglage déjà enregistré — nouvel appareil, permission
+// entre-temps révoquée dans les réglages du téléphone, etc.
+async function synchroniserNotificationSoir() {
+  const notif = greffonNatif("LocalNotifications");
+  if (!notif) return false;
+  const r = notifReglage();
+  if (!r.active) { await annulerNotificationSoir(); return true; }
+  if (!(await permissionNotification())) return false;
+  return await programmerNotificationSoir(r.heure);
+}
+
+function blocNotificationSoir() {
+  const r = notifReglage();
+  const sec = el("section", "carte notif-soir");
+  const etatTxt = r.active ? t("notif.resume", { h: r.heure }) : t("notif.jamais");
+  sec.innerHTML = `<h2>${t("notif.titre")}<span class="rituel-etat">${echapper(etatTxt)}</span></h2>
+    <p class="note">${t("notif.intro")}</p>`;
+
+  const lActive = el("label", "switch-ligne");
+  const caseActive = el("input");
+  caseActive.type = "checkbox";
+  caseActive.checked = r.active;
+  lActive.appendChild(caseActive);
+  lActive.appendChild(el("span", null, t("notif.activer")));
+  sec.appendChild(lActive);
+
+  const grille = el("div", "rituel-grille");
+  const lH = el("label", "champ", t("notif.heure"));
+  const inpH = el("input");
+  inpH.type = "time";
+  inpH.value = r.heure;
+  inpH.disabled = !r.active;
+  lH.appendChild(inpH);
+  grille.appendChild(lH);
+  sec.appendChild(grille);
+
+  const appliquer = async () => {
+    const active = caseActive.checked, heure = inpH.value;
+    inpH.disabled = !active;
+    if (active && !heureValide(heure)) { toast(t("rituel.echec"), "info"); return; }
+    if (!etat.reglages) etat.reglages = {};
+    etat.reglages.notifSoir = { active, heure };
+    sauver();
+    const ok = await synchroniserNotificationSoir();
+    toast(!active ? t("notif.off") : ok ? t("notif.ok") : t("notif.refuse"), ok || !active ? "ok" : "info");
+    majSansSaut(rendre);
+  };
+  caseActive.onchange = appliquer;
+  inpH.onchange = appliquer;
+
+  sec.appendChild(el("p", "note", t("notif.note")));
+  return sec;
+}
 
 /* Modale de partage : le code permanent de la famille, son QR code et le lien.
  * Un seul code, réutilisable indéfiniment — c'est tout l'intérêt : il se colle
@@ -3748,17 +3985,11 @@ function libelleSemaine(d1, d2) {
 }
 
 // Construit la feuille A4 (HTML autonome) et ouvre la fenêtre d'impression.
-function imprimerFeuilleSemaine(mode) {
-  // Même limite que imprimerCible() (plus haut), en pire : ici la WebView
-  // Android n'échoue pas en silence, elle ouvre l'aperçu d'impression NATIF
-  // du système sur une fenêtre que l'app n'a jamais pu créer proprement —
-  // puis reste coincée derrière, sans bouton retour, jusqu'à devoir fermer
-  // l'app de force. On refuse donc d'y entrer, avant même de construire le
-  // HTML ou d'ouvrir la fenêtre.
-  if (greffonNatif("Filesystem") || typeof window.print !== "function") {
-    if (typeof toast === "function") toast(t("papier.indispo", { hote: "fami.team" }), "info");
-    return;
-  }
+// Construit le document HTML autonome de la feuille A4 (styles compris) :
+// une fonction PURE, sans effet de bord, pour servir aussi bien la fenêtre
+// d'impression du web que le rendu hors écran de l'app installée (voir
+// imprimerFeuilleSemaine plus bas) — un seul contenu, deux destinations.
+function htmlFeuilleSemaine(mode) {
   const jours = joursSemaine(semainePapierDebut);
   const lettres = t("planif.jours_courts").split(",");
   const famille = (typeof familleActive !== "undefined" && familleActive && familleActive.name) ? familleActive.name : "";
@@ -3886,10 +4117,30 @@ function imprimerFeuilleSemaine(mode) {
     <div class="grille">${corps}</div>
     <p class="pied">${t("papier.feuille_pied")}</p>
     </body></html>`;
+  return html;
+}
 
+async function imprimerFeuilleSemaine(mode) {
+  // Dans l'app installée, ouvrir une fenêtre pour y imprimer déclenchait
+  // l'aperçu d'impression NATIF du système sur une fenêtre que l'app
+  // n'avait jamais pu créer proprement — puis restait coincée derrière,
+  // sans bouton retour, jusqu'à devoir fermer l'app de force. On y
+  // construit donc un vrai PDF (même document HTML, rendu hors écran —
+  // voir pdfDepuisHtmlEtEnvoyer plus haut), tenté avant toute autre voie.
+  if (greffonNatif("Filesystem")) {
+    try {
+      const ok = await pdfDepuisHtmlEtEnvoyer(htmlFeuilleSemaine(mode), "famiteam-semaine-" + aujourdHui() + ".pdf", APP_NOM);
+      toast(ok ? t("impr.pdf_pret") : t("impr.echec"), ok ? "ok" : "info");
+    } catch (e) { toast(t("impr.echec"), "info"); }
+    return;
+  }
+  if (typeof window.print !== "function") {
+    if (typeof toast === "function") toast(t("papier.indispo", { hote: "fami.team" }), "info");
+    return;
+  }
   const w = window.open("", "_blank");
   if (!w) { toast(t("papier.popup_bloque"), "info"); return; }
-  w.document.open(); w.document.write(html); w.document.close();
+  w.document.open(); w.document.write(htmlFeuilleSemaine(mode)); w.document.close();
   setTimeout(() => { try { w.focus(); w.print(); } catch (e) { /* impression annulée */ } }, 350);
 }
 
@@ -6182,12 +6433,13 @@ function blocPremiersPas() {
   return sec;
 }
 
-/* ----- Le rendez-vous du soir : le rappel que nous ne ferons pas -----
+/* ----- Le rendez-vous du soir : la voie agenda, en complément de la notification -----
  * « On n'y pense pas systématiquement » est la première raison d'abandon
- * donnée par les familles. La réponse évidente serait une notification, et
- * elle nous est fermée : nos repères neurologiques l'excluent, et nous le
- * répétons partout comme un argument. Le parent dépose donc lui-même un
- * rendez-vous dans SON agenda, et c'est son agenda qui le prévient.
+ * donnée par les familles ; voir blocNotificationSoir ci-dessous pour la
+ * réponse par défaut. Celle-ci reste offerte pour le parent qui préfère un
+ * rendez-vous qui lui appartient, dans SON agenda, plutôt qu'un rappel
+ * dépendant de l'application : il choisit son rythme et son heure, et c'est
+ * son agenda qui le prévient.
  *
  * Conséquence assumée : nous ne saurons jamais s'il l'a fait ni s'il l'a
  * supprimé. C'est le prix d'un rappel qui n'appartient pas à l'application. */
@@ -6553,6 +6805,15 @@ function vueReglages(c) {
     return;
   }
 
+  // Rappel du soir (notification) : activé par défaut, on rattrape le réglage
+  // auprès du système une seule fois par session — jamais avant que le parent
+  // ait déverrouillé cet espace, pour ne jamais faire surgir une demande de
+  // permission pendant qu'un enfant tient l'appareil.
+  if (!_notifSoirSyncFaite) {
+    _notifSoirSyncFaite = true;
+    synchroniserNotificationSoir();
+  }
+
   // ----- Bandeau mode parents actif -----
   // Ce bandeau annonce un ÉTAT et offre deux gestes rares : il n'a pas à
   // occuper quatre lignes en haut de chaque écran parent. Le titre, l'état et
@@ -6632,6 +6893,8 @@ function vueReglages(c) {
     if (bm) c.appendChild(carteRepliable(bm, "bonmoment", true));
     const j7 = blocArbreSeptiemeJour();
     if (j7) c.appendChild(carteRepliable(j7, "septiemejour", true));
+    // Repliée : activée par défaut, rien n'y réclame l'attention du parent.
+    c.appendChild(carteRepliable(blocNotificationSoir(), "notif", false));
     c.appendChild(carteRepliable(blocComplimentDuJour(enfantActif()), "compliment", true));
     // Ouvert tant que rien n'est réglé, replié ensuite : la carte se fait
     // discrète pour celui qui a déjà répondu, et reste visible pour l'autre.
@@ -6650,6 +6913,9 @@ function vueReglages(c) {
     // qu'on peut DIRE à l'enfant, on note ensuite — l'inverse installait la
     // notation comme le premier geste de la soirée.
     c.appendChild(carteRepliable(blocEval(enfantActif(), "parent"), "eval", true));
+
+    // ----- Rappel du soir (notification, activée par défaut) -----
+    c.appendChild(carteRepliable(blocNotificationSoir(), "notif", false));
 
     // ----- Le rendez-vous du soir (rappel par l'agenda du parent) -----
     c.appendChild(carteRepliable(blocRituelSoir(), "rituel", !rituelReglage()));

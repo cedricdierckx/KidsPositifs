@@ -177,7 +177,7 @@ const SCIENCE_DEFAUT = {
     ],
     neurologie: [
       "Limiter fortement le temps d'écran chez les jeunes enfants (≈ 3 min/jour ici).",
-      "Éviter les boucles addictives : pas de notifications, pas de scores compétitifs entre enfants.",
+      "Éviter les boucles addictives : au plus une notification calme par jour, désactivable, jamais de score compétitif entre enfants.",
       "Des récompenses prévisibles et calmes, pas de hasard à effet « machine à sous »."
     ]
   },
