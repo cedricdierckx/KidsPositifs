@@ -3499,9 +3499,11 @@ test("agenda natif : le calendrier est tenté avant le fichier, avec permission 
   const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
 
   const pc = ui.slice(ui.indexOf("async function permissionCalendrierEcriture"),
-                      ui.indexOf("async function permissionCalendrierEcriture") + 700);
-  assert.ok(/scope: "writeCalendar"/.test(pc),
-    "seule l'autorisation d'écriture doit être demandée — jamais la lecture");
+                      ui.indexOf("async function permissionCalendrierEcriture") + 1000);
+  assert.ok(/requestWriteOnlyCalendarAccess/.test(pc),
+    "iOS doit se contenter d'une autorisation d'écriture seule");
+  assert.ok(/requestFullCalendarAccess/.test(pc) && /readCalendar/.test(pc),
+    "Android doit aussi demander la lecture : createEvent() interroge la liste des agendas pour trouver celui par défaut");
 
   const ec = ui.slice(ui.indexOf("async function ecrireEvenementCalendrier"),
                       ui.indexOf("async function ecrireEvenementCalendrier") + 1400);
@@ -3542,8 +3544,8 @@ test("agenda natif : permissions et dépendance déclarées côté natif", () =>
 
   const manifest = fs.readFileSync(path.join(r, "android/app/src/main/AndroidManifest.xml"), "utf8");
   assert.ok(/WRITE_CALENDAR/.test(manifest), "permission Android manquante");
-  assert.strictEqual(/READ_CALENDAR/.test(manifest), false,
-    "FamiTeam n'écrit qu'un rendez-vous demandé : la lecture du calendrier n'a pas lieu d'être");
+  assert.ok(/READ_CALENDAR/.test(manifest),
+    "sur Android, createEvent() interroge CalendarContract.Calendars (une lecture) pour trouver l'agenda par défaut : sans READ_CALENDAR la création échoue toujours, même avec WRITE_CALENDAR seul");
 
   const plist = fs.readFileSync(path.join(r, "ios/App/App/Info.plist"), "utf8");
   assert.ok(/NSCalendarsWriteOnlyAccessUsageDescription/.test(plist), "clé iOS 17+ manquante");

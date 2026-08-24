@@ -59,9 +59,18 @@ applications qui ne font que réafficher un site web.
   calendrier du système (`CalendarContract` Android / `EventKit` iOS), le
   même mécanisme que Facebook ou Eventbrite pour un bouton « Ajouter à mon
   agenda » : toute application synchronisée le voit, Google Agenda compris.
-  Nécessite une autorisation système en écriture seule (`WRITE_CALENDAR` /
-  `NSCalendarsWriteOnlyAccessUsageDescription`), demandée une fois au premier
-  usage. Le fichier `.ics` reste le repli si le greffon est absent ou la
+  Sur iOS, une autorisation « écriture seule » suffit
+  (`NSCalendarsWriteOnlyAccessUsageDescription`) : EventKit sait créer un
+  événement dans l'agenda par défaut sans droit de lecture. Sur Android en
+  revanche, `createEvent()` doit d'abord interroger `CalendarContract.Calendars`
+  pour trouver cet agenda par défaut — une LECTURE, que `WRITE_CALENDAR` seul
+  n'autorise pas. ⚠️ Piège vérifié en lisant le code natif du greffon (pas de
+  logcat nécessaire) : avec `WRITE_CALENDAR` seul sur Android, cette requête
+  lève une `SecurityException` que le bloc `try/catch` JS avale, et l'app
+  retombe silencieusement sur le fichier `.ics` — d'où `READ_CALENDAR` en plus
+  sur Android uniquement (`permissionCalendrierEcriture()` dans `js/ui.js`
+  distingue les deux plateformes). Autorisation demandée une fois au premier
+  usage ; le fichier `.ics` reste le repli si le greffon est absent ou la
   permission refusée.
 - **Bibliothèque Supabase embarquée** (`js/vendor/supabase.js`) : elle venait
   d'un CDN, ce qui contredisait le hors-ligne annoncé au §0 — sans réseau, le

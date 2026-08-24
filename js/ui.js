@@ -815,8 +815,8 @@ function chargerLibsImpression() {
     // Les deux fois : un échec ne doit pas laisser la promesse « grillée »
     // en mémoire pour le reste de la session — retenter doit rester possible.
     _libsImpressionPromesse = Promise.all([
-      chargerScript("js/vendor/html2canvas.js?v=156"),
-      chargerScript("js/vendor/jspdf.js?v=156")
+      chargerScript("js/vendor/html2canvas.js?v=157"),
+      chargerScript("js/vendor/jspdf.js?v=157")
     ]).catch(e => { _libsImpressionPromesse = null; throw e; });
   }
   return _libsImpressionPromesse;
@@ -893,15 +893,30 @@ async function pdfDepuisHtmlEtEnvoyer(html, nomFichier, titre) {
  * agenda ». Toute application synchronisée avec ce magasin voit l'événement,
  * Google Agenda compris, sans dépendre de sa capacité à lire un fichier.
  *
- * Contrepartie : une autorisation système, demandée une fois (écriture
- * seule — FamiTeam ne lit jamais le calendrier existant). Si le parent la
- * refuse, ou si le greffon est absent (app trop ancienne), la fonction rend
- * la main sans rien faire : c'est à l'appelant de retomber sur le fichier.
+ * Contrepartie : une autorisation système, demandée une fois. Sur iOS,
+ * écriture seule (FamiTeam ne lit jamais le calendrier existant) — le
+ * système sait y créer un événement sans accès en lecture. Sur Android en
+ * revanche, CapacitorCalendar.createEvent() doit interroger la table des
+ * agendas (CalendarContract.Calendars) pour trouver celui par défaut, une
+ * LECTURE que WRITE_CALENDAR seul n'autorise pas : sans READ_CALENDAR en
+ * plus, la création échouerait silencieusement à chaque fois. D'où la
+ * demande complète sur Android uniquement. Si le parent refuse, ou si le
+ * greffon est absent (app trop ancienne), la fonction rend la main sans
+ * rien faire : c'est à l'appelant de retomber sur le fichier.
  */
 async function permissionCalendrierEcriture() {
   const cal = greffonNatif("CapacitorCalendar");
   if (!cal) return false;
+  const android = window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === "android";
   try {
+    if (android) {
+      const deja = await cal.checkAllPermissions();
+      const jaAcquis = deja && deja.result
+        && deja.result.readCalendar === "granted" && deja.result.writeCalendar === "granted";
+      if (jaAcquis) return true;
+      const demande = await cal.requestFullCalendarAccess();
+      return !!(demande && demande.result === "granted");
+    }
     const deja = await cal.checkPermission({ scope: "writeCalendar" });
     if (deja && deja.result === "granted") return true;
     const demande = await cal.requestWriteOnlyCalendarAccess();
