@@ -1365,5 +1365,7 @@ Object.assign(I18N.de, {
   "admin.google_off": "Aus. Erst einschalten, wenn der Google-Anbieter in Supabase eingerichtet ist, sonst endet jeder Klick in einem Fehler.",
   "admin.connexion_titre": "🔑 Anmeldung der Eltern",
   "admin.connexion_sous": "Die auf dem Startbildschirm angebotenen Wege. E-Mail und Anmeldelink bleiben immer verfügbar, unabhängig davon, was hier angehakt ist.",
-  "impr.indispo": "Drucken ist in der installierten App nicht möglich. Öffnen Sie {hote} im Browser zum Drucken — oder nutzen Sie „Teilen“, um die Karte zu senden."
+  "impr.indispo": "Drucken ist in der installierten App nicht möglich. Öffnen Sie {hote} im Browser zum Drucken — oder nutzen Sie „Teilen“, um die Karte zu senden.",
+  "impr.pdf_pret": "PDF bereit — öffnen Sie es, um es zu drucken oder zu speichern 📄",
+  "impr.echec": "PDF konnte nicht erstellt werden."
 });

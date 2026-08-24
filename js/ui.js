@@ -310,12 +310,22 @@ function blocTableauHonneur() {
 /* Bascule les règles @media print le temps de l'impression : seule la cible
  * marquée `.impression-cible` part sur le papier. Partagé par la carte d'ami et
  * le dépliant des écoles. */
-function imprimerCible() {
-  // La WebView Android n'implémente pas window.print() : le bouton ne faisait
-  // rien du tout dans l'app installée. On ne peut pas imprimer d'ici, alors on
-  // le dit et on indique où c'est possible, plutôt que de laisser croire à une
-  // panne.
-  if (greffonNatif("Filesystem") || typeof window.print !== "function") {
+async function imprimerCible() {
+  // L'impression du navigateur n'existe pas dans la WebView Android : le
+  // bouton ne faisait rien du tout dans l'app installée. On y construit
+  // donc un vrai PDF (voir pdfDepuisElement plus haut), tenté avant toute
+  // autre voie, plutôt que de se contenter de le dire.
+  if (greffonNatif("Filesystem")) {
+    const cible = document.querySelector(".impression-cible");
+    if (!cible) { toast(t("impr.echec"), "info"); return false; }
+    try {
+      const blob = await pdfDepuisElement(cible);
+      const ok = await enregistrerOuPartager(blob, "famiteam-" + aujourdHui() + ".pdf", APP_NOM);
+      toast(ok ? t("impr.pdf_pret") : t("impr.echec"), ok ? "ok" : "info");
+      return !!ok;
+    } catch (e) { toast(t("impr.echec"), "info"); return false; }
+  }
+  if (typeof window.print !== "function") {
     if (typeof toast === "function") toast(t("impr.indispo", { hote: "fami.team" }), "info");
     return false;
   }
@@ -776,6 +786,101 @@ async function partagerFichierNatif(blob, nomFichier, titre, texte) {
 async function enregistrerOuPartager(blob, nomFichier, titre, texte) {
   if (greffonNatif("Filesystem")) return await partagerFichierNatif(blob, nomFichier, titre, texte);
   return telechargerBlob(blob, nomFichier);
+}
+
+/* ---------- Impression → PDF (app installée) ----------
+ * window.print() et window.open() se comportent mal dans la WebView Android
+ * (voir imprimerCible et imprimerFeuilleSemaine plus bas) : l'un ne fait
+ * rien, l'autre a fini par bloquer l'app entière. Dans l'app, on construit
+ * donc un vrai fichier PDF côté client, puis on le confie au même mécanisme
+ * déjà éprouvé pour l'agenda (écriture + ouverture/partage natif).
+ *
+ * jsPDF + html2canvas ne sont chargés qu'à cet instant précis (~600 Ko à eux
+ * deux) : la plupart des familles n'impriment jamais, les charger au
+ * démarrage pénaliserait tout le monde pour un usage rare. Vendorisés
+ * (js/vendor/), jamais un CDN — même raison que pour Supabase : le
+ * hors-ligne ne doit dépendre d'aucun serveur tiers.
+ */
+let _libsImpressionPromesse = null;
+function chargerScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = () => resolve(); s.onerror = () => reject(new Error("échec de chargement : " + src));
+    document.head.appendChild(s);
+  });
+}
+function chargerLibsImpression() {
+  if (window.jspdf && window.html2canvas) return Promise.resolve();
+  if (!_libsImpressionPromesse) {
+    // Les deux fois : un échec ne doit pas laisser la promesse « grillée »
+    // en mémoire pour le reste de la session — retenter doit rester possible.
+    _libsImpressionPromesse = Promise.all([
+      chargerScript("js/vendor/html2canvas.js?v=154"),
+      chargerScript("js/vendor/jspdf.js?v=154")
+    ]).catch(e => { _libsImpressionPromesse = null; throw e; });
+  }
+  return _libsImpressionPromesse;
+}
+
+// Rend un élément DÉJÀ DANS LE DOM (visible ou non) en PDF A4 portrait,
+// réparti sur plusieurs pages si le contenu dépasse une page. Renvoie un Blob.
+async function pdfDepuisElement(element) {
+  await chargerLibsImpression();
+  const canvas = await window.html2canvas(element, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  const pageW = pdf.internal.pageSize.getWidth(), pageH = pdf.internal.pageSize.getHeight();
+  const imgW = pageW, imgH = (canvas.height * imgW) / canvas.width;
+  const donnees = canvas.toDataURL("image/jpeg", 0.92);
+  pdf.addImage(donnees, "JPEG", 0, 0, imgW, imgH);
+  // Une seule grande image, redécoupée à chaque page par un décalage négatif :
+  // plus simple et plus fidèle qu'une pagination du contenu HTML d'origine.
+  for (let y = pageH; y < imgH; y += pageH) {
+    pdf.addPage();
+    pdf.addImage(donnees, "JPEG", 0, -y, imgW, imgH);
+  }
+  return pdf.output("blob");
+}
+
+// Construit un <div> hors écran, DANS LE DOCUMENT PRINCIPAL, à partir d'un
+// document HTML autonome (voir htmlFeuilleSemaine) : évite de dupliquer les
+// styles pour l'écran et pour le PDF — le même HTML sert aux deux, ouvert en
+// fenêtre sur le web, rendu ici pour l'app installée.
+//
+// PAS d'iframe : essayé d'abord, html2canvas échoue systématiquement dès que
+// la cible vit dans une iframe — même un fragment minimal, sans rapport avec
+// le contenu réel — en levant « Error parsing CSS component value, unexpected
+// EOF » (vérifié en conditions réelles avant d'écrire ce commentaire). Sur le
+// document principal, le même contenu se rend sans encombre.
+function elementDepuisHtml(html) {
+  const conteneur = document.createElement("div");
+  // Largeur d'un A4 à 96 dpi (210 mm) : la mise en page (grille, tableaux)
+  // se calcule alors comme sur l'aperçu d'impression du navigateur.
+  conteneur.style.cssText = "position:fixed; left:-9999px; top:0; width:794px";
+  const style = /<style>([\s\S]*?)<\/style>/.exec(html);
+  const corps = /<body>([\s\S]*?)<\/body>/.exec(html);
+  if (style) {
+    const s = document.createElement("style");
+    s.textContent = style[1];
+    conteneur.appendChild(s);
+  }
+  const contenu = document.createElement("div");
+  contenu.innerHTML = corps ? corps[1] : html;
+  conteneur.appendChild(contenu);
+  document.body.appendChild(conteneur);
+  return conteneur;
+}
+
+// Génère le PDF, l'envoie (écriture + partage natif) et retire le conteneur
+// dans tous les cas — un échec ne doit pas laisser un bloc invisible traîner.
+async function pdfDepuisHtmlEtEnvoyer(html, nomFichier, titre) {
+  const conteneur = elementDepuisHtml(html);
+  try {
+    const blob = await pdfDepuisElement(conteneur);
+    return await enregistrerOuPartager(blob, nomFichier, titre);
+  } finally {
+    conteneur.remove();
+  }
 }
 
 /* ---------- Écriture directe dans le calendrier du système ----------
@@ -3748,17 +3853,11 @@ function libelleSemaine(d1, d2) {
 }
 
 // Construit la feuille A4 (HTML autonome) et ouvre la fenêtre d'impression.
-function imprimerFeuilleSemaine(mode) {
-  // Même limite que imprimerCible() (plus haut), en pire : ici la WebView
-  // Android n'échoue pas en silence, elle ouvre l'aperçu d'impression NATIF
-  // du système sur une fenêtre que l'app n'a jamais pu créer proprement —
-  // puis reste coincée derrière, sans bouton retour, jusqu'à devoir fermer
-  // l'app de force. On refuse donc d'y entrer, avant même de construire le
-  // HTML ou d'ouvrir la fenêtre.
-  if (greffonNatif("Filesystem") || typeof window.print !== "function") {
-    if (typeof toast === "function") toast(t("papier.indispo", { hote: "fami.team" }), "info");
-    return;
-  }
+// Construit le document HTML autonome de la feuille A4 (styles compris) :
+// une fonction PURE, sans effet de bord, pour servir aussi bien la fenêtre
+// d'impression du web que le rendu hors écran de l'app installée (voir
+// imprimerFeuilleSemaine plus bas) — un seul contenu, deux destinations.
+function htmlFeuilleSemaine(mode) {
   const jours = joursSemaine(semainePapierDebut);
   const lettres = t("planif.jours_courts").split(",");
   const famille = (typeof familleActive !== "undefined" && familleActive && familleActive.name) ? familleActive.name : "";
@@ -3858,10 +3957,30 @@ function imprimerFeuilleSemaine(mode) {
     <div class="grille">${corps}</div>
     <p class="pied">${t("papier.feuille_pied")}</p>
     </body></html>`;
+  return html;
+}
 
+async function imprimerFeuilleSemaine(mode) {
+  // Dans l'app installée, ouvrir une fenêtre pour y imprimer déclenchait
+  // l'aperçu d'impression NATIF du système sur une fenêtre que l'app
+  // n'avait jamais pu créer proprement — puis restait coincée derrière,
+  // sans bouton retour, jusqu'à devoir fermer l'app de force. On y
+  // construit donc un vrai PDF (même document HTML, rendu hors écran —
+  // voir pdfDepuisHtmlEtEnvoyer plus haut), tenté avant toute autre voie.
+  if (greffonNatif("Filesystem")) {
+    try {
+      const ok = await pdfDepuisHtmlEtEnvoyer(htmlFeuilleSemaine(mode), "famiteam-semaine-" + aujourdHui() + ".pdf", APP_NOM);
+      toast(ok ? t("impr.pdf_pret") : t("impr.echec"), ok ? "ok" : "info");
+    } catch (e) { toast(t("impr.echec"), "info"); }
+    return;
+  }
+  if (typeof window.print !== "function") {
+    if (typeof toast === "function") toast(t("papier.indispo", { hote: "fami.team" }), "info");
+    return;
+  }
   const w = window.open("", "_blank");
   if (!w) { toast(t("papier.popup_bloque"), "info"); return; }
-  w.document.open(); w.document.write(html); w.document.close();
+  w.document.open(); w.document.write(htmlFeuilleSemaine(mode)); w.document.close();
   setTimeout(() => { try { w.focus(); w.print(); } catch (e) { /* impression annulée */ } }, 350);
 }
 

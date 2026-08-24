@@ -42,6 +42,16 @@ applications qui ne font que réafficher un site web.
   ligne qui modifient l'état en même temps ne s'écrasent plus en silence
   (voir commit dédié) — pertinent ici car les coupures prolongées
   deviennent courantes sur mobile.
+- **Impression → PDF dans l'app installée** (`js/vendor/jspdf.js`,
+  `js/vendor/html2canvas.js`) : ni `window.print()` ni `window.open()` ne
+  fonctionnent dans la WebView — le second bloquait même l'app entière (voir
+  plus haut). Un vrai PDF est désormais construit côté client puis envoyé par
+  le même mécanisme que l'agenda (écriture + partage natif). Chargées à la
+  demande seulement (~600 Ko, npm run vendor:pdf pour les régénérer).
+  ⚠️ Piège vérifié en conditions réelles : html2canvas échoue systématiquement
+  si la cible vit dans une iframe (« Error parsing CSS component value »,
+  même sur un contenu minimal) — le rendu se fait donc dans un `<div>` du
+  document principal, jamais dans une iframe hors écran.
 - **Écriture directe dans le calendrier du système** (`@ebarooni/capacitor-calendar`) :
   l'export `.ics` ouvert par une application tierce s'est révélé peu fiable
   — Google Agenda refuse l'import sur un Samsung Galaxy testé, quand Outlook

@@ -3529,6 +3529,84 @@ test("agenda natif : permissions et dépendance déclarées côté natif", () =>
     "aucune clé d'accès complet : FamiTeam ne lit jamais le calendrier");
 });
 
+/* ---------- Impression → PDF (app installée) ----------
+ * window.print() ne fait rien dans la WebView Android, et window.open()
+ * (feuille de la semaine) a fini par bloquer l'app entière — sans bouton
+ * retour, fermeture forcée nécessaire (voir le commit qui a corrigé ce
+ * second point). Dans l'app, un vrai PDF est désormais construit côté
+ * client (jsPDF + html2canvas), chargés à la demande, puis envoyé par le
+ * même mécanisme que l'agenda. */
+test("impression : les bibliothèques PDF ne sont chargées qu'à la demande", () => {
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+
+  // Vendorisées comme Supabase (js/vendor/) : jamais un CDN, sinon le
+  // hors-ligne casserait — et jamais chargées au démarrage : ~600 Ko à
+  // elles deux pour une fonction que la plupart des familles n'utilisent
+  // jamais pénaliserait tout le monde.
+  ["index.html", "defi.html", "challenge.html"].forEach(nom => {
+    const html = fs.readFileSync(path.join(r, nom), "utf8");
+    assert.strictEqual(/jspdf|html2canvas/i.test(html), false,
+      nom + " ne doit pas charger les bibliothèques d'impression au démarrage");
+  });
+  assert.ok(fs.existsSync(path.join(r, "js/vendor/jspdf.js")), "js/vendor/jspdf.js doit être dans le dépôt");
+  assert.ok(fs.existsSync(path.join(r, "js/vendor/html2canvas.js")), "js/vendor/html2canvas.js doit être dans le dépôt");
+  assert.ok(fs.existsSync(path.join(r, "scripts/vendorer-pdf.mjs")), "le script de recopie doit exister");
+  const pkg = JSON.parse(fs.readFileSync(path.join(r, "package.json"), "utf8"));
+  assert.ok(pkg.scripts["vendor:pdf"], "npm run vendor:pdf doit être déclaré");
+  assert.ok((pkg.devDependencies || {}).jspdf && (pkg.devDependencies || {}).html2canvas,
+    "la source de la recopie doit être une dépendance, pas un téléchargement manuel");
+
+  const cli = ui.slice(ui.indexOf("function chargerLibsImpression"),
+                       ui.indexOf("function chargerLibsImpression") + 700);
+  assert.ok(/js\/vendor\/html2canvas\.js/.test(cli) && /js\/vendor\/jspdf\.js/.test(cli),
+    "le chargement à la demande doit cibler les fichiers vendorisés, pas un CDN");
+});
+
+test("impression : le PDF part par le même mécanisme que l'agenda, jamais par un window.print silencieux", () => {
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+
+  const ic = ui.slice(ui.indexOf("async function imprimerCible"),
+                      ui.indexOf("async function imprimerCible") + 1300);
+  assert.ok(/greffonNatif\("Filesystem"\)/.test(ic), "la branche native doit être choisie en premier");
+  const iNatif = ic.indexOf("pdfDepuisElement");
+  const iWebPrint = ic.indexOf("window.print()");
+  assert.ok(iNatif > 0 && iWebPrint > 0 && iNatif < iWebPrint,
+    "dans l'app, le PDF doit être tenté avant tout window.print()");
+  assert.ok(/enregistrerOuPartager\(blob/.test(ic),
+    "le PDF doit partir par le même chemin que les autres fichiers (écriture + partage natif)");
+
+  // La feuille de la semaine : même exigence, et html construit UNE FOIS
+  // (htmlFeuilleSemaine), réutilisé par les deux voies — sinon un correctif
+  // apporté à l'une des deux pourrait ne jamais atteindre l'autre.
+  assert.ok(/function htmlFeuilleSemaine\(mode\)/.test(ui), "la construction du HTML doit être isolée, réutilisable");
+  const ifs = ui.slice(ui.indexOf("async function imprimerFeuilleSemaine"),
+                       ui.indexOf("async function imprimerFeuilleSemaine") + 1300);
+  assert.ok(/greffonNatif\("Filesystem"\)/.test(ifs), "la feuille doit aussi tenter le PDF en premier dans l'app");
+  const iCal2 = ifs.indexOf("pdfDepuisHtmlEtEnvoyer");
+  const iOpen = ifs.indexOf("window.open(");
+  assert.ok(iCal2 > 0 && iOpen > 0 && iCal2 < iOpen,
+    "dans l'app, le PDF doit être tenté avant tout window.open() — celui-ci a déjà bloqué l'app");
+  assert.ok(/pdfDepuisHtmlEtEnvoyer\(htmlFeuilleSemaine\(mode\)/.test(ifs),
+    "la voie native doit utiliser le même HTML que la voie web, pas une copie");
+
+  // Un cadre hors écran oublié resterait invisible mais réel : il doit être
+  // retiré même quand la génération échoue.
+  const pf = ui.slice(ui.indexOf("async function pdfDepuisHtmlEtEnvoyer"),
+                      ui.indexOf("async function pdfDepuisHtmlEtEnvoyer") + 500);
+  assert.ok(/finally/.test(pf) && /conteneur\.remove\(\)/.test(pf),
+    "le conteneur hors écran doit être retiré même si la génération du PDF échoue");
+  // Jamais une iframe : html2canvas échoue systématiquement dès que la cible
+  // y vit (vérifié en conditions réelles), même sur un fragment minimal.
+  assert.strictEqual(/createElement\("iframe"\)/.test(ui.slice(ui.indexOf("function elementDepuisHtml"), ui.indexOf("function elementDepuisHtml") + 900)), false,
+    "elementDepuisHtml ne doit jamais utiliser d'iframe — html2canvas y échoue systématiquement");
+
+  Object.keys(construireContexte().api.LANGUES).forEach(lg =>
+    ["impr.pdf_pret", "impr.echec"].forEach(cle =>
+      assert.ok(construireContexte().api.I18N[lg][cle], cle + " manquant en " + lg)));
+});
+
 test("carte surprise : les familles existantes reçoivent les champs de rendez-vous", () => {
   const { api } = construireContexte();
   const ancien = api.etatVierge();
@@ -4865,11 +4943,13 @@ test("app installée : aucun bouton ne peut échouer en silence", () => {
   assert.ok(iNatif > 0 && iWeb > 0 && iNatif < iWeb,
     "le partage natif doit être tenté avant navigator.share");
 
-  // 3. L'impression n'existe pas dans la WebView : il faut le dire.
-  const ic = ui.slice(ui.indexOf("function imprimerCible"),
-                      ui.indexOf("function imprimerCible") + 800);
-  assert.ok(/greffonNatif\("Filesystem"\)/.test(ic) && /impr\.indispo/.test(ic),
-    "imprimerCible doit prévenir au lieu de ne rien faire");
+  // 3. window.print() n'existe pas vraiment dans la WebView : dans l'app,
+  // imprimerCible construit un PDF plutôt que de se contenter de le dire
+  // (voir le test dédié à l'impression, plus loin, pour le détail).
+  const ic = ui.slice(ui.indexOf("async function imprimerCible"),
+                      ui.indexOf("async function imprimerCible") + 1300);
+  assert.ok(/greffonNatif\("Filesystem"\)/.test(ic) && /pdfDepuisElement/.test(ic),
+    "imprimerCible doit construire un PDF dans l'app, pas seulement prévenir");
   Object.keys(api.LANGUES).forEach(lg =>
     assert.ok(api.I18N[lg]["impr.indispo"], "impr.indispo manquant en " + lg));
 
@@ -4887,20 +4967,16 @@ test("app installée : aucun bouton ne peut échouer en silence", () => {
   assert.ok(/function greffonNatif/.test(ui) && /isNativePlatform/.test(ui));
 
   // 6. La feuille de la semaine imprime autrement (window.open + fenêtre à
-  //    part) et n'avait pas hérité du même garde-fou : dans l'app installée,
-  //    ce chemin ouvrait l'aperçu d'impression natif du système puis restait
-  //    coincé derrière, sans retour possible — pire qu'un échec silencieux.
-  const ifs = ui.slice(ui.indexOf("function imprimerFeuilleSemaine"),
-                       ui.indexOf("function imprimerFeuilleSemaine") + 700);
-  assert.ok(/greffonNatif\("Filesystem"\)/.test(ifs) && /papier\.indispo/.test(ifs),
-    "imprimerFeuilleSemaine doit refuser AVANT window.open, pas seulement échouer dedans");
-  // Le refus doit précéder toute tentative d'ouverture de fenêtre.
-  const iGarde = ifs.indexOf('greffonNatif("Filesystem")');
-  const iOuvre = ui.indexOf("window.open(", ui.indexOf("function imprimerFeuilleSemaine"));
-  assert.ok(iGarde > 0 && iOuvre > 0 && (ui.indexOf("function imprimerFeuilleSemaine") + iGarde) < iOuvre,
-    "le garde-fou doit venir avant window.open, pas après");
-  Object.keys(api.LANGUES).forEach(lg =>
-    assert.ok(api.I18N[lg]["papier.indispo"], "papier.indispo manquant en " + lg));
+  //    part), qui a fini par bloquer l'app installée sans retour possible.
+  //    Dans l'app, un PDF doit être tenté AVANT tout window.open — jamais
+  //    un chemin qui y retomberait. Le détail complet (même HTML pour les
+  //    deux voies, iframe toujours retirée) est couvert par le test dédié
+  //    à l'impression, plus haut dans ce fichier.
+  const iDebutFeuille = ui.indexOf("async function imprimerFeuilleSemaine");
+  const iGarde = ui.indexOf('greffonNatif("Filesystem")', iDebutFeuille);
+  const iOuvre = ui.indexOf("window.open(", iDebutFeuille);
+  assert.ok(iDebutFeuille > 0 && iGarde > 0 && iOuvre > 0 && iGarde < iOuvre,
+    "dans l'app, le PDF doit être tenté avant tout window.open, jamais après");
 });
 
 /* ---------- Repère de version dans l'espace admin ----------

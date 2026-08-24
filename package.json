@@ -7,6 +7,7 @@
     "test": "node test/run.js",
     "cap:copy": "node scripts/sync-www.mjs",
     "vendor:supabase": "node scripts/vendorer-supabase.mjs",
+    "vendor:pdf": "node scripts/vendorer-pdf.mjs",
     "cap:sync": "npm run cap:copy && cap sync",
     "icon:generer": "node scripts/generer-icone.mjs && capacitor-assets generate --android --ios",
     "android:maj": "git pull --ff-only && npm install && npm run cap:sync && cap run android",
@@ -26,6 +27,8 @@
     "@capacitor/cli": "^8.5.0",
     "@capacitor/ios": "^8.5.0",
     "@supabase/supabase-js": "^2.112.3",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "sharp": "^0.35.3"
   }
 }

@@ -4417,14 +4417,22 @@ Object.assign(I18N.de, {
 /* ---- App installée : ce que la WebView ne sait pas faire ----
  * Mieux vaut le dire que laisser un bouton sans effet. */
 Object.assign(I18N.fr, {
-  "impr.indispo": "L'impression n'est pas disponible dans l'application installée. Ouvrez {hote} dans votre navigateur pour imprimer — ou utilisez « Partager » pour envoyer la carte."
+  "impr.indispo": "L'impression n'est pas disponible dans l'application installée. Ouvrez {hote} dans votre navigateur pour imprimer — ou utilisez « Partager » pour envoyer la carte.",
+  "impr.pdf_pret": "PDF prêt — ouvrez-le pour l'imprimer ou l'enregistrer 📄",
+  "impr.echec": "Impossible de créer le PDF."
 });
 Object.assign(I18N.en, {
-  "impr.indispo": "Printing is not available in the installed app. Open {hote} in your browser to print — or use “Share” to send the card."
+  "impr.indispo": "Printing is not available in the installed app. Open {hote} in your browser to print — or use “Share” to send the card.",
+  "impr.pdf_pret": "PDF ready — open it to print or save it 📄",
+  "impr.echec": "Could not create the PDF."
 });
 Object.assign(I18N.nl, {
-  "impr.indispo": "Afdrukken kan niet in de geïnstalleerde app. Open {hote} in uw browser om af te drukken — of gebruik “Delen” om de kaart te versturen."
+  "impr.indispo": "Afdrukken kan niet in de geïnstalleerde app. Open {hote} in uw browser om af te drukken — of gebruik “Delen” om de kaart te versturen.",
+  "impr.pdf_pret": "PDF klaar — open het om af te drukken of te bewaren 📄",
+  "impr.echec": "Kon de PDF niet maken."
 });
 Object.assign(I18N.de, {
-  "impr.indispo": "Drucken ist in der installierten App nicht möglich. Öffnen Sie {hote} im Browser zum Drucken — oder nutzen Sie „Teilen“, um die Karte zu senden."
+  "impr.indispo": "Drucken ist in der installierten App nicht möglich. Öffnen Sie {hote} im Browser zum Drucken — oder nutzen Sie „Teilen“, um die Karte zu senden.",
+  "impr.pdf_pret": "PDF bereit — öffnen Sie es, um es zu drucken oder zu speichern 📄",
+  "impr.echec": "PDF konnte nicht erstellt werden."
 });

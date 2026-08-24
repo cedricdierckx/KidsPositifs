@@ -1061,7 +1061,9 @@ const I18N = {
     "admin.google_off": "Éteint. À n'allumer qu'une fois le fournisseur Google configuré dans Supabase, sinon chaque clic finit sur une erreur.",
     "admin.connexion_titre": "🔑 Connexion des parents",
     "admin.connexion_sous": "Les moyens proposés sur l'écran d'accueil. L'e-mail et le lien de connexion restent toujours disponibles, quoi qu'on coche ici.",
-    "impr.indispo": "L'impression n'est pas disponible dans l'application installée. Ouvrez {hote} dans votre navigateur pour imprimer — ou utilisez « Partager » pour envoyer la carte."
+    "impr.indispo": "L'impression n'est pas disponible dans l'application installée. Ouvrez {hote} dans votre navigateur pour imprimer — ou utilisez « Partager » pour envoyer la carte.",
+    "impr.pdf_pret": "PDF prêt — ouvrez-le pour l'imprimer ou l'enregistrer 📄",
+    "impr.echec": "Impossible de créer le PDF."
   },
   en: {},
   nl: {},
