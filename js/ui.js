@@ -5482,10 +5482,14 @@ function sceneVivante(enf) {
   const VOLANTS = ["coccinelle", "abeille", "papillon", "hibou", "aigle"];
   const ciel = [], plantes = [], animaux = [];
   let total = 0;
-  // Au-delà de ce plafond PAR ESPÈCE, la scène montre un badge « +N » au lieu
-  // d'ajouter un individu de plus : sans lui, une espèce nombreuse (des
-  // dizaines d'escargots, par exemple) devient un amas indistinct — impossible
-  // à compter d'un coup d'œil, et de plus en plus lourd à animer.
+  // Au-delà de ce plafond PAR ESPÈCE, la scène s'arrête d'ajouter des
+  // individus supplémentaires (sans le dire) : sans lui, une espèce
+  // nombreuse (des dizaines d'escargots, par exemple) devient un amas
+  // indistinct, et de plus en plus lourd à animer. Le compte exact reste
+  // toujours visible ailleurs — le total sous la scène, et le nombre
+  // possédé sur la carte d'achat de chaque espèce (voir carteEspece) — la
+  // scène elle-même est une illustration, pas un compteur : pas de badge
+  // « +N » ici.
   const CAP_SCENE = 8;
   TIERS_ECO.forEach(tier => {
     tier.especes.forEach(sp => {
@@ -5497,10 +5501,6 @@ function sceneVivante(enf) {
         : animaux);                                                // se déplace au sol
       const affiches = Math.min(n, CAP_SCENE);
       for (let k = 0; k < affiches; k++) cible.push(emojiOuRepli(sp.emoji, sp.emojiRepli));
-      if (n > CAP_SCENE) {
-        const nom = trData("espece", sp.id, sp.nom);
-        cible.push(`<span class="ecomonde-plus" title="${echapper(nom)} : ${n}">+${n - CAP_SCENE}</span>`);
-      }
     });
   });
   // Le décor (couleurs uniquement) évolue : désert → prairie → forêt.
