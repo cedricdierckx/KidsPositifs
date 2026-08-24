@@ -372,7 +372,7 @@ const TIERS_ECO = [
       { id: "cheval",    emoji: "🐴",  nom: "Cheval",     cout: 26,  prereq: { herbe: 5, ble: 2 } },
       { id: "kangourou", emoji: "🦘",  nom: "Kangourou",  cout: 26,  prereq: { herbe: 5 } },
       { id: "zebre",     emoji: "🦓",  nom: "Zèbre",      cout: 28,  prereq: { herbe: 6 } },
-      { id: "gazelle",   emoji: "🦌",  nom: "Gazelle",    cout: 30,  prereq: { herbe: 4 } },
+      { id: "gazelle",   emoji: "🐎",  nom: "Gazelle",    cout: 30,  prereq: { herbe: 4 } },
       { id: "chameau",   emoji: "🐪",  nom: "Chameau",    cout: 34,  prereq: { cactus: 2, herbe: 3 } },
       { id: "autruche",  emoji: "🦤",  nom: "Autruche",   cout: 40,  prereq: { herbe: 3, ble: 1 } },
       { id: "phacochere",emoji: "🐗",  nom: "Phacochère", cout: 40,  prereq: { herbe: 3, champignon: 1 } },

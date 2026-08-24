@@ -5245,17 +5245,28 @@ function sceneVivante(enf) {
   // On rassemble tous les êtres créés, en distinguant ceux "du ciel".
   const VOLANTS = ["coccinelle", "abeille", "papillon", "hibou", "aigle"];
   const ciel = [], plantes = [], animaux = [];
+  let total = 0;
+  // Au-delà de ce plafond PAR ESPÈCE, la scène montre un badge « +N » au lieu
+  // d'ajouter un individu de plus : sans lui, une espèce nombreuse (des
+  // dizaines d'escargots, par exemple) devient un amas indistinct — impossible
+  // à compter d'un coup d'œil, et de plus en plus lourd à animer.
+  const CAP_SCENE = 8;
   TIERS_ECO.forEach(tier => {
     tier.especes.forEach(sp => {
       const n = (enf.ecosysteme[tier.id] || {})[sp.id] || 0;
-      for (let k = 0; k < n; k++) {
-        if (VOLANTS.includes(sp.id)) ciel.push(sp.emoji);          // vole dans le ciel
-        else if (tier.id === "plantes") plantes.push(sp.emoji);    // immobile au sol
-        else animaux.push(sp.emoji);                               // se déplace au sol
+      if (!n) return;
+      total += n;
+      const cible = VOLANTS.includes(sp.id) ? ciel                 // vole dans le ciel
+        : (tier.id === "plantes" ? plantes                         // immobile au sol
+        : animaux);                                                // se déplace au sol
+      const affiches = Math.min(n, CAP_SCENE);
+      for (let k = 0; k < affiches; k++) cible.push(sp.emoji);
+      if (n > CAP_SCENE) {
+        const nom = trData("espece", sp.id, sp.nom);
+        cible.push(`<span class="ecomonde-plus" title="${echapper(nom)} : ${n}">+${n - CAP_SCENE}</span>`);
       }
     });
   });
-  const total = ciel.length + plantes.length + animaux.length;
   // Le décor (couleurs uniquement) évolue : désert → prairie → forêt.
   let niveau = "desert";
   if (total >= 20) niveau = "foret"; else if (total >= 8) niveau = "prairie";
@@ -5314,9 +5325,15 @@ function vueEcosysteme(enf) {
       <p class="t-lecon">${trData("lecon", tier.id, tier.lecon)}</p>`;
 
     const grille = el("div", "eco-cartes");
-    tier.especes.filter(sp => especeActivePourEnfant(enf, sp.id)).forEach(sp => {
-      grille.appendChild(carteEspece(enf, tier, sp));
-    });
+    // Mode « tous petits » (estJeune) : pas de cartes verrouillées à
+    // déchiffrer — juste celles qu'on peut créer là, tout de suite. Passé le
+    // seuil d'âge, la carte verrouillée reste utile : elle dit quoi viser.
+    tier.especes
+      .filter(sp => especeActivePourEnfant(enf, sp.id))
+      .filter(sp => !jeune || (especeDebloquee(enf, sp) && enf.gouttes >= coutEspece(enf, sp)))
+      .forEach(sp => {
+        grille.appendChild(carteEspece(enf, tier, sp));
+      });
     bloc.appendChild(grille);
     sec.appendChild(bloc);
   });

@@ -1103,6 +1103,11 @@ main{max-width:680px; margin:0 auto; padding:14px}
   filter:drop-shadow(0 4px 3px rgba(0,0,0,.22));
   animation:eco-saut calc(1.15s + (var(--i) * 0.13s)) cubic-bezier(.3,.05,.4,1) infinite;
   animation-delay:calc(var(--i) * -0.25s)}
+/* Badge « +N » d'une espèce nombreuse : remplace les individus au-delà du
+   plafond d'affichage, quelle que soit sa position (ciel, sol, animal). */
+.ecomonde-plus{font-size:14px!important; font-weight:800; line-height:1;
+  color:#fff; background:rgba(0,0,0,.45); border-radius:8px; padding:2px 6px;
+  vertical-align:middle; filter:none!important}
 /* Déplacement au sol : va-et-vient, l'animal se retourne dans le sens de la
    marche (flip instantané aux points de demi-tour). */
 @keyframes eco-marche{
