@@ -3833,9 +3833,37 @@ function imprimerFeuilleSemaine(mode) {
       .tete .logo{font-size:19px;font-weight:800}
       .tete .sem{font-size:13px;color:#5a6b7a;font-weight:700}
       .intro{font-size:11px;color:#6a7a88;margin:0 0 12px;text-align:center}
-      .grille{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
-      .enfant{break-inside:avoid;border:2px solid var(--c);border-radius:16px;padding:9px 11px;background:#fff}
-      .enfant h3{margin:0 0 7px;font-size:15px;display:flex;align-items:center;gap:6px}
+      /* Deux problemes distincts corrigeaient la meme capture d'ecran :
+         page 1 quasi blanche (juste l'entete), puis une paire d'enfants par
+         page suivante au lieu de repartir le contenu au mieux.
+
+         1) "display:grid" ne se pagine PAS correctement a l'impression sous
+         Chrome (limitation connue et ancienne du moteur : les pistes d'une
+         grille ne se fragmentent pas proprement entre les pages). Remplace
+         par un flottement ("float"), qui se pagine normalement — c'est le
+         contournement standard pour un imprime multi-colonnes.
+
+         2) "break-inside:avoid" posee sur LA CARTE ENTIERE forcait chaque
+         enfant a rester d'un bloc. Avec une longue liste de missions (le cas
+         signale : plusieurs categories, beaucoup de lignes), une carte a elle
+         seule peut approcher la hauteur d'une page A4 imprimable (~277 mm).
+         Des qu'elle ne tient plus a cote de l'entete, tout le bloc bascule
+         sur la page suivante — laissant l'entete SEUL sur la premiere page,
+         qui apparait alors quasiment blanche dans un apercu d'impression.
+         La regle passe donc du bloc entier aux seules LIGNES du tableau
+         ("tr"), qui ne se coupent jamais en leur milieu de toute facon : une
+         longue liste se repartit desormais sur autant de pages que
+         necessaire, en utilisant le bas de la premiere page au lieu de le
+         laisser vide. Le nom de l'enfant reste coince au debut de son
+         tableau ("h3" avec "break-after:avoid"), pour ne jamais se retrouver
+         seul en bas d'une page, separe de son contenu. */
+      .grille{overflow:hidden}
+      .grille::after{content:"";display:table;clear:both}
+      .enfant{float:left; width:calc(50% - 8px); margin:0 16px 12px 0;
+        border:2px solid var(--c);border-radius:16px;padding:9px 11px;background:#fff}
+      .enfant:nth-child(2n){margin-right:0}
+      .enfant tr{break-inside:avoid}
+      .enfant h3{margin:0 0 7px;font-size:15px;display:flex;align-items:center;gap:6px;break-after:avoid}
       .enfant h3 .em{font-size:19px}
       .enfant h3 .stars{margin-left:auto;color:#f2c200;font-size:13px;letter-spacing:2px}
       table{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
