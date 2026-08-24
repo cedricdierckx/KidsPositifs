@@ -2196,12 +2196,19 @@ function blocAdminMobile() {
 
 // Graphique en barres minimaliste (SVG vanilla, sans dépendance externe).
 // `serie` = [{ semaine: "AAAA-MM-JJ", n: nombre }]. Échappe les valeurs.
+// Axes : sans eux, une hauteur de barre ne veut rien dire (est-ce 3 ou 30 ?)
+// et un mini-graphe isolé de sa légende n'est lisible que par celui qui l'a
+// fait. Un axe Y à trois repères (0, la moitié, le maximum) et l'axe X déjà
+// présent (mois) suffisent — pas une grille complète, qui alourdirait un
+// graphe pensé pour tenir en un coup d'œil.
 function miniGraphBarres(serie, couleur) {
   if (!serie || !serie.length) return `<p class="note">${t("stats.aucune_donnee")}</p>`;
-  const W = 520, H = 140, padB = 22, padL = 6, padT = 8;
+  const W = 520, H = 140, padB = 22, padL = 30, padR = 6, padT = 8;
   const n = serie.length;
   const maxV = Math.max(1, ...serie.map(p => p.n || 0));
-  const bw = (W - padL * 2) / n;
+  const zoneW = W - padL - padR;
+  const bw = zoneW / n;
+  const yDe = (v) => H - padB - Math.round((v / maxV) * (H - padB - padT));
   const barres = serie.map((p, i) => {
     const h = Math.round(((p.n || 0) / maxV) * (H - padB - padT));
     const x = padL + i * bw;
@@ -2219,7 +2226,16 @@ function miniGraphBarres(serie, couleur) {
       + (lbl ? `<text x="${x + w / 2}" y="${H - 6}" font-size="10" fill="#8aa0b0" text-anchor="middle">${echapper(lbl)}</text>` : "")
       + `</g>`;
   }).join("");
-  return `<svg class="mini-graph" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img">${barres}</svg>`;
+  // Axe Y : la ligne, et trois repères (0, moitié, maximum arrondis).
+  const repereY = (v) => {
+    const y = yDe(v);
+    return `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#e9eef4" stroke-width="1"/>`
+      + `<text x="${padL - 4}" y="${y}" font-size="10" fill="#8aa0b0" text-anchor="end" dominant-baseline="middle">${Math.round(v)}</text>`;
+  };
+  const axes = `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H - padB}" stroke="#c7d2de" stroke-width="1"/>`
+    + `<line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#c7d2de" stroke-width="1"/>`
+    + repereY(0) + repereY(maxV / 2) + repereY(maxV);
+  return `<svg class="mini-graph" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img">${axes}${barres}</svg>`;
 }
 
 // Une carte « chiffre clé » (grande valeur + libellé + précision facultative).
@@ -2243,25 +2259,29 @@ let adminStatsCache = null;
 // il n'y a plus de geste à faire pour voir les chiffres.
 function blocAdminStats() {
   const sec = el("section", "carte");
-  sec.innerHTML = `<h2>📊 ${t("admin.nav_stats")}</h2><p class="note">${t("admin.stats_desc")}</p>`;
+  sec.innerHTML = `<h2>${t("admin.nav_stats")}</h2><p class="note">${t("admin.stats_desc")}</p>`;
   const b = el("button", "btn-secondaire", t(adminStatsCache ? "stats.recharger" : "stats.charger"));
   const corps = el("div", "admin-stats-corps");
   const charger = async () => {
     b.disabled = true; b.textContent = t("common.chargement");
-    const [s, insc, act, recentes, usage, usageSerie, dons, donsRecents] = await Promise.all([
+    const [s, insc, act, recentes, usage, usageSerie, dons, donsRecents, activation] = await Promise.all([
       adminStats(), adminSerieInscriptions(), adminSerieActivite(), adminFamillesRecentes(8),
-      adminUsageStats(), adminSerieUsage(), adminDonationsStats(), adminListerDons(6)
+      adminUsageStats(), adminSerieUsage(), adminDonationsStats(), adminListerDons(6),
+      (typeof adminActivation === "function") ? adminActivation() : null
     ]);
-    adminStatsCache = { s, insc, act, recentes, usage, usageSerie, dons, donsRecents };
+    adminStatsCache = { s, insc, act, recentes, usage, usageSerie, dons, donsRecents, activation };
     b.disabled = false; b.textContent = t("stats.recharger");
     afficher();
   };
   const afficher = () => {
-    const { s, insc, act, recentes, usage, usageSerie, dons, donsRecents } = adminStatsCache || {};
+    const { s, insc, act, recentes, usage, usageSerie, dons, donsRecents, activation } = adminStatsCache || {};
     corps.innerHTML = "";
     if (!s) { corps.appendChild(el("p", "note", t("stats.aucune_donnee"))); return; }
 
     // --- Chiffres clés ---
+    // Réunit ici les deux jeux de chiffres qui vivaient sur deux pages
+    // différentes (Stats, et « Les chiffres du moment » de Croissance) :
+    // même nature de donnée, une seule grille à consulter.
     const grille = el("div", "stat-grille");
     grille.innerHTML = [
       carteStat("👨‍👩‍👧", s.familles_total, t("stats.familles"),
@@ -2276,8 +2296,40 @@ function blocAdminStats() {
       carteStat("⏳", s.waitlist_total, t("stats.attente")),
       carteStat("💬", s.feedback_total, t("stats.retours"),
         t("stats.retours_detail", { bugs: s.feedback_bugs, sugg: s.feedback_suggestions })),
+      carteStat("🚀", (activation && activation.taux != null) ? activation.taux + " %" : "—",
+        t("croiss.kpi_activation"),
+        (activation && activation.eligibles != null) ? t("croiss.kpi_activation_p", { n: activation.eligibles }) : ""),
+      carteStat("🔁", coefficientViral(s, usage), t("croiss.kpi_k"), t("croiss.kpi_k_p")),
     ].join("");
     corps.appendChild(grille);
+
+    // --- Dons (mesure réelle, via le webhook Stripe) : en premier après les
+    // chiffres clés, avant les graphiques d'évolution. ---
+    corps.appendChild(el("h3", "stat-titre", "💛 " + t("stats.dons_titre")));
+    if (dons) {
+      const gd = el("div", "stat-grille");
+      gd.innerHTML = [
+        carteStat("💛", montantLisible(dons.total_cents), t("stats.dons_total")),
+        carteStat("🗓️", montantLisible(dons.total_30j_cents), t("stats.dons_30j")),
+        carteStat("🔁", montantLisible(dons.recurrent_30j_cents), t("stats.dons_recurrent")),
+        carteStat("🙋", dons.donateurs_uniques, t("stats.dons_uniques"),
+          t("stats.dons_nb", { n: dons.nb_dons })),
+      ].join("");
+      corps.appendChild(gd);
+    }
+    if (!donsRecents.length) {
+      corps.appendChild(el("p", "note", t("stats.dons_aucun")));
+    } else {
+      const listeDons = el("div", "admin-liste");
+      donsRecents.forEach(d => {
+        const date = d.created_at ? new Date(d.created_at).toLocaleDateString(langue) : "—";
+        const ligne = el("div", "admin-item");
+        ligne.innerHTML = `<div class="adm-info"><strong>${montantLisible(d.amount_cents, d.currency)}</strong>
+          <small>${echapper(d.email || "?")} · ${d.kind === "subscription" ? t("stats.dons_recurrent_court") : t("stats.dons_ponctuel")} · ${echapper(date)}</small></div>`;
+        listeDons.appendChild(ligne);
+      });
+      corps.appendChild(listeDons);
+    }
 
     // --- Évolution : inscriptions par semaine ---
     corps.appendChild(el("h3", "stat-titre", "📈 " + t("stats.inscriptions")));
@@ -2307,33 +2359,6 @@ function blocAdminStats() {
     const gu2 = el("div", "stat-graph-box"); gu2.innerHTML = miniGraphBarres(usageBarres, "#e88b2f");
     corps.appendChild(gu2);
     corps.appendChild(el("p", "note", t("stats.usage_note")));
-
-    // --- Dons (mesure réelle, via le webhook Stripe) ---
-    corps.appendChild(el("h3", "stat-titre", "💛 " + t("stats.dons_titre")));
-    if (dons) {
-      const gd = el("div", "stat-grille");
-      gd.innerHTML = [
-        carteStat("💛", montantLisible(dons.total_cents), t("stats.dons_total")),
-        carteStat("🗓️", montantLisible(dons.total_30j_cents), t("stats.dons_30j")),
-        carteStat("🔁", montantLisible(dons.recurrent_30j_cents), t("stats.dons_recurrent")),
-        carteStat("🙋", dons.donateurs_uniques, t("stats.dons_uniques"),
-          t("stats.dons_nb", { n: dons.nb_dons })),
-      ].join("");
-      corps.appendChild(gd);
-    }
-    if (!donsRecents.length) {
-      corps.appendChild(el("p", "note", t("stats.dons_aucun")));
-    } else {
-      const listeDons = el("div", "admin-liste");
-      donsRecents.forEach(d => {
-        const date = d.created_at ? new Date(d.created_at).toLocaleDateString(langue) : "—";
-        const ligne = el("div", "admin-item");
-        ligne.innerHTML = `<div class="adm-info"><strong>${montantLisible(d.amount_cents, d.currency)}</strong>
-          <small>${echapper(d.email || "?")} · ${d.kind === "subscription" ? t("stats.dons_recurrent_court") : t("stats.dons_ponctuel")} · ${echapper(date)}</small></div>`;
-        listeDons.appendChild(ligne);
-      });
-      corps.appendChild(listeDons);
-    }
 
     // --- Derniers arrivants ---
     corps.appendChild(el("h3", "stat-titre", "🆕 " + t("stats.recentes")));
@@ -3250,34 +3275,27 @@ function blocAdminCroissance(c) {
   sem.appendChild(rit);
   c.appendChild(sem);
 
-  /* ----- Chiffres réels (étoile du Nord et compagnie) ----- */
+  /* ----- Entonnoir d'activation & origine des inscriptions -----
+   * Les chiffres clés (familles, activation, coefficient viral…) ont rejoint
+   * la grille « Chiffres clés » de l'onglet Stats FamiTeam — les deux pages
+   * portaient exactement les mêmes nombres. Ce qui reste ici est propre à
+   * Croissance : où les familles décrochent, et d'où elles viennent. */
   const kpi = el("section", "carte");
-  kpi.innerHTML = `<h2>${t("croiss.kpi_titre")}</h2>
-    <p class="note">${t("croiss.kpi_sous")}</p>
-    <div id="croiss-kpi" class="stat-grille"><p class="note">${t("common.chargement")}</p></div>`;
+  kpi.innerHTML = `<h2>${t("ent.titre")}</h2>
+    <div id="croiss-kpi"><p class="note">${t("common.chargement")}</p></div>`;
   c.appendChild(kpi);
   (async () => {
-    const [s, u, a, src, ent] = await Promise.all([
-      adminStats(), adminUsageStats(),
-      (typeof adminActivation === "function") ? adminActivation() : null,
+    const [src, ent] = await Promise.all([
       (typeof adminSources === "function") ? adminSources() : [],
       (typeof adminEntonnoir === "function") ? adminEntonnoir() : null
     ]);
     const grille = kpi.querySelector("#croiss-kpi");
     if (!grille) return;
-    if (!s && !u) { grille.innerHTML = `<p class="note">${t("croiss.kpi_ko")}</p>`; return; }
-    const v = (o, k) => (o && o[k] != null) ? o[k] : "—";
-    grille.innerHTML =
-      carteStat("⭐", v(u, "actifs_7j"), t("croiss.kpi_actives"), t("croiss.kpi_actives_p")) +
-      carteStat("🚀", (a && a.taux != null) ? a.taux + " %" : "—", t("croiss.kpi_activation"),
-                (a && a.eligibles != null) ? t("croiss.kpi_activation_p", { n: a.eligibles }) : "") +
-      carteStat("👪", v(s, "familles_total"), t("croiss.kpi_familles")) +
-      carteStat("🌱", v(s, "familles_30j"), t("croiss.kpi_nouvelles")) +
-      carteStat("🎁", v(s, "referrals_acceptes"), t("croiss.kpi_parrainages"),
-                (s && s.referrals_30j != null) ? t("croiss.kpi_parrainages_p", { n: s.referrals_30j }) : "") +
-      carteStat("🔁", coefficientViral(s, u), t("croiss.kpi_k"), t("croiss.kpi_k_p")) +
-      carteStat("📋", v(s, "waitlist_total"), t("croiss.kpi_attente")) +
-      carteStat("📈", v(u, "ouvertures_30j"), t("croiss.kpi_ouvertures"));
+    grille.innerHTML = "";
+    if (!ent && !(Array.isArray(src) && src.length)) {
+      grille.innerHTML = `<p class="note">${t("croiss.kpi_ko")}</p>`;
+      return;
+    }
 
     // L'entonnoir d'activation : où les familles décrochent réellement.
     // Un taux J+1 seul cachait l'essentiel — c'est entre le premier et le
@@ -3292,7 +3310,7 @@ function blocAdminCroissance(c) {
         ["⭐", t("ent.actives_30j"), ent.actives_30j]
       ];
       const bloc = el("div", "croiss-entonnoir");
-      bloc.innerHTML = `<p class="stat-graph-titre">${t("ent.titre")}</p>` +
+      bloc.innerHTML =
         etapes.map(([emo, lib, n]) => {
           const part = Math.max(0, Math.min(100, Math.round((n / ent.familles) * 100)));
           return `<div class="ent-ligne"><span class="ent-emo">${emo}</span>
@@ -3306,7 +3324,7 @@ function blocAdminCroissance(c) {
           ? `<p class="ent-alerte">${t("ent.perte", { n: ent.essaye_puis_parti })}</p>` : "") +
         (ent.endormies_30j
           ? `<p class="note">${t("ent.endormies", { n: ent.endormies_30j })}</p>` : "");
-      kpi.appendChild(bloc);
+      grille.appendChild(bloc);
     }
 
     // Origine des inscriptions : ce qui amène réellement des familles.
@@ -3315,7 +3333,7 @@ function blocAdminCroissance(c) {
       tbl.innerHTML = `<p class="stat-graph-titre">${t("croiss.sources")}</p>` +
         src.map(r => `<div class="croiss-source-l"><span>${echapper(r.source)}</span>
           <span><strong>${r.familles}</strong> ${t("croiss.sources_fam")}${r.attente ? ` · ${r.attente} ${t("croiss.sources_att")}` : ""}</span></div>`).join("");
-      kpi.appendChild(tbl);
+      grille.appendChild(tbl);
     }
   })();
 
@@ -6137,20 +6155,24 @@ function blocCorrections(enf) {
   lDate.appendChild(iDate);
   sec.appendChild(lDate);
 
+  // Une case à cocher par mission : validée ou pas, jamais plus — comme sur
+  // l'écran de l'enfant, une mission ne se valide qu'une fois par jour. Les
+  // anciens boutons −/+ laissaient croire qu'on pouvait aller au-delà de 1,
+  // un état que le reste de l'app ne prévoit nulle part ailleurs.
   const journalJour = enf.journal[jour] || {};
+  const listeHist = el("div", "hist-liste");
   toutesMissions().filter(m => age(enf) >= m.ageMin).forEach(m => {
-    const n = journalJour[m.id] || 0;
-    const ligne = el("div", "hist-ligne" + (n ? " valide" : ""));
+    const fait = (journalJour[m.id] || 0) > 0;
+    const ligne = el("label", "hist-ligne switch-ligne" + (fait ? " valide" : ""));
     const cat = CATEGORIES[m.cat];
-    ligne.innerHTML = `<span class="h-info">${m.emoji} ${titreMission(m)} <small>${cat.monnaieEmoji}${pointsMission(enf, m)}</small></span>
-      <span class="h-compte">${n}</span>`;
-    const moins = el("button", "mini-btn", "−"); moins.setAttribute("aria-label", t("a11y.retirer_un"));
-    moins.onclick = () => modifierHistorique(enf, jour, m, -1);
-    const plus = el("button", "mini-btn", "+"); plus.setAttribute("aria-label", t("a11y.ajouter_un"));
-    plus.onclick = () => modifierHistorique(enf, jour, m, +1);
-    ligne.appendChild(moins); ligne.appendChild(plus);
-    sec.appendChild(ligne);
+    const cb = el("input"); cb.type = "checkbox"; cb.checked = fait;
+    cb.onchange = () => modifierHistorique(enf, jour, m, cb.checked ? +1 : -1);
+    ligne.appendChild(cb);
+    ligne.appendChild(el("span", "h-info", `${emojiOuRepli(m.emoji, m.emojiRepli)} ${titreMission(m)} `
+      + `<small>${cat.monnaieEmoji}${pointsMission(enf, m)}</small>`));
+    listeHist.appendChild(ligne);
   });
+  sec.appendChild(listeHist);
 
   // -- Badges --
   const hBadges = el("h2", null, t("cor.badges")); hBadges.style.marginTop = "12px";

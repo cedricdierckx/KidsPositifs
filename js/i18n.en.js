@@ -269,7 +269,7 @@ Object.assign(I18N.en, {
   "recup.import_titre": "📥 Import a backup file",
   "admin.titre": "🛡️ Administration",
   "admin.note": "Access to all families. Use with caution.",
-  "admin.nav_stats": "📊 Stats",
+  "admin.nav_stats": "📊 Stats FamiTeam",
   "admin.nav_familles": "👨‍👩‍👧 Families",
   "admin.nav_retours": "💬 Feedback",
   "admin.nav_contenu": "🃏 Content",

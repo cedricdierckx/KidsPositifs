@@ -2019,17 +2019,26 @@ function confettis() {
 }
 
 /* ---------- Mode parents ---------- */
+// Chaque entrée démarre sur « Aujourd'hui », jamais sur le dernier onglet
+// visité lors d'une session précédente : `ongletParent` est une variable de
+// session qui ne se réinitialisait jamais toute seule, si bien que rouvrir
+// l'espace parents pouvait faire apparaître la barre d'onglets déjà défilée
+// vers la droite, sur un onglet qu'on avait fini par oublier avoir consulté.
+function debuterSessionModeParents() {
+  modeParents = true;
+  if (typeof ongletParent !== "undefined") ongletParent = "quotidien";
+  rendre();
+}
 function activerModeParents() {
   const code = etat.reglages.codeParent;
-  if (!code) { modeParents = true; rendre(); return; }
+  if (!code) { debuterSessionModeParents(); return; }
   demanderPin({
     titre: "🔒 Code PIN parent",
     permettreOubli: true,
-    onReset: () => { modeParents = true; rendre(); },
+    onReset: () => debuterSessionModeParents(),
     onOk: (saisi) => {
       if (saisi.trim() !== code) return false;   // garde la modale + message d'erreur
-      modeParents = true;
-      rendre();
+      debuterSessionModeParents();
     }
   });
 }

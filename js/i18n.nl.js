@@ -269,7 +269,7 @@ Object.assign(I18N.nl, {
   "recup.import_titre": "📥 Een backupbestand importeren",
   "admin.titre": "🛡️ Beheer",
   "admin.note": "Toegang tot alle families. Gebruik met zorg.",
-  "admin.nav_stats": "📊 Stats",
+  "admin.nav_stats": "📊 Stats FamiTeam",
   "admin.nav_familles": "👨‍👩‍👧 Families",
   "admin.nav_retours": "💬 Feedback",
   "admin.nav_contenu": "🃏 Inhoud",

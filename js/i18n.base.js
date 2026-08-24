@@ -296,7 +296,7 @@ const I18N = {
     "recup.import_titre": "📥 Importer un fichier de sauvegarde",
     "admin.titre": "🛡️ Administration",
     "admin.note": "Accès à toutes les familles. À utiliser avec précaution.",
-    "admin.nav_stats": "📊 Stats",
+    "admin.nav_stats": "📊 Stats FamiTeam",
     "admin.nav_familles": "👨‍👩‍👧 Familles",
     "admin.nav_retours": "💬 Retours",
     "admin.nav_contenu": "🃏 Contenu",

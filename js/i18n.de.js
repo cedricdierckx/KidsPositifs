@@ -269,7 +269,7 @@ Object.assign(I18N.de, {
   "recup.import_titre": "📥 Eine Sicherungsdatei importieren",
   "admin.titre": "🛡️ Verwaltung",
   "admin.note": "Zugriff auf alle Familien. Mit Vorsicht verwenden.",
-  "admin.nav_stats": "📊 Statistik",
+  "admin.nav_stats": "📊 FamiTeam-Statistik",
   "admin.nav_familles": "👨‍👩‍👧 Familien",
   "admin.nav_retours": "💬 Feedback",
   "admin.nav_contenu": "🃏 Inhalt",
