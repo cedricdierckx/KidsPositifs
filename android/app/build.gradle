@@ -1,5 +1,25 @@
 apply plugin: 'com.android.application'
 
+// Google Play refuse un versionCode déjà utilisé, même entre pistes de test
+// différentes (interne vs fermé) — un chiffre en dur oublié à incrémenter a
+// déjà bloqué un envoi. Le nombre de commits sur la branche courante est
+// strictement croissant par construction : jamais de collision possible,
+// rien à retenir de manuel. En cas de dépôt Git indisponible (ex. archive
+// sans .git), repli sur 1 plutôt que d'échouer le build.
+def versionCodeDepuisGit = {
+    try {
+        def sortie = new ByteArrayOutputStream()
+        exec {
+            commandLine 'git', 'rev-list', '--count', 'HEAD'
+            workingDir rootProject.projectDir
+            standardOutput = sortie
+        }
+        return Integer.parseInt(sortie.toString().trim())
+    } catch (Exception ignoree) {
+        return 1
+    }
+}
+
 android {
     namespace = "team.fami.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,7 +27,7 @@ android {
         applicationId "team.fami.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
+        versionCode versionCodeDepuisGit()
         versionName "1.0.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
