@@ -4,6 +4,11 @@
 > e-mails, mesure, etc.) sont catalogués et priorisés dans `COORDINATION.md`,
 > avec le modèle Claude recommandé pour chacun.
 
+> 🔍 Le chantier *✍️ Contenu & référencement* (§ 4) est détaillé, avec un
+> guide pas-à-pas, dans `PLAN-SEO.md`. Sa partie technique (balisage,
+> sitemap) a été traitée le 25 août 2026 ; la partie contenu reste *plus
+> tard*, pour les raisons du § 0.3.
+
 > Document de travail, révisé le 25 juillet 2026.
 > Le **suivi d'avancement** vit dans l'application : espace parents → Admin →
 > onglet **📈 Croissance**. Le plan détaillé (contraintes, chantiers, durées,
@@ -347,7 +352,8 @@ directrice d'école parle à vingt-cinq familles pour trente minutes de travail)
 et de **L'Arbre des familles** (qui tourne tout seul une fois branché ; le
 détail du dispositif et de ses garde-fous est dans `PLAN-PARRAINAGE.md`). Le contenu et le
 référencement, très rentables sur le papier, sont trop lents pour une heure
-par semaine : ils attendent.
+par semaine : ils attendent — leur guide détaillé et leur socle technique
+(fait le 25 août 2026) sont dans `PLAN-SEO.md`.
 
 **Règle d'arrêt.** Tout canal testé trois fois sans résultat est abandonné et
 noté comme tel dans l'onglet Croissance.
