@@ -195,11 +195,15 @@ s'éteint aussi vite s'il y a un souci.
 - **Choix du compte forcé** (`prompt=select_account`) : un parent connecté à
   plusieurs comptes Google n'est pas reconnecté en silence avec le mauvais.
 - **App mobile** : Google refuse l'authentification dans une WebView embarquée.
-  Le code demande donc l'URL sans rediriger, et l'ouvre dans le navigateur du
-  système (plugin Capacitor `Browser` s'il est présent, sinon onglet système).
-  Le retour passe par les App Links déjà déclarés pour le lien magique.
-  **Ce chemin n'a pas été essayé sur un appareil réel** — à valider avec la
-  session qui travaille sur le mobile.
+  Le code demande donc l'URL sans rediriger, et l'ouvre dans un onglet Chrome
+  personnalisé (plugin `@capacitor/browser`, mécanisme recommandé par Google
+  et Supabase pour ce cas précis). Le retour passe par les App Links déjà
+  déclarés pour le lien magique ; l'onglet se referme tout seul une fois de
+  retour dans l'app (`fermerNavigateurExterne()`, `js/auth.js`).
+  ⚠️ Essayé sur un appareil réel une première fois avec `@capacitor/browser`
+  absent des dépendances : `ouvrirDehors()` retombait alors sur
+  `window.open(url, "_system")`, et la connexion Google ne revenait jamais
+  dans l'app — elle restait affichée dans Chrome. Dépendance ajoutée.
 
 ## Ce qui a été mis à jour côté conformité
 

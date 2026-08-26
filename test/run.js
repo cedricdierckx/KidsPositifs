@@ -4921,6 +4921,21 @@ test("Google : une première connexion tierce ne fait pas croire à un compte pe
   assert.ok(/function ouvrirDehors/.test(auth),
     "l'app native doit ouvrir le navigateur du système, pas sa propre vue");
   assert.ok(/prompt: "select_account"/.test(auth));
+
+  // Le greffon @capacitor/browser doit être une dépendance déclarée, jamais un
+  // ajout manuel du dossier natif — sans lui, ouvrirDehors() retombait sur
+  // window.open(url, "_system"), jamais essayé sur un appareil réel avant
+  // qu'un parent ne signale l'échec du retour dans l'app après Google.
+  const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"));
+  assert.ok((pkg.dependencies || {})["@capacitor/browser"],
+    "le greffon de navigateur externe doit être une dépendance déclarée");
+
+  // L'onglet ouvert pour la connexion doit se refermer tout seul au retour,
+  // sinon il reste affiché par-dessus l'app.
+  assert.ok(/function fermerNavigateurExterne/.test(auth));
+  const dl = auth.slice(auth.indexOf("function initDeepLinkAuth"), auth.indexOf("function initDeepLinkAuth") + 700);
+  assert.ok(/fermerNavigateurExterne\(\)/.test(dl),
+    "le retour du lien d'authentification doit refermer l'onglet externe");
 });
 
 test("connexion : l'attente ne s'empile pas", () => {

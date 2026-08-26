@@ -504,6 +504,9 @@ function initDeepLinkAuth() {
   app.addListener("appUrlOpen", async ({ url }) => {
     const jetons = analyserJetonsAuthDepuisUrl(url);
     if (!jetons) return;   // lien d'invitation/parrainage ordinaire : rien à faire ici
+    // L'onglet Chrome (ouvert par ouvrirDehors pour la connexion Google) reste
+    // sinon affiché par-dessus l'app une fois de retour ici.
+    fermerNavigateurExterne();
     const { error } = await sb.auth.setSession(jetons);
     if (error) return;
     if (jetons.type === "recovery") ecranNouveauMdp();
@@ -543,6 +546,18 @@ function ouvrirDehors(url) {
     if (nav && typeof nav.open === "function") { nav.open({ url }); return true; }
   } catch (e) { /* on retombe sur l'ouverture standard */ }
   try { window.open(url, "_system"); return true; } catch (e) { return false; }
+}
+
+// Referme l'onglet ouvert par ouvrirDehors, une fois la connexion Google
+// revenue dans l'app. Sans le greffon Browser (repli "_system" ci-dessus),
+// il n'y a rien a fermer : le navigateur systeme gere lui-meme son propre
+// premier plan, donc on ne fait rien plutot que de risquer une erreur.
+function fermerNavigateurExterne() {
+  try {
+    const cap = (typeof window !== "undefined") ? window.Capacitor : null;
+    const nav = cap && cap.Plugins && cap.Plugins.Browser;
+    if (nav && typeof nav.close === "function") nav.close();
+  } catch (e) { /* pas grave : l'onglet reste ouvert, rien de plus */ }
 }
 
 // Par quel moyen la session courante a-t-elle ete ouverte ? "email", "google"…
