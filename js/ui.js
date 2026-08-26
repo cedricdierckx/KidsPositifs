@@ -4235,6 +4235,10 @@ function htmlFeuilleSemaine(mode) {
          page, separe de son contenu. */
       .enfant{width:100%; margin:0 0 12px;
         border:2px solid var(--c);border-radius:16px;padding:9px 11px;background:#fff}
+      /* Une page par enfant, sur demande explicite : chaque carte peut donc
+         laisser du blanc en bas de sa page plutôt que de partager la
+         suivante — c'est voulu, pour distribuer une feuille par enfant. */
+      .enfant + .enfant{break-before:page; page-break-before:always}
       .enfant tr{break-inside:avoid}
       .enfant h3{margin:0 0 7px;font-size:15px;display:flex;align-items:center;gap:6px;break-after:avoid}
       .enfant h3 .em{font-size:19px}
