@@ -204,6 +204,21 @@ s'éteint aussi vite s'il y a un souci.
   absent des dépendances : `ouvrirDehors()` retombait alors sur
   `window.open(url, "_system")`, et la connexion Google ne revenait jamais
   dans l'app — elle restait affichée dans Chrome. Dépendance ajoutée.
+  ⚠️ Deuxième essai, dépendance en place cette fois : toujours pas de retour
+  dans l'app. Diagnostic par `adb` (`pm path` + `apksigner verify --print-certs`
+  sur le `.aab` réellement installé depuis Play Store, sur deux pistes
+  distinctes — Interne tests ET Test fermé) : le certificat qui signe l'APK
+  livré par Google Play (`CN=Android, OU=Android, O=Google Inc.`, empreinte
+  `C0:B6:AA:...:87:F5`) ne correspondait à AUCUNE des deux empreintes déjà
+  dans `assetlinks.json` (ni la clé d'upload, ni la clé de signature Play
+  « classique » affichée dans Play Console → Beveiligd met Play →
+  App-ondertekening). Cause exacte non éclaircie avec certitude — peut-être
+  liée à la livraison optimisée par scission (base.apk + splits par langue/
+  densité) — mais le correctif est direct : cette troisième empreinte a été
+  ajoutée à `assetlinks.json` telle quelle. Si un doute revient un jour,
+  refaire ce diagnostic `apksigner` sur l'APK réellement installé plutôt que
+  de se fier aux seules empreintes affichées dans Play Console : les deux
+  peuvent diverger.
 
 ## Ce qui a été mis à jour côté conformité
 
