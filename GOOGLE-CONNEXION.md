@@ -219,6 +219,27 @@ s'éteint aussi vite s'il y a un souci.
   refaire ce diagnostic `apksigner` sur l'APK réellement installé plutôt que
   de se fier aux seules empreintes affichées dans Play Console : les deux
   peuvent diverger.
+  ⚠️ Troisième essai, cause réelle trouvée : `adb shell pm get-app-links
+  team.fami.app` affichait un code numérique (`1024`) pour fami.team ET
+  famiteam.com au lieu du mot `verified` — jamais vérifiés, quelle que soit
+  la piste ou l'empreinte. Diagnostic confirmé en interrogeant directement
+  l'API Google `digitalassetlinks.googleapis.com/v1/statements:list` (celle
+  qu'Android utilise en interne) : `fami.team` est parfaitement valide, mais
+  `famiteam.com` échoue avec `ERROR_CODE_REDIRECT` — ce domaine redirige
+  entièrement vers fami.team (y compris `/.well-known/assetlinks.json`
+  lui-même), et Google refuse par sécurité de suivre une redirection lors de
+  cette vérification précise. Les deux domaines étant déclarés dans le même
+  `<intent-filter android:autoVerify="true">`, l'échec de famiteam.com
+  empêchait fami.team d'être marqué "verified" à son tour. **Correctif** :
+  famiteam.com retiré du manifeste (`AndroidManifest.xml`) — aucun lien
+  généré par l'app ne pointe vers ce domaine (`HOTE_PUBLIC = fami.team`,
+  `js/auth.js`), il n'a donc rien à faire dans ce bloc. Confirmé en local en
+  forçant l'état de vérification (`adb shell pm set-app-links --package
+  team.fami.app 1 all`) : une fois "verified", le lien revient bien dans
+  l'app — la mécanique de code était donc déjà correcte, seule la
+  vérification de domaine bloquait. Reste à confirmer après publication
+  d'une nouvelle release (la vérification tourne à l'installation depuis le
+  Play Store) que Google login fonctionne aussi sans ce forçage manuel.
 
 ## Ce qui a été mis à jour côté conformité
 
