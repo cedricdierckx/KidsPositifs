@@ -39,7 +39,12 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // 'proguard-android.txt' n'est plus fourni par l'AGP récent (il embarquait
+            // -dontoptimize, incompatible avec les optimisations R8) — utiliser la
+            // variante '-optimize' à la place. Sans effet ici puisque minifyEnabled
+            // est false, mais Gradle valide ce fichier dès la configuration, avant
+            // même de savoir si la minification tourne.
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
