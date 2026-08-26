@@ -4348,19 +4348,21 @@ test("rendez-vous du soir : la carte agenda existe dans les deux modes parents",
   assert.ok(/\.champ select\{[^}]*width:100%/.test(css), "le menu déroulant doit occuper la ligne");
 });
 
-test("rappel du soir : la notification est activée par défaut, désactivable", () => {
+test("rappel du soir : la notification se propose à l'heure conseillée, sans jamais s'imposer", () => {
   const { api } = construireContexte();
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
   const cles = ["notif.titre", "notif.intro", "notif.activer", "notif.heure", "notif.resume",
-    "notif.jamais", "notif.note", "notif.titre_push", "notif.corps_push", "notif.ok",
-    "notif.off", "notif.refuse"];
+    "notif.jamais", "notif.note", "notif.appliquer", "notif.titre_push", "notif.corps_push",
+    "notif.ok", "notif.off", "notif.refuse"];
   Object.keys(api.LANGUES).forEach(lg =>
     cles.forEach(k => assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`)));
 
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
-  // Le réglage par défaut, en l'absence de tout choix explicite, doit être actif.
+  // Sans réglage enregistré, la fonction ne doit RIEN présumer d'actif — sinon
+  // un appel passif pourrait programmer une notification sans que le parent
+  // ait jamais appuyé sur quoi que ce soit.
   const nf = ui.slice(ui.indexOf("function notifReglage"), ui.indexOf("function notifReglage") + 400);
-  assert.ok(/active:\s*true/.test(nf), "sans réglage enregistré, la notification doit être active par défaut");
+  assert.ok(/return null;/.test(nf), "sans réglage enregistré, notifReglage() ne doit rien décider elle-même");
 
   // La programmation doit être en heure locale (cron-like on:{hour,minute}),
   // jamais en instant UTC absolu — sinon le rappel dériverait au changement
@@ -4370,21 +4372,45 @@ test("rappel du soir : la notification est activée par défaut, désactivable",
   assert.ok(/schedule:\s*\{\s*on:\s*\{\s*hour/.test(ps), "la programmation doit utiliser on:{hour,minute}, pas un instant absolu");
   assert.ok(/isExactNotification:\s*false/.test(ps), "un simple rappel ne doit pas exiger la permission « alarmes exactes »");
 
-  // La synchronisation ne doit jamais se déclencher avant le déverrouillage
-  // du mode parents : aucune demande de permission pendant qu'un enfant tient
-  // l'appareil.
+  // La synchronisation passive (chargement de l'écran) ne doit JAMAIS pouvoir
+  // demander la permission : un parent a rapporté qu'une boîte de dialogue
+  // système apparue à ce moment avait fait basculer, par un appui qui ne lui
+  // était pas destiné, le bouton d'agenda voisin. Seul un appel interactif
+  // (le bouton de la carte elle-même) peut la déclencher.
+  const sf = ui.slice(ui.indexOf("async function synchroniserNotificationSoir"),
+                      ui.indexOf("async function synchroniserNotificationSoir") + 900);
+  const iInteractif = sf.indexOf("if (!interactif)");
+  const iPermission = sf.indexOf("permissionNotification()");
+  assert.ok(iInteractif > 0 && iPermission > iInteractif,
+    "la demande de permission doit rester dans la branche interactive, jamais dans la branche passive");
+  assert.ok(/checkPermissions\(\)/.test(sf.slice(0, iInteractif + 200)),
+    "la branche passive doit seulement CONSTATER la permission, jamais la redemander");
+
+  // Et cet appel passif a bien lieu après le déverrouillage du mode parents,
+  // avec le paramètre `false` : aucune ambiguïté possible sur son caractère
+  // non interactif.
   const vr = ui.slice(ui.indexOf("function vueReglages"), ui.indexOf("function vueReglages") + 1500);
   const iVerrou = vr.indexOf("if (!modeParents)");
-  const iSync = vr.indexOf("synchroniserNotificationSoir();");
+  const iSync = vr.indexOf("synchroniserNotificationSoir(false)");
   assert.ok(iVerrou > 0 && iSync > iVerrou,
-    "dans vueReglages, la synchronisation doit avoir lieu après le contrôle du verrou parent");
+    "dans vueReglages, la synchronisation doit avoir lieu après le contrôle du verrou parent, en mode passif");
+
+  // La carte propose un bouton explicite, comme celle de l'agenda — jamais
+  // une case à cocher qui s'applique toute seule au changement.
+  const bn = ui.slice(ui.indexOf("function blocNotificationSoir"), ui.indexOf("function blocNotificationSoir") + 1900);
+  assert.ok(/t\("notif\.appliquer"\)/.test(bn), "il faut un bouton d'application explicite");
+  assert.ok(/synchroniserNotificationSoir\(true\)/.test(bn),
+    "le bouton de la carte doit appeler la synchronisation en mode interactif");
+  assert.ok(!/caseActive\.onchange|inpH\.onchange/.test(bn),
+    "la case et l'heure ne doivent plus s'appliquer seules au changement, sans le bouton");
 
   // La carte figure dans les deux modes parents, comme celle de l'agenda —
   // mais seulement dans l'app installée : sur le web, aucun greffon de
-  // notification locale n'existe, et blocNotificationSoir renvoie null.
-  assert.ok(/if \(typeof estAppNative !== "function" \|\| !estAppNative\(\)\) return null;/.test(ui),
+  // notification locale n'existe, et blocNotificationSoir renvoie null. Elle
+  // reste ouverte tant que rien n'est choisi.
+  assert.ok(/if \(typeof estAppNative !== "function" \|\| !estAppNative\(\)\) return null;/.test(bn),
     "blocNotificationSoir doit être absente sur le web (aucun greffon natif)");
-  const appelsNotif = ui.match(/const \w+ = blocNotificationSoir\(\);\s*\n\s*if \(\w+\) c\.appendChild\(carteRepliable\(\w+, "notif", false\)\);/g) || [];
+  const appelsNotif = ui.match(/const \w+ = blocNotificationSoir\(\);\s*\n\s*if \(\w+\) c\.appendChild\(carteRepliable\(\w+, "notif", !notifReglage\(\)\)\);/g) || [];
   assert.strictEqual(appelsNotif.length, 2, "il faut la carte notification en mode simplifié ET en mode expert");
 
   // Dépendance déclarée, jamais un ajout manuel du dossier natif.

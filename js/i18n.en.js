@@ -1360,6 +1360,7 @@ Object.assign(I18N.en, {
   "notif.titre": "🔔 Evening reminder",
   "notif.intro": "FamiTeam can send you a small reminder every evening, at the time you choose. One calm message a day — never an insistent sound, never a badge.",
   "notif.activer": "Turn on the reminder",
+  "notif.appliquer": "🔔 Turn on",
   "notif.heure": "At what time?",
   "notif.resume": "On at {h}",
   "notif.jamais": "Off",

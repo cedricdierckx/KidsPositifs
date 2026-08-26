@@ -1360,6 +1360,7 @@ Object.assign(I18N.de, {
   "notif.titre": "🔔 Abenderinnerung",
   "notif.intro": "FamiTeam kann Ihnen jeden Abend eine kleine Erinnerung schicken, zur Uhrzeit Ihrer Wahl. Eine ruhige Nachricht pro Tag — nie ein aufdringlicher Ton, nie ein Badge.",
   "notif.activer": "Erinnerung aktivieren",
+  "notif.appliquer": "🔔 Aktivieren",
   "notif.heure": "Um welche Uhrzeit?",
   "notif.resume": "Aktiv um {h}",
   "notif.jamais": "Deaktiviert",

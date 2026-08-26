@@ -1463,10 +1463,10 @@ function champsCarteSurprise(carte, titreLisible, activiteLisible) {
 
 /* ---------- Le rendez-vous du soir (rappel par l'agenda du parent) ----------
  * La raison d'arrêt la plus citée par les familles est « on n'y pense pas ».
- * FamiTeam y répond désormais par une notification quotidienne (activée par
- * défaut, voir synchroniserNotificationSoir dans js/ui.js) — mais celle-ci
- * dépend du système et disparaît si le parent désinstalle l'app ou change de
- * téléphone. Cette fonction-ci reste donc utile : un rendez-vous déposé dans
+ * FamiTeam y répond désormais aussi par une notification quotidienne, à
+ * activer d'un bouton (voir blocNotificationSoir dans js/ui.js) — mais
+ * celle-ci dépend du système et disparaît si le parent désinstalle l'app ou
+ * change de téléphone. Cette fonction-ci reste donc utile : un rendez-vous déposé dans
  * l'agenda DU PARENT lui survit, se règle à son propre rythme et à sa propre
  * heure, et fonctionne même sur un vieux téléphone sans notifications
  * fiables. Les deux mécanismes coexistent ; le parent choisit l'un, l'autre,

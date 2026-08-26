@@ -1360,6 +1360,7 @@ Object.assign(I18N.nl, {
   "notif.titre": "🔔 Avondherinnering",
   "notif.intro": "FamiTeam kan u elke avond een klein herinneringsbericht sturen, op het uur dat u kiest. Eén rustig bericht per dag — nooit een opdringerig geluid, nooit een badge.",
   "notif.activer": "Herinnering inschakelen",
+  "notif.appliquer": "🔔 Inschakelen",
   "notif.heure": "Op welk uur?",
   "notif.resume": "Aan om {h}",
   "notif.jamais": "Uit",
