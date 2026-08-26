@@ -237,9 +237,11 @@ s'éteint aussi vite s'il y a un souci.
   forçant l'état de vérification (`adb shell pm set-app-links --package
   team.fami.app 1 all`) : une fois "verified", le lien revient bien dans
   l'app — la mécanique de code était donc déjà correcte, seule la
-  vérification de domaine bloquait. Reste à confirmer après publication
-  d'une nouvelle release (la vérification tourne à l'installation depuis le
-  Play Store) que Google login fonctionne aussi sans ce forçage manuel.
+  vérification de domaine bloquait.
+  ✅ **Confirmé en conditions réelles** : nouvelle release (versionCode 375)
+  publiée sur Test fermé, app désinstallée puis réinstallée depuis Play
+  Store (donc sans le forçage `adb` manuel), connexion Google testée avec
+  succès — retour dans l'app. Le problème est clos.
 
 ## Ce qui a été mis à jour côté conformité
 
