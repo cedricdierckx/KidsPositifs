@@ -5263,6 +5263,16 @@ test("feuille papier imprimée : la mise en page ne force plus une page presque 
   // (flottement, puis une seule colonne).
 });
 
+test("feuille papier imprimée : une page par enfant, pour distribuer une feuille séparée à chacun", () => {
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const bloc = ui.slice(ui.indexOf("function htmlFeuilleSemaine"),
+                        ui.indexOf("function htmlFeuilleSemaine") + 9000);
+  assert.ok(/\.enfant \+ \.enfant\{[^}]*break-before:page/.test(bloc),
+    "chaque enfant à partir du deuxième doit démarrer sur une nouvelle page — "
+    + "le premier ne doit pas être concerné, sous peine d'une page blanche en tête");
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async
