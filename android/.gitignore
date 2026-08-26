@@ -95,6 +95,9 @@ capacitor-cordova-android-plugins
 # Copied web assets
 app/src/main/assets/public
 
+# versionCode calculé par npm (scripts/sync-www.mjs) à chaque cap:sync
+versionCode.txt
+
 # Generated Config files
 app/src/main/assets/capacitor.config.json
 app/src/main/assets/capacitor.plugins.json

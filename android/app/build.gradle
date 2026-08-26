@@ -4,9 +4,24 @@ apply plugin: 'com.android.application'
 // différentes (interne vs fermé) — un chiffre en dur oublié à incrémenter a
 // déjà bloqué un envoi. Le nombre de commits sur la branche courante est
 // strictement croissant par construction : jamais de collision possible,
-// rien à retenir de manuel. En cas de dépôt Git indisponible (ex. archive
-// sans .git), repli sur 1 plutôt que d'échouer le build.
+// rien à retenir de manuel.
+//
+// Source 1 (prioritaire) : android/versionCode.txt, écrit par
+// `npm run cap:sync` (scripts/sync-www.mjs) au moment où `git` tourne dans
+// l'environnement npm, fiable. Nécessaire car le démon Gradle lancé par
+// Android Studio, appli graphique Windows, hérite du PATH de la session au
+// démarrage — sans `git` dedans même quand PowerShell le trouve très bien,
+// l'appel direct ci-dessous retombait silencieusement sur 1.
+// Source 2 (repli) : appel direct à git, pour un build hors npm (CI, ligne
+// de commande Gradle seule) où l'environnement est fiable.
+// Source 3 (dernier repli) : 1, pour ne jamais faire échouer le build.
 def versionCodeDepuisGit = {
+    def fichier = new File(rootProject.projectDir, "versionCode.txt")
+    if (fichier.exists()) {
+        try {
+            return Integer.parseInt(fichier.text.trim())
+        } catch (Exception ignoree) { /* fichier corrompu : on retente par git */ }
+    }
     try {
         def sortie = new ByteArrayOutputStream()
         exec {
