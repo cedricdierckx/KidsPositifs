@@ -86,6 +86,20 @@ const MISSIONS = [
   { id: "cartable",      cat: "famille", emoji: "🎒", titre: "Préparer son cartable",      ageMin: 5, points: 2, type: "quotidien" },
   { id: "plier_linge",   cat: "famille", emoji: "🧦", titre: "Ranger / plier son linge",   ageMin: 6, points: 2, type: "quotidien" },
   { id: "poubelle",      cat: "famille", emoji: "🗑️", titre: "Sortir les poubelles",      ageMin: 7, points: 2, type: "ponctuel" },
+  // --- 8 ans et plus : l'autonomie et l'initiative ---
+  // À partir de 8 ans, ce qui progresse n'est plus le geste (il sait ranger)
+  // mais le fait de le faire SANS qu'on le demande, et de savoir régler seul
+  // ce qui se règle par la parole. D'où des missions qui portent sur
+  // l'initiative plutôt que sur la tâche.
+  { id: "aider_spontane",cat: "famille", emoji: "✨", titre: "Aider sans qu'on le demande", ageMin: 8, points: 3, type: "quotidien" },
+  { id: "desaccord",     cat: "famille", emoji: "💬", titre: "Régler un désaccord en parlant", ageMin: 8, points: 3, type: "quotidien" },
+  { id: "lave_vaisselle",cat: "famille", emoji: "🍴", titre: "Vider ou remplir le lave-vaisselle", ageMin: 8, points: 2, type: "quotidien" },
+  { id: "petit_dej",     cat: "famille", emoji: "🥣", titre: "Préparer son petit-déjeuner seul(e)", ageMin: 8, points: 2, type: "quotidien" },
+  { id: "lire_seul",     cat: "famille", emoji: "📕", titre: "Lire seul(e) un moment",     ageMin: 8, points: 2, type: "quotidien" },
+  { id: "reveil_seul",   cat: "famille", emoji: "⏰", titre: "Se lever seul(e) au réveil",  ageMin: 9, points: 2, type: "quotidien" },
+  { id: "aider_devoirs", cat: "famille", emoji: "🧑‍🏫", titre: "Aider un plus jeune à ses devoirs", ageMin: 9, points: 3, type: "ponctuel" },
+  { id: "repas_simple",  cat: "famille", emoji: "👨‍🍳", titre: "Préparer un repas simple",  ageMin: 11, points: 3, type: "ponctuel" },
+  { id: "organiser",     cat: "famille", emoji: "🎲", titre: "Organiser un moment en famille", ageMin: 11, points: 3, type: "ponctuel" },
 
   /* ---------------- PLANÈTE ---------------- */
   { id: "lumiere",       cat: "planete", emoji: "💡", titre: "Éteindre la lumière",       ageMin: 2, points: 1, type: "quotidien" },
@@ -105,7 +119,13 @@ const MISSIONS = [
   { id: "recup",         cat: "planete", emoji: "📦", titre: "Réutiliser au lieu de jeter", ageMin: 4, points: 1, type: "ponctuel" },
   // --- Tâches pour les plus grands ---
   { id: "chauffage",     cat: "planete", emoji: "🌡️", titre: "Baisser le chauffage",      ageMin: 6, points: 1, type: "quotidien" },
-  { id: "transports",    cat: "planete", emoji: "🚌", titre: "Prendre les transports en commun", ageMin: 6, points: 2, type: "ponctuel" }
+  { id: "transports",    cat: "planete", emoji: "🚌", titre: "Prendre les transports en commun", ageMin: 6, points: 2, type: "ponctuel" },
+  // --- 8 ans et plus : le geste devient un choix raisonné ---
+  { id: "veille",        cat: "planete", emoji: "🔌", titre: "Débrancher les appareils en veille", ageMin: 8, points: 1, type: "quotidien" },
+  { id: "saison",        cat: "planete", emoji: "🥗", titre: "Choisir un fruit ou légume de saison", ageMin: 8, points: 1, type: "quotidien" },
+  { id: "reparer_objet", cat: "planete", emoji: "🔧", titre: "Réparer au lieu de remplacer", ageMin: 10, points: 2, type: "ponctuel" },
+  { id: "seconde_main",  cat: "planete", emoji: "👕", titre: "Choisir de la seconde main", ageMin: 12, points: 2, type: "ponctuel" },
+  { id: "sans_emballage",cat: "planete", emoji: "🫙", titre: "Faire une course sans emballage", ageMin: 12, points: 2, type: "ponctuel" }
 ];
 
 /* ---- Priorité des missions pour la sélection PAR DÉFAUT ------------
@@ -121,11 +141,16 @@ const PRIO_DEFAUT = {
   histoire: 4, lit_faire: 4, jouer_calme: 4, calme_colere: 4, chaussures: 5,
   linge_panier: 5, aider_cuisine: 6, aider_courses: 7,
   devoirs: 2, cartable: 3, plier_linge: 4, poubelle: 5,
+  // 8 ans et plus : l'initiative passe devant la tâche — c'est elle qui
+  // progresse encore à cet âge, et elle doit donc être proposée en premier.
+  aider_spontane: 2, desaccord: 2, lire_seul: 3, lave_vaisselle: 4,
+  petit_dej: 4, reveil_seul: 4, aider_devoirs: 6, repas_simple: 6, organiser: 6,
   // Planète
   lumiere: 1, eau_robinet: 1, gourde: 2, pas_gaspiller: 2, tri_dechets: 2,
   ecrans: 3, arroser: 3, compost: 3, douche_courte: 3, oiseaux: 4,
   animaux: 2, marche_velo: 4, ramasser: 4, jardiner: 5, recup: 5,
-  chauffage: 3, transports: 4
+  chauffage: 3, transports: 4,
+  veille: 3, saison: 3, reparer_objet: 5, seconde_main: 6, sans_emballage: 6
 };
 const NB_DEFAUT_PAR_CAT = 8; // nombre de missions proposées par défaut par catégorie
 

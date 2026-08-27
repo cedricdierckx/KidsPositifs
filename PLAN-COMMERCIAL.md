@@ -112,11 +112,15 @@ rythme. C'est le calendrier réaliste, et il est affiché en tête de l'onglet.
 ## 1. Le produit en une page
 
 FamiTeam est une application **web** (aucun téléchargement, aucun magasin
-d'applications) qui aide les enfants de **2 à 7 ans** à adopter des
+d'applications) qui aide les enfants de **3 à 12 ans** à adopter des
 comportements positifs, dans l'esprit de la parentalité bienveillante.
 
 - L'enfant coche ses missions du jour, gagne des **cœurs 💛** et des
   **gouttes 💧**, fait grandir un **avatar** et un **écosystème**.
+- Les missions **suivent l'âge** : le geste chez les petits (se brosser les
+  dents, ranger), l'**initiative** chez les grands (aider sans qu'on le
+  demande, régler un désaccord en parlant, préparer un repas). 59 missions au
+  catalogue, dont 14 réservées aux 8 ans et plus.
 - Les parents choisissent les missions, valident si besoin, et disposent d'un
   espace dédié : comportement du jour, compliment du jour, semaine papier.
 - **Aucun point n'est jamais retiré.** En cas d'incident, l'enfant réalise un
@@ -151,15 +155,28 @@ contexte.
 
 | Niveau | Périmètre | Estimation | Certitude |
 |---|---|---|---|
-| **TAM** | Ménages francophones (BE + FR + CH + LU) avec ≥ 1 enfant de 2 à 7 ans | ≈ **3,8 M** | 65 % |
-| **SAM** | Ceux qui cherchent activement un outil de routine/récompense | ≈ **600 000** | 50 % |
+| **TAM** | Ménages francophones (BE + FR + CH + LU) avec ≥ 1 enfant de 3 à 12 ans | ≈ **6,3 M** | 50 % |
+| **SAM** | Ceux qui cherchent activement un outil de routine/récompense | ≈ **1 000 000** | 40 % |
 | **Cible réaliste** | Ce qu'une heure par semaine permet de servir correctement | ≈ **2 000 familles actives** | 50 % |
 
 Méthode : au 1ᵉʳ janvier 2025, la Belgique comptait ≈ **36,7 % de ménages avec
 enfants** ([Statbel](https://statbel.fgov.be/en/news/belgium-had-36-one-person-households-01-january-2025)),
-soit ≈ 1,8 M ; la tranche 2-7 ans en représente ≈ 30 %, soit **≈ 540 000
-ménages belges**. La France en compte ≈ 3,2 M, la Suisse romande et le
-Luxembourg ≈ 150 000.
+soit ≈ 1,8 M. La tranche 3-12 ans couvre **dix années sur les dix-huit** de la
+minorité ; à répartition uniforme cela donnerait 56 % des ménages avec enfants,
+ramenés à **≈ 50 %** par le même coefficient de prudence que celui appliqué à
+l'ancienne tranche — soit **≈ 900 000 ménages belges**. La France en compte
+≈ 5,3 M, la Suisse romande et le Luxembourg ≈ 250 000.
+
+**Avertissement sur ce recalcul (certitude 50 %, contre 65 % pour l'ancienne
+estimation).** Le passage de 2-7 à 3-12 ans multiplie la cible théorique par
+**≈ 1,67**, mais ce facteur est une **dérivation propre**, obtenue en
+élargissant la bande d'âge à structure de ménages constante — il ne provient
+d'aucune source publiée. Il est à manier avec prudence.
+
+**Et il ne change rien au plan.** La ligne qui gouverne réellement les
+décisions est la troisième : **2 000 familles actives**, plafond fixé non par
+le marché mais par l'heure hebdomadaire et par la facture Supabase (§ 3.3).
+Un marché théorique 1,67 fois plus grand ne desserre ni l'un ni l'autre.
 
 ### 2.2 Concurrence
 
@@ -186,11 +203,34 @@ concurrents : c'est un argument.** Aucun d'eux ne peut promettre « gratuit,
 sans publicité, sans revente de données, et sans intérêt commercial à vous
 retenir ».
 
+**Effet de l'élargissement à 12 ans sur ce tableau (certitude 60 %).** Tant
+que la cible s'arrêtait à 7 ans, FamiTeam n'affrontait aucun de ces
+concurrents sur leur cœur de cible. En montant à 12 ans, il chevauche
+désormais **OurHome** (pensé 8-14) et **NeatKid** (5-8). Deux lectures, et
+elles jouent en sens contraire :
+
+- *À notre avantage* : sur cette tranche, les concurrents sont soit datés et
+  anglophones (OurHome), soit franchement transactionnels — NeatKid paie les
+  corvées en argent de poche, ce qui est l'exact opposé de la doctrine de
+  FamiTeam. Un parent qui refuse de monnayer l'entraide n'a, à notre
+  connaissance, aucune option francophone.
+- *À notre désavantage* : c'est aussi la tranche où l'enfant commence à juger
+  ce qu'on lui propose. L'univers de récompense (avatar à chapeaux, cartes
+  d'animaux, décompte « en dodos », confettis) a été dessiné pour des petits.
+  **Le risque qu'un enfant de 10-12 ans le trouve « bébé » est réel et non
+  mesuré.** C'est le premier point à vérifier auprès d'une famille réelle
+  avant d'investir quoi que ce soit dans l'acquisition sur cette tranche.
+
 ### 2.3 Ce qui distingue réellement FamiTeam
 
 1. **Réparer plutôt que punir** — aucun concurrent n'en fait un principe.
-2. **La tranche 2-7 ans**, avec affichage imagé pour les non-lecteurs.
-3. **Double boucle** avatar (individuel) et écosystème (collectif).
+2. **La tranche 3-12 ans en un seul outil** : affichage imagé pour les
+   non-lecteurs chez les petits, missions d'initiative chez les grands. Une
+   famille n'a pas à changer d'application quand l'aîné grandit — et une
+   fratrie de 4 et 11 ans tient dans la même app, chacun à son niveau.
+3. **Double boucle** : l'avatar et l'écosystème sont **individuels** (chaque
+   enfant a les siens) ; les **cartes FamiTeam** sont le seul dispositif
+   **collectif**, où les Cœurs de la fratrie se mettent en commun.
 4. **Web, pas magasin d'applications** : mise à jour instantanée, aucune
    commission. Contrepartie : la découverte ne profite pas des stores — d'où
    les chantiers Prescripteurs.

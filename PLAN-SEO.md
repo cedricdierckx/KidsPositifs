@@ -133,7 +133,7 @@ vraie recherche et pas seulement à une envie d'écrire :
 - « Faut-il donner de l'argent de poche contre les tâches ménagères ? »
   (répond directement à la faiblesse de NeatKid citée en § 2.2 de
   `PLAN-COMMERCIAL.md`)
-- « Routine du soir 2-7 ans : ce qui marche vraiment »
+- « Routine du soir 3-12 ans : ce qui marche vraiment »
 - « Comment gérer une crise à l'épicerie sans céder ni punir »
 
 Méthode : un seul article à la fois, jamais deux en chantier (règle du § 0.3
@@ -170,7 +170,7 @@ rentables à l'heure investie.
 
 - **Le `<h1>` de la page d'accueil** (`js/auth.js`, ligne 1378) affiche
   « FamiTeam » plutôt qu'une phrase descriptive. Le remplacer par quelque
-  chose comme « FamiTeam — une ambiance positive en famille, 2 à 7 ans »
+  chose comme « FamiTeam — une ambiance positive en famille, 3 à 12 ans »
   aiderait Google **et** clarifierait immédiatement le site pour un visiteur
   qui ne connaît pas le nom — mais c'est un choix de **rédaction et
   d'identité visuelle**, à répercuter dans les quatre langues (`i18n.*.js`),

@@ -2523,7 +2523,7 @@ function consigneClaudeCode(liste) {
   return `Voici les retours reçus des familles utilisatrices de FamiTeam et pas encore traités.
 
 CONTEXTE DU PROJET
-- Application web familiale (2-7 ans), parentalité positive : on encourage, on répare, on ne punit jamais.
+- Application web familiale (3-12 ans), parentalité positive : on encourage, on répare, on ne punit jamais.
 - Projet personnel non marchand : gratuit, sans publicité, sans revente de données, hébergement européen.
   Les frais sont couverts par des dons ; ce n'est pas une activité professionnelle.
 - Une heure de développement par semaine : chaque ajout doit se justifier par son rapport valeur/temps.
@@ -4619,8 +4619,8 @@ function blocCartesSurprises(enf) {
           <span class="cs-prix">${t("cs.debloquee")}</span></div>
         ${jauge}
         <p class="cs-activite">${echapper(activite)}</p>`;
-      // Décompte : pour un enfant de 2 à 7 ans, « dans 3 dodos » veut dire
-      // quelque chose ; une date, non. Tant qu'aucun jour n'est fixé, on garde
+      // Décompte : pour un jeune enfant, « dans 3 dodos » veut dire quelque
+      // chose ; une date, non. Tant qu'aucun jour n'est fixé, on garde
       // l'invitation à le faire — mais sans jamais l'annoncer à l'enfant.
       const jRdv = joursAvantCarte(c);
       if (jRdv !== null) {
@@ -4766,7 +4766,12 @@ function blocRendezVousCarte(c) {
   </div>`;
 }
 
-// Décompte en « dodos » : c'est l'unité de temps d'un enfant de 2 à 7 ans.
+// Décompte en « dodos » : c'est l'unité de temps d'un JEUNE enfant.
+// À revoir depuis l'élargissement de la cible à 12 ans : ce libellé n'est PAS
+// filtré par estJeune(), donc un enfant de 11 ans lit « dans 3 dodos » comme
+// un enfant de 4. Voir PLAN-COMMERCIAL.md § 2.2 (risque « bébé » sur le haut
+// de la tranche) — le correctif demande de faire descendre l'enfant jusqu'ici,
+// plus quatre traductions d'une variante « dans 3 jours ».
 function texteDecompteCarte(j) {
   if (j < 0) return t("cs.rdv_passe");
   if (j === 0) return t("cs.rdv_aujourdhui");
