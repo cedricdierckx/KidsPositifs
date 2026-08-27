@@ -4623,13 +4623,14 @@ function blocCartesSurprises(enf) {
           <span class="cs-prix">${t("cs.debloquee")}</span></div>
         ${jauge}
         <p class="cs-activite">${echapper(activite)}</p>`;
-      // Décompte : pour un jeune enfant, « dans 3 dodos » veut dire quelque
-      // chose ; une date, non. Tant qu'aucun jour n'est fixé, on garde
-      // l'invitation à le faire — mais sans jamais l'annoncer à l'enfant.
+      // Décompte : « dans 3 dodos » chez les petits, « dans 3 jours » dès que
+      // l'enfant lit un calendrier (voir texteDecompteCarte). Tant qu'aucun
+      // jour n'est fixé, on garde l'invitation à le faire — mais sans jamais
+      // l'annoncer à l'enfant.
       const jRdv = joursAvantCarte(c);
       if (jRdv !== null) {
         html += `<p class="cs-rdv${jRdv <= 1 && jRdv >= 0 ? " proche" : ""}">
-          ${jRdv < 0 ? "🎈" : "📅"} ${texteDecompteCarte(jRdv)}
+          ${jRdv < 0 ? "🎈" : "📅"} ${texteDecompteCarte(jRdv, estJeune(enf))}
           <small>${jourLisible(c.prevueLe, true)}${c.prevueHeure ? " · " + echapper(c.prevueHeure) : ""}</small></p>`;
       } else {
         html += `<p class="cs-afaire">${t("cs.a_faire")}</p>`;
@@ -4770,17 +4771,23 @@ function blocRendezVousCarte(c) {
   </div>`;
 }
 
-// Décompte en « dodos » : c'est l'unité de temps d'un JEUNE enfant.
-// À revoir depuis l'élargissement de la cible à 12 ans : ce libellé n'est PAS
-// filtré par estJeune(), donc un enfant de 11 ans lit « dans 3 dodos » comme
-// un enfant de 4. Voir PLAN-COMMERCIAL.md § 2.2 (risque « bébé » sur le haut
-// de la tranche) — le correctif demande de faire descendre l'enfant jusqu'ici,
-// plus quatre traductions d'une variante « dans 3 jours ».
-function texteDecompteCarte(j) {
+// Décompte avant une carte gagnée.
+//
+// « Dans 3 dodos » est l'unité de temps d'un JEUNE enfant : à 4 ans, une date
+// ne veut rien dire, un nombre de nuits si. Passé 7-8 ans, c'est l'inverse —
+// l'enfant lit un calendrier, et « dodos » sonne bébé, ce qui suffit à lui
+// faire décrocher de l'app (voir PLAN-COMMERCIAL.md § 2.2). D'où le second
+// paramètre : le libellé enfantin ne sort QUE si l'enfant qui regarde est
+// jeune au sens de estJeune() — seuil réglable par les parents.
+//
+// `jeune` vaut false par défaut, et c'est voulu : les deux autres appelants
+// sont des écrans PARENTS (bloc parents, modale de date), où « dans 3 jours »
+// est de toute façon la bonne formulation.
+function texteDecompteCarte(j, jeune) {
   if (j < 0) return t("cs.rdv_passe");
   if (j === 0) return t("cs.rdv_aujourdhui");
   if (j === 1) return t("cs.rdv_demain");
-  return t("cs.rdv_dans", { n: j });
+  return t(jeune ? "cs.rdv_dans" : "cs.rdv_dans_j", { n: j });
 }
 
 // Envoi vers l'agenda : un fichier .ics, que tous les agendas savent ouvrir —

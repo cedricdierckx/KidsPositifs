@@ -140,6 +140,9 @@ function construireContexte(options) {
       reinitCarteSurprise, marquerCarteFaite, deplacerCarteSurprise,
       // badges & divers
       verifierBadges, acheterOption, estDebloque, age, ageDepuis,
+      // seuil d'affichage imagé : décide aussi du registre du décompte
+      // (« dans 3 dodos » chez les petits, « dans 3 jours » chez les grands)
+      estJeune, seuilVisuel,
       // humour (touches bon enfant, désactivables)
       humourActif, messageVide, blagueDuJour, MESSAGES_VIDES, avisBlague, definirAvisBlague,
       blaguesActivees, blagueDuJourVisible,

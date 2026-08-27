@@ -1013,6 +1013,7 @@ const I18N = {
     "cs.rdv_note": "La date apparaît chez les enfants sous forme de décompte. L'agenda reçoit un événement de 2 h, ou la journée entière si vous ne mettez pas d'heure.",
     "cs.rdv_agenda": "Ajouter à mon agenda",
     "cs.rdv_dans": "Dans {n} dodos !",
+    "cs.rdv_dans_j": "Dans {n} jours !",
     "cs.rdv_demain": "C'est demain !",
     "cs.rdv_aujourdhui": "C'est aujourd'hui ! 🎉",
     "cs.rdv_passe": "C'était prévu — à marquer comme fait",

@@ -3676,8 +3676,52 @@ test("carte surprise : l'interface propose date, agenda et décompte", () => {
   assert.ok(/text\/calendar;charset=utf-8/.test(ui), "le type MIME iCalendar est requis");
   assert.ok(/URL\.revokeObjectURL/.test(ui), "l'URL temporaire doit être libérée");
   // Côté enfant : le décompte remplace l'invitation générique.
-  assert.ok(/joursAvantCarte\(c\)/.test(ui) && /texteDecompteCarte\(jRdv\)/.test(ui),
+  assert.ok(/joursAvantCarte\(c\)/.test(ui) && /texteDecompteCarte\(jRdv,/.test(ui),
     "le décompte doit apparaître sur la carte de l'enfant");
+});
+
+/* ---------- Décompte : « dodos » chez les petits, « jours » chez les grands ----------
+ * Le libellé enfantin donné à un enfant de 11 ans suffit à lui faire trouver
+ * l'app « bébé » — et depuis l'élargissement de la cible à 3-12 ans, ce cas
+ * n'est plus théorique. Ce test verrouille les deux registres.
+ */
+test("carte surprise : « dodos » seulement pour les jeunes, « jours » pour les grands", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const { api } = construireContexte();
+
+  // La variante « jours » existe dans les quatre langues, et interpole le nombre.
+  Object.keys(api.LANGUES).forEach(lg => {
+    const v = api.I18N[lg]["cs.rdv_dans_j"];
+    assert.ok(v, "cs.rdv_dans_j manquant en " + lg);
+    assert.ok(/\{n\}/.test(v), "le nombre de jours doit être interpolé en " + lg);
+  });
+
+  // Les deux registres sont bien DISTINCTS : sans quoi le correctif ne sert à rien.
+  Object.keys(api.LANGUES).forEach(lg =>
+    assert.notStrictEqual(api.I18N[lg]["cs.rdv_dans_j"], api.I18N[lg]["cs.rdv_dans"],
+      "les deux libellés doivent différer en " + lg));
+
+  // Le libellé enfantin est conditionné, jamais servi inconditionnellement.
+  assert.ok(/t\(jeune \? "cs\.rdv_dans" : "cs\.rdv_dans_j", \{ n: j \}\)/.test(ui),
+    "« dodos » doit dépendre du paramètre jeune");
+  // Et c'est bien estJeune() qui décide, sur l'enfant qui REGARDE l'écran.
+  assert.ok(/texteDecompteCarte\(jRdv, estJeune\(enf\)\)/.test(ui),
+    "le choix du registre doit venir de estJeune(enf), pas d'une constante");
+
+  // Les écrans PARENTS (modale de date, bloc parents) restent en « jours » :
+  // aucun des deux ne doit passer un second argument.
+  assert.ok(/texteDecompteCarte\(j\)/.test(ui),
+    "les écrans parents doivent appeler le décompte sans registre enfantin");
+
+  // estJeune s'appuie sur un seuil réglable par les parents (défaut 5 ans) :
+  // un enfant de 4 ans est « jeune », un enfant de 11 ans ne l'est pas.
+  api.familleId = "f"; api.lierEtat(api.etatVierge());
+  const annee = new Date().getFullYear();
+  const petit = { naissance: (annee - 4) + "-01-01" };
+  const grand = { naissance: (annee - 11) + "-01-01" };
+  assert.ok(api.estJeune(petit), "4 ans doit être « jeune »");
+  assert.ok(!api.estJeune(grand), "11 ans ne doit plus être « jeune »");
 });
 
 test("parents : la famille n'a plus de cadre, la boîte à idées descend", () => {

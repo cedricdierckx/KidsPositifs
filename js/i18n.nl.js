@@ -1331,6 +1331,7 @@ Object.assign(I18N.nl, {
   "cs.rdv_note": "Kinderen zien de datum als een aftelling. Je agenda krijgt een gebeurtenis van 2 uur, of een hele dag als je geen uur invult.",
   "cs.rdv_agenda": "Aan mijn agenda toevoegen",
   "cs.rdv_dans": "Over {n} nachtjes!",
+  "cs.rdv_dans_j": "Over {n} dagen!",
   "cs.rdv_demain": "Het is morgen!",
   "cs.rdv_aujourdhui": "Het is vandaag! 🎉",
   "cs.rdv_passe": "Het stond gepland — vink het af",

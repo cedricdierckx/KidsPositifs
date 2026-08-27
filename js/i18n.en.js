@@ -1331,6 +1331,7 @@ Object.assign(I18N.en, {
   "cs.rdv_note": "Children see the date as a countdown. Your calendar gets a 2-hour event, or a whole day if you leave the time empty.",
   "cs.rdv_agenda": "Add to my calendar",
   "cs.rdv_dans": "In {n} sleeps!",
+  "cs.rdv_dans_j": "In {n} days!",
   "cs.rdv_demain": "It's tomorrow!",
   "cs.rdv_aujourdhui": "It's today! 🎉",
   "cs.rdv_passe": "It was planned — mark it as done",

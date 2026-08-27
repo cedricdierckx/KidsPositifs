@@ -4116,6 +4116,9 @@ Object.assign(I18N.fr, {
   "cs.rdv_note": "La date apparaît chez les enfants sous forme de décompte. L'agenda reçoit un événement de 2 h, ou la journée entière si vous ne mettez pas d'heure.",
   "cs.rdv_agenda": "Ajouter à mon agenda",
   "cs.rdv_dans": "Dans {n} dodos !",
+  // Même décompte pour un grand : « dodos » ne se dit plus passé 7-8 ans, et
+  // c'est aussi la formulation lue par les parents (bloc parents, modale).
+  "cs.rdv_dans_j": "Dans {n} jours !",
   "cs.rdv_demain": "C'est demain !",
   "cs.rdv_aujourdhui": "C'est aujourd'hui ! 🎉",
   "cs.rdv_passe": "C'était prévu — à marquer comme fait",
@@ -4130,6 +4133,7 @@ Object.assign(I18N.en, {
   "cs.rdv_note": "Children see the date as a countdown. Your calendar gets a 2-hour event, or a whole day if you leave the time empty.",
   "cs.rdv_agenda": "Add to my calendar",
   "cs.rdv_dans": "In {n} sleeps!",
+  "cs.rdv_dans_j": "In {n} days!",
   "cs.rdv_demain": "It's tomorrow!",
   "cs.rdv_aujourdhui": "It's today! 🎉",
   "cs.rdv_passe": "It was planned — mark it as done",
@@ -4144,6 +4148,7 @@ Object.assign(I18N.nl, {
   "cs.rdv_note": "Kinderen zien de datum als een aftelling. Je agenda krijgt een gebeurtenis van 2 uur, of een hele dag als je geen uur invult.",
   "cs.rdv_agenda": "Aan mijn agenda toevoegen",
   "cs.rdv_dans": "Over {n} nachtjes!",
+  "cs.rdv_dans_j": "Over {n} dagen!",
   "cs.rdv_demain": "Het is morgen!",
   "cs.rdv_aujourdhui": "Het is vandaag! 🎉",
   "cs.rdv_passe": "Het stond gepland — vink het af",
@@ -4158,6 +4163,7 @@ Object.assign(I18N.de, {
   "cs.rdv_note": "Kinder sehen das Datum als Countdown. Dein Kalender bekommt einen 2-Stunden-Termin, oder einen ganzen Tag, wenn du keine Uhrzeit angibst.",
   "cs.rdv_agenda": "Zu meinem Kalender hinzufügen",
   "cs.rdv_dans": "In {n} Mal schlafen!",
+  "cs.rdv_dans_j": "In {n} Tagen!",
   "cs.rdv_demain": "Morgen ist es so weit!",
   "cs.rdv_aujourdhui": "Heute ist es so weit! 🎉",
   "cs.rdv_passe": "War geplant — als erledigt markieren",

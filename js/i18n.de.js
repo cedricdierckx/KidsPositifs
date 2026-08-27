@@ -1331,6 +1331,7 @@ Object.assign(I18N.de, {
   "cs.rdv_note": "Kinder sehen das Datum als Countdown. Dein Kalender bekommt einen 2-Stunden-Termin, oder einen ganzen Tag, wenn du keine Uhrzeit angibst.",
   "cs.rdv_agenda": "Zu meinem Kalender hinzufügen",
   "cs.rdv_dans": "In {n} Mal schlafen!",
+  "cs.rdv_dans_j": "In {n} Tagen!",
   "cs.rdv_demain": "Morgen ist es so weit!",
   "cs.rdv_aujourdhui": "Heute ist es so weit! 🎉",
   "cs.rdv_passe": "War geplant — als erledigt markieren",

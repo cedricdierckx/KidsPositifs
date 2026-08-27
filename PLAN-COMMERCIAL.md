@@ -216,10 +216,20 @@ elles jouent en sens contraire :
   connaissance, aucune option francophone.
 - *À notre désavantage* : c'est aussi la tranche où l'enfant commence à juger
   ce qu'on lui propose. L'univers de récompense (avatar à chapeaux, cartes
-  d'animaux, décompte « en dodos », confettis) a été dessiné pour des petits.
-  **Le risque qu'un enfant de 10-12 ans le trouve « bébé » est réel et non
-  mesuré.** C'est le premier point à vérifier auprès d'une famille réelle
-  avant d'investir quoi que ce soit dans l'acquisition sur cette tranche.
+  d'animaux, confettis) a été dessiné pour des petits. **Le risque qu'un
+  enfant de 10-12 ans le trouve « bébé » est réel et non mesuré.** C'est le
+  premier point à vérifier auprès d'une famille réelle avant d'investir quoi
+  que ce soit dans l'acquisition sur cette tranche.
+
+**Un cas déjà traité, qui donne la mesure du problème.** Le décompte avant
+une activité gagnée s'affichait « Dans 3 dodos ! » — quel que soit l'âge. À
+4 ans c'est la bonne unité (une date ne veut rien dire) ; à 11 ans c'est
+exactement le mot qui fait refermer l'application. Le libellé suit désormais
+le **seuil d'affichage imagé** déjà réglable par les parents (défaut 5 ans) :
+« dodos » en dessous, « jours » au-dessus, dans les quatre langues, et un
+test verrouille les deux registres. Le même examen reste à faire sur
+l'avatar et l'écosystème — mais là, ce n'est plus un libellé à basculer,
+c'est du dessin.
 
 ### 2.3 Ce qui distingue réellement FamiTeam
 
