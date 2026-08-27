@@ -195,11 +195,53 @@ s'éteint aussi vite s'il y a un souci.
 - **Choix du compte forcé** (`prompt=select_account`) : un parent connecté à
   plusieurs comptes Google n'est pas reconnecté en silence avec le mauvais.
 - **App mobile** : Google refuse l'authentification dans une WebView embarquée.
-  Le code demande donc l'URL sans rediriger, et l'ouvre dans le navigateur du
-  système (plugin Capacitor `Browser` s'il est présent, sinon onglet système).
-  Le retour passe par les App Links déjà déclarés pour le lien magique.
-  **Ce chemin n'a pas été essayé sur un appareil réel** — à valider avec la
-  session qui travaille sur le mobile.
+  Le code demande donc l'URL sans rediriger, et l'ouvre dans un onglet Chrome
+  personnalisé (plugin `@capacitor/browser`, mécanisme recommandé par Google
+  et Supabase pour ce cas précis). Le retour passe par les App Links déjà
+  déclarés pour le lien magique ; l'onglet se referme tout seul une fois de
+  retour dans l'app (`fermerNavigateurExterne()`, `js/auth.js`).
+  ⚠️ Essayé sur un appareil réel une première fois avec `@capacitor/browser`
+  absent des dépendances : `ouvrirDehors()` retombait alors sur
+  `window.open(url, "_system")`, et la connexion Google ne revenait jamais
+  dans l'app — elle restait affichée dans Chrome. Dépendance ajoutée.
+  ⚠️ Deuxième essai, dépendance en place cette fois : toujours pas de retour
+  dans l'app. Diagnostic par `adb` (`pm path` + `apksigner verify --print-certs`
+  sur le `.aab` réellement installé depuis Play Store, sur deux pistes
+  distinctes — Interne tests ET Test fermé) : le certificat qui signe l'APK
+  livré par Google Play (`CN=Android, OU=Android, O=Google Inc.`, empreinte
+  `C0:B6:AA:...:87:F5`) ne correspondait à AUCUNE des deux empreintes déjà
+  dans `assetlinks.json` (ni la clé d'upload, ni la clé de signature Play
+  « classique » affichée dans Play Console → Beveiligd met Play →
+  App-ondertekening). Cause exacte non éclaircie avec certitude — peut-être
+  liée à la livraison optimisée par scission (base.apk + splits par langue/
+  densité) — mais le correctif est direct : cette troisième empreinte a été
+  ajoutée à `assetlinks.json` telle quelle. Si un doute revient un jour,
+  refaire ce diagnostic `apksigner` sur l'APK réellement installé plutôt que
+  de se fier aux seules empreintes affichées dans Play Console : les deux
+  peuvent diverger.
+  ⚠️ Troisième essai, cause réelle trouvée : `adb shell pm get-app-links
+  team.fami.app` affichait un code numérique (`1024`) pour fami.team ET
+  famiteam.com au lieu du mot `verified` — jamais vérifiés, quelle que soit
+  la piste ou l'empreinte. Diagnostic confirmé en interrogeant directement
+  l'API Google `digitalassetlinks.googleapis.com/v1/statements:list` (celle
+  qu'Android utilise en interne) : `fami.team` est parfaitement valide, mais
+  `famiteam.com` échoue avec `ERROR_CODE_REDIRECT` — ce domaine redirige
+  entièrement vers fami.team (y compris `/.well-known/assetlinks.json`
+  lui-même), et Google refuse par sécurité de suivre une redirection lors de
+  cette vérification précise. Les deux domaines étant déclarés dans le même
+  `<intent-filter android:autoVerify="true">`, l'échec de famiteam.com
+  empêchait fami.team d'être marqué "verified" à son tour. **Correctif** :
+  famiteam.com retiré du manifeste (`AndroidManifest.xml`) — aucun lien
+  généré par l'app ne pointe vers ce domaine (`HOTE_PUBLIC = fami.team`,
+  `js/auth.js`), il n'a donc rien à faire dans ce bloc. Confirmé en local en
+  forçant l'état de vérification (`adb shell pm set-app-links --package
+  team.fami.app 1 all`) : une fois "verified", le lien revient bien dans
+  l'app — la mécanique de code était donc déjà correcte, seule la
+  vérification de domaine bloquait.
+  ✅ **Confirmé en conditions réelles** : nouvelle release (versionCode 375)
+  publiée sur Test fermé, app désinstallée puis réinstallée depuis Play
+  Store (donc sans le forçage `adb` manuel), connexion Google testée avec
+  succès — retour dans l'app. Le problème est clos.
 
 ## Ce qui a été mis à jour côté conformité
 
