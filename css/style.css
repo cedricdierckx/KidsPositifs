@@ -1320,18 +1320,40 @@ main{max-width:680px; margin:0 auto; padding:14px}
   display:grid; grid-template-columns:1fr; gap:20px; align-items:start}
 /* Ordre sur téléphone : langues, présentation, formulaire, puis le détail.
    On ne demande pas de créer un compte avant d'avoir dit de quoi il s'agit. */
-.landing-langues{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:0}
+.landing-langues{position:relative; display:inline-flex; justify-self:center; margin:0}
 .landing-tete{margin:0}
 .landing-form .code-carte{max-width:none; width:100%; text-align:center; margin:0}
-/* Barre de langues compacte : drapeau + code, une seule ligne même en 320px. */
-.lang-min{display:inline-flex; align-items:center; gap:5px; padding:5px 9px; cursor:pointer;
+/* Menu déroulant de langue : un seul bouton (drapeau + code), replié par
+   défaut — quatre pastilles à la suite prenaient trop de place sur un petit
+   téléphone. Le drapeau frétille un peu au survol, pour rester « fun ». */
+.lang-select{display:inline-flex; align-items:center; gap:6px; padding:6px 12px; cursor:pointer;
   border:2px solid #e3edf5; border-radius:999px; background:#fff; font-family:inherit;
-  font-size:12px; font-weight:800; color:#54616f; letter-spacing:.03em;
-  transition:border-color .15s, background .15s, color .15s}
-.lang-min:hover{border-color:#bcdcf0}
-.lang-min.actif{border-color:#37b985; background:linear-gradient(135deg,#e7faf1,#dff3ff); color:#1d7a52}
-.lang-min .langue-drapeau{display:inline-flex; line-height:0}
-.lang-min .dpx{width:18px; height:13px}
+  font-size:13px; font-weight:800; color:#54616f; letter-spacing:.03em;
+  transition:border-color .15s}
+.lang-select:hover{border-color:#bcdcf0}
+.lang-select:hover .langue-drapeau{animation:fretille .6s ease-in-out}
+.lang-select .lang-fleche{font-size:11px; transition:transform .2s}
+.lang-select[aria-expanded="true"] .lang-fleche{transform:rotate(180deg)}
+.lang-select .langue-drapeau, .lang-opt .langue-drapeau{display:inline-flex; line-height:0}
+.lang-select .dpx, .lang-opt .dpx{width:18px; height:13px}
+.lang-menu{position:absolute; top:calc(100% + 6px); left:50%; transform:translateX(-50%);
+  z-index:20; margin:0; padding:6px; list-style:none; min-width:170px;
+  background:#fff; border:2px solid #e3edf5; border-radius:16px;
+  box-shadow:0 14px 30px rgba(40,70,110,.16);
+  display:flex; flex-direction:column; gap:2px;
+  animation:menu-pop .16s ease-out}
+.lang-menu[hidden]{display:none}
+@keyframes menu-pop{
+  from{opacity:0; transform:translateX(-50%) translateY(-4px) scale(.92)}
+  to{opacity:1; transform:translateX(-50%) translateY(0) scale(1)}
+}
+.lang-opt{display:flex; align-items:center; gap:8px; width:100%; padding:8px 10px; cursor:pointer;
+  border:none; border-radius:10px; background:none; font-family:inherit; font-size:14px;
+  font-weight:700; color:var(--texte); text-align:left}
+.lang-opt:hover{background:#f2f7fb}
+.lang-opt.actif{background:linear-gradient(135deg,#e7faf1,#dff3ff); color:#1d7a52}
+.lang-opt .lang-nom{flex:1}
+.lang-opt .lang-coche{color:#37b985; font-weight:900}
 /* Liens légaux : jamais coupés en plein milieu d'un intitulé. */
 .landing-liens{display:flex; flex-wrap:wrap; justify-content:center; gap:4px 14px; margin-top:14px}
 .landing-liens a{white-space:nowrap}
@@ -1376,7 +1398,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
       "cle     form"
       "corps   form";
   }
-  .landing-langues{grid-area:langues; justify-content:flex-end; margin-bottom:2px}
+  .landing-langues{grid-area:langues; justify-self:end; margin-bottom:2px}
   .landing-tete{grid-area:tete}
   .landing-cle{grid-area:cle}
   .landing-form{grid-area:form; align-self:start; position:sticky; top:24px}
