@@ -4007,23 +4007,31 @@ test("accueil : sur grand écran, le formulaire est en haut, pas centré", () =>
     assert.ok(new RegExp("grid-area:\\s*" + z).test(bloc), "zone non placée : " + z));
 });
 
-test("accueil : la barre de langues reste compacte et accessible", () => {
+test("accueil : la barre de langues est un menu déroulant compact et accessible", () => {
   const fs = require("fs"), path = require("path");
   const auth = fs.readFileSync(path.join(__dirname, "..", "js", "auth.js"), "utf8");
   const css = fs.readFileSync(path.join(__dirname, "..", "css", "style.css"), "utf8");
-  // Codes à deux lettres : quatre langues sur une ligne, même en 320 px.
-  assert.ok(/lang-code">\$\{l\.toUpperCase\(\)\}/.test(auth),
-    "les pastilles doivent porter le code de langue, pas le nom complet");
-  // Le nom complet reste lisible par un lecteur d'écran et au survol.
-  assert.ok(/aria-label="\$\{LANGUES\[l\]\}"/.test(auth), "aria-label manquant");
-  assert.ok(/title="\$\{LANGUES\[l\]\}"/.test(auth), "title manquant");
-  assert.ok(/aria-current="true"/.test(auth), "la langue active doit être annoncée");
-  // La pastille compacte est une classe distincte : le sélecteur de langue de
-  // l'app (Réglages) garde son propre style, plus grand.
-  assert.ok(/\.lang-min\{/.test(css), "la classe compacte doit exister");
+  // Un seul bouton visible (drapeau + code), replié par défaut : plus de
+  // pastilles à la suite qui prenaient toute la largeur sur un téléphone.
+  assert.ok(/id="lang-toggle" class="lang-select"/.test(auth), "le bouton replié est introuvable");
+  assert.ok(/aria-haspopup="listbox"/.test(auth) && /aria-expanded="false"/.test(auth),
+    "le bouton doit s'annoncer comme un menu repliable");
+  assert.ok(/lang-code">\$\{langue\.toUpperCase\(\)\}/.test(auth),
+    "le bouton replié doit porter le code de la langue active");
+  // La liste déroulante porte le nom complet de chaque langue — lisible par
+  // un lecteur d'écran comme au clic, sans avoir à deviner un code à 2 lettres.
+  assert.ok(/role="listbox"/.test(auth) && /role="option"/.test(auth),
+    "la liste doit être annoncée comme telle (listbox/option)");
+  assert.ok(/class="lang-nom">\$\{LANGUES\[l\]\}/.test(auth), "le nom complet doit rester lisible dans la liste");
+  assert.ok(/aria-selected="\$\{l === langue\}"/.test(auth), "la langue active doit être annoncée dans la liste");
+  // Fermeture : clic extérieur (écouteur à usage unique, sans accumulation) et Échap.
+  assert.ok(/\{ once: true \}/.test(auth), "le clic extérieur doit fermer le menu sans laisser d'écouteurs s'accumuler");
+  assert.ok(/e\.key === "Escape"/.test(auth), "Échap doit fermer le menu");
+  // Les classes du nouveau menu existent ; le sélecteur de langue de l'app
+  // (Réglages) garde le sien, plus grand, inchangé.
+  ["\\.lang-select\\{", "\\.lang-menu\\{", "\\.lang-opt\\{"].forEach(motif =>
+    assert.ok(new RegExp(motif).test(css), "classe manquante dans le CSS : " + motif));
   assert.ok(/\.langue-btn\{/.test(css), "le sélecteur de l'app ne doit pas être supprimé");
-  assert.ok(auth.indexOf('querySelectorAll(".lang-min")') > -1,
-    "le gestionnaire de clic doit viser la nouvelle classe");
 });
 
 test("accueil : libellés de la barre et des liens traduits dans les 4 langues", () => {

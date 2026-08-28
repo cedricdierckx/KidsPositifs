@@ -1230,16 +1230,19 @@ function ecranConfig() {
 function ecranAuth() {
   const parrain = localStorage.getItem(PARRAIN_KEY);
   const parrainCode = localStorage.getItem(PARRAIN_CODE_KEY);
-  // Barre de langues compacte : drapeau + code à deux lettres. Quatre langues
-  // tiennent ainsi sur une seule ligne, même sur un petit téléphone — les noms
-  // complets en occupaient trois ou quatre. Le nom entier reste porté par
-  // aria-label et title, pour les lecteurs d'écran et au survol.
-  const boutonsLangue = Object.keys(LANGUES).map(l =>
-    `<button type="button" class="lang-min${l === langue ? " actif" : ""}" data-lang="${l}"
-             aria-label="${LANGUES[l]}" title="${LANGUES[l]}"
-             ${l === langue ? 'aria-current="true"' : ""}>
-       <span class="langue-drapeau">${drapeau(l)}</span><span class="lang-code">${l.toUpperCase()}</span>
-     </button>`).join("");
+  // Menu déroulant compact : un seul bouton visible (drapeau + code de la
+  // langue active) qui ouvre la liste au clic — même quatre pastilles à la
+  // suite prenaient trop de place sur un petit téléphone. Le nom complet de
+  // chaque langue reste lisible dans la liste, pour un lecteur d'écran comme
+  // au clic.
+  const optionsLangue = Object.keys(LANGUES).map(l =>
+    `<li role="option" aria-selected="${l === langue}">
+       <button type="button" class="lang-opt${l === langue ? " actif" : ""}" data-lang="${l}">
+         <span class="langue-drapeau">${drapeau(l)}</span>
+         <span class="lang-nom">${LANGUES[l]}</span>
+         ${l === langue ? '<span class="lang-coche" aria-hidden="true">✓</span>' : ""}
+       </button>
+     </li>`).join("");
 
   const features = [
     ["🎯", t("auth.feat1_t"), t("auth.feat1_d")],
@@ -1258,7 +1261,15 @@ function ecranAuth() {
   document.body.innerHTML = `
     <div class="landing">
       <!-- Barre de langues : une ligne, en haut, hors du flux du texte. -->
-      <nav class="landing-langues" aria-label="${t("auth.langues")}">${boutonsLangue}</nav>
+      <nav class="landing-langues" aria-label="${t("auth.langues")}">
+        <button type="button" id="lang-toggle" class="lang-select"
+                aria-haspopup="listbox" aria-expanded="false" aria-controls="lang-menu">
+          <span class="langue-drapeau">${drapeau(langue)}</span>
+          <span class="lang-code">${langue.toUpperCase()}</span>
+          <span class="lang-fleche" aria-hidden="true">▾</span>
+        </button>
+        <ul id="lang-menu" class="lang-menu" role="listbox" aria-label="${t("auth.langues")}" hidden>${optionsLangue}</ul>
+      </nav>
 
       <!-- Qui nous sommes, en quatre lignes. Sur téléphone, ce bloc précède le
            formulaire : on ne demande pas de créer un compte avant d'avoir dit
@@ -1345,9 +1356,32 @@ function ecranAuth() {
       </section>
     </div>`;
 
-  document.querySelectorAll(".lang-min").forEach(b => {
-    b.onclick = () => { const l = b.dataset.lang; if (l && l !== langue) { definirLangue(l); ecranAuth(); } };
-  });
+  const toggleLangue = document.getElementById("lang-toggle");
+  const menuLangue = document.getElementById("lang-menu");
+  if (toggleLangue && menuLangue) {
+    toggleLangue.onclick = (e) => {
+      e.stopPropagation();
+      const ouvrir = menuLangue.hidden;
+      menuLangue.hidden = !ouvrir;
+      toggleLangue.setAttribute("aria-expanded", String(ouvrir));
+      // Un clic n'importe où ailleurs referme le menu — écouteur à usage
+      // unique, posé seulement à l'ouverture : jamais d'accumulation au fil
+      // des ouvertures/fermetures successives.
+      if (ouvrir) {
+        document.addEventListener("click", () => {
+          menuLangue.hidden = true; toggleLangue.setAttribute("aria-expanded", "false");
+        }, { once: true });
+      }
+    };
+    menuLangue.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        menuLangue.hidden = true; toggleLangue.setAttribute("aria-expanded", "false"); toggleLangue.focus();
+      }
+    });
+    menuLangue.querySelectorAll(".lang-opt").forEach(b => {
+      b.onclick = () => { const l = b.dataset.lang; if (l && l !== langue) { definirLangue(l); ecranAuth(); } };
+    });
+  }
 
   // Bannière personnalisée si on arrive via un lien de parrainage — jeton
   // unique (?parrain=) ou code permanent (?p=), le message est le même.
