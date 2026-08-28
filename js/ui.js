@@ -62,7 +62,7 @@ function demanderPin(opts) {
     <div class="pin-carte">
       <div class="pin-titre">${opts.titre || "🔒 Code PIN"}</div>
       ${opts.sousTitre ? `<div class="pin-sous">${opts.sousTitre}</div>` : ""}
-      <input id="pin-input" type="text" inputmode="numeric" pattern="[0-9]*"
+      <input id="pin-input" type="tel" inputmode="numeric" pattern="[0-9]*"
              name="pin-parent" autocomplete="one-time-code" maxlength="8"
              data-lpignore="true" data-1p-ignore data-form-type="other"
              class="pin-input" placeholder="••••">
