@@ -5398,6 +5398,158 @@ test("feuille papier imprimée (app installée) : le PDF respecte aussi la page 
     "à partir du deuxième enfant, chaque rendu doit démarrer une nouvelle page PDF");
 });
 
+/* ---------- Mode « verrouillage permanent » : cycle fixe de 6 h, sans PIN ----------
+ * Le parent choisit une durée par enfant (ex. 3 min) ; toutes les 6 h, calé
+ * sur l'horloge locale (0 h/6 h/12 h/18 h), tous les budgets repartent à zéro
+ * automatiquement. Le but explicite : le parent ne doit JAMAIS avoir à
+ * déverrouiller l'application lui-même — seule une échappatoire PIN
+ * facultative permet d'accéder aux réglages sans attendre le cycle suivant. */
+test("permanent : le début de cycle est calé sur l'horloge locale (0h/6h/12h/18h)", () => {
+  const { api } = construireContexte();
+  const verifier = (h, m, hAttendu) => {
+    const ts = new Date(2026, 2, 10, h, m, 0, 0).getTime();
+    const debut = api.timerDebutCycle(ts);
+    assert.strictEqual(debut, new Date(2026, 2, 10, hAttendu, 0, 0, 0).getTime(),
+      `à ${h}h${m}, le cycle en cours doit avoir commencé à ${hAttendu}h`);
+  };
+  verifier(0, 45, 0);
+  verifier(5, 59, 0);
+  verifier(6, 0, 6);
+  verifier(13, 47, 12);
+  verifier(18, 0, 18);
+  verifier(23, 59, 18);
+  const debut = new Date(2026, 2, 10, 12, 0, 0, 0).getTime();
+  assert.strictEqual(api.timerFinCycle(debut) - debut, api.TIMER_CYCLE_MS, "un cycle dure exactement 6 h");
+});
+
+test("permanent : démarre automatiquement le décompte de l'enfant actif, sans PIN ni bouton", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  api.definirReglageTimer(3, "permanent");
+  assert.strictEqual(api.timerMode(), "permanent");
+  assert.strictEqual(api.timerEtat.actif, true, "le décompte doit démarrer tout seul, sans demarrerTimer()");
+  assert.strictEqual(api.timerEtat.enfant, api.etat.enfantActif);
+  assert.strictEqual(api.timerEtat.total, 3 * 60000);
+  assert.ok(api.timerEtat.fin > Date.now());
+  assert.strictEqual(api.timerEtat.lance, 0,
+    "le plafond de 6 h (mécanisme distinct, PIN) ne doit jamais s'activer en mode permanent");
+});
+
+test("permanent : un nouveau cycle réinitialise tous les budgets automatiquement, sans PIN", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const e = api.etatVierge();
+  const ids = Object.keys(e.enfants);
+  api.lierEtat(e);
+  api.definirReglageTimer(3, "permanent");
+  ids.forEach(i => { api.timerEtat.restes[i] = 0; });   // plus aucun enfant disponible
+  api.timerEtat.actif = false;
+  api.timerEtat.verrouille = true;
+  // Le cycle mémorisé est celui d'AVANT : on simule le passage au suivant.
+  api.timerEtat.cyclePermanent = api.timerDebutCycle(Date.now()) - api.TIMER_CYCLE_MS;
+  api.ecrireTimer();
+  api.assurerTimerPermanent();
+  assert.strictEqual(api.timerEtat.verrouille, false, "le nouveau cycle doit lever le verrouillage tout seul");
+  assert.strictEqual(api.timerEtat.actif, true, "et relancer directement le décompte de l'enfant actif");
+  assert.strictEqual(api.timerEtat.cyclePermanent, api.timerDebutCycle(Date.now()));
+  ids.forEach(i => assert.ok(api.tempsRestantEnfant(i) > 0, "l'enfant " + i + " doit retrouver son budget"));
+});
+
+test("permanent : un enfant à court de temps peut céder la main à un autre (sans PIN)", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const e = api.etatVierge();
+  const ids = Object.keys(e.enfants);
+  api.lierEtat(e);
+  api.definirReglageTimer(3, "permanent");
+  api.etat.enfantActif = ids[0];
+  api.timerEtat.enfant = ids[0];
+  api.timerEtat.fin = Date.now() - 1;   // le temps de l'enfant actif vient d'expirer
+  api.finDeTempsEnfant();
+  assert.strictEqual(api.timerEtat.choix, true, "d'autres enfants ont du temps : l'écran de choix doit s'afficher");
+  assert.strictEqual(api.timerEtat.verrouille, false);
+  assert.strictEqual(api.tempsRestantEnfant(ids[0]), 0);
+});
+
+test("permanent : plus aucun enfant disponible → verrouillage SANS code PIN", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const e = api.etatVierge();
+  const ids = Object.keys(e.enfants);
+  api.lierEtat(e);
+  api.definirReglageTimer(3, "permanent");
+  ids.forEach(i => { api.timerEtat.restes[i] = 0; });
+  api.timerEtat.enfant = api.etat.enfantActif;
+  api.timerEtat.fin = Date.now() - 1;
+  api.finDeTempsEnfant();
+  assert.strictEqual(api.timerEtat.verrouille, true);
+  assert.strictEqual(api.timerEtat.choix, false);
+  assert.strictEqual(api.timerEtat.actif, false);
+});
+
+test("permanent : le décompte se met en pause tant que l'espace parents est ouvert", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  api.definirReglageTimer(3, "permanent");
+  api.timerEtat.actif = false;
+  api.timerEtat.enfant = null;
+  api.ecrireTimer();
+  api.modeParents = true;
+  api.assurerTimerPermanent();
+  assert.strictEqual(api.timerEtat.actif, false,
+    "aucun décompte ne doit démarrer pendant que le parent consulte les réglages");
+  api.modeParents = false;
+  api.assurerTimerPermanent();
+  assert.strictEqual(api.timerEtat.actif, true, "le décompte reprend dès que le parent quitte les réglages");
+});
+
+test("permanent : l'échappatoire parentale ouvre les réglages sans toucher aux budgets", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  api.definirReglageTimer(3, "permanent");
+  api.timerEtat.verrouille = true;
+  api.timerEtat.actif = false;
+  const restesAvant = JSON.parse(JSON.stringify(api.timerEtat.restes));
+  api.ecrireTimer();
+  api.contournerVerrouPermanent();
+  assert.strictEqual(api.modeParents, true, "l'échappatoire doit ouvrir l'espace parents");
+  assert.strictEqual(api.etat.vue, "reglages");
+  assert.strictEqual(api.timerEtat.verrouille, true,
+    "le verrouillage logique reste actif : seul l'écran plein-écran est masqué côté UI");
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(api.timerEtat.restes)), restesAvant,
+    "l'échappatoire ne doit ni réinitialiser ni entamer les budgets");
+});
+
+test("permanent : changer de mode (vers ou depuis permanent) repart d'un minuteur vierge", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  api.demarrerTimer();
+  assert.strictEqual(api.timerEtat.actif, true);
+  api.definirReglageTimer(3, "permanent");
+  assert.strictEqual(api.timerMode(), "permanent");
+  assert.strictEqual(api.timerEtat.cyclePermanent, api.timerDebutCycle(Date.now()));
+  api.definirReglageTimer(3, "parEnfant");
+  assert.strictEqual(api.timerMode(), "parEnfant");
+  assert.strictEqual(api.timerEtat.actif, false, "sortir du mode permanent ne doit pas laisser un décompte fantôme");
+  assert.strictEqual(api.timerEtat.cyclePermanent, 0);
+});
+
+test("verrouillage permanent : libellés traduits dans les 4 langues", () => {
+  const { api } = construireContexte();
+  const cles = ["timer.mode_permanent", "timer.mode_permanent_note", "timer.enregistrer", "timer.permanent_active",
+    "verrouPerm.titre", "verrouPerm.texte", "verrouPerm.parents", "verrouPerm.attente_h", "verrouPerm.attente_m"];
+  const manquantes = [];
+  Object.keys(api.LANGUES).forEach(lg => cles.forEach(k => {
+    const v = api.I18N[lg][k];
+    if (typeof v !== "string" || !v.length) manquantes.push(lg + " → " + k);
+  }));
+  assert.strictEqual(manquantes.length, 0, manquantes.join(", "));
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async

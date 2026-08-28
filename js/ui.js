@@ -1225,10 +1225,11 @@ function initSquelette() {
   };
   majPastilleInvit();
 
-  // Bouton minuteur de temps d'écran (verrouillage PIN).
+  // Bouton minuteur de temps d'écran (verrouillage PIN, ou permanent).
   const bTimer = document.getElementById("timer-btn");
   if (bTimer) bTimer.onclick = () => {
     if (typeof modeDemo !== "undefined" && modeDemo) { toast("Indisponible en mode démo 🧪", "info"); return; }
+    if (timerMode() === "permanent") { ouvrirReglagesTimerPermanent(); return; }
     if (timerEtat.actif) modaleTimerActif();
     else modaleTimer();
   };
@@ -1516,8 +1517,16 @@ function lancerTuto() {
 
 // Synchronise l'affichage du minuteur avec son état (appelé à chaque rendu).
 function synchroniserTimerUI() {
-  if (timerEtat.verrouille) { afficherVerrou(); return; }
+  // En mode permanent, l'échappatoire parentale (contournerVerrouPermanent)
+  // laisse `verrouille` inchangé — c'est modeParents qui masque l'écran
+  // d'attente le temps que le parent consulte les réglages.
+  if (timerEtat.verrouille && !(timerMode() === "permanent" && modeParents)) {
+    if (timerMode() === "permanent") { masquerVerrou(); afficherVerrouPermanent(); }
+    else { masquerVerrouPermanent(); afficherVerrou(); }
+    return;
+  }
   masquerVerrou();
+  masquerVerrouPermanent();
   if (timerEtat.choix) { afficherChoixEnfant(); masquerBandeauTimer(); majBoutonTimer(); return; }
   masquerChoixEnfant();
   if (!timerEtat.prep) masquerPrep();
@@ -1525,6 +1534,9 @@ function synchroniserTimerUI() {
     if (!timerInterval) lancerTickTimer(); else tickTimer();
   } else {
     masquerBandeauTimer();
+    // Filet de sécurité : en mode permanent l'intervalle ne doit jamais
+    // rester arrêté (c'est lui qui détecte le changement de cycle).
+    if (timerMode() === "permanent" && !timerInterval) lancerTickTimer();
   }
   majBoutonTimer();
 }
@@ -1655,7 +1667,8 @@ function mmss(ms) {
   return m + ":" + String(s % 60).padStart(2, "0");
 }
 
-// Modale de configuration + démarrage du minuteur.
+// Modale de configuration + démarrage du minuteur (ou d'enregistrement pour
+// le mode permanent, qui se (re)lance tout seul sans bouton « Démarrer »).
 function modaleTimer() {
   const ov = el("div", "pin-modal");
   const mode = (typeof timerMode === "function") ? timerMode() : "parEnfant";
@@ -1669,23 +1682,50 @@ function modaleTimer() {
         <input id="tm-duree" type="number" min="1" max="120" inputmode="numeric" value="${duree}">
       </label>
       <div class="timer-modes">
-        <label class="radio-ligne"><input type="radio" name="tm-mode" value="parEnfant" ${mode !== "global" ? "checked" : ""}> ${t("timer.mode_enfant")}</label>
+        <label class="radio-ligne"><input type="radio" name="tm-mode" value="parEnfant" ${mode === "parEnfant" ? "checked" : ""}> ${t("timer.mode_enfant")}</label>
         <label class="radio-ligne"><input type="radio" name="tm-mode" value="global" ${mode === "global" ? "checked" : ""}> ${t("timer.mode_global")}</label>
+        <label class="radio-ligne"><input type="radio" name="tm-mode" value="permanent" ${mode === "permanent" ? "checked" : ""}> ${t("timer.mode_permanent")}</label>
       </div>
+      <p id="tm-permanent-note" class="note timer-avert" style="display:${mode === "permanent" ? "block" : "none"}">${t("timer.mode_permanent_note")}</p>
       ${etat.reglages && etat.reglages.codeParent ? "" : `<p class="note timer-avert">${t("timer.sans_pin")}</p>`}
-      <button id="tm-go" class="gros-bouton planete">${t("timer.demarrer")}</button>
+      <button id="tm-go" class="gros-bouton planete">${mode === "permanent" ? t("timer.enregistrer") : t("timer.demarrer")}</button>
     </div>`;
   document.body.appendChild(ov);
   const fermer = () => ov.remove();
   ov.querySelector(".modale-fermer").onclick = fermer;
   ov.addEventListener("click", e => { if (e.target === ov) fermer(); });
-  ov.querySelector("#tm-go").onclick = () => {
+  const go = ov.querySelector("#tm-go");
+  const note = ov.querySelector("#tm-permanent-note");
+  ov.querySelectorAll('input[name="tm-mode"]').forEach(r => r.addEventListener("change", () => {
+    if (!r.checked) return;
+    go.textContent = r.value === "permanent" ? t("timer.enregistrer") : t("timer.demarrer");
+    note.style.display = r.value === "permanent" ? "block" : "none";
+  }));
+  go.onclick = () => {
     const d = ov.querySelector("#tm-duree").value;
     const m = (ov.querySelector('input[name="tm-mode"]:checked') || {}).value || "parEnfant";
     definirReglageTimer(d, m);
     fermer();
-    demarrerTimer();
+    if (m === "permanent") { rendre(); toast(t("timer.permanent_active"), "info"); }
+    else demarrerTimer();
   };
+}
+
+// Accès (PIN si défini) aux réglages du minuteur quand le mode permanent est
+// actif — pas de bouton « arrêter » distinct : tout se joue dans la modale
+// de configuration, en repassant éventuellement sur un autre mode.
+function ouvrirReglagesTimerPermanent() {
+  if (etat.reglages && etat.reglages.codeParent) {
+    demanderPin({
+      titre: t("timer.arret_titre"), sousTitre: t("timer.arret_pin"),
+      permettreOubli: true,
+      onReset: () => modaleTimer(),
+      onOk: (saisi) => {
+        if (saisi.trim() !== etat.reglages.codeParent) return false;
+        modaleTimer();
+      }
+    });
+  } else modaleTimer();
 }
 
 // Modale quand un minuteur tourne déjà : arrêter (PIN si défini).
@@ -1783,6 +1823,56 @@ function afficherVerrou() {
 function masquerVerrou() {
   const ov = document.getElementById("verrou-ecran");
   if (ov) ov.remove();
+}
+
+// Écran d'attente du mode « verrouillage permanent » : PAS de code PIN — la
+// reprise est automatique au cycle suivant. Une échappatoire PIN (facultative)
+// permet malgré tout aux parents d'accéder aux réglages sans attendre.
+function afficherVerrouPermanent() {
+  if (document.getElementById("verrou-permanent-ecran")) {
+    majAffichageAttentePermanent(Math.max(0, timerFinCycle(timerEtat.cyclePermanent) - Date.now()));
+    return;
+  }
+  masquerBandeauTimer();
+  const ov = el("div", "verrou-ecran");
+  ov.id = "verrou-permanent-ecran";
+  ov.innerHTML = `
+    <div class="verrou-carte">
+      <div class="verrou-emoji">⏳</div>
+      <h2>${t("verrouPerm.titre")}</h2>
+      <p>${t("verrouPerm.texte")}</p>
+      <div id="vp-attente" class="verrou-attente">--:--</div>
+      <button id="vp-parents" class="lien-oubli">${t("verrouPerm.parents")}</button>
+    </div>`;
+  document.body.appendChild(ov);
+  const btn = ov.querySelector("#vp-parents");
+  if (btn) btn.onclick = () => {
+    if (etat.reglages && etat.reglages.codeParent) {
+      demanderPin({
+        titre: t("verrou.pin_titre"),
+        permettreOubli: true,
+        onReset: () => contournerVerrouPermanent(),
+        onOk: (saisi) => {
+          if (saisi.trim() !== etat.reglages.codeParent) return false;
+          contournerVerrouPermanent();
+        }
+      });
+    } else contournerVerrouPermanent();
+  };
+  majAffichageAttentePermanent(Math.max(0, timerFinCycle(timerEtat.cyclePermanent) - Date.now()));
+}
+function masquerVerrouPermanent() {
+  const ov = document.getElementById("verrou-permanent-ecran");
+  if (ov) ov.remove();
+}
+// Met à jour le décompte « nouveau temps dans Xh Ym » de l'écran d'attente.
+function majAffichageAttentePermanent(msRestant) {
+  const cible = document.getElementById("vp-attente");
+  if (!cible) return;
+  const totalMin = Math.max(0, Math.ceil(msRestant / 60000));
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  cible.textContent = h > 0 ? t("verrouPerm.attente_h", { h, m }) : t("verrouPerm.attente_m", { m });
 }
 
 // Met à jour la pastille d'invitation : pastille « qui frétille » quand il
