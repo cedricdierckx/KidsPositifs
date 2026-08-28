@@ -5354,7 +5354,7 @@ test("feuille papier imprimée : la mise en page ne force plus une page presque 
   // partagée par la voie web et la voie native de l'app installée) — pas
   // dans imprimerFeuilleSemaine, qui ne fait plus que choisir entre les deux.
   const bloc = ui.slice(ui.indexOf("function htmlFeuilleSemaine"),
-                        ui.indexOf("function htmlFeuilleSemaine") + 9000);
+                        ui.indexOf("function htmlFeuilleSemaine") + 13000);
 
   assert.ok(!/\.grille\{display:grid/.test(bloc),
     "CSS Grid ne se pagine pas proprement à l'impression sous Chrome : à éviter ici");
@@ -5380,7 +5380,7 @@ test("feuille papier imprimée : une page par enfant, pour distribuer une feuill
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
   const bloc = ui.slice(ui.indexOf("function htmlFeuilleSemaine"),
-                        ui.indexOf("function htmlFeuilleSemaine") + 9000);
+                        ui.indexOf("function htmlFeuilleSemaine") + 13000);
   assert.ok(/\.enfant \+ \.enfant\{[^}]*break-before:page/.test(bloc),
     "chaque enfant à partir du deuxième doit démarrer sur une nouvelle page — "
     + "le premier ne doit pas être concerné, sous peine d'une page blanche en tête");
@@ -5420,7 +5420,7 @@ test("feuille papier imprimée : l'avatar reste à sa taille normale, sans css/s
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
   const bloc = ui.slice(ui.indexOf("function htmlFeuilleSemaine"),
-                        ui.indexOf("function htmlFeuilleSemaine") + 9000);
+                        ui.indexOf("function htmlFeuilleSemaine") + 13000);
   assert.ok(/\.av-vignette\{[^}]*width:\s*24px[^}]*height:\s*24px/.test(bloc),
     "la vignette doit avoir une taille fixe en pixels, sinon le <svg> sans dimensions propres prend sa taille par défaut");
   assert.ok(/\.av-vignette \.av-svg\{[^}]*width:\s*100%[^}]*height:\s*100%/.test(bloc),

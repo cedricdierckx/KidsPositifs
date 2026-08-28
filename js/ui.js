@@ -4352,11 +4352,14 @@ function htmlFeuilleSemaine(mode) {
         else coeursSem += totMission * pointsMission(enf, m);
         if (mode === "jours") {
           lignes += `<tr><td class="m">${nom}</td>` + lettres.map((_, i) => {
+            // Week-end teinté (voir plus bas) : un petit repère visuel et coloré
+            // dans une grille par ailleurs assez austère.
+            const we = i >= 5 ? " we" : "";
             const j = jours[i];
-            if (!missionActiveJour(enf, m, j)) return `<td class="c hors">·</td>`;   // jour non prévu
+            if (!missionActiveJour(enf, m, j)) return `<td class="c hors${we}">·</td>`;   // jour non prévu
             const fait = (enf.journal[j] || {})[m.id] || 0;
-            if (j <= auj && fait) return `<td class="c faite">✓</td>`;               // déjà fait : pré-rempli
-            return `<td class="c">☆</td>`;                                            // à cocher
+            if (j <= auj && fait) return `<td class="c faite${we}">✓</td>`;               // déjà fait : pré-rempli
+            return `<td class="c${we}">☆</td>`;                                            // à cocher
           }).join("") + `</tr>`;
         } else {
           lignes += `<tr><td class="m">${nom}</td><td class="c large">${totMission || ""}</td></tr>`;
@@ -4369,18 +4372,19 @@ function htmlFeuilleSemaine(mode) {
     // rien ne disait alors à qui appartenait la suite du tableau.
     const nomRepete = `<tr class="cat nom-repete"><th colspan="${mode === "jours" ? 8 : 2}">${vignetteEnfant(enf, "mini")} ${echapper(enf.prenom)}</th></tr>`;
     const entete = (mode === "jours")
-      ? `<tr class="head"><th></th>${lettres.map(l => `<th>${l}</th>`).join("")}</tr>`
+      ? `<tr class="head"><th></th>${lettres.map((l, i) => `<th${i >= 5 ? ' class="we"' : ""}>${l}</th>`).join("")}</tr>`
       : `<tr class="head"><th></th><th>${t("papier.total")}</th></tr>`;
     // Auto-évaluation du comportement : pré-remplie pour les jours écoulés.
     const humeur = `<div class="humeur">
         <div class="humeur-t">😊 ${t("papier.humeur")}</div>
         <table class="humeur-tbl">
-          <tr class="head"><th></th>${lettres.map(l => `<th>${l}</th>`).join("")}</tr>
+          <tr class="head"><th></th>${lettres.map((l, i) => `<th${i >= 5 ? ' class="we"' : ""}>${l}</th>`).join("")}</tr>
           <tr><td class="m">${t("papier.humeur_jour")}</td>${lettres.map((_, i) => {
+            const we = i >= 5 ? " we" : "";
             const ev = (enf.autoEval || {})[jours[i]];
             return (ev && jours[i] <= auj)
-              ? `<td class="hc faite">${EMO_EVAL[ev] || ""}</td>`
-              : `<td class="hc">😄 😐 😠</td>`;
+              ? `<td class="hc faite${we}">${EMO_EVAL[ev] || ""}</td>`
+              : `<td class="hc${we}">😄 😐 😠</td>`;
           }).join("")}</tr>
         </table>
       </div>`;
@@ -4388,9 +4392,11 @@ function htmlFeuilleSemaine(mode) {
     const tG = gouttesSem ? `<strong>${gouttesSem}</strong>` : `<span class="trait"></span>`;
     return `<div class="enfant enf-${k}" style="--c:${coul}">
         <h3>${vignetteEnfant(enf, "mini")} ${echapper(enf.prenom)} <span class="stars">★ ★ ★</span></h3>
+        <p class="fun-msg">${t("papier.encourage", { prenom: enf.prenom })}</p>
         <table><thead>${nomRepete}${entete}</thead><tbody>${lignes}</tbody></table>
         ${humeur}
         <div class="totaux">💛 ${t("money.coeurs")} : ${tC}&nbsp;&nbsp; 💧 ${t("money.gouttes")} : ${tG}</div>
+        <div class="bravo">🎉 ${t("papier.bravo")} <span class="sticker-slot" aria-hidden="true"></span></div>
       </div>`;
   };
 
@@ -4447,9 +4453,16 @@ function htmlFeuilleSemaine(mode) {
          suivante — c'est voulu, pour distribuer une feuille par enfant. */
       .enfant + .enfant{break-before:page; page-break-before:always}
       .enfant tr{break-inside:avoid}
-      .enfant h3{margin:0 0 7px;font-size:15px;display:flex;align-items:center;gap:6px;break-after:avoid}
+      .enfant h3{margin:0 0 4px;font-size:17px;display:flex;align-items:center;gap:8px;break-after:avoid}
       .enfant h3 .em{font-size:19px}
-      .enfant h3 .stars{margin-left:auto;color:#f2c200;font-size:13px;letter-spacing:2px}
+      .enfant h3 .stars{margin-left:auto;color:#f2c200;font-size:15px;letter-spacing:2px}
+      /* Un avatar bien plus grand qu'ailleurs dans l'app, en tête de la
+         feuille : c'est la sienne, autant qu'elle se voie ! (le petit
+         format « mini » reste utilisé pour l'en-tête répétée en cas de
+         débordement sur une deuxième page, voir nomRepete plus haut.) */
+      .enfant h3 .av-vignette{width:38px; height:38px; border-radius:12px;
+        box-shadow:0 2px 4px rgba(0,0,0,.2); vertical-align:middle}
+      .fun-msg{margin:0 0 8px; font-size:12px; font-weight:700; color:var(--c); break-after:avoid}
       /* Vignette avatar (voir vignetteEnfant, taille « mini » ici) : ce document
          est autonome — ouvert dans sa propre fenêtre pour l'impression, ou
          capturé hors écran pour le PDF (voir pdfDepuisElement) — et NE CHARGE
@@ -4469,7 +4482,13 @@ function htmlFeuilleSemaine(mode) {
       tr.cat td,tr.cat th{background:var(--c);color:#fff;text-align:left;font-weight:800;font-size:10.5px;border-color:var(--c)}
       tr.nom-repete th{font-size:12px}
       tr.head th{background:#f3f6fa;font-size:10px;width:23px;font-weight:800}
-      td.c{width:23px;height:19px;color:#cfd8e0;font-size:12px} td.c.large{width:62px;color:#fff}
+      /* Week-end teinté : un petit repère de couleur dans une grille par
+         ailleurs assez austère, pour marquer le rythme de la semaine — placé
+         AVANT les règles « faite »/« hors » ci-dessous, qui doivent rester
+         prioritaires quand une case est à la fois cochée et en week-end. */
+      tr.head th.we{background:#ffe9f3}
+      td.c.we, .humeur-tbl td.hc.we{background:#fff6ea}
+      td.c{width:23px;height:19px;color:#cfd8e0;font-size:13px;border-radius:6px} td.c.large{width:62px;color:#fff}
       td.c.hors{background:repeating-linear-gradient(45deg,#f4f4f4,#f4f4f4 3px,#eaeaea 3px,#eaeaea 6px);color:#c8c8c8}
       td.c.faite{background:#e7f7ee;color:#1d7a52;font-weight:800}
       td.hc.faite{background:#eef6ff;font-size:14px}
@@ -4477,6 +4496,12 @@ function htmlFeuilleSemaine(mode) {
       .humeur-tbl td.hc{font-size:11px;letter-spacing:0;white-space:nowrap}
       .totaux{font-size:12px;margin-top:8px;font-weight:700}
       .totaux .trait{display:inline-block;width:46px;border-bottom:2px dotted #9aa7b3}
+      /* Petit rituel « colle ta plus belle étoile » : un cercle en pointillés
+         que l'enfant remplit lui-même (autocollant, dessin) — la feuille ne
+         reste pas qu'une grille à cocher. */
+      .bravo{margin-top:10px;font-size:12px;font-weight:800;color:var(--c);
+        display:flex;align-items:center;gap:8px}
+      .sticker-slot{width:26px;height:26px;border-radius:50%;border:2px dashed var(--c);flex:0 0 auto}
       .pied{margin-top:12px;font-size:10px;color:#8a97a3;text-align:center}
     </style></head><body>
     <div class="tete"><div class="logo">🌟 ${APP_NOM}${famille ? " · " + echapper(famille) : ""}</div><div class="sem">🗓️ ${titreSem}</div></div>
