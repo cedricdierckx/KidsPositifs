@@ -1362,6 +1362,8 @@ Object.assign(I18N.nl, {
   "rituel.r_hebdo": "Eén keer per week (papieren blad)",
   "rituel.heure": "Op welk uur?",
   "rituel.conseil": "Aangeraden: {h}",
+  "rituel.agenda_label": "In welke agenda?",
+  "rituel.agenda_auto": "Automatisch (gekozen door de telefoon)",
   "rituel.ajouter": "📅 In mijn agenda zetten",
   "rituel.ok": "Afspraak klaar. Open het bestand om het aan uw agenda toe te voegen 📅",
   "rituel.ok_app": "Uw agenda opent — u hoeft alleen te bewaren 📅",

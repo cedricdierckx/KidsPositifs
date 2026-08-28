@@ -1362,6 +1362,8 @@ Object.assign(I18N.en, {
   "rituel.r_hebdo": "Once a week (paper sheet)",
   "rituel.heure": "At what time?",
   "rituel.conseil": "Suggested: {h}",
+  "rituel.agenda_label": "Which calendar?",
+  "rituel.agenda_auto": "Automatic (chosen by the phone)",
   "rituel.ajouter": "📅 Add to my calendar",
   "rituel.ok": "Appointment ready. Open the file to add it to your calendar 📅",
   "rituel.ok_app": "Your calendar is opening — just save the event 📅",

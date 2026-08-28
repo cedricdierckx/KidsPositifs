@@ -1044,6 +1044,8 @@ const I18N = {
     "rituel.r_hebdo": "Une fois par semaine (feuille papier)",
     "rituel.heure": "À quelle heure ?",
     "rituel.conseil": "Conseillé : {h}",
+    "rituel.agenda_label": "Dans quel agenda ?",
+    "rituel.agenda_auto": "Automatique (choisi par le téléphone)",
     "rituel.ajouter": "📅 Déposer dans mon agenda",
     "rituel.ok": "Rendez-vous déposé. Ouvrez le fichier pour l'ajouter à votre agenda 📅",
     "rituel.ok_app": "L'agenda s'ouvre — il ne reste qu'à enregistrer 📅",

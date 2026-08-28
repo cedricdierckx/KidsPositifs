@@ -811,24 +811,70 @@ async function pdfDepuisHtmlEtEnvoyer(html, nomFichier, titre) {
  * greffon est absent (app trop ancienne), la fonction rend la main sans
  * rien faire : c'est à l'appelant de retomber sur le fichier.
  */
+// Le seul constat « déjà accordée », sans jamais rien demander — réutilisé
+// par permissionCalendrierEcriture (qui peut demander) et calendriersDisponibles
+// (qui ne doit jamais le faire : lister les agendas n'est pas un geste assez
+// explicite pour justifier une boîte de dialogue système).
+async function permissionCalendrierDejaAcquise(cal, android) {
+  try {
+    if (android) {
+      const deja = await cal.checkAllPermissions();
+      return !!(deja && deja.result
+        && deja.result.readCalendar === "granted" && deja.result.writeCalendar === "granted");
+    }
+    const deja = await cal.checkPermission({ scope: "writeCalendar" });
+    return !!(deja && deja.result === "granted");
+  } catch (e) { return false; }
+}
+
 async function permissionCalendrierEcriture() {
   const cal = greffonNatif("CapacitorCalendar");
   if (!cal) return false;
   const android = window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === "android";
+  if (await permissionCalendrierDejaAcquise(cal, android)) return true;
   try {
     if (android) {
-      const deja = await cal.checkAllPermissions();
-      const jaAcquis = deja && deja.result
-        && deja.result.readCalendar === "granted" && deja.result.writeCalendar === "granted";
-      if (jaAcquis) return true;
       const demande = await cal.requestFullCalendarAccess();
       return !!(demande && demande.result === "granted");
     }
-    const deja = await cal.checkPermission({ scope: "writeCalendar" });
-    if (deja && deja.result === "granted") return true;
     const demande = await cal.requestWriteOnlyCalendarAccess();
     return !!(demande && demande.result === "granted");
   } catch (e) { return false; }
+}
+
+// Sur un téléphone à plusieurs comptes (Gmail, Outlook/Exchange, Samsung…),
+// l'agenda que le système choisit tout seul (le premier marqué « principal »)
+// n'est pas forcément celui que le parent regarde — constaté : un rendez-vous
+// atterri dans un agenda jamais consulté, alors que le parent vit dans
+// Outlook. `calendrierChoisi` (ci-dessous) laisse le parent trancher.
+// C'est un identifiant du SYSTÈME sur CET appareil : il ne veut rien dire sur
+// un autre téléphone, donc stocké en localStorage, jamais dans etat.reglages.
+const CALENDRIER_CHOISI_CLE = "famiteam_calendrier_id";
+
+function calendrierChoisi() {
+  try { return localStorage.getItem(CALENDRIER_CHOISI_CLE) || null; } catch (e) { return null; }
+}
+function choisirCalendrier(id) {
+  try {
+    if (id) localStorage.setItem(CALENDRIER_CHOISI_CLE, id);
+    else localStorage.removeItem(CALENDRIER_CHOISI_CLE);
+  } catch (e) { /* pas grave : le choix se refait, il ne bloque rien */ }
+}
+
+// Liste les agendas du téléphone pour le sélecteur de blocRituelSoir. Ne
+// demande JAMAIS la permission : une simple liste ne vaut pas une boîte de
+// dialogue système. Tant que le parent n'a pas encore utilisé le bouton
+// « Ajouter à mon agenda » au moins une fois (permission pas encore acquise),
+// la liste est vide et aucun sélecteur ne s'affiche — comportement inchangé.
+async function calendriersDisponibles() {
+  const cal = greffonNatif("CapacitorCalendar");
+  if (!cal) return [];
+  const android = window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === "android";
+  if (!(await permissionCalendrierDejaAcquise(cal, android))) return [];
+  try {
+    const r = await cal.listCalendars();
+    return (r && Array.isArray(r.result)) ? r.result : [];
+  } catch (e) { return []; }
 }
 
 /* options : { titre, texte, debutMs, finMs, alarmes?, recurrence?, idExistant? }
@@ -845,6 +891,8 @@ async function ecrireEvenementCalendrier(options) {
     endDate: options.finMs,
     availability: 1   // EventAvailability.FREE : ne rend pas le parent indisponible
   };
+  const idCal = calendrierChoisi();
+  if (idCal) champs.calendarId = idCal;   // sinon : choix automatique du système
   if (Array.isArray(options.alarmes)) champs.alerts = options.alarmes;
   if (options.recurrence) champs.recurrence = options.recurrence;
   try {
@@ -6725,6 +6773,31 @@ function blocRituelSoir() {
   // Le conseil est une aide de champ, pas un paragraphe : il se rapporte à
   // l'heure et n'a pas à peser comme une phrase de plus.
   lH.appendChild(el("small", "champ-aide", t("rituel.conseil", { h: conseillee })));
+
+  // Invisible tant qu'un seul agenda existe sur le téléphone (cas courant) :
+  // rien à choisir, le sélecteur n'ajouterait qu'une ligne inutile.
+  const zoneAgenda = el("div");
+  sec.appendChild(zoneAgenda);
+  (async () => {
+    const cals = await calendriersDisponibles();
+    if (cals.length < 2) return;
+    const lA = el("label", "champ", t("rituel.agenda_label"));
+    const selA = el("select");
+    const actuel = calendrierChoisi();
+    const oAuto = el("option", "", t("rituel.agenda_auto"));
+    oAuto.value = "";
+    if (!actuel) oAuto.selected = true;
+    selA.appendChild(oAuto);
+    cals.forEach(c => {
+      const o = el("option", "", c.accountName ? (c.title + " — " + c.accountName) : c.title);
+      o.value = c.id;
+      if (c.id === actuel) o.selected = true;
+      selA.appendChild(o);
+    });
+    selA.onchange = () => choisirCalendrier(selA.value || null);
+    lA.appendChild(selA);
+    zoneAgenda.appendChild(lA);
+  })();
 
   const b = el("button", "gros-bouton planete", t("rituel.ajouter"));
   b.onclick = async () => {

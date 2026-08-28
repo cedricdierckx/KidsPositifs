@@ -3510,12 +3510,17 @@ test("agenda natif : le calendrier est tenté avant le fichier, avec permission 
   const fs = require("fs"), path = require("path");
   const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
 
+  const pdj = ui.slice(ui.indexOf("async function permissionCalendrierDejaAcquise"),
+                       ui.indexOf("async function permissionCalendrierDejaAcquise") + 600);
+  assert.ok(/readCalendar/.test(pdj) && /writeCalendar/.test(pdj),
+    "le constat « déjà accordée » doit vérifier lecture ET écriture côté Android : createEvent() interroge la liste des agendas pour trouver celui par défaut");
+
   const pc = ui.slice(ui.indexOf("async function permissionCalendrierEcriture"),
-                      ui.indexOf("async function permissionCalendrierEcriture") + 1000);
+                      ui.indexOf("async function permissionCalendrierEcriture") + 600);
   assert.ok(/requestWriteOnlyCalendarAccess/.test(pc),
     "iOS doit se contenter d'une autorisation d'écriture seule");
-  assert.ok(/requestFullCalendarAccess/.test(pc) && /readCalendar/.test(pc),
-    "Android doit aussi demander la lecture : createEvent() interroge la liste des agendas pour trouver celui par défaut");
+  assert.ok(/requestFullCalendarAccess/.test(pc),
+    "Android doit pouvoir demander l'accès complet (lecture + écriture)");
 
   const ec = ui.slice(ui.indexOf("async function ecrireEvenementCalendrier"),
                       ui.indexOf("async function ecrireEvenementCalendrier") + 1400);
@@ -3564,6 +3569,47 @@ test("agenda natif : permissions et dépendance déclarées côté natif", () =>
   assert.ok(/NSCalendarsUsageDescription/.test(plist), "repli iOS 13-16 manquant");
   assert.strictEqual(/NSCalendarsFullAccessUsageDescription/.test(plist), false,
     "aucune clé d'accès complet : FamiTeam ne lit jamais le calendrier");
+});
+
+test("agenda natif : le parent peut choisir l'agenda, sur un téléphone à plusieurs comptes", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+
+  // Un identifiant d'agenda système n'a de sens que sur CET appareil : jamais
+  // dans etat.reglages (synchronisé entre appareils d'une même famille).
+  const cc = ui.slice(ui.indexOf("function calendrierChoisi("),
+                      ui.indexOf("function choisirCalendrier(") + 400);
+  assert.ok(/localStorage/.test(cc), "le choix d'agenda doit vivre en localStorage, propre à l'appareil");
+  assert.ok(!/etat\.reglages/.test(cc), "un identifiant d'agenda système n'a aucun sens sur un autre appareil de la famille");
+
+  // Lister les agendas ne doit jamais déclencher la boîte de dialogue système :
+  // ce n'est pas un geste assez explicite pour la justifier.
+  const cd = ui.slice(ui.indexOf("async function calendriersDisponibles"),
+                      ui.indexOf("async function calendriersDisponibles") + 700);
+  assert.ok(/permissionCalendrierDejaAcquise/.test(cd),
+    "lister les agendas doit se contenter d'un constat, jamais d'une demande");
+  assert.ok(!/requestFullCalendarAccess|requestWriteOnlyCalendarAccess/.test(cd),
+    "calendriersDisponibles ne doit jamais demander la permission elle-même");
+
+  // L'écriture doit utiliser le choix du parent quand il existe.
+  const ec = ui.slice(ui.indexOf("async function ecrireEvenementCalendrier"),
+                      ui.indexOf("async function ecrireEvenementCalendrier") + 1400);
+  assert.ok(/calendrierChoisi\(\)/.test(ec) && /champs\.calendarId/.test(ec),
+    "l'agenda choisi par le parent doit être transmis à la création de l'événement");
+
+  // Le sélecteur ne s'affiche pas quand un seul agenda existe (cas courant),
+  // et ne présume jamais un choix que le parent n'a pas fait lui-même : une
+  // option « automatique » neutre doit rester sélectionnée par défaut.
+  const br = ui.slice(ui.indexOf("function blocRituelSoir("),
+                      ui.indexOf("function blocRituelSoir(") + 4000);
+  assert.ok(/cals\.length < 2\) return/.test(br),
+    "un seul agenda : rien à choisir, le sélecteur ne doit pas s'afficher");
+  assert.ok(/rituel\.agenda_auto/.test(br) && /oAuto\.selected = true/.test(br),
+    "tant que le parent n'a rien choisi, l'option neutre doit rester affichée, jamais un agenda précis présumé");
+
+  Object.keys(construireContexte().api.LANGUES).forEach(lg =>
+    ["rituel.agenda_label", "rituel.agenda_auto"].forEach(cle =>
+      assert.ok(construireContexte().api.I18N[lg][cle], cle + " manquant en " + lg)));
 });
 
 /* ---------- Impression → PDF (app installée) ----------

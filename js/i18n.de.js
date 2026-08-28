@@ -1362,6 +1362,8 @@ Object.assign(I18N.de, {
   "rituel.r_hebdo": "Einmal pro Woche (Papierblatt)",
   "rituel.heure": "Um welche Uhrzeit?",
   "rituel.conseil": "Empfohlen: {h}",
+  "rituel.agenda_label": "In welchem Kalender?",
+  "rituel.agenda_auto": "Automatisch (vom Telefon gewählt)",
   "rituel.ajouter": "📅 In meinen Kalender legen",
   "rituel.ok": "Termin bereit. Öffnen Sie die Datei, um sie Ihrem Kalender hinzuzufügen 📅",
   "rituel.ok_app": "Ihr Kalender öffnet sich — nur noch speichern 📅",
