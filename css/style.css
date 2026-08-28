@@ -149,6 +149,7 @@ body{
 .verrou-carte h2{margin:0 0 8px; color:#27384a}
 .verrou-carte p{margin:0 0 14px; color:#54616f; font-size:15px; line-height:1.5}
 .verrou-carte .gros-bouton{width:100%}
+.verrou-attente{font-size:22px; font-weight:800; color:#f6a623; margin:2px 0 16px}
 
 /* Décompte « prépare-toi » (5 s) après un changement d'enfant */
 .prep-ecran{position:fixed; inset:0; z-index:1000; display:flex; align-items:center;

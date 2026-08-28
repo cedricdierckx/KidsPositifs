@@ -438,6 +438,10 @@ function auRetour() {
   // le retour au premier plan, sans attendre un rechargement complet — sinon
   // un téléphone simplement déverrouillé après la nuit resterait bloqué.
   if (typeof verifierDelaiMaxTimer === "function" && verifierDelaiMaxTimer()) rendre();
+  // Mode verrouillage permanent : un retour au premier plan doit recalculer
+  // le cycle en cours tout de suite (l'appareil a pu rester en veille bien
+  // après un changement de cycle de 6 h, sans qu'aucun tick ne tourne).
+  if (typeof assurerTimerPermanent === "function") { assurerTimerPermanent(); rendre(); }
   // Relit l'état ET rouvre le canal temps réel : celui d'avant la mise en
   // veille est mort, et un canal mort ne rejoue jamais ce qu'on a manqué.
   Store.reprendre();
