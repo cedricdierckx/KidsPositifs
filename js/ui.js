@@ -1017,7 +1017,10 @@ function blocNotificationSoir() {
   grille.appendChild(lH);
   sec.appendChild(grille);
 
-  const b = el("button", "gros-bouton planete", t("notif.appliquer"));
+  const b = el("button", "gros-bouton planete", "");
+  const majLibelleBouton = () => { b.textContent = caseActive.checked ? t("notif.appliquer") : t("notif.desactiver"); };
+  majLibelleBouton();
+  caseActive.addEventListener("change", majLibelleBouton);
   b.onclick = async () => {
     const active = caseActive.checked, heure = inpH.value;
     if (active && !heureValide(heure)) { toast(t("rituel.echec"), "info"); return; }
