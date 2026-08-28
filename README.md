@@ -3,7 +3,7 @@
 > Site : **https://famiteam.com** (alias du déploiement Vercel).
 
 
-Un programme **évolutif et ludique** pour aider les enfants de **2 à 7 ans** à
+Un programme **évolutif et ludique** pour aider les enfants de **3 à 12 ans** à
 adopter des comportements positifs — et à se détourner des négatifs — dans
 l'esprit de la **parentalité positive et bienveillante**.
 

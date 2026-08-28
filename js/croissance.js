@@ -119,7 +119,7 @@ const CROISSANCE_CHANTIERS = [
     but: "Un parent qui arrive comprend en dix secondes et a envie d'essayer.",
     kpi: "Visiteurs → inscription : 8 %",
     etapes: [
-      { id: "c_preuve_1", titre: "Promesse en une phrase", min: 20, detail: "Fait : « Deux minutes par jour, en famille : FamiTeam valorise les comportements positifs des 2-7 ans, sans jamais retirer de points. » Sur la page publique et dans les balises sociales." , fait: true },
+      { id: "c_preuve_1", titre: "Promesse en une phrase", min: 20, detail: "Fait : « Deux minutes par jour, en famille : FamiTeam valorise les comportements positifs des 3-12 ans, sans jamais retirer de points. » Sur la page publique et dans les balises sociales." , fait: true },
       { id: "c_preuve_2", titre: "Trois captures d'écran parlantes", min: 30, detail: "Fait : trois captures réelles (missions de l'enfant, avatar, écran du parent), générées depuis l'état de démonstration, sur la page publique." , fait: true },
       { id: "c_preuve_3", titre: "Recueillir trois témoignages", min: 25, detail: "Prénom, ville, une phrase concrète, accord écrit.", mail: "m_temoignage" },
       { id: "c_preuve_4", titre: "Expliquer « réparer plutôt que punir »", min: 35, detail: "Fait : bloc « Réparer plutôt que punir » sur la page publique, en mots simples, avec un lien vers la FAQ." , fait: true },
@@ -177,7 +177,7 @@ const CROISSANCE_CHANTIERS = [
       // Aucun nom de marque tierce n'est cité ici, volontairement : le plan
       // est un document interne, mais il reste un écrit. On décrit les
       // critères, la liste nominative se tient à part.
-      { id: "c_communaute_1", titre: "Dresser la liste des cinq destinataires", min: 20, detail: "Critères : francophone ou néerlandophone, lu par des parents de 2-7 ans, entre 5 000 et 40 000 abonnés (au-delà, la boîte est saturée et le pitch devient payant), et qui écrit déjà sur les alternatives à la punition. Priorité aux voix belges : elles ont un intérêt local à parler d'un projet belge. Prendre l'adresse de contact sur leur site : cinq suffisent, quinze diluent." },
+      { id: "c_communaute_1", titre: "Dresser la liste des cinq destinataires", min: 20, detail: "Critères : francophone ou néerlandophone, lu par des parents de 3-12 ans, entre 5 000 et 40 000 abonnés (au-delà, la boîte est saturée et le pitch devient payant), et qui écrit déjà sur les alternatives à la punition. Priorité aux voix belges : elles ont un intérêt local à parler d'un projet belge. Prendre l'adresse de contact sur leur site : cinq suffisent, quinze diluent." },
       { id: "c_communaute_2", titre: "Envoyer les cinq e-mails", min: 25, detail: "Le modèle est écrit : ne restent que le prénom et une phrase propre à chacun (ce qu'on a aimé chez lui). Un envoi groupé n'obtient jamais de réponse.", mail: "m_influence" },
       { id: "c_communaute_3", titre: "Relancer une seule fois, à quinze jours", min: 15, detail: "Une relance courte, puis on laisse tranquille. Le silence est une réponse.", mail: "m_influence_relance" },
       { id: "c_communaute_4", titre: "Repérer d'où viennent les familles", min: 5, detail: "Chaque destinataire reçoit un lien marqué (?src=). L'origine des inscriptions s'affiche dans les chiffres du moment : on voit qui a réellement amené des familles." },
@@ -254,7 +254,7 @@ const CROISSANCE_CHANTIERS = [
     kpi: "5 professionnels prescripteurs",
     etapes: [
       { id: "c_pros_1", titre: "Note d'une page fondée sur la recherche", min: 60, detail: "Renforcement positif, réparation, budget d'attention par âge, sources citées." },
-      { id: "c_pros_2", titre: "Contacter cinq praticiens", min: 35, detail: "Priorité aux psychologues et logopèdes qui suivent des 2-7 ans.", mail: "m_pro_sante" },
+      { id: "c_pros_2", titre: "Contacter cinq praticiens", min: 35, detail: "Priorité aux psychologues et logopèdes qui suivent des 3-12 ans.", mail: "m_pro_sante" },
       { id: "c_pros_3", titre: "Déposer des dépliants", min: 30, detail: "Salle d'attente : le parent a le temps de lire." },
       { id: "c_pros_4", titre: "Obtenir un avis professionnel citable", min: 25, detail: "Une citation nominative sur la page publique, avec accord écrit." },
       { id: "c_pros_5", titre: "Entretenir deux relations, pas dix", min: 15, detail: "Un message par trimestre à ceux qui recommandent vraiment." }
@@ -434,7 +434,7 @@ Vous vous étiez inscrit·e sur la liste d'attente de FamiTeam. Votre place est 
 
 {lien_invitation}
 
-FamiTeam aide les enfants de 2 à 7 ans à adopter des comportements positifs, dans l'esprit de la parentalité bienveillante : on encourage, on répare, on ne punit pas. C'est gratuit, sans publicité, et vos données restent en Europe.
+FamiTeam aide les enfants de 3 à 12 ans à adopter des comportements positifs, dans l'esprit de la parentalité bienveillante : on encourage, on répare, on ne punit pas. C'est gratuit, sans publicité, et vos données restent en Europe.
 
 Les accès s'ouvrent par petites vagues, pour que chaque famille démarre dans de bonnes conditions. Tout se règle depuis l'app, et les questions fréquentes sont rassemblées sur famiteam.com/faq.html
 
@@ -460,7 +460,7 @@ FamiTeam`
 
 Cela fait quelques semaines que votre famille utilise FamiTeam. Merci — vous faites partie des premières familles, celles qui façonnent l'app.
 
-Si vous connaissez une famille avec des enfants de 2 à 7 ans qui galère sur les routines du soir, vous pouvez lui offrir un accès : la pastille 🎁 en haut à gauche de l'app affiche le code de votre famille, avec son lien et son QR code. Le même lien sert autant de fois que vous voulez, gratuitement.
+Si vous connaissez une famille avec des enfants de 3 à 12 ans qui galère sur les routines du soir, vous pouvez lui offrir un accès : la pastille 🎁 en haut à gauche de l'app affiche le code de votre famille, avec son lien et son QR code. Le même lien sert autant de fois que vous voulez, gratuitement.
 
 C'est la seule façon dont FamiTeam se fait connaître : pas de publicité, pas de budget, juste des parents qui en parlent à d'autres parents.
 
@@ -503,10 +503,10 @@ FamiTeam`
   {
     id: "m_influence", titre: "Blog / compte parentalité", dest: "Blog ou compte francophone de parentalité positive",
     quand: "Chantier Contacts choisis, en nom personnel, jamais en envoi groupé",
-    sujet: "Test honnête de FamiTeam — parentalité positive, 2-7 ans",
+    sujet: "Test honnête de FamiTeam — parentalité positive, 3-12 ans",
     corps: `Bonjour {prenom},
 
-Je suis {qui}, papa en Belgique. J'ai créé FamiTeam pour mes propres enfants, sur mon temps libre : une app où l'on encourage les comportements positifs des 2-7 ans sans jamais punir — quand quelque chose se passe mal, l'enfant répare, et c'est la réparation qui est récompensée.
+Je suis {qui}, papa en Belgique. J'ai créé FamiTeam pour mes propres enfants, sur mon temps libre : une app où l'on encourage les comportements positifs des 3-12 ans sans jamais punir — quand quelque chose se passe mal, l'enfant répare, et c'est la réparation qui est récompensée.
 
 Je vous écris parce que {raison_precise}.
 
@@ -560,12 +560,12 @@ FamiTeam — {lien}`
   {
     id: "m_presse", titre: "Pitch presse", dest: "Journaliste rubrique famille / éducation",
     quand: "Chantier Presse, jamais en envoi groupé",
-    sujet: "Réparer plutôt que punir : une app belge gratuite pour les 2-7 ans",
+    sujet: "Réparer plutôt que punir : une app belge gratuite pour les 3-12 ans",
     corps: `Bonjour {prenom},
 
 J'ai lu votre article « {article} » et c'est pour cela que je vous écris plutôt qu'à la rédaction en général.
 
-Je suis {qui}, papa en Belgique. J'ai construit FamiTeam sur mon temps libre : une application familiale gratuite pour les enfants de 2 à 7 ans, avec un parti pris qui va à l'encontre des tableaux de récompenses classiques : aucun point n'est jamais retiré. Quand un incident survient (une dispute, un objet cassé), l'enfant choisit un geste de réparation — et c'est ce geste qui est récompensé.
+Je suis {qui}, papa en Belgique. J'ai construit FamiTeam sur mon temps libre : une application familiale gratuite pour les enfants de 3 à 12 ans, avec un parti pris qui va à l'encontre des tableaux de récompenses classiques : aucun point n'est jamais retiré. Quand un incident survient (une dispute, un objet cassé), l'enfant choisit un geste de réparation — et c'est ce geste qui est récompensé.
 
 Deux angles qui peuvent vous intéresser :
 — La punition mesurée contre la réparation : ce que dit la recherche en parentalité positive, et à quoi cela ressemble dans une app utilisée deux minutes par jour.
@@ -597,7 +597,7 @@ FamiTeam — {lien}`
     sujet: "Outil gratuit de parentalité positive pour les familles de votre école",
     corps: `Madame, Monsieur,
 
-Je suis {qui}, parent {lien_ecole}. J'ai créé sur mon temps libre FamiTeam, une application familiale gratuite qui aide les enfants de 2 à 7 ans à adopter des comportements positifs à la maison : entraide, autonomie, respect du vivant.
+Je suis {qui}, parent {lien_ecole}. J'ai créé sur mon temps libre FamiTeam, une application familiale gratuite qui aide les enfants de 3 à 12 ans à adopter des comportements positifs à la maison : entraide, autonomie, respect du vivant.
 
 Le principe tient en une phrase : on ne retire jamais de points ; quand quelque chose se passe mal, l'enfant répare et c'est la réparation qui est valorisée.
 
@@ -616,10 +616,10 @@ Je reste à votre disposition pour un appel de dix minutes.
   {
     id: "m_creche", titre: "Prise de contact crèche / extrascolaire", dest: "Responsable de milieu d'accueil",
     quand: "Chantier Crèches",
-    sujet: "Outil gratuit pour les parents : encourager sans punir (2-7 ans)",
+    sujet: "Outil gratuit pour les parents : encourager sans punir (3-12 ans)",
     corps: `Bonjour,
 
-Je suis {qui}, papa. J'ai développé sur mon temps libre FamiTeam, une application familiale gratuite pour les enfants de 2 à 7 ans, fondée sur le renforcement positif : on encourage, on répare, on ne punit pas.
+Je suis {qui}, papa. J'ai développé sur mon temps libre FamiTeam, une application familiale gratuite pour les enfants de 3 à 12 ans, fondée sur le renforcement positif : on encourage, on répare, on ne punit pas.
 
 Je vous propose simplement de la faire connaître aux parents de votre structure : une affiche avec un QR code en salle d'attente, ou un dépliant. Aucune contrepartie, aucune publicité, aucune revente de données — l'app est gratuite pour toutes les familles.
 
@@ -631,10 +631,10 @@ Si un atelier parents de 45 minutes vous intéresse (« encourager sans punir : 
   {
     id: "m_pro_sante", titre: "Professionnel de l'enfance", dest: "Pédiatre, psychologue, logopède, coach parental",
     quand: "Chantier Professionnels",
-    sujet: "Support gratuit pour les familles que vous accompagnez (2-7 ans)",
+    sujet: "Support gratuit pour les familles que vous accompagnez (3-12 ans)",
     corps: `Bonjour Docteur / Madame / Monsieur,
 
-Je suis {qui}, papa, et j'ai construit sur mon temps libre FamiTeam, un outil familial gratuit pour les 2-7 ans, fondé sur le renforcement positif : les comportements souhaités sont valorisés, aucun point n'est jamais retiré, et les incidents se règlent par un geste de réparation.
+Je suis {qui}, papa, et j'ai construit sur mon temps libre FamiTeam, un outil familial gratuit pour les 3-12 ans, fondé sur le renforcement positif : les comportements souhaités sont valorisés, aucun point n'est jamais retiré, et les incidents se règlent par un geste de réparation.
 
 Je vous joins une note d'une page sur les principes retenus et leurs sources. Je serais heureux d'avoir votre regard critique : si quelque chose vous paraît discutable sur le plan du développement de l'enfant, je veux le savoir et le corriger.
 
@@ -650,7 +650,7 @@ Avec mes respectueuses salutations,
     sujet: "Avantage membre « parentalité positive » — proposition de partenariat",
     corps: `Bonjour {prenom},
 
-Je suis {qui}, à l'origine de FamiTeam, une application familiale belge pour les enfants de 2 à 7 ans, centrée sur la parentalité positive : encourager, réparer, ne pas punir.
+Je suis {qui}, à l'origine de FamiTeam, une application familiale belge pour les enfants de 3 à 12 ans, centrée sur la parentalité positive : encourager, réparer, ne pas punir.
 
 Votre catalogue d'avantages membres comporte déjà {avantage_existant}. Je propose de le compléter par un avantage numérique à coût maîtrisé pour vous et à valeur immédiate pour vos affiliés, avec un code dédié permettant de mesurer l'usage réel.
 
@@ -669,7 +669,7 @@ Puis-je vous présenter cela en vingt minutes, en visioconférence ?
 
 Les fins de journée sont le moment le plus difficile pour les parents de jeunes enfants, et cela se voit au travail le lendemain.
 
-FamiTeam est une application familiale belge pour les enfants de 2 à 7 ans : deux minutes par soir, en famille, pour valoriser les comportements positifs sans punir. Je propose aux employeurs un accès pour leurs collaborateurs parents, sans aucune donnée personnelle transmise à l'entreprise, sans installation et sans compte à administrer — un simple code d'activation.
+FamiTeam est une application familiale belge pour les enfants de 3 à 12 ans : deux minutes par soir, en famille, pour valoriser les comportements positifs sans punir. Je propose aux employeurs un accès pour leurs collaborateurs parents, sans aucune donnée personnelle transmise à l'entreprise, sans installation et sans compte à administrer — un simple code d'activation.
 
 Un pilote de trois mois sur un service volontaire vous permettrait de juger sur pièces. Puis-je vous en parler vingt minutes ?
 
@@ -682,7 +682,7 @@ Un pilote de trois mois sur un service volontaire vous permettrait de juger sur 
     sujet: "Votre sortie comme récompense familiale dans FamiTeam",
     corps: `Bonjour,
 
-FamiTeam est une application familiale belge gratuite où les enfants de 2 à 7 ans gagnent, par leurs efforts du quotidien, des « cartes FamiTeam » : des sorties en famille que les parents débloquent avec eux.
+FamiTeam est une application familiale belge gratuite où les enfants de 3 à 12 ans gagnent, par leurs efforts du quotidien, des « cartes FamiTeam » : des sorties en famille que les parents débloquent avec eux.
 
 Je cherche des lieux comme {lieu} pour devenir ces récompenses. Le principe : votre sortie apparaît comme objectif d'équipe pour les familles de la région ; en échange, vous proposez un avantage famille (réduction, entrée offerte pour un enfant, atelier). Aucun flux financier entre nous, aucune commission.
 
@@ -699,7 +699,7 @@ Puis-je vous appeler cette semaine ?
     sujet: "Demande d'avis — développement d'une application familiale gratuite sur temps libre",
     corps: `Madame, Monsieur,
 
-Je développe sur mon temps libre, depuis {date_debut}, une application familiale gratuite destinée aux enfants de 2 à 7 ans (parentalité positive). Elle est aujourd'hui utilisée par {familles} familles.
+Je développe sur mon temps libre, depuis {date_debut}, une application familiale gratuite destinée aux enfants de 3 à 12 ans (parentalité positive). Elle est aujourd'hui utilisée par {familles} familles.
 
 Le projet n'a aucune finalité lucrative : l'accès est gratuit, il n'y a ni publicité, ni revente de données, ni abonnement. Les frais techniques, de l'ordre de {couts} par an, sont supportés personnellement ; la seule recette envisagée serait un bouton de don destiné à les couvrir.
 
@@ -721,7 +721,7 @@ Je vous prie d'agréer, Madame, Monsieur, l'expression de ma considération dist
     sujet: "Reprendre FamiTeam ?",
     corps: `Bonjour {prenom},
 
-FamiTeam est une application familiale gratuite pour les enfants de 2 à 7 ans, que j'ai développée sur mon temps libre. Elle fonctionne, elle est utilisée par {familles} familles, elle est traduite en quatre langues et hébergée en Europe.
+FamiTeam est une application familiale gratuite pour les enfants de 3 à 12 ans, que j'ai développée sur mon temps libre. Elle fonctionne, elle est utilisée par {familles} familles, elle est traduite en quatre langues et hébergée en Europe.
 
 Je ne peux pas — et ne souhaite pas — en faire une activité professionnelle. Plutôt que de la laisser s'éteindre faute de temps, je préfère chercher qui pourrait la reprendre et lui donner la suite qu'elle mérite.
 

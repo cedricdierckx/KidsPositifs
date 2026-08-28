@@ -48,7 +48,7 @@ et le présent registre est tenu.
 |---|---|
 | Finalité | Faire fonctionner l'application : afficher les missions adaptées à l'âge, l'avatar et les progrès |
 | Base légale | Consentement du titulaire de l'autorité parentale — art. 6.1.a, lu avec l'art. 8 |
-| Personnes concernées | Enfants de 2 à 7 ans, dont les profils sont créés et gérés par leur parent |
+| Personnes concernées | Enfants de 3 à 12 ans, dont les profils sont créés et gérés par leur parent |
 | Catégories de données | Prénom **ou surnom** au choix du parent ; **mois et année de naissance** (le jour n'est jamais demandé) ; sexe (détermine la coiffure par défaut de l'avatar) ; apparence de l'avatar ; couleur ; missions cochées, points et récompenses |
 | Données **non** collectées | Nom de famille, photo, adresse, coordonnées de l'enfant, données de santé, géolocalisation, identifiants publicitaires |
 | Destinataires | Supabase (sous-traitant). Aucune communication à des tiers |
