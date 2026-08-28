@@ -5406,6 +5406,27 @@ test("feuille papier imprimée (app installée) : le PDF respecte aussi la page 
     "à partir du deuxième enfant, chaque rendu doit démarrer une nouvelle page PDF");
 });
 
+test("feuille papier imprimée : l'avatar reste à sa taille normale, sans css/style.css", () => {
+  // htmlFeuilleSemaine() produit un document HTML AUTONOME (fenêtre à part
+  // pour l'impression navigateur, conteneur hors écran pour le PDF de l'app
+  // installée) : css/style.css n'y est jamais chargé. Sans les règles
+  // .av-vignette dans son PROPRE <style>, le <svg> de l'avatar (un simple
+  // viewBox, sans largeur/hauteur propres) se rend à sa taille par défaut du
+  // navigateur — un avatar énorme qui gonfle chaque carte bien au-delà d'une
+  // page A4, cassant du même coup la pagination « une page par enfant ».
+  // Constaté en rendu réel (Chromium headless, print-to-pdf) : sans cette
+  // règle, une famille de 4 enfants ne produisait qu'UNE SEULE page PDF (le
+  // contenu débordant, aplati) au lieu de 4.
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const bloc = ui.slice(ui.indexOf("function htmlFeuilleSemaine"),
+                        ui.indexOf("function htmlFeuilleSemaine") + 9000);
+  assert.ok(/\.av-vignette\{[^}]*width:\s*24px[^}]*height:\s*24px/.test(bloc),
+    "la vignette doit avoir une taille fixe en pixels, sinon le <svg> sans dimensions propres prend sa taille par défaut");
+  assert.ok(/\.av-vignette \.av-svg\{[^}]*width:\s*100%[^}]*height:\s*100%/.test(bloc),
+    "le <svg> intérieur doit être contraint à 100% de la vignette");
+});
+
 /* ---------- Mode « verrouillage permanent » : cycle fixe de 6 h, sans PIN ----------
  * Le parent choisit une durée par enfant (ex. 3 min) ; toutes les 6 h, calé
  * sur l'horloge locale (0 h/6 h/12 h/18 h), tous les budgets repartent à zéro

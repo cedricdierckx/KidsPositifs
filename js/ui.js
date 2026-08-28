@@ -4450,6 +4450,19 @@ function htmlFeuilleSemaine(mode) {
       .enfant h3{margin:0 0 7px;font-size:15px;display:flex;align-items:center;gap:6px;break-after:avoid}
       .enfant h3 .em{font-size:19px}
       .enfant h3 .stars{margin-left:auto;color:#f2c200;font-size:13px;letter-spacing:2px}
+      /* Vignette avatar (voir vignetteEnfant, taille « mini » ici) : ce document
+         est autonome — ouvert dans sa propre fenêtre pour l'impression, ou
+         capturé hors écran pour le PDF (voir pdfDepuisElement) — et NE CHARGE
+         PAS css/style.css, où ces règles vivent normalement. Sans elles, le
+         <svg> de l'avatar (qui n'a qu'un viewBox, aucune taille propre) se
+         rendait à sa taille par défaut du navigateur — un avatar énorme,
+         gonflant chaque carte bien au-delà d'une page A4 et cassant du même
+         coup la pagination « une page par enfant » juste au-dessus. */
+      .av-vignette{width:24px; height:24px; display:inline-block; border-radius:7px;
+        overflow:hidden; background:#fff; vertical-align:-6px; flex:0 0 auto}
+      .av-vignette .av-svg{width:100%; height:100%; display:block}
+      .av-vignette.initiale{display:inline-flex; align-items:center; justify-content:center;
+        background:var(--c,#5b8def); color:#fff; font-weight:900; font-size:12px}
       table{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
       th,td{border:1px solid #e0e6ec;padding:3px 4px;text-align:center}
       td.m{text-align:left;font-size:10.5px;line-height:1.2} td.m small{color:#9aa7b3}
