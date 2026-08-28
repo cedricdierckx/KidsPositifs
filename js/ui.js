@@ -731,20 +731,61 @@ function chargerLibsImpression() {
 
 // Rend un élément DÉJÀ DANS LE DOM (visible ou non) en PDF A4 portrait,
 // réparti sur plusieurs pages si le contenu dépasse une page. Renvoie un Blob.
+//
+// html2canvas aplatit tout en une seule image : il ignore complètement les
+// sauts de page CSS (`.enfant + .enfant{break-before:page}` de
+// htmlFeuilleSemaine, pensés pour l'impression NAVIGATEUR — inutilisable
+// dans la WebView, voir imprimerFeuilleSemaine). Un simple découpage par
+// hauteur de page fixe, sans égard au contenu, coupait donc les cartes
+// n'importe où, à cheval sur deux enfants. Quand l'élément contient
+// plusieurs `.enfant`, chacun est donc rendu À PART (tête et pied masqués
+// sauf sur le premier / dernier), chacun sur ses propres pages — jamais
+// partagées avec le suivant.
 async function pdfDepuisElement(element) {
   await chargerLibsImpression();
-  const canvas = await window.html2canvas(element, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const pageW = pdf.internal.pageSize.getWidth(), pageH = pdf.internal.pageSize.getHeight();
-  const imgW = pageW, imgH = (canvas.height * imgW) / canvas.width;
-  const donnees = canvas.toDataURL("image/jpeg", 0.92);
-  pdf.addImage(donnees, "JPEG", 0, 0, imgW, imgH);
-  // Une seule grande image, redécoupée à chaque page par un décalage négatif :
-  // plus simple et plus fidèle qu'une pagination du contenu HTML d'origine.
-  for (let y = pageH; y < imgH; y += pageH) {
-    pdf.addPage();
-    pdf.addImage(donnees, "JPEG", 0, -y, imgW, imgH);
+
+  const ajouterCanvas = (canvas, nouvellePage) => {
+    const imgW = pageW, imgH = (canvas.height * imgW) / canvas.width;
+    const donnees = canvas.toDataURL("image/jpeg", 0.92);
+    if (nouvellePage) pdf.addPage();
+    pdf.addImage(donnees, "JPEG", 0, 0, imgW, imgH);
+    // Un seul enfant trop long pour une page se poursuit sur ses propres
+    // pages, redécoupé par décalage négatif — jamais mêlé au suivant.
+    for (let y = pageH; y < imgH; y += pageH) {
+      pdf.addPage();
+      pdf.addImage(donnees, "JPEG", 0, -y, imgW, imgH);
+    }
+  };
+
+  const enfants = element.querySelectorAll ? Array.from(element.querySelectorAll(".enfant")) : [];
+  if (enfants.length < 2) {
+    // Rien à répartir : un seul bloc (ou aucun — carte d'ami, dépliant) —
+    // comportement inchangé, un seul rendu de l'élément entier.
+    ajouterCanvas(await window.html2canvas(element, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }), false);
+    return pdf.output("blob");
+  }
+
+  const tete = element.querySelector(".tete"), intro = element.querySelector(".intro"),
+        pied = element.querySelector(".pied");
+  const masquer = (n) => { const av = n.style.display; n.style.display = "none"; return av; };
+
+  for (let i = 0; i < enfants.length; i++) {
+    const dernier = i === enfants.length - 1;
+    const avTete = (i !== 0 && tete) ? masquer(tete) : null;
+    const avIntro = (i !== 0 && intro) ? masquer(intro) : null;
+    const avPied = (!dernier && pied) ? masquer(pied) : null;
+    const avEnfants = enfants.map((e, j) => (j !== i) ? masquer(e) : null);
+    try {
+      ajouterCanvas(await window.html2canvas(element, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }), i > 0);
+    } finally {
+      if (i !== 0 && tete) tete.style.display = avTete;
+      if (i !== 0 && intro) intro.style.display = avIntro;
+      if (!dernier && pied) pied.style.display = avPied;
+      enfants.forEach((e, j) => { if (j !== i) e.style.display = avEnfants[j]; });
+    }
   }
   return pdf.output("blob");
 }

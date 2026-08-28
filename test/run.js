@@ -5378,6 +5378,26 @@ test("feuille papier imprimée : une page par enfant, pour distribuer une feuill
     + "le premier ne doit pas être concerné, sous peine d'une page blanche en tête");
 });
 
+test("feuille papier imprimée (app installée) : le PDF respecte aussi la page par enfant", () => {
+  // La règle CSS ci-dessus ne vaut que pour l'impression NAVIGATEUR : dans
+  // l'app installée, un vrai PDF est construit via html2canvas, qui aplatit
+  // tout en une seule image et ignore totalement les sauts de page CSS.
+  // Sans traitement dédié, les cartes des enfants étaient coupées n'importe
+  // où — constaté en conditions réelles (aperçu d'impression Android).
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const pd = ui.slice(ui.indexOf("async function pdfDepuisElement"),
+                      ui.indexOf("async function pdfDepuisElement") + 3000);
+  assert.ok(/querySelectorAll\(["']\.enfant["']\)/.test(pd),
+    "le PDF doit repérer les enfants pour les répartir un par un, pas les traiter comme un seul bloc");
+  assert.ok(/enfants\.length < 2/.test(pd),
+    "un seul enfant (cas courant) doit garder le rendu simple, sans découpage inutile");
+  assert.ok(/j !== i.*masquer\(e\)|\(j !== i\) \? masquer/.test(pd),
+    "chaque rendu ne doit montrer qu'UN SEUL enfant à la fois — sinon deux enfants pourraient encore partager une image");
+  assert.ok(/,\s*i > 0\)/.test(pd),
+    "à partir du deuxième enfant, chaque rendu doit démarrer une nouvelle page PDF");
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async
