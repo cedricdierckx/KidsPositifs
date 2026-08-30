@@ -243,7 +243,7 @@ const I18N = {
     "arbre.titre": "🌳 L'Arbre des familles",
     "arbre.modale_titre": "🌳 Inviter une famille amie",
     "arbre.modale_note": "<strong>Lien permanent</strong> : à partager par message, sur le groupe de l'école, ou avec le QR code.",
-    "arbre.code_label": "Le code de ta famille",
+    "arbre.code_label": "Code de parrainage de ta famille",
     "arbre.qr_note": "À montrer ou à imprimer : un parent le scanne, et il arrive directement chez toi. 🌳",
     "arbre.partage": "Chaque famille qui arrive fait pousser une branche de plus. 💛",
     "arbre.attente": "Préparation de ton code…",

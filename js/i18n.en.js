@@ -216,7 +216,7 @@ Object.assign(I18N.en, {
   "arbre.titre": "🌳 The Family Tree",
   "arbre.modale_titre": "🌳 Invite a friend family",
   "arbre.modale_note": "<strong>Permanent link</strong>: share it by message, in the school group chat, or with the QR code.",
-  "arbre.code_label": "Your family code",
+  "arbre.code_label": "Your family's referral code",
   "arbre.qr_note": "Show it or print it: a parent scans it and lands straight at your place. 🌳",
   "arbre.partage": "Every family that arrives grows one more branch. 💛",
   "arbre.attente": "Preparing your code…",
