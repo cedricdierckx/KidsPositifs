@@ -140,6 +140,9 @@ function construireContexte(options) {
       reinitCarteSurprise, marquerCarteFaite, deplacerCarteSurprise,
       // badges & divers
       verifierBadges, acheterOption, estDebloque, age, ageDepuis,
+      // seuil d'affichage imagé : décide aussi du registre du décompte
+      // (« dans 3 dodos » chez les petits, « dans 3 jours » chez les grands)
+      estJeune, seuilVisuel,
       // humour (touches bon enfant, désactivables)
       humourActif, messageVide, blagueDuJour, MESSAGES_VIDES, avisBlague, definirAvisBlague,
       blaguesActivees, blagueDuJourVisible,
@@ -174,6 +177,10 @@ function construireContexte(options) {
       timerDureeMin, timerMode, definirReglageTimer, demarrerTimer, arreterTimer,
       timerDepasseDelaiMax, verifierDelaiMaxTimer, TIMER_DELAI_MAX_MS,
       continuerAvecEnfant, ajouterTempsEnfant, ajouterTempsGlobal, tempsRestantEnfant,
+      // mode « verrouillage permanent » : cycle fixe de 6 h, sans PIN
+      TIMER_CYCLE_MS, timerDebutCycle, timerFinCycle, assurerCyclePermanent, assurerTimerPermanent,
+      verrouillerAppPermanent, contournerVerrouPermanent, restesDisponibles, finDeTempsEnfant,
+      get modeParents() { return modeParents; }, set modeParents(v) { modeParents = v; },
     };
   `;
   const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/croissance.js"), lire("js/qr.js"), lire("js/app.js"), lire("js/store.js"), epilogue].join("\n;\n");

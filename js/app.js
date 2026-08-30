@@ -164,10 +164,22 @@ const PREP_MS = 5000;
 // verrouillage oublié (téléphone laissé de côté pour la nuit) restait actif
 // indéfiniment au lieu de se réinitialiser tout seul.
 const TIMER_DELAI_MAX_MS = 6 * 60 * 60 * 1000;
-let timerEtat = { actif: false, fin: 0, total: 0, enfant: null, restes: {}, prep: 0, choix: false, verrouille: false, lance: 0 };
+// Mode « verrouillage permanent » : cycle fixe de 6 h calé sur l'horloge
+// locale (00 h/06 h/12 h/18 h). À chaque nouveau cycle, tous les budgets par
+// enfant repartent à zéro automatiquement — sans code PIN — de sorte que le
+// parent n'a jamais besoin de déverrouiller l'application lui-même.
+const TIMER_CYCLE_MS = 6 * 60 * 60 * 1000;
+let timerEtat = { actif: false, fin: 0, total: 0, enfant: null, restes: {}, prep: 0, choix: false, verrouille: false, lance: 0, cyclePermanent: 0 };
 let timerInterval = null;
 function cleTimer() { return STORAGE_KEY + ":timer:" + (familleId || "_local"); }
-function timerVierge() { return { actif: false, fin: 0, total: 0, enfant: null, restes: {}, prep: 0, choix: false, verrouille: false, lance: 0 }; }
+function timerVierge() { return { actif: false, fin: 0, total: 0, enfant: null, restes: {}, prep: 0, choix: false, verrouille: false, lance: 0, cyclePermanent: 0 }; }
+// Horodatage (ms) du début du cycle de 6 h en cours (heure locale), et de sa fin.
+function timerDebutCycle(ts) {
+  const d = new Date(ts);
+  d.setHours(d.getHours() - (d.getHours() % 6), 0, 0, 0);
+  return d.getTime();
+}
+function timerFinCycle(debutCycle) { return debutCycle + TIMER_CYCLE_MS; }
 // Vrai si le minuteur (dans n'importe quel sous-état) tourne depuis plus de
 // TIMER_DELAI_MAX_MS. `lance` n'est jamais touché par les ajouts de temps ni
 // les changements d'enfant : c'est bien le lancement d'ORIGINE qui compte.
@@ -197,6 +209,8 @@ function chargerTimer() {
   if (!timerEtat.restes || typeof timerEtat.restes !== "object") timerEtat.restes = {};
   if (typeof timerEtat.prep !== "number") timerEtat.prep = 0;
   if (typeof timerEtat.lance !== "number") timerEtat.lance = 0;   // anciens minuteurs (avant ce plafond)
+  if (typeof timerEtat.cyclePermanent !== "number") timerEtat.cyclePermanent = 0;
+  if (timerMode() === "permanent") { lancerTickTimer(); return; }   // orchestré par assurerTimerPermanent()
   if (verifierDelaiMaxTimer()) return;   // priorité au plafond de 6 h
   // Le minuteur a expiré pendant l'absence (onglet fermé).
   if (timerEtat.actif && timerEtat.fin && Date.now() >= timerEtat.fin) {
@@ -210,14 +224,29 @@ function timerDureeMin() {
   return (typeof m === "number" && m > 0) ? m : 3;
 }
 function timerMode() {
-  return (etat.reglages && etat.reglages.timerMode === "global") ? "global" : "parEnfant";
+  const m = etat.reglages && etat.reglages.timerMode;
+  return (m === "global" || m === "permanent") ? m : "parEnfant";
 }
 function definirReglageTimer(duree, mode) {
   if (!etat.reglages) etat.reglages = {};
+  const modeAvant = etat.reglages.timerMode;
   const d = Math.max(1, Math.min(120, parseInt(duree, 10) || 3));
+  const modeApres = (mode === "global") ? "global" : (mode === "permanent") ? "permanent" : "parEnfant";
   etat.reglages.timerDuree = d;
-  etat.reglages.timerMode = (mode === "global") ? "global" : "parEnfant";
+  etat.reglages.timerMode = modeApres;
   sauver();
+  // Un changement DE ou VERS le mode permanent repart d'un minuteur vierge :
+  // les états (verrouillage, décompte, choix) des autres modes n'ont pas de
+  // sens une fois le mode changé.
+  if (modeApres !== modeAvant && (modeApres === "permanent" || modeAvant === "permanent")) {
+    timerEtat = timerVierge();
+    stopTickTimer();
+    ecrireTimer();
+    if (typeof masquerVerrou === "function") masquerVerrou();
+    if (typeof masquerVerrouPermanent === "function") masquerVerrouPermanent();
+    if (typeof masquerChoixEnfant === "function") masquerChoixEnfant();
+  }
+  if (modeApres === "permanent") lancerTickTimer();
 }
 
 function demarrerTimer() {
@@ -246,7 +275,18 @@ function lancerTickTimer() {
 }
 function stopTickTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
 function tickTimer() {
-  if (!timerEtat.actif) { stopTickTimer(); return; }
+  if (timerMode() === "permanent") {
+    assurerTimerPermanent();
+    if (!timerEtat.actif) {
+      // Verrouillé ou en attente d'un choix : rien à décompter pour l'instant,
+      // mais on NE COUPE PAS l'intervalle — c'est lui qui détecte le
+      // changement de cycle (toutes les 6 h) et relance tout seul, sans PIN.
+      if (timerEtat.verrouille && typeof majAffichageAttentePermanent === "function") {
+        majAffichageAttentePermanent(Math.max(0, timerFinCycle(timerEtat.cyclePermanent) - Date.now()));
+      }
+      return;
+    }
+  } else if (!timerEtat.actif) { stopTickTimer(); return; }
   if (verifierDelaiMaxTimer()) { rendre(); return; }   // plafond de 6 h dépassé
   // Phase « prépare-toi » : décompte de 5 s avant de (re)lancer le minuteur.
   if (timerEtat.prep) {
@@ -276,7 +316,8 @@ function tickTimer() {
 function finDeTempsEnfant() {
   stopTickTimer();
   timerEtat.actif = false;
-  if (timerMode() === "parEnfant") {
+  const mode = timerMode();
+  if (mode === "parEnfant" || mode === "permanent") {
     if (timerEtat.enfant) timerEtat.restes[timerEtat.enfant] = 0;   // budget épuisé
     if (restesDisponibles().length > 0) {
       timerEtat.choix = true;
@@ -286,7 +327,8 @@ function finDeTempsEnfant() {
     }
   }
   ecrireTimer();
-  verrouillerApp();
+  if (mode === "permanent") verrouillerAppPermanent();
+  else verrouillerApp();
 }
 
 // Liste des enfants (objets) ayant encore du temps disponible (mode par enfant).
@@ -344,7 +386,9 @@ function continuerAvecEnfant(id) {
 // on mémorise le temps restant de l'enfant qui sort, et on reprend (sans
 // réinitialiser) le temps restant de l'enfant qui entre.
 function timerSurChangementEnfant() {
-  if (!timerEtat.actif || timerEtat.choix || timerMode() !== "parEnfant") return;
+  if (!timerEtat.actif || timerEtat.choix) return;
+  const mode = timerMode();
+  if (mode !== "parEnfant" && mode !== "permanent") return;
   const enf = enfantActif();
   const id = enf ? enf.id : null;
   if (id && id !== timerEtat.enfant) {
@@ -375,6 +419,63 @@ function deverrouillerApp() {
   if (typeof masquerVerrou === "function") masquerVerrou();
   if (typeof masquerChoixEnfant === "function") masquerChoixEnfant();
   rendre();
+}
+
+// --- Mode « verrouillage permanent » -----------------------------------
+// Verrouille SANS code PIN : la reprise n'est pas un déverrouillage manuel,
+// elle survient automatiquement au cycle suivant (voir assurerTimerPermanent).
+// L'intervalle est délibérément relancé : c'est lui qui fait vivre le
+// décompte « nouveau temps dans Xh Ym » et détecte le changement de cycle.
+function verrouillerAppPermanent() {
+  timerEtat.verrouille = true;
+  timerEtat.choix = false;
+  ecrireTimer();
+  modeParents = false;
+  if (typeof afficherVerrouPermanent === "function") afficherVerrouPermanent();
+  lancerTickTimer();
+}
+// Échappatoire parentale (PIN) depuis l'écran d'attente permanent : ouvre
+// l'espace parents SANS toucher aux budgets ni interrompre le cycle en
+// cours. Le verrouillage permanent reprend normalement dès que les parents
+// quittent les réglages (assurerTimerPermanent se met en pause tant que
+// modeParents est actif).
+function contournerVerrouPermanent() {
+  if (typeof masquerVerrouPermanent === "function") masquerVerrouPermanent();
+  etat.vue = "reglages";   // atterrit directement dans l'espace parents, comme depuis la barre de nav
+  if (typeof debuterSessionModeParents === "function") debuterSessionModeParents();
+  else { modeParents = true; rendre(); }
+}
+// Réinitialise tous les budgets dès qu'on entre dans un nouveau cycle de 6 h
+// (calé sur l'horloge locale). Appelé à chaque tick en mode permanent.
+function assurerCyclePermanent() {
+  const debut = timerDebutCycle(Date.now());
+  if (timerEtat.cyclePermanent !== debut) {
+    timerEtat = timerVierge();
+    timerEtat.cyclePermanent = debut;
+    ecrireTimer();
+  }
+}
+// Orchestrateur du mode permanent : démarre/poursuit automatiquement le
+// décompte de l'enfant actif, sans aucune action manuelle du parent. Mis en
+// pause tant que l'espace parents est ouvert (modeParents), pour ne pas
+// décompter le temps d'un enfant pendant que le parent consulte les réglages.
+function assurerTimerPermanent() {
+  if (timerMode() !== "permanent") return;
+  assurerCyclePermanent();
+  if (modeParents) return;
+  if (timerEtat.choix || timerEtat.verrouille) return;
+  const enf = enfantActif();
+  const id = enf ? enf.id : null;
+  if (!id) return;
+  if (timerEtat.actif) { timerSurChangementEnfant(); return; }
+  if (tempsRestantEnfant(id) <= 0) { finDeTempsEnfant(); return; }
+  timerEtat.enfant = id;
+  timerEtat.restes[id] = tempsRestantEnfant(id);
+  timerEtat.total = timerDureeMin() * 60000;
+  timerEtat.actif = true;
+  timerEtat.fin = Date.now() + timerEtat.restes[id];
+  timerEtat.prep = 0;
+  ecrireTimer();
 }
 
 function etatVierge() {

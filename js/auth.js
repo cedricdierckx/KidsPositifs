@@ -438,6 +438,10 @@ function auRetour() {
   // le retour au premier plan, sans attendre un rechargement complet — sinon
   // un téléphone simplement déverrouillé après la nuit resterait bloqué.
   if (typeof verifierDelaiMaxTimer === "function" && verifierDelaiMaxTimer()) rendre();
+  // Mode verrouillage permanent : un retour au premier plan doit recalculer
+  // le cycle en cours tout de suite (l'appareil a pu rester en veille bien
+  // après un changement de cycle de 6 h, sans qu'aucun tick ne tourne).
+  if (typeof assurerTimerPermanent === "function") { assurerTimerPermanent(); rendre(); }
   // Relit l'état ET rouvre le canal temps réel : celui d'avant la mise en
   // veille est mort, et un canal mort ne rejoue jamais ce qu'on a manqué.
   Store.reprendre();
@@ -504,6 +508,9 @@ function initDeepLinkAuth() {
   app.addListener("appUrlOpen", async ({ url }) => {
     const jetons = analyserJetonsAuthDepuisUrl(url);
     if (!jetons) return;   // lien d'invitation/parrainage ordinaire : rien à faire ici
+    // L'onglet Chrome (ouvert par ouvrirDehors pour la connexion Google) reste
+    // sinon affiché par-dessus l'app une fois de retour ici.
+    fermerNavigateurExterne();
     const { error } = await sb.auth.setSession(jetons);
     if (error) return;
     if (jetons.type === "recovery") ecranNouveauMdp();
@@ -543,6 +550,18 @@ function ouvrirDehors(url) {
     if (nav && typeof nav.open === "function") { nav.open({ url }); return true; }
   } catch (e) { /* on retombe sur l'ouverture standard */ }
   try { window.open(url, "_system"); return true; } catch (e) { return false; }
+}
+
+// Referme l'onglet ouvert par ouvrirDehors, une fois la connexion Google
+// revenue dans l'app. Sans le greffon Browser (repli "_system" ci-dessus),
+// il n'y a rien a fermer : le navigateur systeme gere lui-meme son propre
+// premier plan, donc on ne fait rien plutot que de risquer une erreur.
+function fermerNavigateurExterne() {
+  try {
+    const cap = (typeof window !== "undefined") ? window.Capacitor : null;
+    const nav = cap && cap.Plugins && cap.Plugins.Browser;
+    if (nav && typeof nav.close === "function") nav.close();
+  } catch (e) { /* pas grave : l'onglet reste ouvert, rien de plus */ }
 }
 
 // Par quel moyen la session courante a-t-elle ete ouverte ? "email", "google"…
@@ -1340,16 +1359,19 @@ function ecranConfig() {
 function ecranAuth() {
   const parrain = localStorage.getItem(PARRAIN_KEY);
   const parrainCode = localStorage.getItem(PARRAIN_CODE_KEY);
-  // Barre de langues compacte : drapeau + code à deux lettres. Quatre langues
-  // tiennent ainsi sur une seule ligne, même sur un petit téléphone — les noms
-  // complets en occupaient trois ou quatre. Le nom entier reste porté par
-  // aria-label et title, pour les lecteurs d'écran et au survol.
-  const boutonsLangue = Object.keys(LANGUES).map(l =>
-    `<button type="button" class="lang-min${l === langue ? " actif" : ""}" data-lang="${l}"
-             aria-label="${LANGUES[l]}" title="${LANGUES[l]}"
-             ${l === langue ? 'aria-current="true"' : ""}>
-       <span class="langue-drapeau">${drapeau(l)}</span><span class="lang-code">${l.toUpperCase()}</span>
-     </button>`).join("");
+  // Menu déroulant compact : un seul bouton visible (drapeau + code de la
+  // langue active) qui ouvre la liste au clic — même quatre pastilles à la
+  // suite prenaient trop de place sur un petit téléphone. Le nom complet de
+  // chaque langue reste lisible dans la liste, pour un lecteur d'écran comme
+  // au clic.
+  const optionsLangue = Object.keys(LANGUES).map(l =>
+    `<li role="option" aria-selected="${l === langue}">
+       <button type="button" class="lang-opt${l === langue ? " actif" : ""}" data-lang="${l}">
+         <span class="langue-drapeau">${drapeau(l)}</span>
+         <span class="lang-nom">${LANGUES[l]}</span>
+         ${l === langue ? '<span class="lang-coche" aria-hidden="true">✓</span>' : ""}
+       </button>
+     </li>`).join("");
 
   const features = [
     ["🎯", t("auth.feat1_t"), t("auth.feat1_d")],
@@ -1368,7 +1390,15 @@ function ecranAuth() {
   document.body.innerHTML = `
     <div class="landing">
       <!-- Barre de langues : une ligne, en haut, hors du flux du texte. -->
-      <nav class="landing-langues" aria-label="${t("auth.langues")}">${boutonsLangue}</nav>
+      <nav class="landing-langues" aria-label="${t("auth.langues")}">
+        <button type="button" id="lang-toggle" class="lang-select"
+                aria-haspopup="listbox" aria-expanded="false" aria-controls="lang-menu">
+          <span class="langue-drapeau">${drapeau(langue)}</span>
+          <span class="lang-code">${langue.toUpperCase()}</span>
+          <span class="lang-fleche" aria-hidden="true">▾</span>
+        </button>
+        <ul id="lang-menu" class="lang-menu" role="listbox" aria-label="${t("auth.langues")}" hidden>${optionsLangue}</ul>
+      </nav>
 
       <!-- Qui nous sommes, en quatre lignes. Sur téléphone, ce bloc précède le
            formulaire : on ne demande pas de créer un compte avant d'avoir dit
@@ -1470,9 +1500,32 @@ function ecranAuth() {
       </section>
     </div>`;
 
-  document.querySelectorAll(".lang-min").forEach(b => {
-    b.onclick = () => { const l = b.dataset.lang; if (l && l !== langue) { definirLangue(l); ecranAuth(); } };
-  });
+  const toggleLangue = document.getElementById("lang-toggle");
+  const menuLangue = document.getElementById("lang-menu");
+  if (toggleLangue && menuLangue) {
+    toggleLangue.onclick = (e) => {
+      e.stopPropagation();
+      const ouvrir = menuLangue.hidden;
+      menuLangue.hidden = !ouvrir;
+      toggleLangue.setAttribute("aria-expanded", String(ouvrir));
+      // Un clic n'importe où ailleurs referme le menu — écouteur à usage
+      // unique, posé seulement à l'ouverture : jamais d'accumulation au fil
+      // des ouvertures/fermetures successives.
+      if (ouvrir) {
+        document.addEventListener("click", () => {
+          menuLangue.hidden = true; toggleLangue.setAttribute("aria-expanded", "false");
+        }, { once: true });
+      }
+    };
+    menuLangue.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        menuLangue.hidden = true; toggleLangue.setAttribute("aria-expanded", "false"); toggleLangue.focus();
+      }
+    });
+    menuLangue.querySelectorAll(".lang-opt").forEach(b => {
+      b.onclick = () => { const l = b.dataset.lang; if (l && l !== langue) { definirLangue(l); ecranAuth(); } };
+    });
+  }
 
   // Bannière personnalisée si on arrive via un lien de parrainage — jeton
   // unique (?parrain=) ou code permanent (?p=), le message est le même.

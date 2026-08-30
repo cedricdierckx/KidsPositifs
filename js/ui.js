@@ -62,7 +62,7 @@ function demanderPin(opts) {
     <div class="pin-carte">
       <div class="pin-titre">${opts.titre || "🔒 Code PIN"}</div>
       ${opts.sousTitre ? `<div class="pin-sous">${opts.sousTitre}</div>` : ""}
-      <input id="pin-input" type="text" inputmode="numeric" pattern="[0-9]*"
+      <input id="pin-input" type="tel" inputmode="numeric" pattern="[0-9]*"
              name="pin-parent" autocomplete="one-time-code" maxlength="8"
              data-lpignore="true" data-1p-ignore data-form-type="other"
              class="pin-input" placeholder="••••">
@@ -731,20 +731,61 @@ function chargerLibsImpression() {
 
 // Rend un élément DÉJÀ DANS LE DOM (visible ou non) en PDF A4 portrait,
 // réparti sur plusieurs pages si le contenu dépasse une page. Renvoie un Blob.
+//
+// html2canvas aplatit tout en une seule image : il ignore complètement les
+// sauts de page CSS (`.enfant + .enfant{break-before:page}` de
+// htmlFeuilleSemaine, pensés pour l'impression NAVIGATEUR — inutilisable
+// dans la WebView, voir imprimerFeuilleSemaine). Un simple découpage par
+// hauteur de page fixe, sans égard au contenu, coupait donc les cartes
+// n'importe où, à cheval sur deux enfants. Quand l'élément contient
+// plusieurs `.enfant`, chacun est donc rendu À PART (tête et pied masqués
+// sauf sur le premier / dernier), chacun sur ses propres pages — jamais
+// partagées avec le suivant.
 async function pdfDepuisElement(element) {
   await chargerLibsImpression();
-  const canvas = await window.html2canvas(element, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const pageW = pdf.internal.pageSize.getWidth(), pageH = pdf.internal.pageSize.getHeight();
-  const imgW = pageW, imgH = (canvas.height * imgW) / canvas.width;
-  const donnees = canvas.toDataURL("image/jpeg", 0.92);
-  pdf.addImage(donnees, "JPEG", 0, 0, imgW, imgH);
-  // Une seule grande image, redécoupée à chaque page par un décalage négatif :
-  // plus simple et plus fidèle qu'une pagination du contenu HTML d'origine.
-  for (let y = pageH; y < imgH; y += pageH) {
-    pdf.addPage();
-    pdf.addImage(donnees, "JPEG", 0, -y, imgW, imgH);
+
+  const ajouterCanvas = (canvas, nouvellePage) => {
+    const imgW = pageW, imgH = (canvas.height * imgW) / canvas.width;
+    const donnees = canvas.toDataURL("image/jpeg", 0.92);
+    if (nouvellePage) pdf.addPage();
+    pdf.addImage(donnees, "JPEG", 0, 0, imgW, imgH);
+    // Un seul enfant trop long pour une page se poursuit sur ses propres
+    // pages, redécoupé par décalage négatif — jamais mêlé au suivant.
+    for (let y = pageH; y < imgH; y += pageH) {
+      pdf.addPage();
+      pdf.addImage(donnees, "JPEG", 0, -y, imgW, imgH);
+    }
+  };
+
+  const enfants = element.querySelectorAll ? Array.from(element.querySelectorAll(".enfant")) : [];
+  if (enfants.length < 2) {
+    // Rien à répartir : un seul bloc (ou aucun — carte d'ami, dépliant) —
+    // comportement inchangé, un seul rendu de l'élément entier.
+    ajouterCanvas(await window.html2canvas(element, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }), false);
+    return pdf.output("blob");
+  }
+
+  const tete = element.querySelector(".tete"), intro = element.querySelector(".intro"),
+        pied = element.querySelector(".pied");
+  const masquer = (n) => { const av = n.style.display; n.style.display = "none"; return av; };
+
+  for (let i = 0; i < enfants.length; i++) {
+    const dernier = i === enfants.length - 1;
+    const avTete = (i !== 0 && tete) ? masquer(tete) : null;
+    const avIntro = (i !== 0 && intro) ? masquer(intro) : null;
+    const avPied = (!dernier && pied) ? masquer(pied) : null;
+    const avEnfants = enfants.map((e, j) => (j !== i) ? masquer(e) : null);
+    try {
+      ajouterCanvas(await window.html2canvas(element, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }), i > 0);
+    } finally {
+      if (i !== 0 && tete) tete.style.display = avTete;
+      if (i !== 0 && intro) intro.style.display = avIntro;
+      if (!dernier && pied) pied.style.display = avPied;
+      enfants.forEach((e, j) => { if (j !== i) e.style.display = avEnfants[j]; });
+    }
   }
   return pdf.output("blob");
 }
@@ -811,24 +852,70 @@ async function pdfDepuisHtmlEtEnvoyer(html, nomFichier, titre) {
  * greffon est absent (app trop ancienne), la fonction rend la main sans
  * rien faire : c'est à l'appelant de retomber sur le fichier.
  */
+// Le seul constat « déjà accordée », sans jamais rien demander — réutilisé
+// par permissionCalendrierEcriture (qui peut demander) et calendriersDisponibles
+// (qui ne doit jamais le faire : lister les agendas n'est pas un geste assez
+// explicite pour justifier une boîte de dialogue système).
+async function permissionCalendrierDejaAcquise(cal, android) {
+  try {
+    if (android) {
+      const deja = await cal.checkAllPermissions();
+      return !!(deja && deja.result
+        && deja.result.readCalendar === "granted" && deja.result.writeCalendar === "granted");
+    }
+    const deja = await cal.checkPermission({ scope: "writeCalendar" });
+    return !!(deja && deja.result === "granted");
+  } catch (e) { return false; }
+}
+
 async function permissionCalendrierEcriture() {
   const cal = greffonNatif("CapacitorCalendar");
   if (!cal) return false;
   const android = window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === "android";
+  if (await permissionCalendrierDejaAcquise(cal, android)) return true;
   try {
     if (android) {
-      const deja = await cal.checkAllPermissions();
-      const jaAcquis = deja && deja.result
-        && deja.result.readCalendar === "granted" && deja.result.writeCalendar === "granted";
-      if (jaAcquis) return true;
       const demande = await cal.requestFullCalendarAccess();
       return !!(demande && demande.result === "granted");
     }
-    const deja = await cal.checkPermission({ scope: "writeCalendar" });
-    if (deja && deja.result === "granted") return true;
     const demande = await cal.requestWriteOnlyCalendarAccess();
     return !!(demande && demande.result === "granted");
   } catch (e) { return false; }
+}
+
+// Sur un téléphone à plusieurs comptes (Gmail, Outlook/Exchange, Samsung…),
+// l'agenda que le système choisit tout seul (le premier marqué « principal »)
+// n'est pas forcément celui que le parent regarde — constaté : un rendez-vous
+// atterri dans un agenda jamais consulté, alors que le parent vit dans
+// Outlook. `calendrierChoisi` (ci-dessous) laisse le parent trancher.
+// C'est un identifiant du SYSTÈME sur CET appareil : il ne veut rien dire sur
+// un autre téléphone, donc stocké en localStorage, jamais dans etat.reglages.
+const CALENDRIER_CHOISI_CLE = "famiteam_calendrier_id";
+
+function calendrierChoisi() {
+  try { return localStorage.getItem(CALENDRIER_CHOISI_CLE) || null; } catch (e) { return null; }
+}
+function choisirCalendrier(id) {
+  try {
+    if (id) localStorage.setItem(CALENDRIER_CHOISI_CLE, id);
+    else localStorage.removeItem(CALENDRIER_CHOISI_CLE);
+  } catch (e) { /* pas grave : le choix se refait, il ne bloque rien */ }
+}
+
+// Liste les agendas du téléphone pour le sélecteur de blocRituelSoir. Ne
+// demande JAMAIS la permission : une simple liste ne vaut pas une boîte de
+// dialogue système. Tant que le parent n'a pas encore utilisé le bouton
+// « Ajouter à mon agenda » au moins une fois (permission pas encore acquise),
+// la liste est vide et aucun sélecteur ne s'affiche — comportement inchangé.
+async function calendriersDisponibles() {
+  const cal = greffonNatif("CapacitorCalendar");
+  if (!cal) return [];
+  const android = window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === "android";
+  if (!(await permissionCalendrierDejaAcquise(cal, android))) return [];
+  try {
+    const r = await cal.listCalendars();
+    return (r && Array.isArray(r.result)) ? r.result : [];
+  } catch (e) { return []; }
 }
 
 /* options : { titre, texte, debutMs, finMs, alarmes?, recurrence?, idExistant? }
@@ -845,6 +932,8 @@ async function ecrireEvenementCalendrier(options) {
     endDate: options.finMs,
     availability: 1   // EventAvailability.FREE : ne rend pas le parent indisponible
   };
+  const idCal = calendrierChoisi();
+  if (idCal) champs.calendarId = idCal;   // sinon : choix automatique du système
   if (Array.isArray(options.alarmes)) champs.alerts = options.alarmes;
   if (options.recurrence) champs.recurrence = options.recurrence;
   try {
@@ -1017,7 +1106,10 @@ function blocNotificationSoir() {
   grille.appendChild(lH);
   sec.appendChild(grille);
 
-  const b = el("button", "gros-bouton planete", t("notif.appliquer"));
+  const b = el("button", "gros-bouton planete", "");
+  const majLibelleBouton = () => { b.textContent = caseActive.checked ? t("notif.appliquer") : t("notif.desactiver"); };
+  majLibelleBouton();
+  caseActive.addEventListener("change", majLibelleBouton);
   b.onclick = async () => {
     const active = caseActive.checked, heure = inpH.value;
     if (active && !heureValide(heure)) { toast(t("rituel.echec"), "info"); return; }
@@ -1139,10 +1231,11 @@ function initSquelette() {
   };
   majPastilleInvit();
 
-  // Bouton minuteur de temps d'écran (verrouillage PIN).
+  // Bouton minuteur de temps d'écran (verrouillage PIN, ou permanent).
   const bTimer = document.getElementById("timer-btn");
   if (bTimer) bTimer.onclick = () => {
     if (typeof modeDemo !== "undefined" && modeDemo) { toast("Indisponible en mode démo 🧪", "info"); return; }
+    if (timerMode() === "permanent") { ouvrirReglagesTimerPermanent(); return; }
     if (timerEtat.actif) modaleTimerActif();
     else modaleTimer();
   };
@@ -1430,8 +1523,16 @@ function lancerTuto() {
 
 // Synchronise l'affichage du minuteur avec son état (appelé à chaque rendu).
 function synchroniserTimerUI() {
-  if (timerEtat.verrouille) { afficherVerrou(); return; }
+  // En mode permanent, l'échappatoire parentale (contournerVerrouPermanent)
+  // laisse `verrouille` inchangé — c'est modeParents qui masque l'écran
+  // d'attente le temps que le parent consulte les réglages.
+  if (timerEtat.verrouille && !(timerMode() === "permanent" && modeParents)) {
+    if (timerMode() === "permanent") { masquerVerrou(); afficherVerrouPermanent(); }
+    else { masquerVerrouPermanent(); afficherVerrou(); }
+    return;
+  }
   masquerVerrou();
+  masquerVerrouPermanent();
   if (timerEtat.choix) { afficherChoixEnfant(); masquerBandeauTimer(); majBoutonTimer(); return; }
   masquerChoixEnfant();
   if (!timerEtat.prep) masquerPrep();
@@ -1439,6 +1540,9 @@ function synchroniserTimerUI() {
     if (!timerInterval) lancerTickTimer(); else tickTimer();
   } else {
     masquerBandeauTimer();
+    // Filet de sécurité : en mode permanent l'intervalle ne doit jamais
+    // rester arrêté (c'est lui qui détecte le changement de cycle).
+    if (timerMode() === "permanent" && !timerInterval) lancerTickTimer();
   }
   majBoutonTimer();
 }
@@ -1569,7 +1673,8 @@ function mmss(ms) {
   return m + ":" + String(s % 60).padStart(2, "0");
 }
 
-// Modale de configuration + démarrage du minuteur.
+// Modale de configuration + démarrage du minuteur (ou d'enregistrement pour
+// le mode permanent, qui se (re)lance tout seul sans bouton « Démarrer »).
 function modaleTimer() {
   const ov = el("div", "pin-modal");
   const mode = (typeof timerMode === "function") ? timerMode() : "parEnfant";
@@ -1583,23 +1688,50 @@ function modaleTimer() {
         <input id="tm-duree" type="number" min="1" max="120" inputmode="numeric" value="${duree}">
       </label>
       <div class="timer-modes">
-        <label class="radio-ligne"><input type="radio" name="tm-mode" value="parEnfant" ${mode !== "global" ? "checked" : ""}> ${t("timer.mode_enfant")}</label>
+        <label class="radio-ligne"><input type="radio" name="tm-mode" value="parEnfant" ${mode === "parEnfant" ? "checked" : ""}> ${t("timer.mode_enfant")}</label>
         <label class="radio-ligne"><input type="radio" name="tm-mode" value="global" ${mode === "global" ? "checked" : ""}> ${t("timer.mode_global")}</label>
+        <label class="radio-ligne"><input type="radio" name="tm-mode" value="permanent" ${mode === "permanent" ? "checked" : ""}> ${t("timer.mode_permanent")}</label>
       </div>
+      <p id="tm-permanent-note" class="note timer-avert" style="display:${mode === "permanent" ? "block" : "none"}">${t("timer.mode_permanent_note")}</p>
       ${etat.reglages && etat.reglages.codeParent ? "" : `<p class="note timer-avert">${t("timer.sans_pin")}</p>`}
-      <button id="tm-go" class="gros-bouton planete">${t("timer.demarrer")}</button>
+      <button id="tm-go" class="gros-bouton planete">${mode === "permanent" ? t("timer.enregistrer") : t("timer.demarrer")}</button>
     </div>`;
   document.body.appendChild(ov);
   const fermer = () => ov.remove();
   ov.querySelector(".modale-fermer").onclick = fermer;
   ov.addEventListener("click", e => { if (e.target === ov) fermer(); });
-  ov.querySelector("#tm-go").onclick = () => {
+  const go = ov.querySelector("#tm-go");
+  const note = ov.querySelector("#tm-permanent-note");
+  ov.querySelectorAll('input[name="tm-mode"]').forEach(r => r.addEventListener("change", () => {
+    if (!r.checked) return;
+    go.textContent = r.value === "permanent" ? t("timer.enregistrer") : t("timer.demarrer");
+    note.style.display = r.value === "permanent" ? "block" : "none";
+  }));
+  go.onclick = () => {
     const d = ov.querySelector("#tm-duree").value;
     const m = (ov.querySelector('input[name="tm-mode"]:checked') || {}).value || "parEnfant";
     definirReglageTimer(d, m);
     fermer();
-    demarrerTimer();
+    if (m === "permanent") { rendre(); toast(t("timer.permanent_active"), "info"); }
+    else demarrerTimer();
   };
+}
+
+// Accès (PIN si défini) aux réglages du minuteur quand le mode permanent est
+// actif — pas de bouton « arrêter » distinct : tout se joue dans la modale
+// de configuration, en repassant éventuellement sur un autre mode.
+function ouvrirReglagesTimerPermanent() {
+  if (etat.reglages && etat.reglages.codeParent) {
+    demanderPin({
+      titre: t("timer.arret_titre"), sousTitre: t("timer.arret_pin"),
+      permettreOubli: true,
+      onReset: () => modaleTimer(),
+      onOk: (saisi) => {
+        if (saisi.trim() !== etat.reglages.codeParent) return false;
+        modaleTimer();
+      }
+    });
+  } else modaleTimer();
 }
 
 // Modale quand un minuteur tourne déjà : arrêter (PIN si défini).
@@ -1697,6 +1829,56 @@ function afficherVerrou() {
 function masquerVerrou() {
   const ov = document.getElementById("verrou-ecran");
   if (ov) ov.remove();
+}
+
+// Écran d'attente du mode « verrouillage permanent » : PAS de code PIN — la
+// reprise est automatique au cycle suivant. Une échappatoire PIN (facultative)
+// permet malgré tout aux parents d'accéder aux réglages sans attendre.
+function afficherVerrouPermanent() {
+  if (document.getElementById("verrou-permanent-ecran")) {
+    majAffichageAttentePermanent(Math.max(0, timerFinCycle(timerEtat.cyclePermanent) - Date.now()));
+    return;
+  }
+  masquerBandeauTimer();
+  const ov = el("div", "verrou-ecran");
+  ov.id = "verrou-permanent-ecran";
+  ov.innerHTML = `
+    <div class="verrou-carte">
+      <div class="verrou-emoji">⏳</div>
+      <h2>${t("verrouPerm.titre")}</h2>
+      <p>${t("verrouPerm.texte")}</p>
+      <div id="vp-attente" class="verrou-attente">--:--</div>
+      <button id="vp-parents" class="lien-oubli">${t("verrouPerm.parents")}</button>
+    </div>`;
+  document.body.appendChild(ov);
+  const btn = ov.querySelector("#vp-parents");
+  if (btn) btn.onclick = () => {
+    if (etat.reglages && etat.reglages.codeParent) {
+      demanderPin({
+        titre: t("verrou.pin_titre"),
+        permettreOubli: true,
+        onReset: () => contournerVerrouPermanent(),
+        onOk: (saisi) => {
+          if (saisi.trim() !== etat.reglages.codeParent) return false;
+          contournerVerrouPermanent();
+        }
+      });
+    } else contournerVerrouPermanent();
+  };
+  majAffichageAttentePermanent(Math.max(0, timerFinCycle(timerEtat.cyclePermanent) - Date.now()));
+}
+function masquerVerrouPermanent() {
+  const ov = document.getElementById("verrou-permanent-ecran");
+  if (ov) ov.remove();
+}
+// Met à jour le décompte « nouveau temps dans Xh Ym » de l'écran d'attente.
+function majAffichageAttentePermanent(msRestant) {
+  const cible = document.getElementById("vp-attente");
+  if (!cible) return;
+  const totalMin = Math.max(0, Math.ceil(msRestant / 60000));
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  cible.textContent = h > 0 ? t("verrouPerm.attente_h", { h, m }) : t("verrouPerm.attente_m", { m });
 }
 
 // Met à jour la pastille d'invitation : pastille « qui frétille » quand il
@@ -2529,7 +2711,7 @@ function consigneClaudeCode(liste) {
   return `Voici les retours reçus des familles utilisatrices de FamiTeam et pas encore traités.
 
 CONTEXTE DU PROJET
-- Application web familiale (2-7 ans), parentalité positive : on encourage, on répare, on ne punit jamais.
+- Application web familiale (3-12 ans), parentalité positive : on encourage, on répare, on ne punit jamais.
 - Projet personnel non marchand : gratuit, sans publicité, sans revente de données, hébergement européen.
   Les frais sont couverts par des dons ; ce n'est pas une activité professionnelle.
 - Une heure de développement par semaine : chaque ajout doit se justifier par son rapport valeur/temps.
@@ -4176,11 +4358,14 @@ function htmlFeuilleSemaine(mode) {
         else coeursSem += totMission * pointsMission(enf, m);
         if (mode === "jours") {
           lignes += `<tr><td class="m">${nom}</td>` + lettres.map((_, i) => {
+            // Week-end teinté (voir plus bas) : un petit repère visuel et coloré
+            // dans une grille par ailleurs assez austère.
+            const we = i >= 5 ? " we" : "";
             const j = jours[i];
-            if (!missionActiveJour(enf, m, j)) return `<td class="c hors">·</td>`;   // jour non prévu
+            if (!missionActiveJour(enf, m, j)) return `<td class="c hors${we}">·</td>`;   // jour non prévu
             const fait = (enf.journal[j] || {})[m.id] || 0;
-            if (j <= auj && fait) return `<td class="c faite">✓</td>`;               // déjà fait : pré-rempli
-            return `<td class="c">☆</td>`;                                            // à cocher
+            if (j <= auj && fait) return `<td class="c faite${we}">✓</td>`;               // déjà fait : pré-rempli
+            return `<td class="c${we}">☆</td>`;                                            // à cocher
           }).join("") + `</tr>`;
         } else {
           lignes += `<tr><td class="m">${nom}</td><td class="c large">${totMission || ""}</td></tr>`;
@@ -4193,18 +4378,19 @@ function htmlFeuilleSemaine(mode) {
     // rien ne disait alors à qui appartenait la suite du tableau.
     const nomRepete = `<tr class="cat nom-repete"><th colspan="${mode === "jours" ? 8 : 2}">${vignetteEnfant(enf, "mini")} ${echapper(enf.prenom)}</th></tr>`;
     const entete = (mode === "jours")
-      ? `<tr class="head"><th></th>${lettres.map(l => `<th>${l}</th>`).join("")}</tr>`
+      ? `<tr class="head"><th></th>${lettres.map((l, i) => `<th${i >= 5 ? ' class="we"' : ""}>${l}</th>`).join("")}</tr>`
       : `<tr class="head"><th></th><th>${t("papier.total")}</th></tr>`;
     // Auto-évaluation du comportement : pré-remplie pour les jours écoulés.
     const humeur = `<div class="humeur">
         <div class="humeur-t">😊 ${t("papier.humeur")}</div>
         <table class="humeur-tbl">
-          <tr class="head"><th></th>${lettres.map(l => `<th>${l}</th>`).join("")}</tr>
+          <tr class="head"><th></th>${lettres.map((l, i) => `<th${i >= 5 ? ' class="we"' : ""}>${l}</th>`).join("")}</tr>
           <tr><td class="m">${t("papier.humeur_jour")}</td>${lettres.map((_, i) => {
+            const we = i >= 5 ? " we" : "";
             const ev = (enf.autoEval || {})[jours[i]];
             return (ev && jours[i] <= auj)
-              ? `<td class="hc faite">${EMO_EVAL[ev] || ""}</td>`
-              : `<td class="hc">😄 😐 😠</td>`;
+              ? `<td class="hc faite${we}">${EMO_EVAL[ev] || ""}</td>`
+              : `<td class="hc${we}">😄 😐 😠</td>`;
           }).join("")}</tr>
         </table>
       </div>`;
@@ -4212,9 +4398,11 @@ function htmlFeuilleSemaine(mode) {
     const tG = gouttesSem ? `<strong>${gouttesSem}</strong>` : `<span class="trait"></span>`;
     return `<div class="enfant enf-${k}" style="--c:${coul}">
         <h3>${vignetteEnfant(enf, "mini")} ${echapper(enf.prenom)} <span class="stars">★ ★ ★</span></h3>
+        <p class="fun-msg">${t("papier.encourage", { prenom: enf.prenom })}</p>
         <table><thead>${nomRepete}${entete}</thead><tbody>${lignes}</tbody></table>
         ${humeur}
         <div class="totaux">💛 ${t("money.coeurs")} : ${tC}&nbsp;&nbsp; 💧 ${t("money.gouttes")} : ${tG}</div>
+        <div class="bravo">🎉 ${t("papier.bravo")} <span class="sticker-slot" aria-hidden="true"></span></div>
       </div>`;
   };
 
@@ -4271,16 +4459,42 @@ function htmlFeuilleSemaine(mode) {
          suivante — c'est voulu, pour distribuer une feuille par enfant. */
       .enfant + .enfant{break-before:page; page-break-before:always}
       .enfant tr{break-inside:avoid}
-      .enfant h3{margin:0 0 7px;font-size:15px;display:flex;align-items:center;gap:6px;break-after:avoid}
+      .enfant h3{margin:0 0 4px;font-size:17px;display:flex;align-items:center;gap:8px;break-after:avoid}
       .enfant h3 .em{font-size:19px}
-      .enfant h3 .stars{margin-left:auto;color:#f2c200;font-size:13px;letter-spacing:2px}
+      .enfant h3 .stars{margin-left:auto;color:#f2c200;font-size:15px;letter-spacing:2px}
+      /* Un avatar bien plus grand qu'ailleurs dans l'app, en tête de la
+         feuille : c'est la sienne, autant qu'elle se voie ! (le petit
+         format « mini » reste utilisé pour l'en-tête répétée en cas de
+         débordement sur une deuxième page, voir nomRepete plus haut.) */
+      .enfant h3 .av-vignette{width:38px; height:38px; border-radius:12px;
+        box-shadow:0 2px 4px rgba(0,0,0,.2); vertical-align:middle}
+      .fun-msg{margin:0 0 8px; font-size:12px; font-weight:700; color:var(--c); break-after:avoid}
+      /* Vignette avatar (voir vignetteEnfant, taille « mini » ici) : ce document
+         est autonome — ouvert dans sa propre fenêtre pour l'impression, ou
+         capturé hors écran pour le PDF (voir pdfDepuisElement) — et NE CHARGE
+         PAS css/style.css, où ces règles vivent normalement. Sans elles, le
+         <svg> de l'avatar (qui n'a qu'un viewBox, aucune taille propre) se
+         rendait à sa taille par défaut du navigateur — un avatar énorme,
+         gonflant chaque carte bien au-delà d'une page A4 et cassant du même
+         coup la pagination « une page par enfant » juste au-dessus. */
+      .av-vignette{width:24px; height:24px; display:inline-block; border-radius:7px;
+        overflow:hidden; background:#fff; vertical-align:-6px; flex:0 0 auto}
+      .av-vignette .av-svg{width:100%; height:100%; display:block}
+      .av-vignette.initiale{display:inline-flex; align-items:center; justify-content:center;
+        background:var(--c,#5b8def); color:#fff; font-weight:900; font-size:12px}
       table{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
       th,td{border:1px solid #e0e6ec;padding:3px 4px;text-align:center}
       td.m{text-align:left;font-size:10.5px;line-height:1.2} td.m small{color:#9aa7b3}
       tr.cat td,tr.cat th{background:var(--c);color:#fff;text-align:left;font-weight:800;font-size:10.5px;border-color:var(--c)}
       tr.nom-repete th{font-size:12px}
       tr.head th{background:#f3f6fa;font-size:10px;width:23px;font-weight:800}
-      td.c{width:23px;height:19px;color:#cfd8e0;font-size:12px} td.c.large{width:62px;color:#fff}
+      /* Week-end teinté : un petit repère de couleur dans une grille par
+         ailleurs assez austère, pour marquer le rythme de la semaine — placé
+         AVANT les règles « faite »/« hors » ci-dessous, qui doivent rester
+         prioritaires quand une case est à la fois cochée et en week-end. */
+      tr.head th.we{background:#ffe9f3}
+      td.c.we, .humeur-tbl td.hc.we{background:#fff6ea}
+      td.c{width:23px;height:19px;color:#cfd8e0;font-size:13px;border-radius:6px} td.c.large{width:62px;color:#fff}
       td.c.hors{background:repeating-linear-gradient(45deg,#f4f4f4,#f4f4f4 3px,#eaeaea 3px,#eaeaea 6px);color:#c8c8c8}
       td.c.faite{background:#e7f7ee;color:#1d7a52;font-weight:800}
       td.hc.faite{background:#eef6ff;font-size:14px}
@@ -4288,6 +4502,12 @@ function htmlFeuilleSemaine(mode) {
       .humeur-tbl td.hc{font-size:11px;letter-spacing:0;white-space:nowrap}
       .totaux{font-size:12px;margin-top:8px;font-weight:700}
       .totaux .trait{display:inline-block;width:46px;border-bottom:2px dotted #9aa7b3}
+      /* Petit rituel « colle ta plus belle étoile » : un cercle en pointillés
+         que l'enfant remplit lui-même (autocollant, dessin) — la feuille ne
+         reste pas qu'une grille à cocher. */
+      .bravo{margin-top:10px;font-size:12px;font-weight:800;color:var(--c);
+        display:flex;align-items:center;gap:8px}
+      .sticker-slot{width:26px;height:26px;border-radius:50%;border:2px dashed var(--c);flex:0 0 auto}
       .pied{margin-top:12px;font-size:10px;color:#8a97a3;text-align:center}
     </style></head><body>
     <div class="tete"><div class="logo">🌟 ${APP_NOM}${famille ? " · " + echapper(famille) : ""}</div><div class="sem">🗓️ ${titreSem}</div></div>
@@ -4629,13 +4849,14 @@ function blocCartesSurprises(enf) {
           <span class="cs-prix">${t("cs.debloquee")}</span></div>
         ${jauge}
         <p class="cs-activite">${echapper(activite)}</p>`;
-      // Décompte : pour un enfant de 2 à 7 ans, « dans 3 dodos » veut dire
-      // quelque chose ; une date, non. Tant qu'aucun jour n'est fixé, on garde
-      // l'invitation à le faire — mais sans jamais l'annoncer à l'enfant.
+      // Décompte : « dans 3 dodos » chez les petits, « dans 3 jours » dès que
+      // l'enfant lit un calendrier (voir texteDecompteCarte). Tant qu'aucun
+      // jour n'est fixé, on garde l'invitation à le faire — mais sans jamais
+      // l'annoncer à l'enfant.
       const jRdv = joursAvantCarte(c);
       if (jRdv !== null) {
         html += `<p class="cs-rdv${jRdv <= 1 && jRdv >= 0 ? " proche" : ""}">
-          ${jRdv < 0 ? "🎈" : "📅"} ${texteDecompteCarte(jRdv)}
+          ${jRdv < 0 ? "🎈" : "📅"} ${texteDecompteCarte(jRdv, estJeune(enf))}
           <small>${jourLisible(c.prevueLe, true)}${c.prevueHeure ? " · " + echapper(c.prevueHeure) : ""}</small></p>`;
       } else {
         html += `<p class="cs-afaire">${t("cs.a_faire")}</p>`;
@@ -4776,12 +4997,23 @@ function blocRendezVousCarte(c) {
   </div>`;
 }
 
-// Décompte en « dodos » : c'est l'unité de temps d'un enfant de 2 à 7 ans.
-function texteDecompteCarte(j) {
+// Décompte avant une carte gagnée.
+//
+// « Dans 3 dodos » est l'unité de temps d'un JEUNE enfant : à 4 ans, une date
+// ne veut rien dire, un nombre de nuits si. Passé 7-8 ans, c'est l'inverse —
+// l'enfant lit un calendrier, et « dodos » sonne bébé, ce qui suffit à lui
+// faire décrocher de l'app (voir PLAN-COMMERCIAL.md § 2.2). D'où le second
+// paramètre : le libellé enfantin ne sort QUE si l'enfant qui regarde est
+// jeune au sens de estJeune() — seuil réglable par les parents.
+//
+// `jeune` vaut false par défaut, et c'est voulu : les deux autres appelants
+// sont des écrans PARENTS (bloc parents, modale de date), où « dans 3 jours »
+// est de toute façon la bonne formulation.
+function texteDecompteCarte(j, jeune) {
   if (j < 0) return t("cs.rdv_passe");
   if (j === 0) return t("cs.rdv_aujourdhui");
   if (j === 1) return t("cs.rdv_demain");
-  return t("cs.rdv_dans", { n: j });
+  return t(jeune ? "cs.rdv_dans" : "cs.rdv_dans_j", { n: j });
 }
 
 // Envoi vers l'agenda : un fichier .ics, que tous les agendas savent ouvrir —
@@ -6716,6 +6948,31 @@ function blocRituelSoir() {
   // Le conseil est une aide de champ, pas un paragraphe : il se rapporte à
   // l'heure et n'a pas à peser comme une phrase de plus.
   lH.appendChild(el("small", "champ-aide", t("rituel.conseil", { h: conseillee })));
+
+  // Invisible tant qu'un seul agenda existe sur le téléphone (cas courant) :
+  // rien à choisir, le sélecteur n'ajouterait qu'une ligne inutile.
+  const zoneAgenda = el("div");
+  sec.appendChild(zoneAgenda);
+  (async () => {
+    const cals = await calendriersDisponibles();
+    if (cals.length < 2) return;
+    const lA = el("label", "champ", t("rituel.agenda_label"));
+    const selA = el("select");
+    const actuel = calendrierChoisi();
+    const oAuto = el("option", "", t("rituel.agenda_auto"));
+    oAuto.value = "";
+    if (!actuel) oAuto.selected = true;
+    selA.appendChild(oAuto);
+    cals.forEach(c => {
+      const o = el("option", "", c.accountName ? (c.title + " — " + c.accountName) : c.title);
+      o.value = c.id;
+      if (c.id === actuel) o.selected = true;
+      selA.appendChild(o);
+    });
+    selA.onchange = () => choisirCalendrier(selA.value || null);
+    lA.appendChild(selA);
+    zoneAgenda.appendChild(lA);
+  })();
 
   const b = el("button", "gros-bouton planete", t("rituel.ajouter"));
   b.onclick = async () => {

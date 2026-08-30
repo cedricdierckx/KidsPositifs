@@ -3510,12 +3510,17 @@ test("agenda natif : le calendrier est tenté avant le fichier, avec permission 
   const fs = require("fs"), path = require("path");
   const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
 
+  const pdj = ui.slice(ui.indexOf("async function permissionCalendrierDejaAcquise"),
+                       ui.indexOf("async function permissionCalendrierDejaAcquise") + 600);
+  assert.ok(/readCalendar/.test(pdj) && /writeCalendar/.test(pdj),
+    "le constat « déjà accordée » doit vérifier lecture ET écriture côté Android : createEvent() interroge la liste des agendas pour trouver celui par défaut");
+
   const pc = ui.slice(ui.indexOf("async function permissionCalendrierEcriture"),
-                      ui.indexOf("async function permissionCalendrierEcriture") + 1000);
+                      ui.indexOf("async function permissionCalendrierEcriture") + 600);
   assert.ok(/requestWriteOnlyCalendarAccess/.test(pc),
     "iOS doit se contenter d'une autorisation d'écriture seule");
-  assert.ok(/requestFullCalendarAccess/.test(pc) && /readCalendar/.test(pc),
-    "Android doit aussi demander la lecture : createEvent() interroge la liste des agendas pour trouver celui par défaut");
+  assert.ok(/requestFullCalendarAccess/.test(pc),
+    "Android doit pouvoir demander l'accès complet (lecture + écriture)");
 
   const ec = ui.slice(ui.indexOf("async function ecrireEvenementCalendrier"),
                       ui.indexOf("async function ecrireEvenementCalendrier") + 1400);
@@ -3564,6 +3569,47 @@ test("agenda natif : permissions et dépendance déclarées côté natif", () =>
   assert.ok(/NSCalendarsUsageDescription/.test(plist), "repli iOS 13-16 manquant");
   assert.strictEqual(/NSCalendarsFullAccessUsageDescription/.test(plist), false,
     "aucune clé d'accès complet : FamiTeam ne lit jamais le calendrier");
+});
+
+test("agenda natif : le parent peut choisir l'agenda, sur un téléphone à plusieurs comptes", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+
+  // Un identifiant d'agenda système n'a de sens que sur CET appareil : jamais
+  // dans etat.reglages (synchronisé entre appareils d'une même famille).
+  const cc = ui.slice(ui.indexOf("function calendrierChoisi("),
+                      ui.indexOf("function choisirCalendrier(") + 400);
+  assert.ok(/localStorage/.test(cc), "le choix d'agenda doit vivre en localStorage, propre à l'appareil");
+  assert.ok(!/etat\.reglages/.test(cc), "un identifiant d'agenda système n'a aucun sens sur un autre appareil de la famille");
+
+  // Lister les agendas ne doit jamais déclencher la boîte de dialogue système :
+  // ce n'est pas un geste assez explicite pour la justifier.
+  const cd = ui.slice(ui.indexOf("async function calendriersDisponibles"),
+                      ui.indexOf("async function calendriersDisponibles") + 700);
+  assert.ok(/permissionCalendrierDejaAcquise/.test(cd),
+    "lister les agendas doit se contenter d'un constat, jamais d'une demande");
+  assert.ok(!/requestFullCalendarAccess|requestWriteOnlyCalendarAccess/.test(cd),
+    "calendriersDisponibles ne doit jamais demander la permission elle-même");
+
+  // L'écriture doit utiliser le choix du parent quand il existe.
+  const ec = ui.slice(ui.indexOf("async function ecrireEvenementCalendrier"),
+                      ui.indexOf("async function ecrireEvenementCalendrier") + 1400);
+  assert.ok(/calendrierChoisi\(\)/.test(ec) && /champs\.calendarId/.test(ec),
+    "l'agenda choisi par le parent doit être transmis à la création de l'événement");
+
+  // Le sélecteur ne s'affiche pas quand un seul agenda existe (cas courant),
+  // et ne présume jamais un choix que le parent n'a pas fait lui-même : une
+  // option « automatique » neutre doit rester sélectionnée par défaut.
+  const br = ui.slice(ui.indexOf("function blocRituelSoir("),
+                      ui.indexOf("function blocRituelSoir(") + 4000);
+  assert.ok(/cals\.length < 2\) return/.test(br),
+    "un seul agenda : rien à choisir, le sélecteur ne doit pas s'afficher");
+  assert.ok(/rituel\.agenda_auto/.test(br) && /oAuto\.selected = true/.test(br),
+    "tant que le parent n'a rien choisi, l'option neutre doit rester affichée, jamais un agenda précis présumé");
+
+  Object.keys(construireContexte().api.LANGUES).forEach(lg =>
+    ["rituel.agenda_label", "rituel.agenda_auto"].forEach(cle =>
+      assert.ok(construireContexte().api.I18N[lg][cle], cle + " manquant en " + lg)));
 });
 
 /* ---------- Impression → PDF (app installée) ----------
@@ -3676,8 +3722,52 @@ test("carte surprise : l'interface propose date, agenda et décompte", () => {
   assert.ok(/text\/calendar;charset=utf-8/.test(ui), "le type MIME iCalendar est requis");
   assert.ok(/URL\.revokeObjectURL/.test(ui), "l'URL temporaire doit être libérée");
   // Côté enfant : le décompte remplace l'invitation générique.
-  assert.ok(/joursAvantCarte\(c\)/.test(ui) && /texteDecompteCarte\(jRdv\)/.test(ui),
+  assert.ok(/joursAvantCarte\(c\)/.test(ui) && /texteDecompteCarte\(jRdv,/.test(ui),
     "le décompte doit apparaître sur la carte de l'enfant");
+});
+
+/* ---------- Décompte : « dodos » chez les petits, « jours » chez les grands ----------
+ * Le libellé enfantin donné à un enfant de 11 ans suffit à lui faire trouver
+ * l'app « bébé » — et depuis l'élargissement de la cible à 3-12 ans, ce cas
+ * n'est plus théorique. Ce test verrouille les deux registres.
+ */
+test("carte surprise : « dodos » seulement pour les jeunes, « jours » pour les grands", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const { api } = construireContexte();
+
+  // La variante « jours » existe dans les quatre langues, et interpole le nombre.
+  Object.keys(api.LANGUES).forEach(lg => {
+    const v = api.I18N[lg]["cs.rdv_dans_j"];
+    assert.ok(v, "cs.rdv_dans_j manquant en " + lg);
+    assert.ok(/\{n\}/.test(v), "le nombre de jours doit être interpolé en " + lg);
+  });
+
+  // Les deux registres sont bien DISTINCTS : sans quoi le correctif ne sert à rien.
+  Object.keys(api.LANGUES).forEach(lg =>
+    assert.notStrictEqual(api.I18N[lg]["cs.rdv_dans_j"], api.I18N[lg]["cs.rdv_dans"],
+      "les deux libellés doivent différer en " + lg));
+
+  // Le libellé enfantin est conditionné, jamais servi inconditionnellement.
+  assert.ok(/t\(jeune \? "cs\.rdv_dans" : "cs\.rdv_dans_j", \{ n: j \}\)/.test(ui),
+    "« dodos » doit dépendre du paramètre jeune");
+  // Et c'est bien estJeune() qui décide, sur l'enfant qui REGARDE l'écran.
+  assert.ok(/texteDecompteCarte\(jRdv, estJeune\(enf\)\)/.test(ui),
+    "le choix du registre doit venir de estJeune(enf), pas d'une constante");
+
+  // Les écrans PARENTS (modale de date, bloc parents) restent en « jours » :
+  // aucun des deux ne doit passer un second argument.
+  assert.ok(/texteDecompteCarte\(j\)/.test(ui),
+    "les écrans parents doivent appeler le décompte sans registre enfantin");
+
+  // estJeune s'appuie sur un seuil réglable par les parents (défaut 5 ans) :
+  // un enfant de 4 ans est « jeune », un enfant de 11 ans ne l'est pas.
+  api.familleId = "f"; api.lierEtat(api.etatVierge());
+  const annee = new Date().getFullYear();
+  const petit = { naissance: (annee - 4) + "-01-01" };
+  const grand = { naissance: (annee - 11) + "-01-01" };
+  assert.ok(api.estJeune(petit), "4 ans doit être « jeune »");
+  assert.ok(!api.estJeune(grand), "11 ans ne doit plus être « jeune »");
 });
 
 test("parents : la famille n'a plus de cadre, la boîte à idées descend", () => {
@@ -4590,23 +4680,31 @@ test("accueil : sur grand écran, le formulaire est en haut, pas centré", () =>
     assert.ok(new RegExp("grid-area:\\s*" + z).test(bloc), "zone non placée : " + z));
 });
 
-test("accueil : la barre de langues reste compacte et accessible", () => {
+test("accueil : la barre de langues est un menu déroulant compact et accessible", () => {
   const fs = require("fs"), path = require("path");
   const auth = fs.readFileSync(path.join(__dirname, "..", "js", "auth.js"), "utf8");
   const css = fs.readFileSync(path.join(__dirname, "..", "css", "style.css"), "utf8");
-  // Codes à deux lettres : quatre langues sur une ligne, même en 320 px.
-  assert.ok(/lang-code">\$\{l\.toUpperCase\(\)\}/.test(auth),
-    "les pastilles doivent porter le code de langue, pas le nom complet");
-  // Le nom complet reste lisible par un lecteur d'écran et au survol.
-  assert.ok(/aria-label="\$\{LANGUES\[l\]\}"/.test(auth), "aria-label manquant");
-  assert.ok(/title="\$\{LANGUES\[l\]\}"/.test(auth), "title manquant");
-  assert.ok(/aria-current="true"/.test(auth), "la langue active doit être annoncée");
-  // La pastille compacte est une classe distincte : le sélecteur de langue de
-  // l'app (Réglages) garde son propre style, plus grand.
-  assert.ok(/\.lang-min\{/.test(css), "la classe compacte doit exister");
+  // Un seul bouton visible (drapeau + code), replié par défaut : plus de
+  // pastilles à la suite qui prenaient toute la largeur sur un téléphone.
+  assert.ok(/id="lang-toggle" class="lang-select"/.test(auth), "le bouton replié est introuvable");
+  assert.ok(/aria-haspopup="listbox"/.test(auth) && /aria-expanded="false"/.test(auth),
+    "le bouton doit s'annoncer comme un menu repliable");
+  assert.ok(/lang-code">\$\{langue\.toUpperCase\(\)\}/.test(auth),
+    "le bouton replié doit porter le code de la langue active");
+  // La liste déroulante porte le nom complet de chaque langue — lisible par
+  // un lecteur d'écran comme au clic, sans avoir à deviner un code à 2 lettres.
+  assert.ok(/role="listbox"/.test(auth) && /role="option"/.test(auth),
+    "la liste doit être annoncée comme telle (listbox/option)");
+  assert.ok(/class="lang-nom">\$\{LANGUES\[l\]\}/.test(auth), "le nom complet doit rester lisible dans la liste");
+  assert.ok(/aria-selected="\$\{l === langue\}"/.test(auth), "la langue active doit être annoncée dans la liste");
+  // Fermeture : clic extérieur (écouteur à usage unique, sans accumulation) et Échap.
+  assert.ok(/\{ once: true \}/.test(auth), "le clic extérieur doit fermer le menu sans laisser d'écouteurs s'accumuler");
+  assert.ok(/e\.key === "Escape"/.test(auth), "Échap doit fermer le menu");
+  // Les classes du nouveau menu existent ; le sélecteur de langue de l'app
+  // (Réglages) garde le sien, plus grand, inchangé.
+  ["\\.lang-select\\{", "\\.lang-menu\\{", "\\.lang-opt\\{"].forEach(motif =>
+    assert.ok(new RegExp(motif).test(css), "classe manquante dans le CSS : " + motif));
   assert.ok(/\.langue-btn\{/.test(css), "le sélecteur de l'app ne doit pas être supprimé");
-  assert.ok(auth.indexOf('querySelectorAll(".lang-min")') > -1,
-    "le gestionnaire de clic doit viser la nouvelle classe");
 });
 
 test("accueil : libellés de la barre et des liens traduits dans les 4 langues", () => {
@@ -4921,6 +5019,21 @@ test("Google : une première connexion tierce ne fait pas croire à un compte pe
   assert.ok(/function ouvrirDehors/.test(auth),
     "l'app native doit ouvrir le navigateur du système, pas sa propre vue");
   assert.ok(/prompt: "select_account"/.test(auth));
+
+  // Le greffon @capacitor/browser doit être une dépendance déclarée, jamais un
+  // ajout manuel du dossier natif — sans lui, ouvrirDehors() retombait sur
+  // window.open(url, "_system"), jamais essayé sur un appareil réel avant
+  // qu'un parent ne signale l'échec du retour dans l'app après Google.
+  const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"));
+  assert.ok((pkg.dependencies || {})["@capacitor/browser"],
+    "le greffon de navigateur externe doit être une dépendance déclarée");
+
+  // L'onglet ouvert pour la connexion doit se refermer tout seul au retour,
+  // sinon il reste affiché par-dessus l'app.
+  assert.ok(/function fermerNavigateurExterne/.test(auth));
+  const dl = auth.slice(auth.indexOf("function initDeepLinkAuth"), auth.indexOf("function initDeepLinkAuth") + 700);
+  assert.ok(/fermerNavigateurExterne\(\)/.test(dl),
+    "le retour du lien d'authentification doit refermer l'onglet externe");
 });
 
 test("connexion : l'attente ne s'empile pas", () => {
@@ -5241,7 +5354,7 @@ test("feuille papier imprimée : la mise en page ne force plus une page presque 
   // partagée par la voie web et la voie native de l'app installée) — pas
   // dans imprimerFeuilleSemaine, qui ne fait plus que choisir entre les deux.
   const bloc = ui.slice(ui.indexOf("function htmlFeuilleSemaine"),
-                        ui.indexOf("function htmlFeuilleSemaine") + 9000);
+                        ui.indexOf("function htmlFeuilleSemaine") + 13000);
 
   assert.ok(!/\.grille\{display:grid/.test(bloc),
     "CSS Grid ne se pagine pas proprement à l'impression sous Chrome : à éviter ici");
@@ -5267,10 +5380,203 @@ test("feuille papier imprimée : une page par enfant, pour distribuer une feuill
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
   const bloc = ui.slice(ui.indexOf("function htmlFeuilleSemaine"),
-                        ui.indexOf("function htmlFeuilleSemaine") + 9000);
+                        ui.indexOf("function htmlFeuilleSemaine") + 13000);
   assert.ok(/\.enfant \+ \.enfant\{[^}]*break-before:page/.test(bloc),
     "chaque enfant à partir du deuxième doit démarrer sur une nouvelle page — "
     + "le premier ne doit pas être concerné, sous peine d'une page blanche en tête");
+});
+
+test("feuille papier imprimée (app installée) : le PDF respecte aussi la page par enfant", () => {
+  // La règle CSS ci-dessus ne vaut que pour l'impression NAVIGATEUR : dans
+  // l'app installée, un vrai PDF est construit via html2canvas, qui aplatit
+  // tout en une seule image et ignore totalement les sauts de page CSS.
+  // Sans traitement dédié, les cartes des enfants étaient coupées n'importe
+  // où — constaté en conditions réelles (aperçu d'impression Android).
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const pd = ui.slice(ui.indexOf("async function pdfDepuisElement"),
+                      ui.indexOf("async function pdfDepuisElement") + 3000);
+  assert.ok(/querySelectorAll\(["']\.enfant["']\)/.test(pd),
+    "le PDF doit repérer les enfants pour les répartir un par un, pas les traiter comme un seul bloc");
+  assert.ok(/enfants\.length < 2/.test(pd),
+    "un seul enfant (cas courant) doit garder le rendu simple, sans découpage inutile");
+  assert.ok(/j !== i.*masquer\(e\)|\(j !== i\) \? masquer/.test(pd),
+    "chaque rendu ne doit montrer qu'UN SEUL enfant à la fois — sinon deux enfants pourraient encore partager une image");
+  assert.ok(/,\s*i > 0\)/.test(pd),
+    "à partir du deuxième enfant, chaque rendu doit démarrer une nouvelle page PDF");
+});
+
+test("feuille papier imprimée : l'avatar reste à sa taille normale, sans css/style.css", () => {
+  // htmlFeuilleSemaine() produit un document HTML AUTONOME (fenêtre à part
+  // pour l'impression navigateur, conteneur hors écran pour le PDF de l'app
+  // installée) : css/style.css n'y est jamais chargé. Sans les règles
+  // .av-vignette dans son PROPRE <style>, le <svg> de l'avatar (un simple
+  // viewBox, sans largeur/hauteur propres) se rend à sa taille par défaut du
+  // navigateur — un avatar énorme qui gonfle chaque carte bien au-delà d'une
+  // page A4, cassant du même coup la pagination « une page par enfant ».
+  // Constaté en rendu réel (Chromium headless, print-to-pdf) : sans cette
+  // règle, une famille de 4 enfants ne produisait qu'UNE SEULE page PDF (le
+  // contenu débordant, aplati) au lieu de 4.
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const bloc = ui.slice(ui.indexOf("function htmlFeuilleSemaine"),
+                        ui.indexOf("function htmlFeuilleSemaine") + 13000);
+  assert.ok(/\.av-vignette\{[^}]*width:\s*24px[^}]*height:\s*24px/.test(bloc),
+    "la vignette doit avoir une taille fixe en pixels, sinon le <svg> sans dimensions propres prend sa taille par défaut");
+  assert.ok(/\.av-vignette \.av-svg\{[^}]*width:\s*100%[^}]*height:\s*100%/.test(bloc),
+    "le <svg> intérieur doit être contraint à 100% de la vignette");
+});
+
+/* ---------- Mode « verrouillage permanent » : cycle fixe de 6 h, sans PIN ----------
+ * Le parent choisit une durée par enfant (ex. 3 min) ; toutes les 6 h, calé
+ * sur l'horloge locale (0 h/6 h/12 h/18 h), tous les budgets repartent à zéro
+ * automatiquement. Le but explicite : le parent ne doit JAMAIS avoir à
+ * déverrouiller l'application lui-même — seule une échappatoire PIN
+ * facultative permet d'accéder aux réglages sans attendre le cycle suivant. */
+test("permanent : le début de cycle est calé sur l'horloge locale (0h/6h/12h/18h)", () => {
+  const { api } = construireContexte();
+  const verifier = (h, m, hAttendu) => {
+    const ts = new Date(2026, 2, 10, h, m, 0, 0).getTime();
+    const debut = api.timerDebutCycle(ts);
+    assert.strictEqual(debut, new Date(2026, 2, 10, hAttendu, 0, 0, 0).getTime(),
+      `à ${h}h${m}, le cycle en cours doit avoir commencé à ${hAttendu}h`);
+  };
+  verifier(0, 45, 0);
+  verifier(5, 59, 0);
+  verifier(6, 0, 6);
+  verifier(13, 47, 12);
+  verifier(18, 0, 18);
+  verifier(23, 59, 18);
+  const debut = new Date(2026, 2, 10, 12, 0, 0, 0).getTime();
+  assert.strictEqual(api.timerFinCycle(debut) - debut, api.TIMER_CYCLE_MS, "un cycle dure exactement 6 h");
+});
+
+test("permanent : démarre automatiquement le décompte de l'enfant actif, sans PIN ni bouton", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  api.definirReglageTimer(3, "permanent");
+  assert.strictEqual(api.timerMode(), "permanent");
+  assert.strictEqual(api.timerEtat.actif, true, "le décompte doit démarrer tout seul, sans demarrerTimer()");
+  assert.strictEqual(api.timerEtat.enfant, api.etat.enfantActif);
+  assert.strictEqual(api.timerEtat.total, 3 * 60000);
+  assert.ok(api.timerEtat.fin > Date.now());
+  assert.strictEqual(api.timerEtat.lance, 0,
+    "le plafond de 6 h (mécanisme distinct, PIN) ne doit jamais s'activer en mode permanent");
+});
+
+test("permanent : un nouveau cycle réinitialise tous les budgets automatiquement, sans PIN", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const e = api.etatVierge();
+  const ids = Object.keys(e.enfants);
+  api.lierEtat(e);
+  api.definirReglageTimer(3, "permanent");
+  ids.forEach(i => { api.timerEtat.restes[i] = 0; });   // plus aucun enfant disponible
+  api.timerEtat.actif = false;
+  api.timerEtat.verrouille = true;
+  // Le cycle mémorisé est celui d'AVANT : on simule le passage au suivant.
+  api.timerEtat.cyclePermanent = api.timerDebutCycle(Date.now()) - api.TIMER_CYCLE_MS;
+  api.ecrireTimer();
+  api.assurerTimerPermanent();
+  assert.strictEqual(api.timerEtat.verrouille, false, "le nouveau cycle doit lever le verrouillage tout seul");
+  assert.strictEqual(api.timerEtat.actif, true, "et relancer directement le décompte de l'enfant actif");
+  assert.strictEqual(api.timerEtat.cyclePermanent, api.timerDebutCycle(Date.now()));
+  ids.forEach(i => assert.ok(api.tempsRestantEnfant(i) > 0, "l'enfant " + i + " doit retrouver son budget"));
+});
+
+test("permanent : un enfant à court de temps peut céder la main à un autre (sans PIN)", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const e = api.etatVierge();
+  const ids = Object.keys(e.enfants);
+  api.lierEtat(e);
+  api.definirReglageTimer(3, "permanent");
+  api.etat.enfantActif = ids[0];
+  api.timerEtat.enfant = ids[0];
+  api.timerEtat.fin = Date.now() - 1;   // le temps de l'enfant actif vient d'expirer
+  api.finDeTempsEnfant();
+  assert.strictEqual(api.timerEtat.choix, true, "d'autres enfants ont du temps : l'écran de choix doit s'afficher");
+  assert.strictEqual(api.timerEtat.verrouille, false);
+  assert.strictEqual(api.tempsRestantEnfant(ids[0]), 0);
+});
+
+test("permanent : plus aucun enfant disponible → verrouillage SANS code PIN", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const e = api.etatVierge();
+  const ids = Object.keys(e.enfants);
+  api.lierEtat(e);
+  api.definirReglageTimer(3, "permanent");
+  ids.forEach(i => { api.timerEtat.restes[i] = 0; });
+  api.timerEtat.enfant = api.etat.enfantActif;
+  api.timerEtat.fin = Date.now() - 1;
+  api.finDeTempsEnfant();
+  assert.strictEqual(api.timerEtat.verrouille, true);
+  assert.strictEqual(api.timerEtat.choix, false);
+  assert.strictEqual(api.timerEtat.actif, false);
+});
+
+test("permanent : le décompte se met en pause tant que l'espace parents est ouvert", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  api.definirReglageTimer(3, "permanent");
+  api.timerEtat.actif = false;
+  api.timerEtat.enfant = null;
+  api.ecrireTimer();
+  api.modeParents = true;
+  api.assurerTimerPermanent();
+  assert.strictEqual(api.timerEtat.actif, false,
+    "aucun décompte ne doit démarrer pendant que le parent consulte les réglages");
+  api.modeParents = false;
+  api.assurerTimerPermanent();
+  assert.strictEqual(api.timerEtat.actif, true, "le décompte reprend dès que le parent quitte les réglages");
+});
+
+test("permanent : l'échappatoire parentale ouvre les réglages sans toucher aux budgets", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  api.definirReglageTimer(3, "permanent");
+  api.timerEtat.verrouille = true;
+  api.timerEtat.actif = false;
+  const restesAvant = JSON.parse(JSON.stringify(api.timerEtat.restes));
+  api.ecrireTimer();
+  api.contournerVerrouPermanent();
+  assert.strictEqual(api.modeParents, true, "l'échappatoire doit ouvrir l'espace parents");
+  assert.strictEqual(api.etat.vue, "reglages");
+  assert.strictEqual(api.timerEtat.verrouille, true,
+    "le verrouillage logique reste actif : seul l'écran plein-écran est masqué côté UI");
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(api.timerEtat.restes)), restesAvant,
+    "l'échappatoire ne doit ni réinitialiser ni entamer les budgets");
+});
+
+test("permanent : changer de mode (vers ou depuis permanent) repart d'un minuteur vierge", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  api.demarrerTimer();
+  assert.strictEqual(api.timerEtat.actif, true);
+  api.definirReglageTimer(3, "permanent");
+  assert.strictEqual(api.timerMode(), "permanent");
+  assert.strictEqual(api.timerEtat.cyclePermanent, api.timerDebutCycle(Date.now()));
+  api.definirReglageTimer(3, "parEnfant");
+  assert.strictEqual(api.timerMode(), "parEnfant");
+  assert.strictEqual(api.timerEtat.actif, false, "sortir du mode permanent ne doit pas laisser un décompte fantôme");
+  assert.strictEqual(api.timerEtat.cyclePermanent, 0);
+});
+
+test("verrouillage permanent : libellés traduits dans les 4 langues", () => {
+  const { api } = construireContexte();
+  const cles = ["timer.mode_permanent", "timer.mode_permanent_note", "timer.enregistrer", "timer.permanent_active",
+    "verrouPerm.titre", "verrouPerm.texte", "verrouPerm.parents", "verrouPerm.attente_h", "verrouPerm.attente_m"];
+  const manquantes = [];
+  Object.keys(api.LANGUES).forEach(lg => cles.forEach(k => {
+    const v = api.I18N[lg][k];
+    if (typeof v !== "string" || !v.length) manquantes.push(lg + " → " + k);
+  }));
+  assert.strictEqual(manquantes.length, 0, manquantes.join(", "));
 });
 
 /* ---------- Exécution ----------
