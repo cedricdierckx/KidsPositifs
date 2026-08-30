@@ -215,7 +215,7 @@ Object.assign(I18N.nl, {
   "arbre.enfant_n": "{n} vriendenfamilies laten je boom groeien! 🌳",
   "arbre.titre": "🌳 De Familieboom",
   "arbre.modale_titre": "🌳 Een vriendenfamilie uitnodigen",
-  "arbre.modale_note": "Je link is <strong>permanent</strong>: deel hem zo vaak als je wil — in de schoolgroep, per bericht, of door de QR-code te tonen.",
+  "arbre.modale_note": "<strong>Permanente link</strong>: deel hem per bericht, in de schoolgroep, of met de QR-code.",
   "arbre.code_label": "De code van je familie",
   "arbre.qr_note": "Tonen of afdrukken: een ouder scant hem en komt rechtstreeks bij jou terecht. 🌳",
   "arbre.partage": "Elke familie die erbij komt, laat een tak extra groeien. 💛",

@@ -181,7 +181,18 @@ body{
 #contenu.glisse-gauche{animation:glisseGauche .22s ease-out}
 #contenu.glisse-droite{animation:glisseDroite .22s ease-out}
 
-.parrain-modale{position:relative; max-width:340px}
+/* max-height + overflow-y : signalé trop grande et mal affichée sur mobile —
+   sans ça, une carte plus haute que l'écran (code + QR + lien + e-mail)
+   débordait hors de l'overlay `.pin-modal`, illisible et impossible à faire
+   défiler. */
+.parrain-modale{position:relative; max-width:340px; max-height:88vh; overflow-y:auto}
+/* Bandeau d'accroche chaleureux, repris de `.parrain-carte` (page publique) :
+   le but est de donner envie d'inviter, pas juste d'expliquer la mécanique. */
+.parrain-hero{background:linear-gradient(135deg,#fff3d6,#ffe0ec); border-radius:14px;
+  padding:14px 12px; margin:14px 0 10px; text-align:center}
+.parrain-hero .parrain-hero-emoji{font-size:32px; line-height:1; margin-bottom:2px}
+.parrain-hero .pin-titre{margin:2px 0 6px}
+.parrain-hero .note{margin:0; background:none; padding:0}
 .modale-fermer{position:absolute; top:8px; right:10px; border:none; background:transparent;
   font-size:18px; cursor:pointer; color:var(--doux)}
 /* `overflow-x:auto` rend aussi le débordement vertical « auto » : sans marge

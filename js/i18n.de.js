@@ -215,7 +215,7 @@ Object.assign(I18N.de, {
   "arbre.enfant_n": "{n} Freundesfamilien lassen deinen Baum wachsen! 🌳",
   "arbre.titre": "🌳 Der Familienbaum",
   "arbre.modale_titre": "🌳 Eine Freundesfamilie einladen",
-  "arbre.modale_note": "Dein Link ist <strong>dauerhaft</strong>: teile ihn so oft du willst — in der Schulgruppe, per Nachricht oder indem du den QR-Code zeigst.",
+  "arbre.modale_note": "<strong>Dauerhafter Link</strong>: teile ihn per Nachricht, in der Schulgruppe oder mit dem QR-Code.",
   "arbre.code_label": "Der Code deiner Familie",
   "arbre.qr_note": "Zeigen oder ausdrucken: ein Elternteil scannt ihn und landet direkt bei dir. 🌳",
   "arbre.partage": "Jede Familie, die dazukommt, lässt einen Zweig mehr wachsen. 💛",

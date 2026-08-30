@@ -1043,8 +1043,11 @@ function modaleParrainage() {
   ov.innerHTML = `
     <div class="pin-carte parrain-modale">
       <button class="modale-fermer" aria-label="${t("common.fermer")}">✕</button>
-      <div class="pin-titre">${t("arbre.modale_titre")}</div>
-      <p class="note">${t("arbre.modale_note")}</p>
+      <div class="parrain-hero">
+        <div class="parrain-hero-emoji">🌳</div>
+        <div class="pin-titre">${t("arbre.modale_titre")}</div>
+        <p class="note">${t("arbre.modale_note")}</p>
+      </div>
       <div id="pm-code" class="arbre-code-bloc"><p class="note">${t("arbre.attente")}</p></div>
       <div id="pm-zone"></div>
       <button id="pm-regen" class="lien-oubli">${t("arbre.regenerer")}</button>
@@ -1061,10 +1064,13 @@ function modaleParrainage() {
     if (!code) { blocCode.innerHTML = `<p class="note">${t("arbre.indispo")}</p>`; return; }
     const lien = lienDepuisCode(code);
     const qr = (typeof qrSvg === "function") ? qrSvg(lien, { classe: "arbre-qr", titre: code }) : null;
+    // Note QR volontairement omise ici (contrairement à la page « Arbre des
+    // familles ») : cette modale, plus compacte, a déjà tout dit plus haut
+    // (voir .parrain-hero) — la répéter ne faisait que l'allonger.
     blocCode.innerHTML =
       `<p class="arbre-code-label">${t("arbre.code_label")}</p>
        <p class="arbre-code">${echapper(code)}</p>
-       ${qr ? `<div class="arbre-qr-cadre">${qr}</div><p class="note">${t("arbre.qr_note")}</p>` : ""}`;
+       ${qr ? `<div class="arbre-qr-cadre">${qr}</div>` : ""}`;
     zone.innerHTML = "";
     montrerLienInvitation(zone, lien, t("arbre.partage"), {
       sujet: t("parr.sujet", { app: APP_NOM }),
