@@ -151,6 +151,25 @@ body{
 .verrou-carte .gros-bouton{width:100%}
 .verrou-attente{font-size:22px; font-weight:800; color:#f6a623; margin:2px 0 16px}
 
+/* Écran d'attente du mode « verrouillage permanent » : vu plusieurs fois par
+   jour par de jeunes enfants sans jamais exiger de code — un ciel étoilé
+   chaleureux plutôt que le bleu sobre de l'écran « temps écoulé » classique
+   (qui, lui, reste destiné à un déverrouillage par PIN). */
+.verrou-ecran-perm{background:linear-gradient(160deg,#2b2f6b,#6a3d8f)}
+.verrou-carte-perm{position:relative; overflow:hidden}
+.verrou-perm-ciel{position:absolute; inset:0; pointer-events:none; font-size:15px}
+.verrou-perm-ciel span{position:absolute; animation:etoilePerm 2.6s ease-in-out infinite}
+.verrou-perm-ciel span:nth-child(1){top:8%; left:12%; animation-delay:0s}
+.verrou-perm-ciel span:nth-child(2){top:14%; right:16%; animation-delay:.6s}
+.verrou-perm-ciel span:nth-child(3){top:80%; left:20%; animation-delay:1.2s}
+.verrou-perm-ciel span:nth-child(4){top:76%; right:12%; animation-delay:1.8s}
+@keyframes etoilePerm{0%,100%{opacity:.25; transform:scale(.85)}50%{opacity:1; transform:scale(1.15)}}
+.verrou-emoji-perm{animation:rebondPerm 2.2s ease-in-out infinite}
+@keyframes rebondPerm{0%,50%,100%{transform:translateY(0)}25%{transform:translateY(-7px)}}
+@media(prefers-reduced-motion:reduce){
+  .verrou-perm-ciel span, .verrou-emoji-perm{animation:none}
+}
+
 /* Décompte « prépare-toi » (5 s) après un changement d'enfant */
 .prep-ecran{position:fixed; inset:0; z-index:1000; display:flex; align-items:center;
   justify-content:center; padding:24px;

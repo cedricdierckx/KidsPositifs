@@ -5427,28 +5427,42 @@ test("feuille papier imprimée : l'avatar reste à sa taille normale, sans css/s
     "le <svg> intérieur doit être contraint à 100% de la vignette");
 });
 
-/* ---------- Mode « verrouillage permanent » : cycle fixe de 6 h, sans PIN ----------
- * Le parent choisit une durée par enfant (ex. 3 min) ; toutes les 6 h, calé
- * sur l'horloge locale (0 h/6 h/12 h/18 h), tous les budgets repartent à zéro
- * automatiquement. Le but explicite : le parent ne doit JAMAIS avoir à
- * déverrouiller l'application lui-même — seule une échappatoire PIN
- * facultative permet d'accéder aux réglages sans attendre le cycle suivant. */
-test("permanent : le début de cycle est calé sur l'horloge locale (0h/6h/12h/18h)", () => {
+/* ---------- Mode « verrouillage permanent » : cycle glissant de 6 h, sans PIN ----------
+ * Le parent choisit une durée par enfant (ex. 3 min) ; 6 h après le tout
+ * premier lancement réel d'un enfant (pas un horaire fixe de l'horloge),
+ * tous les budgets repartent à zéro automatiquement. Signalé : caler le
+ * cycle sur l'horloge (0 h/6 h/12 h/18 h) pouvait tout réinitialiser
+ * quelques minutes après le début d'usage, au lieu de laisser 6 h pleines.
+ * Le but reste inchangé : le parent ne doit JAMAIS avoir à déverrouiller
+ * l'application lui-même — seule une échappatoire PIN facultative permet
+ * d'accéder aux réglages sans attendre le cycle suivant. */
+test("permanent : le cycle s'ancre sur le premier lancement réel, pas sur l'horloge", () => {
   const { api } = construireContexte();
-  const verifier = (h, m, hAttendu) => {
-    const ts = new Date(2026, 2, 10, h, m, 0, 0).getTime();
-    const debut = api.timerDebutCycle(ts);
-    assert.strictEqual(debut, new Date(2026, 2, 10, hAttendu, 0, 0, 0).getTime(),
-      `à ${h}h${m}, le cycle en cours doit avoir commencé à ${hAttendu}h`);
-  };
-  verifier(0, 45, 0);
-  verifier(5, 59, 0);
-  verifier(6, 0, 6);
-  verifier(13, 47, 12);
-  verifier(18, 0, 18);
-  verifier(23, 59, 18);
-  const debut = new Date(2026, 2, 10, 12, 0, 0, 0).getTime();
-  assert.strictEqual(api.timerFinCycle(debut) - debut, api.TIMER_CYCLE_MS, "un cycle dure exactement 6 h");
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  assert.strictEqual(api.timerEtat.cyclePermanent, 0, "aucun cycle tant que rien n'a démarré");
+  const avant = Date.now();
+  api.definirReglageTimer(3, "permanent");   // démarre automatiquement l'enfant actif
+  const apres = Date.now();
+  assert.ok(api.timerEtat.cyclePermanent >= avant && api.timerEtat.cyclePermanent <= apres,
+    "le cycle doit s'ancrer sur l'instant réel du premier lancement, pas sur un multiple de 6 h");
+  assert.strictEqual(api.timerFinCycle(api.timerEtat.cyclePermanent) - api.timerEtat.cyclePermanent,
+    api.TIMER_CYCLE_MS, "un cycle dure exactement 6 h depuis ce début réel");
+});
+
+test("permanent : un deuxième enfant qui prend la main ne repousse pas l'échéance du cycle", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const e = api.etatVierge();
+  const ids = Object.keys(e.enfants);
+  api.lierEtat(e);
+  api.definirReglageTimer(3, "permanent");
+  const ancre = api.timerEtat.cyclePermanent;
+  api.timerEtat.restes[ids[0]] = 0;          // le premier enfant a épuisé son temps
+  api.etat.enfantActif = ids[1];
+  api.assurerTimerPermanent();
+  assert.strictEqual(api.timerEtat.cyclePermanent, ancre,
+    "l'échéance commune doit rester celle du tout premier enfant, pas repartir de zéro");
 });
 
 test("permanent : démarre automatiquement le décompte de l'enfant actif, sans PIN ni bouton", () => {
@@ -5475,13 +5489,17 @@ test("permanent : un nouveau cycle réinitialise tous les budgets automatiquemen
   ids.forEach(i => { api.timerEtat.restes[i] = 0; });   // plus aucun enfant disponible
   api.timerEtat.actif = false;
   api.timerEtat.verrouille = true;
-  // Le cycle mémorisé est celui d'AVANT : on simule le passage au suivant.
-  api.timerEtat.cyclePermanent = api.timerDebutCycle(Date.now()) - api.TIMER_CYCLE_MS;
+  // Le cycle mémorisé est celui d'AVANT, déjà expiré depuis un moment : on
+  // simule le passage au suivant.
+  api.timerEtat.cyclePermanent = Date.now() - api.TIMER_CYCLE_MS - 1000;
   api.ecrireTimer();
+  const avant = Date.now();
   api.assurerTimerPermanent();
+  const apres = Date.now();
   assert.strictEqual(api.timerEtat.verrouille, false, "le nouveau cycle doit lever le verrouillage tout seul");
   assert.strictEqual(api.timerEtat.actif, true, "et relancer directement le décompte de l'enfant actif");
-  assert.strictEqual(api.timerEtat.cyclePermanent, api.timerDebutCycle(Date.now()));
+  assert.ok(api.timerEtat.cyclePermanent >= avant && api.timerEtat.cyclePermanent <= apres,
+    "le nouveau cycle doit s'ancrer sur l'instant de ce nouveau départ, pas sur l'horloge");
   ids.forEach(i => assert.ok(api.tempsRestantEnfant(i) > 0, "l'enfant " + i + " doit retrouver son budget"));
 });
 
@@ -5560,7 +5578,8 @@ test("permanent : changer de mode (vers ou depuis permanent) repart d'un minuteu
   assert.strictEqual(api.timerEtat.actif, true);
   api.definirReglageTimer(3, "permanent");
   assert.strictEqual(api.timerMode(), "permanent");
-  assert.strictEqual(api.timerEtat.cyclePermanent, api.timerDebutCycle(Date.now()));
+  assert.ok(api.timerEtat.cyclePermanent > 0 && api.timerEtat.cyclePermanent <= Date.now(),
+    "le cycle doit s'ancrer sur l'instant réel de l'entrée en mode permanent");
   api.definirReglageTimer(3, "parEnfant");
   assert.strictEqual(api.timerMode(), "parEnfant");
   assert.strictEqual(api.timerEtat.actif, false, "sortir du mode permanent ne doit pas laisser un décompte fantôme");
@@ -5577,6 +5596,18 @@ test("verrouillage permanent : libellés traduits dans les 4 langues", () => {
     if (typeof v !== "string" || !v.length) manquantes.push(lg + " → " + k);
   }));
   assert.strictEqual(manquantes.length, 0, manquantes.join(", "));
+});
+
+test("verrouillage permanent : l'écran d'attente a son propre décor, plus chaleureux que l'écran PIN classique", () => {
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const css = fs.readFileSync(path.join(r, "css/style.css"), "utf8");
+  assert.ok(/verrou-ecran-perm/.test(ui) && /verrou-ecran-perm/.test(css),
+    "l'écran doit porter sa propre classe de décor, distincte de l'écran PIN sobre");
+  assert.ok(/verrou-emoji-perm/.test(css) && /animation:\s*rebondPerm/.test(css),
+    "un signe de vie animé, pas une icône figée");
+  assert.ok(/prefers-reduced-motion:reduce\)\{[\s\S]{0,120}verrou-emoji-perm/.test(css),
+    "l'animation doit se couper si l'utilisateur a demandé de réduire les animations");
 });
 
 /* ---------- Exécution ----------

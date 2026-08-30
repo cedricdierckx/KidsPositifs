@@ -1840,11 +1840,18 @@ function afficherVerrouPermanent() {
     return;
   }
   masquerBandeauTimer();
-  const ov = el("div", "verrou-ecran");
+  const ov = el("div", "verrou-ecran verrou-ecran-perm");
   ov.id = "verrou-permanent-ecran";
+  // Contrairement à l'écran « temps écoulé » classique (sobre, avec PIN), ce
+  // décor est vu plusieurs fois par jour par de jeunes enfants SANS jamais
+  // exiger de code : autant qu'il ressemble à une pause câline plutôt qu'à un
+  // écran de panne — étoiles qui clignotent, croissant animé.
   ov.innerHTML = `
-    <div class="verrou-carte">
-      <div class="verrou-emoji">⏳</div>
+    <div class="verrou-carte verrou-carte-perm">
+      <div class="verrou-perm-ciel" aria-hidden="true">
+        <span>✨</span><span>⭐</span><span>✨</span><span>⭐</span>
+      </div>
+      <div class="verrou-emoji verrou-emoji-perm">🌙</div>
       <h2>${t("verrouPerm.titre")}</h2>
       <p>${t("verrouPerm.texte")}</p>
       <div id="vp-attente" class="verrou-attente">--:--</div>

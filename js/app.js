@@ -164,21 +164,17 @@ const PREP_MS = 5000;
 // verrouillage oublié (téléphone laissé de côté pour la nuit) restait actif
 // indéfiniment au lieu de se réinitialiser tout seul.
 const TIMER_DELAI_MAX_MS = 6 * 60 * 60 * 1000;
-// Mode « verrouillage permanent » : cycle fixe de 6 h calé sur l'horloge
-// locale (00 h/06 h/12 h/18 h). À chaque nouveau cycle, tous les budgets par
-// enfant repartent à zéro automatiquement — sans code PIN — de sorte que le
-// parent n'a jamais besoin de déverrouiller l'application lui-même.
+// Mode « verrouillage permanent » : cycle glissant de 6 h, ancré sur le
+// moment où UN enfant démarre effectivement à jouer (voir
+// assurerTimerPermanent) — jamais sur un horaire fixe de l'horloge. À la fin
+// du cycle, tous les budgets par enfant repartent à zéro automatiquement —
+// sans code PIN — de sorte que le parent n'a jamais besoin de déverrouiller
+// l'application lui-même.
 const TIMER_CYCLE_MS = 6 * 60 * 60 * 1000;
 let timerEtat = { actif: false, fin: 0, total: 0, enfant: null, restes: {}, prep: 0, choix: false, verrouille: false, lance: 0, cyclePermanent: 0 };
 let timerInterval = null;
 function cleTimer() { return STORAGE_KEY + ":timer:" + (familleId || "_local"); }
 function timerVierge() { return { actif: false, fin: 0, total: 0, enfant: null, restes: {}, prep: 0, choix: false, verrouille: false, lance: 0, cyclePermanent: 0 }; }
-// Horodatage (ms) du début du cycle de 6 h en cours (heure locale), et de sa fin.
-function timerDebutCycle(ts) {
-  const d = new Date(ts);
-  d.setHours(d.getHours() - (d.getHours() % 6), 0, 0, 0);
-  return d.getTime();
-}
 function timerFinCycle(debutCycle) { return debutCycle + TIMER_CYCLE_MS; }
 // Vrai si le minuteur (dans n'importe quel sous-état) tourne depuis plus de
 // TIMER_DELAI_MAX_MS. `lance` n'est jamais touché par les ajouts de temps ni
@@ -445,13 +441,15 @@ function contournerVerrouPermanent() {
   if (typeof debuterSessionModeParents === "function") debuterSessionModeParents();
   else { modeParents = true; rendre(); }
 }
-// Réinitialise tous les budgets dès qu'on entre dans un nouveau cycle de 6 h
-// (calé sur l'horloge locale). Appelé à chaque tick en mode permanent.
+// Réinitialise tous les budgets 6 h après le DÉBUT RÉEL du cycle — c'est-à-dire
+// l'instant où un enfant a effectivement commencé à jouer (voir
+// assurerTimerPermanent, qui pose cyclePermanent), pas un horaire fixe de
+// l'horloge (0 h/6 h/12 h/18 h). Un enfant qui démarre à 17 h 55 dispose donc
+// bien de 6 h pleines, au lieu d'être recalé 5 minutes plus tard par un
+// changement de tranche horaire. Appelé à chaque tick en mode permanent.
 function assurerCyclePermanent() {
-  const debut = timerDebutCycle(Date.now());
-  if (timerEtat.cyclePermanent !== debut) {
+  if (timerEtat.cyclePermanent && Date.now() >= timerFinCycle(timerEtat.cyclePermanent)) {
     timerEtat = timerVierge();
-    timerEtat.cyclePermanent = debut;
     ecrireTimer();
   }
 }
@@ -469,6 +467,12 @@ function assurerTimerPermanent() {
   if (!id) return;
   if (timerEtat.actif) { timerSurChangementEnfant(); return; }
   if (tempsRestantEnfant(id) <= 0) { finDeTempsEnfant(); return; }
+  // Ancre le cycle de 6 h sur ce tout premier lancement du cycle (jamais
+  // ré-ancré tant que timerVierge() ne l'a pas remis à 0 — voir
+  // assurerCyclePermanent) : un enfant qui reprend la main en cours de
+  // cycle, ou un deuxième enfant qui démarre après le premier, ne repousse
+  // jamais l'échéance commune.
+  if (!timerEtat.cyclePermanent) timerEtat.cyclePermanent = Date.now();
   timerEtat.enfant = id;
   timerEtat.restes[id] = tempsRestantEnfant(id);
   timerEtat.total = timerDureeMin() * 60000;
