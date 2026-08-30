@@ -772,7 +772,7 @@ Object.assign(I18N.de, {
   "timer.temps_ajoute": "+{min} Min hinzugefügt ⏱️",
   "timer.temps_ajoute_enf": "+{min} Min für {prenom} ⏱️",
   "timer.mode_permanent": "🔁 Dauerhafte Sperre (jedes Kind erhält alle 6 Std. seine Zeit zurück, ohne PIN)",
-  "timer.mode_permanent_note": "Die Zähler werden automatisch alle 6 Std. zurückgesetzt (0, 6, 12, 18 Uhr). Die Eltern müssen nichts entsperren: Die App startet sich selbst neu.",
+  "timer.mode_permanent_note": "Die Zähler werden automatisch 6 Std. nachdem das erste Kind zu spielen begonnen hat zurückgesetzt. Die Eltern müssen nichts entsperren: Die App startet sich selbst neu.",
   "timer.enregistrer": "✅ Speichern",
   "timer.permanent_active": "Dauerhafte Sperre aktiviert 🔁",
   "verrou.titre": "Zeit ist um!",

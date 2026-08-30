@@ -540,7 +540,7 @@ const I18N = {
     "timer.temps_ajoute": "+{min} min ajoutées ⏱️",
     "timer.temps_ajoute_enf": "+{min} min pour {prenom} ⏱️",
     "timer.mode_permanent": "🔁 Verrouillage permanent (chaque enfant reçoit à nouveau son temps toutes les 6 h, sans PIN)",
-    "timer.mode_permanent_note": "Les compteurs se réinitialisent automatiquement toutes les 6 h (0 h, 6 h, 12 h, 18 h). Le parent n'a rien à déverrouiller : l'application se relance toute seule.",
+    "timer.mode_permanent_note": "Les compteurs se réinitialisent automatiquement 6 h après que le premier enfant a commencé à jouer. Le parent n'a rien à déverrouiller : l'application se relance toute seule.",
     "timer.enregistrer": "✅ Enregistrer",
     "timer.permanent_active": "Verrouillage permanent activé 🔁",
     "verrou.titre": "Temps écoulé !",

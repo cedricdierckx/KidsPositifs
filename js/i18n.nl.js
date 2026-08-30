@@ -772,7 +772,7 @@ Object.assign(I18N.nl, {
   "timer.temps_ajoute": "+{min} min toegevoegd ⏱️",
   "timer.temps_ajoute_enf": "+{min} min voor {prenom} ⏱️",
   "timer.mode_permanent": "🔁 Permanente vergrendeling (elk kind krijgt om de 6 u opnieuw zijn tijd, zonder PIN)",
-  "timer.mode_permanent_note": "De tellers worden automatisch elke 6 u gereset (0 u, 6 u, 12 u, 18 u). De ouder hoeft niets te ontgrendelen: de app herstart zichzelf.",
+  "timer.mode_permanent_note": "De tellers worden automatisch gereset 6 u nadat het eerste kind is beginnen spelen. De ouder hoeft niets te ontgrendelen: de app herstart zichzelf.",
   "timer.enregistrer": "✅ Opslaan",
   "timer.permanent_active": "Permanente vergrendeling geactiveerd 🔁",
   "verrou.titre": "Tijd is om!",

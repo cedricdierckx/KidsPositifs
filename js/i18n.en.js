@@ -772,7 +772,7 @@ Object.assign(I18N.en, {
   "timer.temps_ajoute": "+{min} min added ⏱️",
   "timer.temps_ajoute_enf": "+{min} min for {prenom} ⏱️",
   "timer.mode_permanent": "🔁 Permanent lock (each child gets their time back every 6 h, no PIN)",
-  "timer.mode_permanent_note": "Time budgets reset automatically every 6 h (midnight, 6am, noon, 6pm). Nothing for a parent to unlock: the app restarts itself.",
+  "timer.mode_permanent_note": "Time budgets reset automatically 6 h after the first child starts playing. Nothing for a parent to unlock: the app restarts itself.",
   "timer.enregistrer": "✅ Save",
   "timer.permanent_active": "Permanent lock enabled 🔁",
   "verrou.titre": "Time's up!",
