@@ -206,7 +206,14 @@ function chargerTimer() {
   if (typeof timerEtat.prep !== "number") timerEtat.prep = 0;
   if (typeof timerEtat.lance !== "number") timerEtat.lance = 0;   // anciens minuteurs (avant ce plafond)
   if (typeof timerEtat.cyclePermanent !== "number") timerEtat.cyclePermanent = 0;
-  if (timerMode() === "permanent") { lancerTickTimer(); return; }   // orchestré par assurerTimerPermanent()
+  if (timerMode() === "permanent") {
+    // Rien à surveiller tant que personne n'a été désigné pour ce cycle : pas
+    // d'intervalle à faire tourner pour rien. `verrouille` doit en revanche
+    // reprendre son décompte (« nouveau temps dans Xh Ym »), et un décompte
+    // déjà `actif` doit continuer sans interruption après un simple rechargement.
+    if (timerEtat.enfant || timerEtat.verrouille) lancerTickTimer();
+    return;
+  }
   if (verifierDelaiMaxTimer()) return;   // priorité au plafond de 6 h
   // Le minuteur a expiré pendant l'absence (onglet fermé).
   if (timerEtat.actif && timerEtat.fin && Date.now() >= timerEtat.fin) {
@@ -242,7 +249,10 @@ function definirReglageTimer(duree, mode) {
     if (typeof masquerVerrouPermanent === "function") masquerVerrouPermanent();
     if (typeof masquerChoixEnfant === "function") masquerChoixEnfant();
   }
-  if (modeApres === "permanent") lancerTickTimer();
+  // Aucun démarrage automatique ici, y compris pour le mode permanent :
+  // choisir un mode ne fait que l'enregistrer. C'est le choix explicite d'un
+  // enfant (écran « qui commence ? », voir afficherChoixDemarrage côté UI et
+  // demarrerTimerPourEnfant ci-dessous) qui lance réellement un décompte.
 }
 
 function demarrerTimer() {
@@ -418,8 +428,10 @@ function deverrouillerApp() {
 }
 
 // --- Mode « verrouillage permanent » -----------------------------------
-// Verrouille SANS code PIN : la reprise n'est pas un déverrouillage manuel,
-// elle survient automatiquement au cycle suivant (voir assurerTimerPermanent).
+// Verrouille SANS code PIN : la levée du verrou n'exige pas de PIN parental,
+// mais n'est pas non plus automatique — le cycle suivant affiche l'écran
+// « qui commence ? » (afficherChoixDemarrage) au lieu de relancer tout seul
+// un décompte sur l'enfant actif (voir assurerCyclePermanent).
 // L'intervalle est délibérément relancé : c'est lui qui fait vivre le
 // décompte « nouveau temps dans Xh Ym » et détecte le changement de cycle.
 function verrouillerAppPermanent() {
@@ -437,6 +449,7 @@ function verrouillerAppPermanent() {
 // modeParents est actif).
 function contournerVerrouPermanent() {
   if (typeof masquerVerrouPermanent === "function") masquerVerrouPermanent();
+  if (typeof masquerChoixDemarrage === "function") masquerChoixDemarrage();
   etat.vue = "reglages";   // atterrit directement dans l'espace parents, comme depuis la barre de nav
   if (typeof debuterSessionModeParents === "function") debuterSessionModeParents();
   else { modeParents = true; rendre(); }
@@ -451,35 +464,59 @@ function assurerCyclePermanent() {
   if (timerEtat.cyclePermanent && Date.now() >= timerFinCycle(timerEtat.cyclePermanent)) {
     timerEtat = timerVierge();
     ecrireTimer();
+    // Le reset peut survenir en tâche de fond (personne n'interagit avec
+    // l'app à cet instant) : sans cet appel direct, l'écran « nouveau temps
+    // dans Xh Ym » resterait affiché jusqu'au prochain rendu complet. On ne
+    // pose rien par-dessus l'espace parents s'il est ouvert : le choix
+    // réapparaîtra dès que modeParents repasse à false (assurerTimerPermanent
+    // continue d'appeler assurerCyclePermanent à chaque tick).
+    if (typeof masquerVerrouPermanent === "function") masquerVerrouPermanent();
+    if (!modeParents && typeof afficherChoixDemarrage === "function") afficherChoixDemarrage();
   }
 }
-// Orchestrateur du mode permanent : démarre/poursuit automatiquement le
-// décompte de l'enfant actif, sans aucune action manuelle du parent. Mis en
-// pause tant que l'espace parents est ouvert (modeParents), pour ne pas
-// décompter le temps d'un enfant pendant que le parent consulte les réglages.
+// Orchestrateur du mode permanent : poursuit le décompte d'un enfant déjà
+// désigné (voir demarrerTimerPourEnfant), ou détecte qu'il vient de terminer
+// son temps / de changer d'onglet en cours de partie. NE DÉSIGNE JAMAIS
+// personne tout seul — sans quoi le premier enfant affiché au dernier
+// rechargement se retrouvait décompté à l'insu de tous. Mis en pause tant
+// que l'espace parents est ouvert (modeParents).
 function assurerTimerPermanent() {
   if (timerMode() !== "permanent") return;
   assurerCyclePermanent();
   if (modeParents) return;
   if (timerEtat.choix || timerEtat.verrouille) return;
-  const enf = enfantActif();
-  const id = enf ? enf.id : null;
-  if (!id) return;
+  const id = timerEtat.enfant;
+  if (!id) return;   // personne désigné pour ce cycle : on attend le choix explicite
   if (timerEtat.actif) { timerSurChangementEnfant(); return; }
   if (tempsRestantEnfant(id) <= 0) { finDeTempsEnfant(); return; }
-  // Ancre le cycle de 6 h sur ce tout premier lancement du cycle (jamais
-  // ré-ancré tant que timerVierge() ne l'a pas remis à 0 — voir
-  // assurerCyclePermanent) : un enfant qui reprend la main en cours de
-  // cycle, ou un deuxième enfant qui démarre après le premier, ne repousse
-  // jamais l'échéance commune.
   if (!timerEtat.cyclePermanent) timerEtat.cyclePermanent = Date.now();
-  timerEtat.enfant = id;
   timerEtat.restes[id] = tempsRestantEnfant(id);
   timerEtat.total = timerDureeMin() * 60000;
   timerEtat.actif = true;
   timerEtat.fin = Date.now() + timerEtat.restes[id];
   timerEtat.prep = 0;
   ecrireTimer();
+}
+// Point d'entrée unique du choix « qui commence ? » (afficherChoixDemarrage,
+// ui.js) : quel que soit le mode, aucun minuteur ne démarre jamais tout
+// seul — il faut un enfant explicitement désigné. Bascule dessus, lance son
+// décompte, et renvoie à son accueil (haut de page).
+function demarrerTimerPourEnfant(id) {
+  if (!id || !etat.enfants[id]) return;
+  etat.enfantActif = id;
+  ecrireCache();
+  if (timerMode() === "permanent") {
+    timerEtat = timerVierge();
+    timerEtat.enfant = id;
+    ecrireTimer();
+    lancerTickTimer();   // assurerTimerPermanent complète immédiatement pour cet enfant
+  } else {
+    demarrerTimer();
+  }
+  etat.vue = "accueil";
+  if (typeof masquerChoixDemarrage === "function") masquerChoixDemarrage();
+  rendre();
+  if (typeof window !== "undefined" && typeof window.scrollTo === "function") window.scrollTo(0, 0);
 }
 
 function etatVierge() {

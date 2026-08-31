@@ -180,6 +180,7 @@ function construireContexte(options) {
       // mode « verrouillage permanent » : cycle glissant de 6 h, sans PIN
       TIMER_CYCLE_MS, timerFinCycle, assurerCyclePermanent, assurerTimerPermanent,
       verrouillerAppPermanent, contournerVerrouPermanent, restesDisponibles, finDeTempsEnfant,
+      demarrerTimerPourEnfant,
       get modeParents() { return modeParents; }, set modeParents(v) { modeParents = v; },
     };
   `;

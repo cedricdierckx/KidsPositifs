@@ -1990,10 +1990,11 @@ Object.assign(I18N.fr, {
   "timer.demarrer": "▶️ Démarrer", "timer.lance": "Minuteur lancé ⏱️", "timer.sans_pin": "⚠️ Aucun code PIN défini : pense à en créer un (onglet Activités) pour empêcher le déverrouillage.",
   "timer.arret_titre": "Arrêter le minuteur", "timer.arret_pin": "Saisis le code PIN parental pour arrêter.", "timer.arret_confirm": "Arrêter le minuteur ?", "timer.pin_faux": "Code PIN incorrect 🔒",
   "timer.opt_titre": "⏱️ Minuteur", "timer.opt_arreter": "⏹️ Arrêter le minuteur", "timer.opt_ajouter": "Ou remettre du temps (+{min} min) :", "timer.opt_plus": "➕ Ajouter {min} min", "timer.temps_ajoute": "+{min} min ajoutées ⏱️", "timer.temps_ajoute_enf": "+{min} min pour {prenom} ⏱️",
-  "timer.mode_permanent": "🔁 Verrouillage permanent (chaque enfant reçoit à nouveau son temps toutes les 6 h, sans PIN)", "timer.mode_permanent_note": "Les compteurs se réinitialisent automatiquement 6 h après que le premier enfant a commencé à jouer. Le parent n'a rien à déverrouiller : l'application se relance toute seule.", "timer.enregistrer": "✅ Enregistrer", "timer.permanent_active": "Verrouillage permanent activé 🔁",
+  "timer.mode_permanent": "🔁 Verrouillage permanent (chaque enfant reçoit à nouveau son temps toutes les 6 h, sans PIN)", "timer.mode_permanent_note": "Les compteurs se réinitialisent automatiquement 6 h après que le premier enfant a commencé à jouer. Le parent n'a rien à déverrouiller : il suffit ensuite de choisir qui recommence, sans code PIN.", "timer.enregistrer": "✅ Enregistrer", "timer.permanent_active": "Verrouillage permanent activé 🔁",
   "verrou.titre": "Temps écoulé !", "verrou.texte": "C'est l'heure de faire une pause 😊 Demande à un parent pour continuer.", "verrou.sans_pin": "Aucun code PIN défini : tu peux déverrouiller directement.", "verrou.bouton": "🔓 Déverrouiller (parent)", "verrou.pin_titre": "🔒 Code PIN parental",
   "verrouPerm.titre": "Temps écoulé !", "verrouPerm.texte": "C'est l'heure de faire une pause 😊 Un nouveau temps arrive automatiquement, pas besoin de PIN.", "verrouPerm.parents": "Espace parents", "verrouPerm.attente_h": "Nouveau temps dans {h} h {m} min", "verrouPerm.attente_m": "Nouveau temps dans {m} min",
   "choix.titre": "Temps écoulé pour cet enfant !", "choix.texte": "Qui veut continuer ? (temps restant indiqué)", "choix.arreter": "Arrêter le minuteur",
+  "choixDemarrage.titre": "Qui commence ?", "choixDemarrage.texte": "Touche ton prénom pour lancer ton temps.",
   "prep.titre": "À toi, {prenom} !", "prep.sous": "Prépare-toi… ton temps démarre tout de suite 😊"
 });
 Object.assign(I18N.en, {
@@ -2002,10 +2003,11 @@ Object.assign(I18N.en, {
   "timer.demarrer": "▶️ Start", "timer.lance": "Timer started ⏱️", "timer.sans_pin": "⚠️ No PIN set: create one (Activities tab) to prevent unlocking.",
   "timer.arret_titre": "Stop the timer", "timer.arret_pin": "Enter the parental PIN to stop.", "timer.arret_confirm": "Stop the timer?", "timer.pin_faux": "Wrong PIN 🔒",
   "timer.opt_titre": "⏱️ Timer", "timer.opt_arreter": "⏹️ Stop the timer", "timer.opt_ajouter": "Or add more time (+{min} min):", "timer.opt_plus": "➕ Add {min} min", "timer.temps_ajoute": "+{min} min added ⏱️", "timer.temps_ajoute_enf": "+{min} min for {prenom} ⏱️",
-  "timer.mode_permanent": "🔁 Permanent lock (each child gets their time back every 6 h, no PIN)", "timer.mode_permanent_note": "Time budgets reset automatically 6 h after the first child starts playing. Nothing for a parent to unlock: the app restarts itself.", "timer.enregistrer": "✅ Save", "timer.permanent_active": "Permanent lock enabled 🔁",
+  "timer.mode_permanent": "🔁 Permanent lock (each child gets their time back every 6 h, no PIN)", "timer.mode_permanent_note": "Time budgets reset automatically 6 h after the first child starts playing. Nothing for a parent to unlock: just pick who's starting again, no PIN needed.", "timer.enregistrer": "✅ Save", "timer.permanent_active": "Permanent lock enabled 🔁",
   "verrou.titre": "Time's up!", "verrou.texte": "Time for a break 😊 Ask a parent to continue.", "verrou.sans_pin": "No PIN set: you can unlock directly.", "verrou.bouton": "🔓 Unlock (parent)", "verrou.pin_titre": "🔒 Parental PIN",
   "verrouPerm.titre": "Time's up!", "verrouPerm.texte": "Time for a break 😊 New time arrives automatically, no PIN needed.", "verrouPerm.parents": "Parents area", "verrouPerm.attente_h": "New time in {h}h {m}min", "verrouPerm.attente_m": "New time in {m} min",
   "choix.titre": "Time's up for this child!", "choix.texte": "Who wants to continue? (remaining time shown)", "choix.arreter": "Stop the timer",
+  "choixDemarrage.titre": "Who's starting?", "choixDemarrage.texte": "Tap your name to start your time.",
   "prep.titre": "Your turn, {prenom}!", "prep.sous": "Get ready… your time starts now 😊"
 });
 Object.assign(I18N.nl, {
@@ -2014,10 +2016,11 @@ Object.assign(I18N.nl, {
   "timer.demarrer": "▶️ Starten", "timer.lance": "Timer gestart ⏱️", "timer.sans_pin": "⚠️ Geen PIN ingesteld: maak er een aan (tabblad Activiteiten) om ontgrendelen te voorkomen.",
   "timer.arret_titre": "Timer stoppen", "timer.arret_pin": "Voer de ouderlijke PIN in om te stoppen.", "timer.arret_confirm": "Timer stoppen?", "timer.pin_faux": "Verkeerde PIN 🔒",
   "timer.opt_titre": "⏱️ Timer", "timer.opt_arreter": "⏹️ Timer stoppen", "timer.opt_ajouter": "Of tijd bijgeven (+{min} min):", "timer.opt_plus": "➕ {min} min toevoegen", "timer.temps_ajoute": "+{min} min toegevoegd ⏱️", "timer.temps_ajoute_enf": "+{min} min voor {prenom} ⏱️",
-  "timer.mode_permanent": "🔁 Permanente vergrendeling (elk kind krijgt om de 6 u opnieuw zijn tijd, zonder PIN)", "timer.mode_permanent_note": "De tellers worden automatisch gereset 6 u nadat het eerste kind is beginnen spelen. De ouder hoeft niets te ontgrendelen: de app herstart zichzelf.", "timer.enregistrer": "✅ Opslaan", "timer.permanent_active": "Permanente vergrendeling geactiveerd 🔁",
+  "timer.mode_permanent": "🔁 Permanente vergrendeling (elk kind krijgt om de 6 u opnieuw zijn tijd, zonder PIN)", "timer.mode_permanent_note": "De tellers worden automatisch gereset 6 u nadat het eerste kind is beginnen spelen. De ouder hoeft niets te ontgrendelen: gewoon kiezen wie er opnieuw begint, zonder PIN.", "timer.enregistrer": "✅ Opslaan", "timer.permanent_active": "Permanente vergrendeling geactiveerd 🔁",
   "verrou.titre": "Tijd is om!", "verrou.texte": "Tijd voor een pauze 😊 Vraag een ouder om door te gaan.", "verrou.sans_pin": "Geen PIN ingesteld: je kunt direct ontgrendelen.", "verrou.bouton": "🔓 Ontgrendelen (ouder)", "verrou.pin_titre": "🔒 Ouderlijke PIN",
   "verrouPerm.titre": "Tijd is om!", "verrouPerm.texte": "Tijd voor een pauze 😊 Er komt automatisch nieuwe tijd, geen PIN nodig.", "verrouPerm.parents": "Ouderruimte", "verrouPerm.attente_h": "Nieuwe tijd binnen {h} u {m} min", "verrouPerm.attente_m": "Nieuwe tijd binnen {m} min",
   "choix.titre": "Tijd is om voor dit kind!", "choix.texte": "Wie wil verdergaan? (resterende tijd weergegeven)", "choix.arreter": "Timer stoppen",
+  "choixDemarrage.titre": "Wie begint er?", "choixDemarrage.texte": "Tik op je naam om je tijd te starten.",
   "prep.titre": "Jouw beurt, {prenom}!", "prep.sous": "Maak je klaar… je tijd start zo 😊"
 });
 Object.assign(I18N.de, {
@@ -2026,10 +2029,11 @@ Object.assign(I18N.de, {
   "timer.demarrer": "▶️ Starten", "timer.lance": "Timer gestartet ⏱️", "timer.sans_pin": "⚠️ Keine PIN festgelegt: Lege eine an (Tab Aktivitäten), um das Entsperren zu verhindern.",
   "timer.arret_titre": "Timer stoppen", "timer.arret_pin": "Gib die Eltern-PIN ein, um zu stoppen.", "timer.arret_confirm": "Timer stoppen?", "timer.pin_faux": "Falsche PIN 🔒",
   "timer.opt_titre": "⏱️ Timer", "timer.opt_arreter": "⏹️ Timer stoppen", "timer.opt_ajouter": "Oder Zeit hinzufügen (+{min} Min):", "timer.opt_plus": "➕ {min} Min hinzufügen", "timer.temps_ajoute": "+{min} Min hinzugefügt ⏱️", "timer.temps_ajoute_enf": "+{min} Min für {prenom} ⏱️",
-  "timer.mode_permanent": "🔁 Dauerhafte Sperre (jedes Kind erhält alle 6 Std. seine Zeit zurück, ohne PIN)", "timer.mode_permanent_note": "Die Zähler werden automatisch 6 Std. nachdem das erste Kind zu spielen begonnen hat zurückgesetzt. Die Eltern müssen nichts entsperren: Die App startet sich selbst neu.", "timer.enregistrer": "✅ Speichern", "timer.permanent_active": "Dauerhafte Sperre aktiviert 🔁",
+  "timer.mode_permanent": "🔁 Dauerhafte Sperre (jedes Kind erhält alle 6 Std. seine Zeit zurück, ohne PIN)", "timer.mode_permanent_note": "Die Zähler werden automatisch 6 Std. nachdem das erste Kind zu spielen begonnen hat zurückgesetzt. Die Eltern müssen nichts entsperren: einfach auswählen, wer wieder anfängt, ohne PIN.", "timer.enregistrer": "✅ Speichern", "timer.permanent_active": "Dauerhafte Sperre aktiviert 🔁",
   "verrou.titre": "Zeit ist um!", "verrou.texte": "Zeit für eine Pause 😊 Frag ein Elternteil, um weiterzumachen.", "verrou.sans_pin": "Keine PIN festgelegt: Du kannst direkt entsperren.", "verrou.bouton": "🔓 Entsperren (Eltern)", "verrou.pin_titre": "🔒 Eltern-PIN",
   "verrouPerm.titre": "Zeit ist um!", "verrouPerm.texte": "Zeit für eine Pause 😊 Neue Zeit kommt automatisch, keine PIN nötig.", "verrouPerm.parents": "Elternbereich", "verrouPerm.attente_h": "Neue Zeit in {h} Std. {m} Min.", "verrouPerm.attente_m": "Neue Zeit in {m} Min.",
   "choix.titre": "Zeit ist um für dieses Kind!", "choix.texte": "Wer möchte weitermachen? (verbleibende Zeit angezeigt)", "choix.arreter": "Timer stoppen",
+  "choixDemarrage.titre": "Wer fängt an?", "choixDemarrage.texte": "Tippe auf deinen Namen, um deine Zeit zu starten.",
   "prep.titre": "Du bist dran, {prenom}!", "prep.sous": "Mach dich bereit… deine Zeit startet gleich 😊"
 });
 

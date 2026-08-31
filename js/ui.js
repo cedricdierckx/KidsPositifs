@@ -1535,6 +1535,17 @@ function synchroniserTimerUI() {
   masquerVerrouPermanent();
   if (timerEtat.choix) { afficherChoixEnfant(); masquerBandeauTimer(); majBoutonTimer(); return; }
   masquerChoixEnfant();
+  // Mode permanent configuré mais personne désigné pour ce cycle (première
+  // activation, ou cycle qui vient d'expirer pendant que l'espace parents
+  // était ouvert) : jamais de reprise automatique sur l'enfant actif au
+  // hasard — on redemande explicitement.
+  if (timerMode() === "permanent" && !timerEtat.enfant && !modeParents) {
+    afficherChoixDemarrage();
+    masquerBandeauTimer();
+    majBoutonTimer();
+    return;
+  }
+  masquerChoixDemarrage();
   if (!timerEtat.prep) masquerPrep();
   if (timerEtat.actif) {
     if (!timerInterval) lancerTickTimer(); else tickTimer();
@@ -1590,6 +1601,59 @@ function afficherChoixEnfant() {
 }
 function masquerChoixEnfant() {
   const ov = document.getElementById("choix-enfant");
+  if (ov) ov.remove();
+}
+
+// Écran « qui commence ? » : aucun minuteur (permanent compris) ne démarre
+// jamais tout seul sur l'enfant actif au hasard — on demande explicitement.
+// Utilisé juste après avoir configuré un mode (bouton « go » de modaleTimer)
+// ET automatiquement à chaque nouveau cycle du mode permanent (voir
+// assurerCyclePermanent, app.js), puisque ce mode n'a pas de bouton dédié.
+function afficherChoixDemarrage() {
+  if (document.getElementById("choix-demarrage")) return;   // déjà affiché
+  masquerBandeauTimer();
+  const permanent = (typeof timerMode === "function") && timerMode() === "permanent";
+  const ov = el("div", "verrou-ecran" + (permanent ? " verrou-ecran-perm" : ""));
+  ov.id = "choix-demarrage";
+  let cartes = "";
+  Object.values(etat.enfants).forEach(enf => {
+    cartes += `<button class="choix-enf" data-id="${enf.id}" style="--c:${enf.couleur}">
+        ${vignetteEnfant(enf, "moyen")}
+        <span class="choix-nom">${echapper(enf.prenom)}</span>
+      </button>`;
+  });
+  ov.innerHTML = `
+    <div class="verrou-carte choix-carte">
+      ${permanent ? "" : `<button class="modale-fermer" aria-label="${t("common.fermer")}">✕</button>`}
+      <div class="verrou-emoji">🙋</div>
+      <h2>${t("choixDemarrage.titre")}</h2>
+      <p>${t("choixDemarrage.texte")}</p>
+      <div class="choix-liste">${cartes}</div>
+      ${permanent ? `<button id="cd-parents" class="lien-oubli">${t("verrouPerm.parents")}</button>` : ""}
+    </div>`;
+  document.body.appendChild(ov);
+  ov.querySelectorAll(".choix-enf").forEach(b => {
+    b.onclick = () => demarrerTimerPourEnfant(b.dataset.id);
+  });
+  const fermer = ov.querySelector(".modale-fermer");
+  if (fermer) fermer.onclick = () => masquerChoixDemarrage();
+  const parents = ov.querySelector("#cd-parents");
+  if (parents) parents.onclick = () => {
+    if (etat.reglages && etat.reglages.codeParent) {
+      demanderPin({
+        titre: t("verrou.pin_titre"),
+        permettreOubli: true,
+        onReset: () => contournerVerrouPermanent(),
+        onOk: (saisi) => {
+          if (saisi.trim() !== etat.reglages.codeParent) return false;
+          contournerVerrouPermanent();
+        }
+      });
+    } else contournerVerrouPermanent();
+  };
+}
+function masquerChoixDemarrage() {
+  const ov = document.getElementById("choix-demarrage");
   if (ov) ov.remove();
 }
 
@@ -1712,8 +1776,10 @@ function modaleTimer() {
     const m = (ov.querySelector('input[name="tm-mode"]:checked') || {}).value || "parEnfant";
     definirReglageTimer(d, m);
     fermer();
-    if (m === "permanent") { rendre(); toast(t("timer.permanent_active"), "info"); }
-    else demarrerTimer();
+    // Aucun mode ne démarre plus tout seul sur l'enfant actif : on demande
+    // toujours explicitement qui commence (voir afficherChoixDemarrage).
+    if (m === "permanent") toast(t("timer.permanent_active"), "info");
+    afficherChoixDemarrage();
   };
 }
 
