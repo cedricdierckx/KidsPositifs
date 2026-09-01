@@ -5688,6 +5688,33 @@ test("verrouillage permanent : l'écran d'attente a son propre décor, plus chal
     "l'animation doit se couper si l'utilisateur a demandé de réduire les animations");
 });
 
+/* ---------- Changement d'onglet : toujours remonter en haut de page ----------
+ * Signalé : passer d'Accueil à Famille (ou d'un onglet parent à un autre)
+ * pouvait laisser la page scrollée là où elle en était sur l'onglet
+ * précédent, alors que le nouveau contenu démarre lui, depuis le haut. */
+test("navigation : changer d'onglet principal (barre du bas) remonte en haut de page", () => {
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ancre = "Navigation : choix d'affichage local";
+  const bloc = ui.slice(ui.indexOf(ancre), ui.indexOf(ancre) + 900);
+  assert.ok(/etat\.vue = b\.dataset\.vue;[\s\S]{0,700}window\.scrollTo\(0, 0\)/.test(bloc),
+    "le clic sur un bouton de la barre du bas (Accueil, Famille, Planète, Avatar, Parents) doit remonter la page");
+});
+
+test("navigation : changer d'onglet dans l'espace parents remonte aussi en haut de page", () => {
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  assert.ok(/function changerOngletParent\(id\)\s*\{[\s\S]{0,200}window\.scrollTo\(0, 0\)[\s\S]{0,100}rendre\(\)/.test(ui),
+    "changerOngletParent() doit remonter la page avant de re-rendre le contenu du nouvel onglet");
+  // Regression : les points d'entrée du sous-menu parents (barre d'onglets,
+  // bouton « Mes enfants », étapes de Premiers pas) doivent tous passer par
+  // cette fonction commune, pas réassigner ongletParent en direct sans
+  // remonter la page.
+  assert.ok(!/ongletParent = id; rendre\(\)/.test(ui) && !/ongletParent = "enfants"; rendre\(\)/.test(ui)
+    && !/ongletParent = e\.onglet; rendre\(\)/.test(ui),
+    "ces points d'entrée doivent appeler changerOngletParent(), pas réassigner ongletParent directement");
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async

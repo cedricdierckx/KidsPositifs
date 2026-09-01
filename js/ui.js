@@ -1220,6 +1220,9 @@ function initSquelette() {
       // session) laissait le sous-menu sur le dernier onglet consulté,
       // parfois loin à droite dans la barre défilante.
       if (b.dataset.vue === "reglages" && typeof ongletParent !== "undefined") ongletParent = "quotidien";
+      // Chaque onglet démarre son propre contenu depuis le haut : rester
+      // scrollé plus bas qu'où on était sur l'onglet précédent serait déroutant.
+      window.scrollTo(0, 0);
       ecrireCache(); rendre();
     }));
 
@@ -6862,12 +6865,19 @@ function sectionVisible(section) {
   }
 }
 
+// Change l'onglet parent affiché ET remonte en haut de page : rester scrollé
+// plus bas qu'où on était sur le précédent onglet serait déroutant, chaque
+// section démarrant son propre contenu depuis le haut.
+function changerOngletParent(id) {
+  ongletParent = id;
+  if (typeof window !== "undefined" && typeof window.scrollTo === "function") window.scrollTo(0, 0);
+  rendre();
+}
 // Change d'onglet parent d'un cran (dir = +1 suivant, -1 précédent), en boucle.
 function changerOngletParentRelatif(dir) {
   const ids = ongletsParents();
   const i = Math.max(0, ids.indexOf(ongletParent));
-  ongletParent = ids[(i + dir + ids.length) % ids.length];
-  rendre();
+  changerOngletParent(ids[(i + dir + ids.length) % ids.length]);
 }
 
 // Bandeau "mode démo" (remplace les sections compte/famille en démo).
@@ -6930,7 +6940,7 @@ function blocPremiersPas() {
     // retrouver l'écran où l'enfant coche vraiment ses missions.
     if (!e.fait && e.onglet) {
       const b = el("button", "mini-btn", e.bouton);
-      b.onclick = () => { ongletParent = e.onglet; rendre(); };
+      b.onclick = () => changerOngletParent(e.onglet);
       li.querySelector(".pp-corps").appendChild(b);
     } else if (!e.fait && e.pli) {
       const b = el("button", "mini-btn", e.bouton);
@@ -7414,7 +7424,7 @@ function vueReglages(c) {
       const pin = el("span", "sous-nav-pin", String(totalAttente));
       b.appendChild(pin);
     }
-    b.onclick = () => { ongletParent = id; rendre(); };
+    b.onclick = () => changerOngletParent(id);
     nav.appendChild(b);
   });
   c.appendChild(nav);
@@ -7655,7 +7665,7 @@ function vueReglages(c) {
     const carteEnfants = el("section", "carte");
     carteEnfants.innerHTML = `<h2>${t("grp.enfants")}</h2><p class="note">${t("regl.enfants_note")}</p>`;
     const bEnfants = el("button", "btn-secondaire", t("regl.enfants_ouvrir"));
-    bEnfants.onclick = () => { ongletParent = "enfants"; rendre(); };
+    bEnfants.onclick = () => changerOngletParent("enfants");
     carteEnfants.appendChild(bEnfants);
     c.appendChild(carteEnfants);
     // Famille : pas de dépliant englobant. Ses trois cartes se présentent
