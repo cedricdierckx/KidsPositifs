@@ -5701,6 +5701,26 @@ test("navigation : changer d'onglet principal (barre du bas) remonte en haut de 
     "le clic sur un bouton de la barre du bas (Accueil, Famille, Planète, Avatar, Parents) doit remonter la page");
 });
 
+test("PDF (app installée) : la carte d'ami/dépliant se capture à largeur fixe, pas à celle du téléphone", () => {
+  // Signalé (capture à l'appui) : sur un téléphone étroit, le QR + le texte
+  // parents de la carte d'ami repliaient en colonne, doublant sa hauteur —
+  // assez pour déborder sur une deuxième page, en pleine coupure du QR.
+  // Vérifié empiriquement (headless, hors suite) : à 260px de large (rendu
+  // écran réel), la carte fait 546px de haut (441 mm ramenée à une largeur
+  // A4) ; à 794px (largeur fixe ci-dessous), elle ne fait plus que 450px de
+  // haut (119 mm) — largement sous les 297 mm d'une page.
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const bloc = ui.slice(ui.indexOf("async function pdfDepuisElement"),
+                        ui.indexOf("async function pdfDepuisElement") + 2500);
+  assert.ok(/if \(enfants\.length < 2\) \{[\s\S]{0,1200}width:\s*794px/.test(bloc),
+    "le bloc « un seul élément » (carte d'ami, dépliant) doit capturer un clone à largeur fixe (794px, A4 à 96 dpi)");
+  assert.ok(/element\.cloneNode\(true\)/.test(bloc),
+    "un CLONE, jamais l'élément affiché lui-même (qu'on ne doit pas déplacer/redimensionner sous les yeux du parent)");
+  assert.ok(/finally\s*\{\s*large\.remove\(\)/.test(bloc),
+    "le clone hors écran doit être retiré même si la capture échoue");
+});
+
 test("navigation : changer d'onglet dans l'espace parents remonte aussi en haut de page", () => {
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");

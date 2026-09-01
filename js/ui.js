@@ -762,9 +762,28 @@ async function pdfDepuisElement(element) {
 
   const enfants = element.querySelectorAll ? Array.from(element.querySelectorAll(".enfant")) : [];
   if (enfants.length < 2) {
-    // Rien à répartir : un seul bloc (ou aucun — carte d'ami, dépliant) —
-    // comportement inchangé, un seul rendu de l'élément entier.
-    ajouterCanvas(await window.html2canvas(element, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }), false);
+    // Rien à répartir : un seul bloc (carte d'ami, dépliant — ou, déjà
+    // élargi par elementDepuisHtml, la feuille papier).
+    //
+    // Signalé (capture à l'appui) : sur un téléphone étroit, la carte d'ami
+    // (QR + texte destiné aux parents, en ligne) repliait ce duo en colonne
+    // faute de place — doublant la hauteur de la carte, assez pour déborder
+    // sur une deuxième page, en pleine coupure du QR. Vérifié : à 260px de
+    // large (téléphone compact), la carte capturée telle quelle atteint 546px
+    // de haut (ratio 2,1) ; largeur d'une page A4 x ce ratio = 441mm, quand
+    // la page ne fait que 297mm. Le rendu à l'écran dépend donc du téléphone
+    // qui imprime — jamais souhaitable pour un PDF. On capture un CLONE hors
+    // écran à largeur fixe (794px, même convention que elementDepuisHtml :
+    // un A4 à 96 dpi), où ce duo tient toujours côte à côte.
+    const large = document.createElement("div");
+    large.style.cssText = "position:fixed; left:-9999px; top:0; width:794px";
+    large.appendChild(element.cloneNode(true));
+    document.body.appendChild(large);
+    try {
+      ajouterCanvas(await window.html2canvas(large, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }), false);
+    } finally {
+      large.remove();
+    }
     return pdf.output("blob");
   }
 
