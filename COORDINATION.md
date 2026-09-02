@@ -76,7 +76,7 @@ de choix.
 | 10 | Étendre le banc d'essai (`test/`) à `js/ui.js` (au moins les fonctions pures : `montantLisible`, `octetsLisibles`, `miniGraphBarres`…) | P2 | Sonnet 5 | à faire — voir la note ci-dessous |
 | 11 | Captures d'écran + promesse en une phrase pour la page publique (`c_preuve_1`, `c_preuve_2`) | P2 | Sonnet 5 | ✅ fait |
 | 12 | Phase C — découpage `ui.js` en modules | P3 | Opus 5 | ✅ fait (ce commit) — volet `import`/`export` gelé, motifs dans `ARCHITECTURE.md` |
-| 13 | Phase F — build/lint/CI | P3 | Sonnet 5 | à faire |
+| 13 | Phase F — build/lint/CI | P3 | Sonnet 5 | à faire — voir la piste « fumée » ci-dessous |
 | 14 | Découper `schema.sql` en migrations numérotées (si le fichier continue de grossir) | P3 | Sonnet 5 | à faire (1 702 lignes au 02/09/2026) |
 
 ### Note sur le chantier 10 (état réel du banc d'essai)
@@ -106,6 +106,22 @@ contemporaine identifiable, et prévoir une relecture humaine avant de
 cocher la case « Contenu blagues » (Admin → Contenu, `app_config.blagues_actives`
 — voir `blaguesActivees()` dans `js/app.js`, ancien commutateur figé
 `BLAGUES_ACTIVEES`).*
+
+### Piste concrète pour le chantier 13 : un test « de fumée » en navigateur
+
+Toute la suite actuelle raisonne sur du **texte** (source lue, expressions
+régulières) ou sur de la logique chargée dans une `vm`. Aucun test n'ouvre
+réellement l'application. Le découpage de l'interface (chantier 12) a été
+contrôlé, en plus des 288 tests, en ouvrant `index.html` dans un Chromium
+sans affichage : zéro erreur JavaScript, les 23 fonctions d'entrée présentes
+(`rendre`, `vueAccueil`, `vueAdmin`, `htmlFeuilleSemaine`…), premier écran
+peint. C'est le contrôle qui manquait, et il tient en une trentaine de lignes.
+
+Recette : `python3 -m http.server` à la racine, puis Playwright (`pageerror`
++ `console` de type `error`) sur `http://127.0.0.1:<port>/index.html`. À
+n'ajouter qu'avec la phase F : cela introduit la première dépendance de
+développement lourde du dépôt (~150 Mo de navigateur), ce qui ne se décide
+pas au détour d'un autre chantier.
 
 ### Pourquoi Opus 5 pour les chantiers 9 et 12
 

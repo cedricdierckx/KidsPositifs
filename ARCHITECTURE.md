@@ -77,6 +77,11 @@ Chaque phase est **indépendante**, livrable seule, et **réversible**.
 - Ce dernier point est ce qui rend le découpage réversible : comme rien ne
   tourne au chargement, l'ordre des balises `<script>` est un confort de
   lecture, pas une dépendance.
+- Contrôlé en plus des 288 tests par une ouverture réelle d'`index.html` dans
+  un Chromium sans affichage (zéro erreur JavaScript, fonctions d'entrée
+  toutes présentes, premier écran peint). Ce contrôle n'est pas encore dans
+  la suite : il introduirait la première dépendance lourde du dépôt — voir la
+  piste « test de fumée » du chantier 13 dans `COORDINATION.md`.
 
 **Ce qui n'a délibérément PAS été fait : le passage aux `import`/`export`.**
 La phase prévoyait aussi de convertir les `js/*.js` en modules ES. C'est
