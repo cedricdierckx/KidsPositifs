@@ -228,26 +228,31 @@ function timerDureeMin() {
 }
 function timerMode() {
   const m = etat.reglages && etat.reglages.timerMode;
-  return (m === "global" || m === "permanent") ? m : "parEnfant";
+  return (m === "global" || m === "permanent" || m === "off") ? m : "parEnfant";
 }
 function definirReglageTimer(duree, mode) {
   if (!etat.reglages) etat.reglages = {};
   const modeAvant = etat.reglages.timerMode;
   const d = Math.max(1, Math.min(120, parseInt(duree, 10) || 3));
-  const modeApres = (mode === "global") ? "global" : (mode === "permanent") ? "permanent" : "parEnfant";
+  const modeApres = (mode === "global") ? "global" : (mode === "permanent") ? "permanent"
+                   : (mode === "off") ? "off" : "parEnfant";
   etat.reglages.timerDuree = d;
   etat.reglages.timerMode = modeApres;
   sauver();
-  // Un changement DE ou VERS le mode permanent repart d'un minuteur vierge :
-  // les états (verrouillage, décompte, choix) des autres modes n'ont pas de
-  // sens une fois le mode changé.
-  if (modeApres !== modeAvant && (modeApres === "permanent" || modeAvant === "permanent")) {
+  // Un changement DE ou VERS le mode permanent OU désactivé repart d'un
+  // minuteur vierge : les états (verrouillage, décompte, choix) des autres
+  // modes n'ont pas de sens une fois le mode changé — et « désactivé » doit
+  // toujours pouvoir tout arrêter net, immédiatement, quel que soit l'état
+  // en cours (c'est tout son intérêt).
+  if (modeApres !== modeAvant && (modeApres === "permanent" || modeAvant === "permanent"
+      || modeApres === "off" || modeAvant === "off")) {
     timerEtat = timerVierge();
     stopTickTimer();
     ecrireTimer();
     if (typeof masquerVerrou === "function") masquerVerrou();
     if (typeof masquerVerrouPermanent === "function") masquerVerrouPermanent();
     if (typeof masquerChoixEnfant === "function") masquerChoixEnfant();
+    if (typeof masquerChoixDemarrage === "function") masquerChoixDemarrage();
   }
   // Aucun démarrage automatique ici, y compris pour le mode permanent :
   // choisir un mode ne fait que l'enregistrer. C'est le choix explicite d'un

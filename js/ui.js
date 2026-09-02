@@ -1777,10 +1777,14 @@ function modaleTimer() {
         <label class="radio-ligne"><input type="radio" name="tm-mode" value="parEnfant" ${mode === "parEnfant" ? "checked" : ""}> ${t("timer.mode_enfant")}</label>
         <label class="radio-ligne"><input type="radio" name="tm-mode" value="global" ${mode === "global" ? "checked" : ""}> ${t("timer.mode_global")}</label>
         <label class="radio-ligne"><input type="radio" name="tm-mode" value="permanent" ${mode === "permanent" ? "checked" : ""}> ${t("timer.mode_permanent")}</label>
+        <!-- Toujours prévoir la possibilité d'arrêter net : un parent qui a
+             activé un mode (surtout le permanent, sans PIN) doit pouvoir
+             revenir ici et tout désactiver, sans avoir à deviner comment. -->
+        <label class="radio-ligne"><input type="radio" name="tm-mode" value="off" ${mode === "off" ? "checked" : ""}> ${t("timer.mode_off")}</label>
       </div>
       <p id="tm-permanent-note" class="note timer-avert" style="display:${mode === "permanent" ? "block" : "none"}">${t("timer.mode_permanent_note")}</p>
-      ${etat.reglages && etat.reglages.codeParent ? "" : `<p class="note timer-avert">${t("timer.sans_pin")}</p>`}
-      <button id="tm-go" class="gros-bouton planete">${mode === "permanent" ? t("timer.enregistrer") : t("timer.demarrer")}</button>
+      ${(etat.reglages && etat.reglages.codeParent) || mode === "off" ? "" : `<p id="tm-sans-pin" class="note timer-avert">${t("timer.sans_pin")}</p>`}
+      <button id="tm-go" class="gros-bouton planete">${(mode === "permanent" || mode === "off") ? t("timer.enregistrer") : t("timer.demarrer")}</button>
     </div>`;
   document.body.appendChild(ov);
   const fermer = () => ov.remove();
@@ -1790,16 +1794,21 @@ function modaleTimer() {
   const note = ov.querySelector("#tm-permanent-note");
   ov.querySelectorAll('input[name="tm-mode"]').forEach(r => r.addEventListener("change", () => {
     if (!r.checked) return;
-    go.textContent = r.value === "permanent" ? t("timer.enregistrer") : t("timer.demarrer");
+    go.textContent = (r.value === "permanent" || r.value === "off") ? t("timer.enregistrer") : t("timer.demarrer");
     note.style.display = r.value === "permanent" ? "block" : "none";
+    const sansPin = ov.querySelector("#tm-sans-pin");
+    if (sansPin) sansPin.style.display = r.value === "off" ? "none" : "block";
   }));
   go.onclick = () => {
     const d = ov.querySelector("#tm-duree").value;
     const m = (ov.querySelector('input[name="tm-mode"]:checked') || {}).value || "parEnfant";
     definirReglageTimer(d, m);
     fermer();
-    // Aucun mode ne démarre plus tout seul sur l'enfant actif : on demande
-    // toujours explicitement qui commence (voir afficherChoixDemarrage).
+    // Désactivé : rien à démarrer, ni à choisir — juste confirmer que c'est
+    // bien coupé (utile en particulier en sortant du mode permanent, sans PIN).
+    if (m === "off") { toast(t("timer.off_active"), "info"); return; }
+    // Les autres modes ne démarrent plus tout seuls sur l'enfant actif : on
+    // demande toujours explicitement qui commence (voir afficherChoixDemarrage).
     if (m === "permanent") toast(t("timer.permanent_active"), "info");
     afficherChoixDemarrage();
   };

@@ -5604,6 +5604,75 @@ test("permanent : changer de mode (vers ou depuis permanent) repart d'un minuteu
   assert.strictEqual(api.timerEtat.cyclePermanent, 0);
 });
 
+/* ---------- Mode « désactivé » : toujours pouvoir tout arrêter -----------
+ * Un parent qui a activé un mode (le permanent surtout, sans PIN) doit
+ * toujours pouvoir revenir dans les réglages du minuteur et tout couper net,
+ * quel que soit l'état en cours — verrouillé, en plein décompte, ou en
+ * attente d'un choix. */
+test("désactivé : coupe net un décompte actif (mode « par enfant » ou « global »)", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  api.demarrerTimer();
+  assert.strictEqual(api.timerEtat.actif, true);
+  api.definirReglageTimer(3, "off");
+  assert.strictEqual(api.timerMode(), "off");
+  assert.strictEqual(api.timerEtat.actif, false, "le décompte en cours doit s'arrêter immédiatement");
+  assert.strictEqual(api.timerEtat.enfant, null);
+});
+
+test("désactivé : lève un verrouillage permanent en cours, sans code PIN", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const e = api.etatVierge();
+  const ids = Object.keys(e.enfants);
+  api.lierEtat(e);
+  api.definirReglageTimer(3, "permanent");
+  api.demarrerTimerPourEnfant(ids[0]);
+  api.timerEtat.actif = false;
+  api.timerEtat.verrouille = true;   // verrouillage permanent en cours, en attente du prochain cycle
+  api.ecrireTimer();
+  api.definirReglageTimer(3, "off");
+  assert.strictEqual(api.timerMode(), "off");
+  assert.strictEqual(api.timerEtat.verrouille, false, "plus aucun verrouillage une fois désactivé");
+  assert.strictEqual(api.timerEtat.cyclePermanent, 0);
+});
+
+test("désactivé : assurerTimerPermanent ne fait plus rien du tout une fois ce mode choisi", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const e = api.etatVierge();
+  const ids = Object.keys(e.enfants);
+  api.lierEtat(e);
+  api.definirReglageTimer(3, "permanent");
+  api.demarrerTimerPourEnfant(ids[0]);
+  api.definirReglageTimer(3, "off");
+  api.assurerTimerPermanent();   // même appelé directement, aucun effet hors du mode permanent
+  assert.strictEqual(api.timerEtat.actif, false);
+  assert.strictEqual(api.timerEtat.cyclePermanent, 0);
+});
+
+test("désactivé : traduit dans les 4 langues", () => {
+  const { api } = construireContexte();
+  const cles = ["timer.mode_off", "timer.off_active"];
+  const manquantes = [];
+  Object.keys(api.LANGUES).forEach(lg => cles.forEach(k => {
+    const v = api.I18N[lg][k];
+    if (typeof v !== "string" || !v.length) manquantes.push(lg + " → " + k);
+  }));
+  assert.strictEqual(manquantes.length, 0, manquantes.join(", "));
+});
+
+test("désactivé : 4e option dans la modale du minuteur, et le clic « go » ne montre pas l'écran de choix", () => {
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const bloc = ui.slice(ui.indexOf("function modaleTimer("), ui.indexOf("function modaleTimer(") + 4000);
+  assert.ok(/value="off"/.test(bloc) && /timer\.mode_off/.test(bloc),
+    "la 4e option (mode désactivé) doit exister dans la liste des choix");
+  assert.ok(/if \(m === "off"\) \{[\s\S]{0,200}return/.test(bloc),
+    "choisir « désactivé » doit s'arrêter là, sans jamais appeler afficherChoixDemarrage() ni demarrerTimer()");
+});
+
 /* ---------- Écran « qui commence ? » : aucun mode ne démarre jamais tout
  * seul sur l'enfant actif au hasard — demarrerTimerPourEnfant est le SEUL
  * point d'entrée qui lance réellement un décompte, quel que soit le mode. */
@@ -5650,11 +5719,11 @@ test("demarrerTimerPourEnfant : un identifiant invalide ou inconnu ne démarre r
 test("écran « qui commence ? » : le bouton de configuration du minuteur ne démarre plus jamais directement", () => {
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
-  const bloc = ui.slice(ui.indexOf("function modaleTimer("), ui.indexOf("function modaleTimer(") + 3000);
-  assert.ok(!/go\.onclick[\s\S]{0,500}demarrerTimer\(\)/.test(bloc),
+  const bloc = ui.slice(ui.indexOf("function modaleTimer("), ui.indexOf("function modaleTimer(") + 4000);
+  assert.ok(!/go\.onclick[\s\S]{0,800}demarrerTimer\(\)/.test(bloc),
     "le clic sur « go » ne doit plus appeler demarrerTimer() directement, quel que soit le mode");
-  assert.ok(/go\.onclick[\s\S]{0,500}afficherChoixDemarrage\(\)/.test(bloc),
-    "il doit systématiquement passer par l'écran de choix explicite");
+  assert.ok(/go\.onclick[\s\S]{0,800}afficherChoixDemarrage\(\)/.test(bloc),
+    "il doit systématiquement passer par l'écran de choix explicite (sauf mode désactivé, testé à part)");
   assert.ok(/function afficherChoixDemarrage/.test(ui) && /function masquerChoixDemarrage/.test(ui),
     "l'écran de choix et sa fonction de fermeture doivent exister");
   const fs2 = require("fs");
