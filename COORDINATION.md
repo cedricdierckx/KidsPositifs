@@ -64,20 +64,32 @@ de choix.
 
 | # | Chantier | Priorité | Modèle | Statut |
 |---|---|---|---|---|
-| 1 | Ce document (protocole + catalogue) | P0 | Sonnet 5 | ✅ fait (ce commit) |
-| 2 | Rafraîchir `ARCHITECTURE.md` (phases A/B/E réellement faites) | P0 | Sonnet 5 | ✅ fait (ce commit) |
-| 3 | E-mail de bienvenue automatique à la création d'une famille (`c_auto_1`) | P1 | Sonnet 5 | à faire |
-| 4 | Rapport mensuel par e-mail à l'admin (`c_auto_3`) | P1 | Sonnet 5 | à faire |
-| 5 | Réponses types (canned replies) dans l'onglet Retours (`c_auto_5`) | P1 | Sonnet 5 | à faire |
-| 6 | FAQ publique (`c_auto_4`) | P1 | Sonnet 5 | à faire |
-| 7 | Corpus de blagues éprouvées et libres de droits (remplace le corpus désactivé) | P1 | Sonnet 5* | à faire |
-| 8 | SEO de base de la page publique — titres, meta description, Open Graph, sitemap (`c_preuve_5`) | P1 | Sonnet 5 | à faire |
-| 9 | Relance d'activation J+3 automatique, si aucune mission validée (`c_auto_2`) | P2 | Opus 5 | à faire |
-| 10 | Étendre le banc d'essai (`test/`) à `js/ui.js` (au moins les fonctions pures : `montantLisible`, `octetsLisibles`, `miniGraphBarres`…) | P2 | Sonnet 5 | à faire |
-| 11 | Captures d'écran + promesse en une phrase pour la page publique (`c_preuve_1`, `c_preuve_2`) | P2 | Sonnet 5 | à faire (contenu final = décision fondateur) |
-| 12 | Phase C — découpage `ui.js` en modules ES | P3 | Opus 5 | à faire |
+| 1 | Ce document (protocole + catalogue) | P0 | Sonnet 5 | ✅ fait (`80d6ba9`) |
+| 2 | Rafraîchir `ARCHITECTURE.md` (phases A/B/E réellement faites) | P0 | Sonnet 5 | ✅ fait (`80d6ba9`) |
+| 3 | E-mail de bienvenue automatique à la création d'une famille (`c_auto_1`) | P1 | Sonnet 5 | ✅ fait (`c_auto_1` coché dans `js/croissance.js`) |
+| 4 | Rapport mensuel par e-mail à l'admin (`c_auto_3`) | P1 | Sonnet 5 | ✅ fait (à armer par le fondateur) |
+| 5 | Réponses types (canned replies) dans l'onglet Retours (`c_auto_5`) | P1 | Sonnet 5 | ✅ fait (`REPONSES_TYPES`) |
+| 6 | FAQ publique (`c_auto_4`) | P1 | Sonnet 5 | ✅ fait (`faq.html`) |
+| 7 | Corpus de blagues éprouvées et libres de droits (remplace le corpus désactivé) | P1 | Sonnet 5* | ✅ fait (`BLAGUES_DEFAUT`, `js/data.js`) — l'activation reste une décision du fondateur |
+| 8 | SEO de base de la page publique — titres, meta description, Open Graph, sitemap (`c_preuve_5`) | P1 | Sonnet 5 | ✅ fait |
+| 9 | Relance d'activation J+3 automatique, si aucune mission validée (`c_auto_2`) | P2 | Opus 5 | ✅ fait (à armer par le fondateur) |
+| 10 | Étendre le banc d'essai (`test/`) à `js/ui.js` (au moins les fonctions pures : `montantLisible`, `octetsLisibles`, `miniGraphBarres`…) | P2 | Sonnet 5 | à faire — voir la note ci-dessous |
+| 11 | Captures d'écran + promesse en une phrase pour la page publique (`c_preuve_1`, `c_preuve_2`) | P2 | Sonnet 5 | ✅ fait |
+| 12 | Phase C — découpage `ui.js` en modules | P3 | Opus 5 | 🟡 en cours |
 | 13 | Phase F — build/lint/CI | P3 | Sonnet 5 | à faire |
-| 14 | Découper `schema.sql` en migrations numérotées (si le fichier continue de grossir) | P3 | Sonnet 5 | à faire |
+| 14 | Découper `schema.sql` en migrations numérotées (si le fichier continue de grossir) | P3 | Sonnet 5 | à faire (1 702 lignes au 02/09/2026) |
+
+### Note sur le chantier 10 (état réel du banc d'essai)
+
+`js/ui.js` **est** couvert, mais de deux façons très inégales : une
+cinquantaine de tests lisent son **texte source** et vérifient par expression
+régulière qu'une garantie y figure (ordre des branches, absence d'un lien,
+présence d'un garde-fou). C'est utile — c'est ce qui a rattrapé plusieurs
+régressions — mais ça ne fait **jamais tourner** le code. Le harnais
+(`test/harness.js`) ne charge toujours pas l'interface dans la `vm` : aucune
+fonction de `ui.js` n'est appelée pour de vrai, donc `montantLisible`,
+`octetsLisibles`, `miniGraphBarres` n'ont pas de test unitaire. Le chantier 10
+reste donc entier.
 
 *\* Chantier 7 : certitude ≈ 60 % seulement sur le caractère réellement
 « libre de droits » de toute liste compilée par un agent — aucun modèle ne
@@ -98,10 +110,11 @@ cocher la case « Contenu blagues » (Admin → Contenu, `app_config.blagues_act
   double). Les chantiers 3, 4, 5, 6, 8 sont mécaniques ou à faible impact
   (un seul déclencheur simple, ou un seul destinataire admin, ou du contenu
   statique) : Sonnet 5 suffit.
-- **#12 (découpage `ui.js`)** : fichier de ~4000 lignes, très nombreux points
-  d'appel croisés (`ui.js` ↔ `app.js` ↔ `auth.js`), risque de régression
-  visuelle subtile non couverte par la suite de tests actuelle (qui ne charge
-  pas `ui.js`, cf. chantier #10). Un refactor de cette ampleur mérite le
+- **#12 (découpage `ui.js`)** : fichier de **7 841 lignes** au 02/09/2026 (et
+  non ~4000 comme écrit à l'origine), très nombreux points d'appel croisés
+  (`ui.js` ↔ `app.js` ↔ `auth.js`), risque de régression visuelle subtile non
+  couverte par la suite de tests actuelle (qui ne fait pas tourner `ui.js`,
+  cf. la note du chantier #10). Un refactor de cette ampleur mérite le
   raisonnement le plus prudent disponible.
 
 ## 4. Chantiers non-agents (pour mémoire, fondateur uniquement)
