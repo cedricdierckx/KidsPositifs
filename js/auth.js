@@ -315,7 +315,15 @@ async function apresConnexion() {
   // `configAppPrete()` memorise sa promesse : si le demarrage l'a deja
   // demandee, on reutilise la requete en vol au lieu d'en faire une seconde.
   const [donneesAdmin] = await Promise.all([
-    sb.rpc("is_admin").then(r => r.data).catch(() => false),
+    // Premier appel réseau à froid : le plus exposé sur l'app native (réseau
+    // mobile pas encore chaud). Sans filet, un raté isolé masquait Admin et
+    // Soutien toute la session, même admin. Erreur retentée 1×, jamais un
+    // "pas admin" explicite (data=false sans erreur : une réponse, pas un raté).
+    (async () => {
+      let r = await sb.rpc("is_admin");
+      if (r.error) { await new Promise(res => setTimeout(res, 1200)); r = await sb.rpc("is_admin"); }
+      return r.error ? false : r.data;
+    })().catch(() => false),
     configAppPrete().catch(() => {}),
     chargerFamilles().catch(() => { mesFamilles = []; })
   ]);
@@ -446,6 +454,22 @@ function auRetour() {
   // veille est mort, et un canal mort ne rejoue jamais ce qu'on a manqué.
   Store.reprendre();
   if (typeof majDodo === "function") majDodo();
+  // Filet pour Admin/Soutien : si le contrôle d'administrateur avait échoué
+  // au démarrage (réseau pas encore prêt — surtout sur l'app native), chaque
+  // retour au premier plan lui redonne une chance. Sans ce filet, la seule
+  // porte de sortie restait un redémarrage complet de l'app.
+  rafraichirEstAdmin();
+}
+// Read-only, jamais bloquant : n'agit que si le statut a changé, et reste
+// silencieux en cas d'échec (simple filet de rattrapage, pas un chemin critique).
+async function rafraichirEstAdmin() {
+  if (!sb || !utilisateur) return;
+  try {
+    const { data, error } = await sb.rpc("is_admin");
+    if (error) return;
+    const nouveau = !!data;
+    if (nouveau !== estAdmin) { estAdmin = nouveau; if (typeof rendre === "function") rendre(); }
+  } catch (e) { /* silencieux : simple filet de rattrapage */ }
 }
 
 // Ping d'usage : une fois par jour et par famille (best-effort, jamais bloquant).
