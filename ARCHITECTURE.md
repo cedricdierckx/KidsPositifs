@@ -23,7 +23,7 @@ Application **web vanilla** (sans framework), chargée par `index.html` :
 | `js/croissance.js` | Données du plan de développement (chantiers, e-mails) — voir `PLAN-COMMERCIAL.md` |
 | `js/app.js` | État de jeu + logique (missions, badges, écosystème, sûreté données) |
 | `js/store.js` | Couche de données isolée : sync `family_state(_history)`, garde-fous d'écriture |
-| `js/ui.js` | Rendu de tous les écrans (espace enfant, parents, admin) |
+| `js/ui/*.js` | Rendu de tous les écrans, **17 modules** (espace enfant, parents, admin) — phase C |
 | `js/auth.js` | Auth, familles, invitations, parrainage, **synchronisation** |
 | `supabase/schema.sql` | Schéma BDD : tables, RLS, fonctions, déclencheurs |
 | `supabase/functions/` | Edge functions : `send-mail`, `delete-account`, `stripe-webhook` |
@@ -52,21 +52,50 @@ Chaque phase est **indépendante**, livrable seule, et **réversible**.
   crédit/décrédit mission, plan « jours suivants », écosystème (prérequis,
   coûts), **sync** (anti inter-familles, anti-vide), migrations `normaliser`,
   auto-évaluation, i18n (parité des traductions), etc.
-- **88 tests** au 26/07/2026 (`node test/run.js`). Ne couvre pas encore `js/ui.js`
-  (voir chantier « Étendre le banc d'essai à ui.js » dans `COORDINATION.md`).
+- **288 tests** au 02/09/2026 (`node test/run.js`). L'interface (`js/ui/`) est
+  contrôlée par lecture de son **texte source** (une cinquantaine d'assertions,
+  via `sourceUi()`), mais n'est toujours pas **exécutée** dans la `vm` : voir
+  le chantier 10 de `COORDINATION.md`, qui reste ouvert.
 
 ### Phase B — Validation de schéma à l'écriture (risque faible) ✅ FAIT
 - `etatValide(e)` (enfants non vides, types corrects) appelée **avant chaque**
   écriture cloud, centralisée dans `Store.ecritureAutorisee()` (Phase D).
 
-### Phase C — Découpage en modules (risque moyen) — pas commencé
-- Passer les `js/*.js` en **modules ES** (`import`/`export`) au lieu de globals.
-- Découper `ui.js` (très gros fichier, ~4000 lignes) en sous-vues :
-  `ui/accueil.js`, `ui/missions.js`, `ui/avatar.js`, `ui/parents.js`,
-  `ui/admin.js`, `ui/recovery.js`.
-- Avantage : lisibilité, moins d'effets de bord globaux. **Nécessite la Phase A**
-  (faite) — risque désormais couvert par la suite de tests, mais `ui.js` lui-même
-  n'est pas testé (cf. Phase A) : à faire prudemment, petit module à la fois.
+### Phase C — Découpage en modules (risque moyen) ✅ FAIT pour l'interface
+- `js/ui.js` (7 841 lignes) est découpé en **17 modules** sous `js/ui/`, un par
+  domaine : `pin`, `parrainage`, `partage`, `notifications`, `squelette`,
+  `minuteur`, `admin`, `admin-croissance`, `noyau`, `accueil`, `feuille`,
+  `enfant`, `statistiques`, `famille`, `parents`, `parents-accueil`, `reglages`.
+- **Aucune ligne de code n'a été réécrite** : le découpage est un pur
+  déplacement, vérifié ligne à ligne contre l'ancien fichier. Un seul bloc
+  change de voisin (`modaleParrainage`, rapproché du reste du parrainage).
+- Trois garde-fous nouveaux (`test/run.js`) : `index.html` et `test/harness.js`
+  doivent s'accorder sur la liste ET l'ordre des modules ; les modules
+  concaténés doivent former un script valide (c'est là que se verrait un
+  `const` déclaré deux fois dans deux fichiers — page blanche en scripts
+  classiques) ; et **aucun module ne s'exécute au chargement**.
+- Ce dernier point est ce qui rend le découpage réversible : comme rien ne
+  tourne au chargement, l'ordre des balises `<script>` est un confort de
+  lecture, pas une dépendance.
+
+**Ce qui n'a délibérément PAS été fait : le passage aux `import`/`export`.**
+La phase prévoyait aussi de convertir les `js/*.js` en modules ES. C'est
+écarté pour l'instant, pour trois raisons concrètes et non par prudence
+générale :
+1. `test/harness.js` charge les fichiers en les **concaténant** dans un même
+   script `vm` — c'est cette portée lexicale partagée qui laisse les 288 tests
+   appeler n'importe quelle fonction. `import`/`export` sont interdits dans un
+   `vm.Script` : la conversion démolirait le banc d'essai, c'est-à-dire
+   exactement le filet qui protège le reste.
+2. `index.html` injecte le fichier de langue par `document.write` **pendant
+   l'analyse**, pour en garantir l'ordre ; un `<script type="module">` est
+   différé par nature et ne peut pas écrire dans le document.
+3. Les modules ES sont soumis au CORS : ils ne se chargent pas depuis
+   `file://`, ce qui ferait perdre l'ouverture directe d'`index.html`.
+Le bénéfice annoncé de la phase (lisibilité, fichiers de taille humaine) est
+acquis par le découpage seul ; `import`/`export` en apporterait un second
+(portée close), au prix des trois points ci-dessus. À rouvrir avec la phase F
+(build), qui répondrait aux trois d'un coup.
 
 ### Phase D — Couche de données isolée (risque moyen) ✅ FAIT
 - Toute la sync `family_state(_history)` (lecture/écriture, realtime, garde-fous)
@@ -100,6 +129,8 @@ Chaque phase est **indépendante**, livrable seule, et **réversible**.
 ## 5. Ordre recommandé
 
 **A → B** (sécurité immédiate) puis **E** (i18n, valeur produit) : **faites**.
-Restent **C** (modularisation) et **F** (industrialisation), utiles seulement
-si l'app continue de grossir — voir `COORDINATION.md` pour leur priorité
-actuelle face aux autres chantiers (croissance, dons, contenu).
+**C** est faite pour l'interface (découpage de `js/ui/`), sauf son volet
+`import`/`export`, gelé et motivé ci-dessus. Reste **F** (industrialisation),
+utile seulement si l'app continue de grossir — et qui lèverait au passage les
+trois obstacles au volet ES de la phase C. Voir `COORDINATION.md` pour la
+priorité actuelle face aux autres chantiers (croissance, dons, contenu).

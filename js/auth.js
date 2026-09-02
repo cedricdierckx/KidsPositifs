@@ -467,7 +467,7 @@ async function pingUsage() {
  * Toute la logique d'accès aux tables `family_state(_history)` et au temps
  * réel vit désormais dans js/store.js (couche de données isolée, Phase D).
  * Les fonctions ci-dessous ne sont que de fines délégations conservées pour
- * compatibilité avec les appelants existants (app.js, ui.js). */
+ * compatibilité avec les appelants existants (app.js, js/ui/*.js). */
 async function chargerEtatFamille() { return Store.charger(); }
 async function tirerEtat()          { return Store.tirer(); }
 function planifierSauvegardeCloud() { return Store.planifierSauver(); }

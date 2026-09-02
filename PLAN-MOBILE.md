@@ -68,7 +68,7 @@ applications qui ne font que réafficher un site web.
   logcat nécessaire) : avec `WRITE_CALENDAR` seul sur Android, cette requête
   lève une `SecurityException` que le bloc `try/catch` JS avale, et l'app
   retombe silencieusement sur le fichier `.ics` — d'où `READ_CALENDAR` en plus
-  sur Android uniquement (`permissionCalendrierEcriture()` dans `js/ui.js`
+  sur Android uniquement (`permissionCalendrierEcriture()` dans `js/ui/partage.js`
   distingue les deux plateformes). Autorisation demandée une fois au premier
   usage ; le fichier `.ics` reste le repli si le greffon est absent ou la
   permission refusée.
@@ -78,7 +78,7 @@ applications qui ne font que réafficher un site web.
   n'utilisaient jamais le rendez-vous agenda ci-dessus faute d'y penser.
   L'app propose désormais un rappel quotidien à l'heure conseillée
   (`heureRituelConseillee()`), activable/désactivable dans l'espace parents
-  (`blocNotificationSoir()`, `js/ui.js`). L'esprit du repère neurologique est
+  (`blocNotificationSoir()`, `js/ui/notifications.js`). L'esprit du repère neurologique est
   tenu (un seul message calme par jour, pas de son insistant, pas de badge,
   aucun score compétitif) ; sa lettre ne l'est plus.
   Programmé en `schedule.on:{hour,minute}` (répétition quotidienne en heure
@@ -107,7 +107,7 @@ applications qui ne font que réafficher un site web.
   affichait « Configuration requise » au lieu de travailler sur son cache.
   Elle est désormais dans le dépôt, recopiée depuis `node_modules` par
   `npm run vendor:supabase` (à relancer après chaque montée de version).
-- **Envoi vers l'agenda depuis l'app** (`js/ui.js`, `envoyerVersAgenda`) :
+- **Envoi vers l'agenda depuis l'app** (`js/ui/partage.js`, `envoyerVersAgenda`) :
   la WebView ignore l'attribut `download` d'un lien, sans erreur — les deux
   boutons « agenda » (carte surprise et rendez-vous du soir) ne faisaient donc
   plus rien une fois l'app installée. Dans l'app, le `.ics` est écrit dans le

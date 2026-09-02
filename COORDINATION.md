@@ -75,21 +75,27 @@ de choix.
 | 9 | Relance d'activation J+3 automatique, si aucune mission validée (`c_auto_2`) | P2 | Opus 5 | ✅ fait (à armer par le fondateur) |
 | 10 | Étendre le banc d'essai (`test/`) à `js/ui.js` (au moins les fonctions pures : `montantLisible`, `octetsLisibles`, `miniGraphBarres`…) | P2 | Sonnet 5 | à faire — voir la note ci-dessous |
 | 11 | Captures d'écran + promesse en une phrase pour la page publique (`c_preuve_1`, `c_preuve_2`) | P2 | Sonnet 5 | ✅ fait |
-| 12 | Phase C — découpage `ui.js` en modules | P3 | Opus 5 | 🟡 en cours |
+| 12 | Phase C — découpage `ui.js` en modules | P3 | Opus 5 | ✅ fait (ce commit) — volet `import`/`export` gelé, motifs dans `ARCHITECTURE.md` |
 | 13 | Phase F — build/lint/CI | P3 | Sonnet 5 | à faire |
 | 14 | Découper `schema.sql` en migrations numérotées (si le fichier continue de grossir) | P3 | Sonnet 5 | à faire (1 702 lignes au 02/09/2026) |
 
 ### Note sur le chantier 10 (état réel du banc d'essai)
 
-`js/ui.js` **est** couvert, mais de deux façons très inégales : une
+L'interface **est** couverte, mais de deux façons très inégales : une
 cinquantaine de tests lisent son **texte source** et vérifient par expression
 régulière qu'une garantie y figure (ordre des branches, absence d'un lien,
 présence d'un garde-fou). C'est utile — c'est ce qui a rattrapé plusieurs
 régressions — mais ça ne fait **jamais tourner** le code. Le harnais
 (`test/harness.js`) ne charge toujours pas l'interface dans la `vm` : aucune
-fonction de `ui.js` n'est appelée pour de vrai, donc `montantLisible`,
+de ses fonctions n'est appelée pour de vrai, donc `montantLisible`,
 `octetsLisibles`, `miniGraphBarres` n'ont pas de test unitaire. Le chantier 10
 reste donc entier.
+
+Le chantier 12 lui a toutefois préparé le terrain : ces tests passent
+désormais par `sourceUi()` (harnais) au lieu d'ouvrir un chemin de fichier en
+dur, et `MODULES_UI` donne la liste exacte des fichiers à charger. Ajouter
+l'interface au contexte `vm` ne demande donc plus que les bouchons DOM
+manquants — plus aucun travail de repérage.
 
 *\* Chantier 7 : certitude ≈ 60 % seulement sur le caractère réellement
 « libre de droits » de toute liste compilée par un agent — aucun modèle ne
@@ -113,9 +119,15 @@ cocher la case « Contenu blagues » (Admin → Contenu, `app_config.blagues_act
 - **#12 (découpage `ui.js`)** : fichier de **7 841 lignes** au 02/09/2026 (et
   non ~4000 comme écrit à l'origine), très nombreux points d'appel croisés
   (`ui.js` ↔ `app.js` ↔ `auth.js`), risque de régression visuelle subtile non
-  couverte par la suite de tests actuelle (qui ne fait pas tourner `ui.js`,
-  cf. la note du chantier #10). Un refactor de cette ampleur mérite le
-  raisonnement le plus prudent disponible.
+  couverte par la suite de tests actuelle (qui ne fait pas tourner
+  l'interface, cf. la note du chantier #10). Un refactor de cette ampleur
+  mérite le raisonnement le plus prudent disponible.
+  *Bilan a posteriori* : le risque a été neutralisé en n'écrivant aucune ligne
+  de code — le découpage est un pur déplacement, contrôlé ligne à ligne contre
+  l'ancien fichier. Ce qui a vraiment demandé du jugement n'est pas la coupe,
+  mais **où s'arrêter** : le volet `import`/`export` de la phase C aurait
+  démoli le banc d'essai (qui concatène les fichiers dans une `vm`), et il est
+  gelé pour cette raison, motivée dans `ARCHITECTURE.md`.
 
 ## 4. Chantiers non-agents (pour mémoire, fondateur uniquement)
 

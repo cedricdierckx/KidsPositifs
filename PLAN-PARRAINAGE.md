@@ -320,7 +320,7 @@ continue de fonctionner pendant et après. Aucune perte de données possible.
 |---|---|
 | `supabase/schema.sql` | 3 colonnes, 8 fonctions, 2 `grant` |
 | `js/auth.js` | Lecture du code permanent, `?p=CODE` en plus de `?parrain=`, appel de `claim_referral_code` |
-| `js/ui.js` | Modale de parrainage refondue (code + QR + partage), section « Arbre des familles » (paliers, jauge, tableau), variante 7ᵉ jour de `blocBonMoment`, carte d'ami imprimable |
+| `js/ui/parrainage.js` | Modale de parrainage refondue (code + QR + partage), section « Arbre des familles » (paliers, jauge, tableau), variante 7ᵉ jour de `blocBonMoment`, carte d'ami imprimable |
 | `js/data.js` | 4 badges de palier, 1 mission de générosité |
 | `js/app.js` | Attribution des badges de palier dans `verifierBadges` |
 | `js/i18n.js` | Clés `arbre.*`, `parr.*` complétées, **4 langues** |

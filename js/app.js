@@ -498,7 +498,7 @@ function assurerTimerPermanent() {
   ecrireTimer();
 }
 // Point d'entrée unique du choix « qui commence ? » (afficherChoixDemarrage,
-// ui.js) : quel que soit le mode, aucun minuteur ne démarre jamais tout
+// ui/minuteur.js) : quel que soit le mode, aucun minuteur ne démarre jamais tout
 // seul — il faut un enfant explicitement désigné. Bascule dessus, lance son
 // décompte, et renvoie à son accueil (haut de page).
 function demarrerTimerPourEnfant(id) {
@@ -1589,7 +1589,7 @@ function icsCarteSurprise(carte, titreLisible, activiteLisible, maintenant) {
 // pas de texte iCalendar) : ce que consomme l'écriture directe dans le
 // calendrier du système, plus fiable que l'ouverture d'un fichier (constaté :
 // Google Agenda refuse d'importer un .ics reçu ainsi, quand Outlook l'accepte
-// — voir envoyerVersAgenda dans js/ui.js). Réservé au cas AVEC heure : une
+// — voir envoyerVersAgenda dans js/ui/partage.js). Réservé au cas AVEC heure : une
 // journée entière pose, pour une écriture directe, des questions de fuseau
 // (minuit UTC attendu par certains calendriers) que le fichier .ics gère déjà
 // correctement — on ne duplique donc pas ce cas-là.
@@ -1606,7 +1606,7 @@ function champsCarteSurprise(carte, titreLisible, activiteLisible) {
 /* ---------- Le rendez-vous du soir (rappel par l'agenda du parent) ----------
  * La raison d'arrêt la plus citée par les familles est « on n'y pense pas ».
  * FamiTeam y répond désormais aussi par une notification quotidienne, à
- * activer d'un bouton (voir blocNotificationSoir dans js/ui.js) — mais
+ * activer d'un bouton (voir blocNotificationSoir dans js/ui/notifications.js) — mais
  * celle-ci dépend du système et disparaît si le parent désinstalle l'app ou
  * change de téléphone. Cette fonction-ci reste donc utile : un rendez-vous déposé dans
  * l'agenda DU PARENT lui survit, se règle à son propre rythme et à sa propre
@@ -2394,7 +2394,7 @@ async function exporter() {
   const blob = new Blob([JSON.stringify(paquet, null, 2)], { type: "application/json" });
   // Dans l'app installee, un lien « download » ne fait rien et ne leve rien :
   // la sauvegarde semblait partir alors que le fichier n'existait nulle part.
-  // enregistrerOuPartager (ui.js) prend le chemin natif quand il le faut, et
+  // enregistrerOuPartager (js/ui/partage.js) prend le chemin natif quand il le faut, et
   // renvoie false plutot que de laisser croire a une reussite.
   if (typeof enregistrerOuPartager === "function") {
     const ok = await enregistrerOuPartager(blob, "famiteam-sauvegarde.json", "FamiTeam");

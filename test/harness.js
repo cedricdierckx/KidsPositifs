@@ -32,7 +32,23 @@ const lire = (rel) => fs.readFileSync(path.join(racine, rel), "utf8");
  * source de vérité de l'ordre : un test dédié vérifie qu'index.html
  * charge exactement ces modules, dans cet ordre, et pas un de plus. */
 const MODULES_UI = [
-  "js/ui.js",
+  "js/ui/pin.js",
+  "js/ui/parrainage.js",
+  "js/ui/partage.js",
+  "js/ui/notifications.js",
+  "js/ui/squelette.js",
+  "js/ui/minuteur.js",
+  "js/ui/admin.js",
+  "js/ui/admin-croissance.js",
+  "js/ui/noyau.js",
+  "js/ui/accueil.js",
+  "js/ui/feuille.js",
+  "js/ui/enfant.js",
+  "js/ui/statistiques.js",
+  "js/ui/famille.js",
+  "js/ui/parents.js",
+  "js/ui/parents-accueil.js",
+  "js/ui/reglages.js",
 ];
 function sourceUi() { return MODULES_UI.map(lire).join("\n"); }
 

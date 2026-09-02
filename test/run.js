@@ -879,7 +879,7 @@ test("tournantes : le rappel « demain » distingue la tournante qui arrive de c
   // ...mais « débarrasser la table » lui arrive.
   assert.strictEqual(api.enfantDeGardeRotation(debarrasser, dem), "maria");
 
-  // Le prédicat du rappel (même logique que blocTournanteEnfant, js/ui.js) :
+  // Le prédicat du rappel (même logique que blocTournanteEnfant, js/ui/enfant.js) :
   // une tournante compte pour le rappel seulement si elle devient la sienne
   // demain ET n'était pas déjà la sienne aujourd'hui.
   const compteDansLeRappel = (rot) =>
@@ -3444,7 +3444,7 @@ test("carte surprise : le fichier d'agenda est un iCalendar valide", () => {
  * un Samsung Galaxy : Outlook l'importe, Google Agenda le refuse en
  * silence). champsCarteSurprise/champsRituelSoir fournissent la même
  * information "à plat", pour l'écriture directe dans le calendrier du
- * système (js/ui.js, ecrireEvenementCalendrier). Testés ici comme logique
+ * système (js/ui/partage.js, ecrireEvenementCalendrier). Testés ici comme logique
  * pure, au même titre que leurs équivalents .ics. */
 test("carte surprise : les champs à plat correspondent au fichier .ics", () => {
   const { api } = construireContexte();

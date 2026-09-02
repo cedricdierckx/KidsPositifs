@@ -3,7 +3,7 @@
 //
 // Même raison que scripts/vendorer-supabase.mjs : pas de CDN (le hors-ligne
 // casserait), et un fichier embarqué versionné plutôt qu'un téléchargement
-// manuel. Chargées à la demande seulement (voir js/ui.js, chargerLibsImpression) :
+// manuel. Chargées à la demande seulement (voir js/ui/partage.js, chargerLibsImpression) :
 // ~600 Ko à elles deux, pour une fonction que la plupart des sessions
 // n'utilisent jamais — les charger au démarrage pénaliserait tout le monde
 // pour un usage rare.

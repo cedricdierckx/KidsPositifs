@@ -91,7 +91,28 @@
   <script defer src="js/croissance.js?v=184"></script>
   <script defer src="js/app.js?v=184"></script>
   <script defer src="js/store.js?v=184"></script>
-  <script defer src="js/ui.js?v=184"></script>
+  <!-- L'interface, découpée en modules thématiques (ARCHITECTURE.md,
+       phase C). Scripts classiques : les fonctions restent globales et
+       rien ne s'exécute au chargement, donc cet ordre est un confort de
+       lecture, pas une dépendance. test/harness.js (MODULES_UI) tient la
+       même liste, et un test refuse toute divergence. -->
+  <script defer src="js/ui/pin.js?v=184"></script>
+  <script defer src="js/ui/parrainage.js?v=184"></script>
+  <script defer src="js/ui/partage.js?v=184"></script>
+  <script defer src="js/ui/notifications.js?v=184"></script>
+  <script defer src="js/ui/squelette.js?v=184"></script>
+  <script defer src="js/ui/minuteur.js?v=184"></script>
+  <script defer src="js/ui/admin.js?v=184"></script>
+  <script defer src="js/ui/admin-croissance.js?v=184"></script>
+  <script defer src="js/ui/noyau.js?v=184"></script>
+  <script defer src="js/ui/accueil.js?v=184"></script>
+  <script defer src="js/ui/feuille.js?v=184"></script>
+  <script defer src="js/ui/enfant.js?v=184"></script>
+  <script defer src="js/ui/statistiques.js?v=184"></script>
+  <script defer src="js/ui/famille.js?v=184"></script>
+  <script defer src="js/ui/parents.js?v=184"></script>
+  <script defer src="js/ui/parents-accueil.js?v=184"></script>
+  <script defer src="js/ui/reglages.js?v=184"></script>
   <script defer src="js/auth.js?v=184"></script>
 </body>
 </html>
