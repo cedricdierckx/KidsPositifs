@@ -19,6 +19,23 @@ const vm = require("vm");
 const racine = path.join(__dirname, "..");
 const lire = (rel) => fs.readFileSync(path.join(racine, rel), "utf8");
 
+/* ---------- Les modules d'interface (chantier 12, Phase C) ----------
+ * `js/ui.js` a été découpé en modules thématiques. Beaucoup de tests
+ * vérifient une garantie en lisant le TEXTE SOURCE de l'interface (ordre
+ * des branches, absence d'un lien, présence d'un garde-fou) : ils ne
+ * doivent pas avoir à savoir dans quel module vit telle fonction, sans
+ * quoi le moindre déplacement casserait la suite sans qu'aucun
+ * comportement n'ait changé.
+ *
+ * `sourceUi()` leur rend donc l'interface comme un seul texte, dans
+ * l'ordre exact où index.html charge les fichiers. Cette liste est la
+ * source de vérité de l'ordre : un test dédié vérifie qu'index.html
+ * charge exactement ces modules, dans cet ordre, et pas un de plus. */
+const MODULES_UI = [
+  "js/ui.js",
+];
+function sourceUi() { return MODULES_UI.map(lire).join("\n"); }
+
 // ---------- Bouchons DOM / navigateur ----------
 function elementFactice() {
   const noeud = {
@@ -189,4 +206,4 @@ function construireContexte(options) {
   return { contexte, api: contexte.contexteExports };
 }
 
-module.exports = { construireContexte };
+module.exports = { construireContexte, MODULES_UI, sourceUi, racine, lire };
