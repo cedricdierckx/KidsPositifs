@@ -1,6 +1,6 @@
 // Génère les sources d'icône/écran de démarrage (resources/) à partir du
 // « logo » déjà en place partout dans l'app : le texte « 🌟 FamiTeam »
-// (js/ui.js) et son dégradé doré caractéristique — celui déjà utilisé pour
+// (js/ui/squelette.js) et son dégradé doré caractéristique — celui déjà utilisé pour
 // les moments de récompense (css/style.css, ligne ~528 : radial-gradient
 // « circle at 35% 30%, #fff3c4, #ffd25e 60%, #f6a623 »). Rien n'est inventé :
 // c'est une mise en forme graphique d'une identité déjà établie, en attendant

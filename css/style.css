@@ -408,7 +408,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
   text-transform:uppercase; letter-spacing:.06em; color:var(--doux)}
 
 /* Mini-roue tournante : repère fixe (triangle) en haut, disque posé d'emblée
-   sur la bonne réponse (style inline, cf. js/ui.js). L'animation (rotation +
+   sur la bonne réponse (style inline, cf. js/ui/enfant.js). L'animation (rotation +
    apparition des avatars) est déclenchée en JS par observerRoues(), au
    moment où la roue entre réellement dans l'écran — jamais au chargement. */
 .roue-svg{display:block; overflow:visible}

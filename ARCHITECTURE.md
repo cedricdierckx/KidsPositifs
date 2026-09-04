@@ -23,7 +23,7 @@ Application **web vanilla** (sans framework), chargée par `index.html` :
 | `js/croissance.js` | Données du plan de développement (chantiers, e-mails) — voir `PLAN-COMMERCIAL.md` |
 | `js/app.js` | État de jeu + logique (missions, badges, écosystème, sûreté données) |
 | `js/store.js` | Couche de données isolée : sync `family_state(_history)`, garde-fous d'écriture |
-| `js/ui.js` | Rendu de tous les écrans (espace enfant, parents, admin) |
+| `js/ui/*.js` | Rendu de tous les écrans, en 14 morceaux (Phase C) : `pin`, `partage`, `systeme`, `squelette`, `minuteur`, `admin`, `admin-croissance`, `rendu`, `semaine-papier`, `enfant`, `planete-avatar`, `parents`, `reglages`, `retours` |
 | `js/auth.js` | Auth, familles, invitations, parrainage, **synchronisation** |
 | `supabase/schema.sql` | Schéma BDD : tables, RLS, fonctions, déclencheurs |
 | `supabase/functions/` | Edge functions : `send-mail`, `delete-account`, `stripe-webhook` |
@@ -52,21 +52,49 @@ Chaque phase est **indépendante**, livrable seule, et **réversible**.
   crédit/décrédit mission, plan « jours suivants », écosystème (prérequis,
   coûts), **sync** (anti inter-familles, anti-vide), migrations `normaliser`,
   auto-évaluation, i18n (parité des traductions), etc.
-- **88 tests** au 26/07/2026 (`node test/run.js`). Ne couvre pas encore `js/ui.js`
-  (voir chantier « Étendre le banc d'essai à ui.js » dans `COORDINATION.md`).
+- **299 tests** au 04/09/2026 (`node test/run.js`). L'interface (`js/ui/*.js`)
+  est désormais **chargée et exécutée** par le banc d'essai : intégrité du
+  découpage, présence de tous les points d'entrée, absence de doublon de
+  déclaration, et premières fonctions pures (`mmss`, `montantLisible`,
+  `octetsLisibles`, `lienDepliant`, `coefficientViral`, `miniGraphBarres`).
+  Le reste des fonctions de rendu attend toujours le chantier 10.
 
 ### Phase B — Validation de schéma à l'écriture (risque faible) ✅ FAIT
 - `etatValide(e)` (enfants non vides, types corrects) appelée **avant chaque**
   écriture cloud, centralisée dans `Store.ecritureAutorisee()` (Phase D).
 
-### Phase C — Découpage en modules (risque moyen) — pas commencé
-- Passer les `js/*.js` en **modules ES** (`import`/`export`) au lieu de globals.
-- Découper `ui.js` (très gros fichier, ~4000 lignes) en sous-vues :
-  `ui/accueil.js`, `ui/missions.js`, `ui/avatar.js`, `ui/parents.js`,
-  `ui/admin.js`, `ui/recovery.js`.
-- Avantage : lisibilité, moins d'effets de bord globaux. **Nécessite la Phase A**
-  (faite) — risque désormais couvert par la suite de tests, mais `ui.js` lui-même
-  n'est pas testé (cf. Phase A) : à faire prudemment, petit module à la fois.
+### Phase C — Découpage de l'interface (risque moyen) — 1ère moitié ✅ FAITE
+**C1 — découpage physique de `ui.js` (fait le 04/09/2026).** Le fichier unique
+(7 850 lignes) est devenu **14 fichiers** dans `js/ui/`, du plus bas niveau au
+plus haut : `pin`, `partage`, `systeme`, `squelette`, `minuteur`, `admin`,
+`admin-croissance`, `rendu`, `semaine-papier`, `enfant`, `planete-avatar`,
+`parents`, `reglages`, `retours` (151 à 1 158 lignes chacun).
+
+- **Aucune ligne de code n'a été déplacée, réécrite ni renommée** : les
+  morceaux sont des tranches contiguës de l'ancien fichier, recollables à
+  l'identique (vérifié mécaniquement avant commit). Le seul ajout est
+  l'en-tête de chaque fichier.
+- Ce sont toujours des **scripts classiques**, dans l'ordre fixé par
+  `index.html` : ils partagent la même portée globale qu'avant, donc aucun
+  appel croisé (`ui` ↔ `app.js` ↔ `auth.js`) n'a eu à changer.
+- Trois tests gardent le découpage : `index.html` et le contenu de `js/ui/`
+  doivent coïncider, l'ensemble doit **s'exécuter** et déclarer tous les
+  points d'entrée, et aucun symbole racine ne doit être déclaré deux fois
+  (un `const` en double casserait l'app entière au chargement).
+- Un morceau au-delà de 1 400 lignes fait échouer un test : le but du
+  chantier est la relecture, il ne doit pas se reperdre.
+
+**C2 — vrais modules ES (`import`/`export`) — pas commencé, et pas urgent.**
+Ce qu'il faudrait changer d'un bloc, et pourquoi c'est un autre chantier :
+`index.html` (14 + 9 balises en `type="module"`), les ~250 symboles partagés
+entre `ui/*`, `app.js`, `auth.js`, `data.js`, `i18n.js` (chacun devient un
+`export`/`import` explicite), le banc d'essai (`test/harness.js` concatène
+aujourd'hui les fichiers dans un contexte `vm` et compte sur la portée
+partagée), et le chargement conditionnel des langues par `document.write`
+(inopérant dans un module). Bénéfice réel : plus d'effets de bord globaux.
+Coût : une journée de vérification, sur une app en production, pour un gain
+invisible pour les familles. À reprendre **après** le chantier 10 (couverture
+de test de l'interface), pas avant.
 
 ### Phase D — Couche de données isolée (risque moyen) ✅ FAIT
 - Toute la sync `family_state(_history)` (lecture/écriture, realtime, garde-fous)
@@ -99,7 +127,8 @@ Chaque phase est **indépendante**, livrable seule, et **réversible**.
 
 ## 5. Ordre recommandé
 
-**A → B** (sécurité immédiate) puis **E** (i18n, valeur produit) : **faites**.
-Restent **C** (modularisation) et **F** (industrialisation), utiles seulement
+**A → B** (sécurité immédiate) puis **E** (i18n, valeur produit) : **faites**,
+ainsi que **C1** (découpage de l'interface).
+Restent **C2** (modules ES) et **F** (industrialisation), utiles seulement
 si l'app continue de grossir — voir `COORDINATION.md` pour leur priorité
 actuelle face aux autres chantiers (croissance, dons, contenu).

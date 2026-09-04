@@ -198,7 +198,11 @@ js/config.js         Clés Supabase (URL + clé anon) — à renseigner
 js/data.js           Configuration : enfants, catégories, missions, récompenses
 js/avatar.js         Rendu vectoriel (SVG) des avatars, parfaitement alignés
 js/app.js            Logique de jeu : état, calcul d'âge, actions, badges
-js/ui.js             Rendu des différents écrans de l'application
+js/ui/               Rendu des écrans, en 14 morceaux (l'ordre de chargement
+                     est fixé par index.html) : pin, partage, systeme,
+                     squelette, minuteur, admin, admin-croissance, rendu,
+                     semaine-papier, enfant, planete-avatar, parents,
+                     reglages, retours
 js/auth.js           Comptes, familles, invitations, synchro Supabase, démarrage
 supabase/schema.sql  Schéma de la base (tables, RLS, fonctions, invitations)
 vercel.json          Configuration du déploiement Vercel

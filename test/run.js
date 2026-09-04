@@ -10,6 +10,31 @@
 const assert = require("assert");
 const { construireContexte } = require("./harness");
 
+/* ---------- Le code de l'interface, désormais en morceaux (Phase C) --------
+ * js/ui.js a été découpé en js/ui/*.js. La liste ET l'ordre des morceaux
+ * viennent d'index.html : une seule source de vérité, donc un morceau oublié
+ * dans la page se voit immédiatement ici. Les tests qui inspectent le code
+ * source de l'interface lisent l'ensemble, recollé dans l'ordre de
+ * chargement — ils continuent donc de raisonner comme sur un fichier unique.
+ */
+const fsUi = require("fs"), pathUi = require("path");
+const RACINE_UI = pathUi.join(__dirname, "..");
+function fichiersUi() {
+  const html = fsUi.readFileSync(pathUi.join(RACINE_UI, "index.html"), "utf8");
+  const liste = (html.match(/js\/ui\/[\w.-]+\.js/g) || []).map(s => s.split("?")[0]);
+  assert.ok(liste.length >= 2, "index.html ne charge aucun morceau d'interface");
+  return liste;
+}
+let _sourceUi = null;
+function sourceUi() {
+  if (_sourceUi === null) {
+    _sourceUi = fichiersUi()
+      .map(f => fsUi.readFileSync(pathUi.join(RACINE_UI, f), "utf8"))
+      .join("\n");
+  }
+  return _sourceUi;
+}
+
 let reussites = 0, echecs = 0;
 const cas = [];
 function test(nom, fn) { cas.push({ nom, fn }); }
@@ -879,7 +904,7 @@ test("tournantes : le rappel « demain » distingue la tournante qui arrive de c
   // ...mais « débarrasser la table » lui arrive.
   assert.strictEqual(api.enfantDeGardeRotation(debarrasser, dem), "maria");
 
-  // Le prédicat du rappel (même logique que blocTournanteEnfant, js/ui.js) :
+  // Le prédicat du rappel (même logique que blocTournanteEnfant, js/ui/enfant.js) :
   // une tournante compte pour le rappel seulement si elle devient la sienne
   // demain ET n'était pas déjà la sienne aujourd'hui.
   const compteDansLeRappel = (rot) =>
@@ -1739,7 +1764,7 @@ test("minimisation : l'emoji d'enfant n'est plus conservé dans l'état", () => 
 
 test("minimisation : seuls le mois et l'année de naissance sont stockés", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js", "ui.js"), "utf8");
+  const ui = sourceUi();
   // Le champ est de type « month » et on ne recompose jamais un jour réel.
   assert.ok(/iDate\.type = "month"/.test(ui), "la date de naissance doit être un champ mois");
   assert.ok(/majEnfant\(enf\.id, "naissance", v \? v \+ "-01"/.test(ui),
@@ -1748,7 +1773,7 @@ test("minimisation : seuls le mois et l'année de naissance sont stockés", () =
 
 test("retours : un message non envoyé est mis en file locale, jamais perdu", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js", "ui.js"), "utf8");
+  const ui = sourceUi();
   assert.ok(/if \(!ok\) fileRetoursEcrire\(fileRetours\(\)\.concat\(\[retour\]\)\)/.test(ui),
     "un échec d'enregistrement doit alimenter la file locale");
   const auth = fs.readFileSync(path.join(__dirname, "..", "js", "auth.js"), "utf8");
@@ -1762,7 +1787,7 @@ test("retours : un message non envoyé est mis en file locale, jamais perdu", ()
 
 test("retours : la revue reprend tout ce qui n'est pas marqué « traité »", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js", "ui.js"), "utf8");
+  const ui = sourceUi();
   assert.ok(/\(f\.status \|\| "nouveau"\) !== "traite"/.test(ui),
     "un retour seulement « lu » doit revenir à la revue suivante");
   assert.strictEqual(/liste = \(adminRetoursCache \|\| \[\]\)\.filter\(f => \(f\.status \|\| "nouveau"\) === "nouveau"\)/.test(ui), false,
@@ -1808,7 +1833,7 @@ test("conformité : le registre des traitements couvre l'essentiel", () => {
 test("accessibilité : les boutons-icônes portent un nom accessible", () => {
   const { api } = construireContexte();
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js", "ui.js"), "utf8");
+  const ui = sourceUi();
   // Aucun bouton fait d'un seul symbole ne doit rester sans aria-label.
   const motif = /el\("button", "[^"]*", "([^a-zA-Z0-9"]{1,4})"\);(?!\s*\w+\.setAttribute\("aria-label")/g;
   const orphelins = [];
@@ -1853,7 +1878,7 @@ test("plafond : la protection s'applique même quand les e-mails sont coupés", 
 
 test("coût : le total annuel est cohérent avec le détail affiché", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js", "ui.js"), "utf8");
+  const ui = sourceUi();
   const bloc = ui.slice(ui.indexOf("const COUT_ANNUEL"), ui.indexOf("function coutAnnuelCents"));
   const montants = (bloc.match(/montant:\s*(\d+)/g) || []).map(s => parseInt(s.split(":")[1], 10));
   assert.strictEqual(montants.length, 4, "quatre postes de frais attendus");
@@ -1881,7 +1906,7 @@ test("modèle : gratuité présente, cadre des dons et préavis sont publiés", 
   ["À quoi servent les dons", "liste d'attente", 'id="dons"'].forEach(k =>
     assert.ok(faq.includes(k), "la FAQ doit couvrir « " + k + " »"));
   // Le bouton de don doit renvoyer vers cette explication.
-  const ui = fs.readFileSync(path.join(racine, "js", "ui.js"), "utf8");
+  const ui = sourceUi();
   assert.ok(ui.includes('faq.html#dons'), "le bloc de don doit pointer vers l'explication");
 });
 
@@ -2057,7 +2082,7 @@ test("production : les quatre domaines officiels, et eux seuls", () => {
 
 test("production : le point de sortie des e-mails bloque par défaut", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js", "ui.js"), "utf8");
+  const ui = sourceUi();
   const bloc = ui.slice(ui.indexOf("async function envoyerMailFn"));
   const corps = bloc.slice(0, bloc.indexOf("\n}"));
   assert.ok(/!payload\.interactif[\s\S]*?!estProduction\(\)/.test(corps),
@@ -2097,7 +2122,7 @@ test("production : les envois automatiques sortent avant de poser leurs verrous"
 
 test("production : les envois déclenchés par un clic restent possibles en aperçu", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js", "ui.js"), "utf8");
+  const ui = sourceUi();
   // Exactement deux envois interactifs : le code PIN et le test d'envoi admin.
   // On ne compte que les lignes de code, pas le commentaire qui documente la règle.
   const marques = ui.split("\n").filter(l =>
@@ -2257,7 +2282,7 @@ test("Arbre des familles : l'enfant n'est jamais récompensé pour un parrainage
   const fs = require("fs");
   const path = require("path");
   const racine = path.join(__dirname, "..");
-  const ui = fs.readFileSync(path.join(racine, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const data = fs.readFileSync(path.join(racine, "js/data.js"), "utf8");
   const app = fs.readFileSync(path.join(racine, "js/app.js"), "utf8");
   // Aucun badge, aucune espèce, aucune monnaie ne doit dépendre d'un filleul.
@@ -2427,7 +2452,7 @@ test("impression : seuls les documents destinés au papier s'impriment", () => {
   const fs = require("fs");
   const path = require("path");
   const css = fs.readFileSync(path.join(__dirname, "..", "css/style.css"), "utf8");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   assert.ok(/@media print\s*\{/.test(css), "aucune feuille d'impression");
   const bloc = css.slice(css.indexOf("@media print"));
   // L'application elle-même n'a aucun sens sur papier : son cadre est masqué.
@@ -2685,7 +2710,7 @@ test("dépliant : il tient sur une A5, et ne porte aucun code de famille", () =>
   const fs = require("fs");
   const path = require("path");
   const css = fs.readFileSync(path.join(__dirname, "..", "css/style.css"), "utf8");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   // A5 = 148 mm ; moins 2 × 12 mm de marge, il reste 124 mm utiles.
   const large = /impression \.depliant-page\{[^}]*max-width:(\d+)mm/.exec(css);
   assert.ok(large, "largeur d'impression du dépliant non fixée");
@@ -2705,7 +2730,7 @@ test("dépliant : il tient sur une A5, et ne porte aucun code de famille", () =>
 
 test("dépliant : le nom d'école est assaini et borné à la capacité du QR", () => {
   const fs = require("fs");
-  const ui = fs.readFileSync(require("path").join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const d = ui.indexOf("function normaliserSourceDepliant");
   const src = ui.slice(ui.indexOf("const DEPLIANT_HOTE"), ui.indexOf("function modaleDepliant"));
   const f = new Function(src + "; return { normaliserSourceDepliant, lienDepliant, DEPLIANT_SRC_MAX, DEPLIANT_HOTE };")();
@@ -2725,7 +2750,7 @@ test("dépliant : le nom d'école est assaini et borné à la capacité du QR", 
   // est ancré sur un domaine officiel, indépendamment de l'origine courante.
   assert.ok(/^https:\/\/(fami\.team|famiteam\.com)\//.test(f.DEPLIANT_HOTE),
     "le dépliant doit pointer vers un domaine officiel : " + f.DEPLIANT_HOTE);
-  const ui2 = fs.readFileSync(require("path").join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui2 = sourceUi();
   const corps = ui2.slice(ui2.indexOf("function lienDepliant"), ui2.indexOf("function modaleDepliant"));
   assert.ok(!/location/.test(corps),
     "lienDepliant dépend de location : imprimé depuis un aperçu, le dépliant porterait une URL d'aperçu");
@@ -2977,7 +3002,7 @@ test("défi : la page reste secrète — noindex, robots, absente du plan du sit
   ["index.html", "faq.html", "confidentialite.html", "mentions-legales.html"].forEach(f => {
     assert.ok(!/defi\.html/.test(R(f)), f + " contient un lien vers la page secrète");
   });
-  assert.ok(!/defi\.html/.test(R("js/ui.js")), "l'application renvoie vers la page secrète");
+  assert.ok(!/defi\.html/.test(sourceUi()), "l'application renvoie vers la page secrète");
 });
 
 test("défi : le classement ne divulgue ni nom de famille ni identifiant interne", () => {
@@ -3114,7 +3139,7 @@ test("dodo : les trois ambiances suivent la fenêtre de deux heures", () => {
 test("dodo : le rafraîchissement est calé sur l'horloge, pas sur un intervalle libre", () => {
   const fs = require("fs");
   const path = require("path");
-  const src = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const src = sourceUi();
   assert.ok(!/setInterval\(\s*majDodo/.test(src),
     "majDodo ne doit plus tourner sur un setInterval libre (dérive + gel en arrière-plan)");
   assert.ok(/function planifierDodo\(\)/.test(src), "planifierDodo introuvable");
@@ -3199,7 +3224,7 @@ test("dons : le soutien mensuel peut être arrêté depuis l'application", () =>
     ["don.gerer", "admin.don_portail", "admin.don_portail_aide"].forEach(k =>
       assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`));
   });
-  const ui = fs.readFileSync(path.join(racine, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   assert.ok(/cfg\.don_portail_url/.test(ui), "le bloc de don doit exposer le portail client");
   assert.ok(/\["don_portail_url", t\("admin\.don_portail"\)\]/.test(ui),
     "le portail doit être réglable depuis l'espace admin");
@@ -3211,7 +3236,7 @@ test("dons : le soutien mensuel peut être arrêté depuis l'application", () =>
 
 test("parents : le soutien a son onglet, et n'encombre plus « Aujourd'hui »", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   // L'onglet n'existe que si le don est proposé à cette famille.
   assert.ok(/const soutien = \(typeof donDisponible/.test(ui),
     "la présence de l'onglet doit dépendre de donDisponible");
@@ -3229,7 +3254,7 @@ test("parents : le soutien a son onglet, et n'encombre plus « Aujourd'hui »", 
 
 test("parents : les cartes longues sont repliables et retiennent leur état", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   assert.ok(/function carteRepliable\(sec, cle, ouvertParDefaut\)/.test(ui), "carteRepliable absente");
   // <details>/<summary> : pliage natif, accessible au clavier sans script.
   assert.ok(/el\("details", "carte-pli"\)/.test(ui) && /el\("summary", "carte-pli-t"\)/.test(ui),
@@ -3277,7 +3302,7 @@ test("parents : les cartes longues sont repliables et retiennent leur état", ()
 
 test("parents : sous-plis et découpe des cartes de l'espace parents", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const { api } = construireContexte();
 
   // 1. Famille / Planète ouvertes d'emblée : « Missions proposées » étant déjà
@@ -3323,7 +3348,7 @@ test("parents : sous-plis et découpe des cartes de l'espace parents", () => {
 
 test("arbre : la carte explique ce qu'est l'Arbre, sans rang ni comparaison", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   assert.ok(/t\("arbre\.explication", \{ app: APP_NOM \}\)/.test(ui),
     "l'explication doit être affichée dans la carte de l'Arbre");
   const { api } = construireContexte();
@@ -3339,7 +3364,7 @@ test("arbre : la carte explique ce qu'est l'Arbre, sans rang ni comparaison", ()
 
 test("carte d'ami : elle peut être imprimée ou partagée", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const { api } = construireContexte();
   Object.keys(api.LANGUES).forEach(lg =>
     ["cami.partager", "cami.partage_titre", "cami.partage_texte", "cami.imprimer"].forEach(k =>
@@ -3444,7 +3469,7 @@ test("carte surprise : le fichier d'agenda est un iCalendar valide", () => {
  * un Samsung Galaxy : Outlook l'importe, Google Agenda le refuse en
  * silence). champsCarteSurprise/champsRituelSoir fournissent la même
  * information "à plat", pour l'écriture directe dans le calendrier du
- * système (js/ui.js, ecrireEvenementCalendrier). Testés ici comme logique
+ * système (js/ui/systeme.js, ecrireEvenementCalendrier). Testés ici comme logique
  * pure, au même titre que leurs équivalents .ics. */
 test("carte surprise : les champs à plat correspondent au fichier .ics", () => {
   const { api } = construireContexte();
@@ -3508,7 +3533,7 @@ test("rendez-vous du soir : les champs à plat correspondent au fichier .ics", (
 
 test("agenda natif : le calendrier est tenté avant le fichier, avec permission d'abord", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
 
   const pdj = ui.slice(ui.indexOf("async function permissionCalendrierDejaAcquise"),
                        ui.indexOf("async function permissionCalendrierDejaAcquise") + 600);
@@ -3573,7 +3598,7 @@ test("agenda natif : permissions et dépendance déclarées côté natif", () =>
 
 test("agenda natif : le parent peut choisir l'agenda, sur un téléphone à plusieurs comptes", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
 
   // Un identifiant d'agenda système n'a de sens que sur CET appareil : jamais
   // dans etat.reglages (synchronisé entre appareils d'une même famille).
@@ -3621,7 +3646,7 @@ test("agenda natif : le parent peut choisir l'agenda, sur un téléphone à plus
  * même mécanisme que l'agenda. */
 test("impression : les bibliothèques PDF ne sont chargées qu'à la demande", () => {
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
 
   // Vendorisées comme Supabase (js/vendor/) : jamais un CDN, sinon le
   // hors-ligne casserait — et jamais chargées au démarrage : ~600 Ko à
@@ -3648,7 +3673,7 @@ test("impression : les bibliothèques PDF ne sont chargées qu'à la demande", (
 
 test("impression : le PDF part par le même mécanisme que l'agenda, jamais par un window.print silencieux", () => {
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
 
   const ic = ui.slice(ui.indexOf("async function imprimerCible"),
                       ui.indexOf("async function imprimerCible") + 1300);
@@ -3707,7 +3732,7 @@ test("carte surprise : les familles existantes reçoivent les champs de rendez-v
 
 test("carte surprise : l'interface propose date, agenda et décompte", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const { api } = construireContexte();
   Object.keys(api.LANGUES).forEach(lg =>
     ["cs.rdv_titre", "cs.rdv_agenda", "cs.rdv_dans", "cs.rdv_demain",
@@ -3733,7 +3758,7 @@ test("carte surprise : l'interface propose date, agenda et décompte", () => {
  */
 test("carte surprise : « dodos » seulement pour les jeunes, « jours » pour les grands", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const { api } = construireContexte();
 
   // La variante « jours » existe dans les quatre langues, et interpole le nombre.
@@ -3772,7 +3797,7 @@ test("carte surprise : « dodos » seulement pour les jeunes, « jours » pour l
 
 test("parents : la famille n'a plus de cadre, la boîte à idées descend", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   // Mode simplifié : plus de dépliant englobant autour des trois cartes.
   assert.ok(!/dep\(t\("regl\.famille"\)/.test(ui),
     "le cadre « Famille et invitations » ne doit plus envelopper les trois cartes");
@@ -3792,7 +3817,7 @@ test("parents : la famille n'a plus de cadre, la boîte à idées descend", () =
 
 test("carte d'ami : le partage produit une image, avec le lien en légende", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const { api } = construireContexte();
   Object.keys(api.LANGUES).forEach(lg =>
     assert.ok(api.I18N[lg]["cami.partage_ordi"], "cami.partage_ordi manquant en " + lg));
@@ -3900,7 +3925,7 @@ test("analyserJetonsAuthDepuisUrl extrait les jetons du lien d'authentification 
 
 test("QR : un carré impossible à produire ne s'écrit jamais « null »", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const { api } = construireContexte();
   assert.strictEqual(api.qrSvg("x".repeat(api.QR_CAPACITE + 1)), null,
     "au-delà de la capacité, qrSvg doit renvoyer null");
@@ -3921,7 +3946,7 @@ test("QR : un carré impossible à produire ne s'écrit jamais « null »", () =
 
 test("carte surprise : la date se fixe depuis la vue famille, derrière le code parent", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const { api } = construireContexte();
   Object.keys(api.LANGUES).forEach(lg =>
     ["cs.rdv_planifier", "cs.rdv_modifier", "cs.rdv_pin"].forEach(k =>
@@ -3937,7 +3962,7 @@ test("carte surprise : la date se fixe depuis la vue famille, derrière le code 
 
 test("arbre : les enfants aussi savent ce qu'est cet arbre", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const { api } = construireContexte();
   assert.ok(/t\("arbre\.enfant_expli", \{ app: APP_NOM \}\)/.test(ui),
     "l'explication enfant doit être affichée");
@@ -4158,7 +4183,7 @@ test("défi : le tableau de bord dit aussi ce qui ne flatte pas", () => {
 
 test("carte surprise : une activité réalisée quitte le fil principal", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const { api } = construireContexte();
 
   const f = ui.slice(ui.indexOf("function blocCartesSurprises(enf)"));
@@ -4189,7 +4214,7 @@ test("carte surprise : une activité réalisée quitte le fil principal", () => 
 test("réparation : six gestes, tous traduits, et un accès direct sous code parent", () => {
   const fs = require("fs"), path = require("path");
   const r = path.join(__dirname, "..");
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const css = fs.readFileSync(path.join(r, "css/style.css"), "utf8");
   const { api } = construireContexte();
 
@@ -4284,7 +4309,7 @@ test("cartes : le nom « surprise » a disparu de tout ce que voient les famille
   assert.ok(Array.isArray(e.cartesSurprises), "l'état doit continuer de porter cartesSurprises");
 
   // Et le tutoriel les présente désormais, avant l'avatar.
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const tuto = ui.slice(ui.indexOf("const etapes = ["), ui.indexOf("];", ui.indexOf("const etapes = [")));
   assert.ok(/data-vue="famille"[^\n]*tuto\.cartes_t/.test(tuto),
     "le tutoriel doit présenter les cartes FamiTeam");
@@ -4429,7 +4454,7 @@ test("rendez-vous du soir : la carte agenda existe dans les deux modes parents",
       "l'intro ne doit plus nier la notification en " + lg));
 
   // La carte existe dans les deux modes parents, et se replie une fois réglée.
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const appels = ui.match(/carteRepliable\(blocRituelSoir\(\), "rituel", !rituelReglage\(\)\)/g) || [];
   assert.strictEqual(appels.length, 2, "il faut la carte en mode simplifié ET en mode expert");
   // Un `<select>` dans un `.champ` doit être mis en forme comme un `input`,
@@ -4447,7 +4472,7 @@ test("rappel du soir : la notification se propose à l'heure conseillée, sans j
   Object.keys(api.LANGUES).forEach(lg =>
     cles.forEach(k => assert.ok(api.I18N[lg][k], `${k} manquant en ${lg}`)));
 
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   // Sans réglage enregistré, la fonction ne doit RIEN présumer d'actif — sinon
   // un appel passif pourrait programmer une notification sans que le parent
   // ait jamais appuyé sur quoi que ce soit.
@@ -4526,14 +4551,14 @@ test("parents : l'action principale a partout la même taille", () => {
     "la règle ne doit régler que la taille, pas la largeur ni les marges");
   // La portée doit rester l'espace parent : sur les écrans enfants, le gros
   // bouton est une cible tactile, pas une maladresse.
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
   assert.ok(/c\.setAttribute\("data-vue", etat\.vue\)/.test(ui),
     "le sélecteur ci-dessus dépend de cet attribut : il doit continuer d'être posé");
 });
 
 test("parents : le bandeau d'en-tête tient sur deux lignes, pas sur quatre", () => {
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const css = fs.readFileSync(path.join(r, "css/style.css"), "utf8");
 
   // Le titre et la sortie partagent une ligne.
@@ -4603,7 +4628,7 @@ test("langue : le choix survit au rafraîchissement", () => {
 
 test("parents : noter le comportement est un geste d'expert, et il vient après l'éloge", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
 
   // On isole la section « quotidien » et ses deux branches de mode.
   const debut = ui.indexOf('if (sectionVisible("quotidien")) {');
@@ -4856,7 +4881,7 @@ test("mobile : le manuel liste précisément ce qui revient au fondateur", () =>
  * l'attribut `download` sans lever la moindre erreur. */
 test("agenda : dans l'app, le .ics passe par le pont natif et jamais par un faux téléchargement", () => {
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
 
   const env = ui.slice(ui.indexOf("async function envoyerVersAgenda"));
   const corps = env.slice(0, env.indexOf("\n}\n"));
@@ -4976,7 +5001,7 @@ test("Google : le bouton n'existe pas tant que l'admin ne l'a pas allumé", () =
     + "toutes les familles avant que Google ne soit configuré");
   assert.ok(/configApp\.google_actif === "on"/.test(auth),
     "l'interrupteur se lit dans app_config, donc réglable sans redéploiement");
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   assert.ok(/adminDefinirConfig\("google_actif"/.test(ui),
     "l'admin doit pouvoir l'allumer et l'éteindre depuis l'application");
   // Et il doit être TROUVABLE. Placé d'abord au milieu de « Pause et
@@ -5146,7 +5171,7 @@ test("langues : le navigateur ne reçoit que celle qu'il lit", () => {
 test("app installée : aucun bouton ne peut échouer en silence", () => {
   const { api } = construireContexte();
   const fsx = require("fs"), pathx = require("path"), r = pathx.join(__dirname, "..");
-  const ui = fsx.readFileSync(pathx.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const app = fsx.readFileSync(pathx.join(r, "js/app.js"), "utf8");
 
   // 1. telechargerBlob ne doit plus renvoyer « réussi » dans l'app : la
@@ -5210,7 +5235,7 @@ test("app installée : aucun bouton ne peut échouer en silence", () => {
 test("admin : le numéro de version affiché vient du script réellement chargé", () => {
   const { api } = construireContexte();
   const fs = require("fs"), path = require("path");
-  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const ui = sourceUi();
 
   const vc = ui.slice(ui.indexOf("function versionChargeeActuelle"),
                       ui.indexOf("function versionChargeeActuelle") + 500);
@@ -5265,7 +5290,7 @@ test("admin : le numéro de version chargée survit au premier écran affiché",
   const { api } = construireContexte();
   const fsx = require("fs"), pathx = require("path"), r = pathx.join(__dirname, "..");
   const app = fsx.readFileSync(pathx.join(r, "js/app.js"), "utf8");
-  const ui = fsx.readFileSync(pathx.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
 
   // La valeur doit être capturée PENDANT l'exécution d'app.js lui-même
   // (document.currentScript), pas relue plus tard dans le DOM en premier lieu.
@@ -5349,7 +5374,7 @@ test("feuille papier imprimée : la mise en page ne force plus une page presque 
   //    basculait à la page suivante en laissant la page courante quasiment
   //    vide.
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   // Le CSS vit dans htmlFeuilleSemaine (construction du document HTML,
   // partagée par la voie web et la voie native de l'app installée) — pas
   // dans imprimerFeuilleSemaine, qui ne fait plus que choisir entre les deux.
@@ -5378,7 +5403,7 @@ test("feuille papier imprimée : la mise en page ne force plus une page presque 
 
 test("feuille papier imprimée : une page par enfant, pour distribuer une feuille séparée à chacun", () => {
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const bloc = ui.slice(ui.indexOf("function htmlFeuilleSemaine"),
                         ui.indexOf("function htmlFeuilleSemaine") + 13000);
   assert.ok(/\.enfant \+ \.enfant\{[^}]*break-before:page/.test(bloc),
@@ -5393,7 +5418,7 @@ test("feuille papier imprimée (app installée) : le PDF respecte aussi la page 
   // Sans traitement dédié, les cartes des enfants étaient coupées n'importe
   // où — constaté en conditions réelles (aperçu d'impression Android).
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const pd = ui.slice(ui.indexOf("async function pdfDepuisElement"),
                       ui.indexOf("async function pdfDepuisElement") + 3000);
   assert.ok(/querySelectorAll\(["']\.enfant["']\)/.test(pd),
@@ -5418,7 +5443,7 @@ test("feuille papier imprimée : l'avatar reste à sa taille normale, sans css/s
   // règle, une famille de 4 enfants ne produisait qu'UNE SEULE page PDF (le
   // contenu débordant, aplati) au lieu de 4.
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const bloc = ui.slice(ui.indexOf("function htmlFeuilleSemaine"),
                         ui.indexOf("function htmlFeuilleSemaine") + 13000);
   assert.ok(/\.av-vignette\{[^}]*width:\s*24px[^}]*height:\s*24px/.test(bloc),
@@ -5665,7 +5690,7 @@ test("désactivé : traduit dans les 4 langues", () => {
 
 test("désactivé : 4e option dans la modale du minuteur, et le clic « go » ne montre pas l'écran de choix", () => {
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const bloc = ui.slice(ui.indexOf("function modaleTimer("), ui.indexOf("function modaleTimer(") + 4000);
   assert.ok(/value="off"/.test(bloc) && /timer\.mode_off/.test(bloc),
     "la 4e option (mode désactivé) doit exister dans la liste des choix");
@@ -5718,7 +5743,7 @@ test("demarrerTimerPourEnfant : un identifiant invalide ou inconnu ne démarre r
 
 test("écran « qui commence ? » : le bouton de configuration du minuteur ne démarre plus jamais directement", () => {
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const bloc = ui.slice(ui.indexOf("function modaleTimer("), ui.indexOf("function modaleTimer(") + 4000);
   assert.ok(!/go\.onclick[\s\S]{0,800}demarrerTimer\(\)/.test(bloc),
     "le clic sur « go » ne doit plus appeler demarrerTimer() directement, quel que soit le mode");
@@ -5747,7 +5772,7 @@ test("verrouillage permanent : libellés traduits dans les 4 langues", () => {
 
 test("verrouillage permanent : l'écran d'attente a son propre décor, plus chaleureux que l'écran PIN classique", () => {
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const css = fs.readFileSync(path.join(r, "css/style.css"), "utf8");
   assert.ok(/verrou-ecran-perm/.test(ui) && /verrou-ecran-perm/.test(css),
     "l'écran doit porter sa propre classe de décor, distincte de l'écran PIN sobre");
@@ -5763,7 +5788,7 @@ test("verrouillage permanent : l'écran d'attente a son propre décor, plus chal
  * précédent, alors que le nouveau contenu démarre lui, depuis le haut. */
 test("navigation : changer d'onglet principal (barre du bas) remonte en haut de page", () => {
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const ancre = "Navigation : choix d'affichage local";
   const bloc = ui.slice(ui.indexOf(ancre), ui.indexOf(ancre) + 900);
   assert.ok(/etat\.vue = b\.dataset\.vue;[\s\S]{0,700}window\.scrollTo\(0, 0\)/.test(bloc),
@@ -5779,7 +5804,7 @@ test("PDF (app installée) : la carte d'ami/dépliant se capture à largeur fixe
   // A4) ; à 794px (largeur fixe ci-dessous), elle ne fait plus que 450px de
   // haut (119 mm) — largement sous les 297 mm d'une page.
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   const bloc = ui.slice(ui.indexOf("async function pdfDepuisElement"),
                         ui.indexOf("async function pdfDepuisElement") + 2500);
   assert.ok(/if \(enfants\.length < 2\) \{[\s\S]{0,1200}width:\s*794px/.test(bloc),
@@ -5792,7 +5817,7 @@ test("PDF (app installée) : la carte d'ami/dépliant se capture à largeur fixe
 
 test("navigation : changer d'onglet dans l'espace parents remonte aussi en haut de page", () => {
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
-  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const ui = sourceUi();
   assert.ok(/function changerOngletParent\(id\)\s*\{[\s\S]{0,200}window\.scrollTo\(0, 0\)[\s\S]{0,100}rendre\(\)/.test(ui),
     "changerOngletParent() doit remonter la page avant de re-rendre le contenu du nouvel onglet");
   // Regression : les points d'entrée du sous-menu parents (barre d'onglets,
@@ -5802,6 +5827,154 @@ test("navigation : changer d'onglet dans l'espace parents remonte aussi en haut 
   assert.ok(!/ongletParent = id; rendre\(\)/.test(ui) && !/ongletParent = "enfants"; rendre\(\)/.test(ui)
     && !/ongletParent = e\.onglet; rendre\(\)/.test(ui),
     "ces points d'entrée doivent appeler changerOngletParent(), pas réassigner ongletParent directement");
+});
+
+/* =====================================================================
+ * DÉCOUPAGE DE L'INTERFACE (Phase C, chantier 12)
+ * ---------------------------------------------------------------------
+ * Le fichier unique js/ui.js (7 850 lignes) est devenu js/ui/*.js. Le
+ * découpage ne déplace pas une ligne de code : ces tests vérifient qu'il
+ * reste complet, cohérent avec index.html, et surtout exécutable — un
+ * `const` déclaré deux fois ou un morceau oublié casserait l'app entière au
+ * chargement, sans qu'aucun test de logique ne s'en aperçoive.
+ * ===================================================================== */
+
+// Contexte d'exécution des morceaux d'interface : bouchons minimalistes,
+// suffisants pour que les déclarations s'exécutent. Renvoie les fonctions
+// demandées (portée lexicale partagée, comme dans le navigateur).
+function chargerUi(noms) {
+  const vm = require("vm");
+  const el = () => ({
+    style: {}, classList: { add() {}, remove() {}, toggle() {}, contains: () => false },
+    setAttribute() {}, appendChild(c) { return c; }, remove() {}, focus() {},
+    querySelector: () => null, querySelectorAll: () => [],
+    innerHTML: "", textContent: "", className: "", value: "",
+  });
+  const ctx = {
+    console, Math, Date, JSON, Object, Array, String, Number, Boolean, RegExp, Set, Map, Promise,
+    parseInt, parseFloat, isNaN, isFinite, encodeURIComponent, decodeURIComponent, URL, URLSearchParams,
+    setTimeout: () => 0, clearTimeout() {}, setInterval: () => 0, clearInterval() {},
+    document: { body: el(), documentElement: el(), createElement: el, querySelector: () => null,
+                querySelectorAll: () => [], getElementById: () => null, addEventListener() {} },
+    navigator: { language: "fr" }, localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    location: { href: "https://famiteam.com/", origin: "https://famiteam.com", search: "", hash: "" },
+    // Ce que l'interface attend des autres fichiers (app.js, i18n.js, auth.js).
+    t: (cle) => String(cle), echapper: (s) => String(s == null ? "" : s), langue: "fr",
+    el, toast() {}, configApp: {}, etat: { enfants: {} }, familleActive: null,
+  };
+  ctx.window = ctx; ctx.globalThis = ctx;
+  vm.createContext(ctx);
+  const epilogue = "\n;__ui = { " + noms.join(", ") + " };\n";
+  vm.runInContext(sourceUi() + epilogue, ctx, { filename: "famiteam-ui.js" });
+  return ctx.__ui;
+}
+
+test("découpage : index.html et le dossier js/ui/ disent exactement la même chose", () => {
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const surDisque = fs.readdirSync(path.join(r, "js", "ui")).filter(f => f.endsWith(".js")).sort();
+  const dansLaPage = fichiersUi().map(f => f.replace("js/ui/", "")).sort();
+  assert.deepStrictEqual(dansLaPage, surDisque,
+    "un morceau d'interface est présent d'un côté et absent de l'autre : l'app se chargerait à moitié");
+  assert.ok(!fs.existsSync(path.join(r, "js", "ui.js")),
+    "l'ancien fichier unique ne doit plus traîner : deux sources de vérité pour le même code");
+  const vm = require("vm");
+  surDisque.forEach(f => {
+    const src = fs.readFileSync(path.join(r, "js", "ui", f), "utf8");
+    // Chaque morceau reste d'une taille relisible d'un seul tenant.
+    const n = src.split("\n").length;
+    assert.ok(n < 1400, `js/ui/${f} fait ${n} lignes : à re-découper (le but du chantier était la relecture)`);
+    // Et chaque morceau se tient tout seul syntaxiquement : une coupure au
+    // milieu d'une fonction passerait inaperçue à la lecture du diff, alors
+    // qu'elle empêcherait le navigateur de charger le fichier.
+    assert.doesNotThrow(() => new vm.Script(src, { filename: f }),
+      `js/ui/${f} ne s'analyse pas seul : la coupure tombe au milieu d'une déclaration`);
+  });
+});
+
+test("découpage : l'ensemble des morceaux s'exécute et déclare toutes les vues", () => {
+  // Les points d'entrée appelés depuis app.js / auth.js : si l'un manque,
+  // l'application plante à l'usage, pas au chargement.
+  const attendus = ["rendre", "initSquelette", "vueAccueil", "vueFamille", "vuePlanete", "vueAvatar",
+    "vueReglages", "vueAdmin", "demanderPin", "animationBadge", "synchroniserTimerUI",
+    "afficherVerrou", "afficherVerrouPermanent", "majPastilleInvit", "majPastilleAttente",
+    "blocFeedback", "blocRecuperation", "modaleParrainage", "modaleDepliant", "modaleCarteAmi",
+    "imprimerFeuilleSemaine", "envoyerVersAgenda", "envoyerMailFn", "notifierCarteDebloquee",
+    "montrerLienInvitation", "emailSupport", "changerOngletParent", "changerEnfantRelatif"];
+  const ui = chargerUi(attendus);
+  attendus.forEach(nom => assert.strictEqual(typeof ui[nom], "function",
+    `${nom}() n'est plus déclaré : un morceau manque, ou une déclaration a été perdue au découpage`));
+});
+
+test("découpage : aucun symbole d'interface déclaré deux fois", () => {
+  // Un `const` en double ne se voit pas à la lecture (les morceaux sont
+  // longs) mais casse TOUT au chargement : le navigateur refuse le script.
+  // chargerUi() le prouverait déjà en levant, ce test nomme le doublon.
+  const src = sourceUi();
+  const noms = {};
+  const motif = /^(?:function|async function|const|let|var|class)\s+([A-Za-z_$][\w$]*)/gm;
+  let m;
+  while ((m = motif.exec(src)) !== null) noms[m[1]] = (noms[m[1]] || 0) + 1;
+  const doublons = Object.keys(noms).filter(n => noms[n] > 1);
+  assert.deepStrictEqual(doublons, [], "symbole(s) déclaré(s) deux fois au niveau racine : " + doublons.join(", "));
+  assert.ok(Object.keys(noms).length > 200,
+    "moins de 200 symboles racine : une partie de l'interface a disparu au découpage");
+});
+
+/* ---------- Fonctions pures de l'interface (chantier 10, amorcé ici) -------
+ * Elles n'étaient testées par personne : le banc d'essai ne chargeait pas
+ * js/ui.js. Le découpage donne l'occasion de les couvrir vraiment (appel
+ * réel, pas simple lecture du source). */
+test("interface : mmss formate un décompte, et ne descend jamais sous zéro", () => {
+  const { mmss } = chargerUi(["mmss"]);
+  assert.strictEqual(mmss(0), "0:00");
+  assert.strictEqual(mmss(1000), "0:01");
+  assert.strictEqual(mmss(59_000), "0:59");
+  assert.strictEqual(mmss(60_000), "1:00");
+  assert.strictEqual(mmss(90_500), "1:31", "on arrondit vers le haut : une seconde entamée reste affichée");
+  assert.strictEqual(mmss(-5000), "0:00", "un décompte négatif s'affiche 0:00, jamais -1:-5");
+  assert.strictEqual(mmss(3_600_000), "60:00");
+});
+
+test("interface : montantLisible et octetsLisibles restent lisibles aux bornes", () => {
+  const { montantLisible, octetsLisibles } = chargerUi(["montantLisible", "octetsLisibles"]);
+  assert.ok(/^10,00\s?€$/.test(montantLisible(1000)), "1000 centimes = 10,00 € (got: " + montantLisible(1000) + ")");
+  assert.ok(/€$/.test(montantLisible(0)), "0 reste un montant, pas un vide");
+  assert.ok(/USD$/.test(montantLisible(1234, "usd")), "une devise inconnue s'affiche en capitales");
+  assert.ok(/€$/.test(montantLisible(null)), "un montant absent vaut 0, il n'affiche pas NaN");
+  assert.strictEqual(octetsLisibles(0), "0 o");
+  assert.strictEqual(octetsLisibles(512), "512 o");
+  assert.strictEqual(octetsLisibles(1024), "1.0 Ko");
+  assert.strictEqual(octetsLisibles(1024 * 1024), "1.0 Mo");
+  assert.strictEqual(octetsLisibles(20 * 1024 * 1024), "20 Mo", "au-delà de 10, les décimales n'apportent rien");
+  assert.strictEqual(octetsLisibles("abc"), "0 o", "une valeur illisible ne doit pas afficher NaN");
+});
+
+test("interface : le lien du dépliant nettoie la source sans jamais rester vide", () => {
+  const { lienDepliant, normaliserSourceDepliant } = chargerUi(["lienDepliant", "normaliserSourceDepliant"]);
+  assert.strictEqual(normaliserSourceDepliant("  École Saint-Josse  "), "ecole-saint-josse");
+  assert.strictEqual(normaliserSourceDepliant("Crèche l'Écureuil !"), "creche-l-ecureuil");
+  assert.strictEqual(normaliserSourceDepliant("???"), "", "sans lettre exploitable, la source est vide");
+  assert.ok(normaliserSourceDepliant("a".repeat(80)).length <= 24, "la source est bornée : au-delà, le QR déborde");
+  assert.ok(/\?src=ecole$/.test(lienDepliant("")), "une source vide retombe sur « ecole », jamais sur ?src=");
+  assert.ok(/^https:\/\//.test(lienDepliant("bibliotheque")), "le lien imprimé est absolu");
+});
+
+test("interface : le coefficient viral ne divise jamais par zéro", () => {
+  const { coefficientViral } = chargerUi(["coefficientViral"]);
+  assert.strictEqual(coefficientViral({ referrals_30j: 4 }, { actifs_7j: 10 }), "0,4");
+  assert.strictEqual(coefficientViral({ referrals_30j: 4 }, { actifs_7j: 0 }), "—", "aucune famille active : pas de coefficient");
+  assert.strictEqual(coefficientViral({}, { actifs_7j: 10 }), "—", "chiffre manquant : on n'invente pas un 0");
+  assert.strictEqual(coefficientViral({ referrals_30j: 0 }, { actifs_7j: 10 }), "0", "zéro filleul est une information, pas un tiret");
+});
+
+test("interface : le mini-graphe supporte une série vide et une série plate", () => {
+  const { miniGraphBarres } = chargerUi(["miniGraphBarres"]);
+  assert.ok(!/svg/.test(miniGraphBarres([], "#000")), "série vide : un message, pas un cadre vide");
+  assert.ok(!/svg/.test(miniGraphBarres(null, "#000")), "série absente : même traitement, sans planter");
+  const plat = miniGraphBarres([{ semaine: "2026-01-05", n: 0 }, { semaine: "2026-02-02", n: 0 }], "#f6a623");
+  assert.ok(/<svg/.test(plat) && !/NaN/.test(plat), "une série toute à zéro se dessine sans NaN (division par le maximum)");
+  const svg = miniGraphBarres([{ semaine: "2026-01-05", n: 3 }, { semaine: "2026-01-12", n: 7 }], "#f6a623");
+  assert.ok(/<svg/.test(svg) && /#f6a623/.test(svg) && !/NaN/.test(svg));
 });
 
 /* ---------- Exécution ----------

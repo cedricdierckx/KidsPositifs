@@ -73,9 +73,10 @@ de choix.
 | 7 | Corpus de blagues éprouvées et libres de droits (remplace le corpus désactivé) | P1 | Sonnet 5* | à faire |
 | 8 | SEO de base de la page publique — titres, meta description, Open Graph, sitemap (`c_preuve_5`) | P1 | Sonnet 5 | ✅ fait (`index.html`, `sitemap.xml`) |
 | 9 | Relance d'activation J+3 automatique, si aucune mission validée (`c_auto_2`) | P2 | Opus 5 | ✅ fait (voir §3.1) |
-| 10 | Étendre le banc d'essai (`test/`) à `js/ui.js` (au moins les fonctions pures : `montantLisible`, `octetsLisibles`, `miniGraphBarres`…) | P2 | Sonnet 5 | à faire |
+| 10 | Étendre le banc d'essai (`test/`) à l'interface (`js/ui/*.js`) | P2 | Sonnet 5 | 🟠 amorcé (6 fonctions pures + intégrité du découpage ; le reste du rendu à couvrir) |
 | 11 | Captures d'écran + promesse en une phrase pour la page publique (`c_preuve_1`, `c_preuve_2`) | P2 | Sonnet 5 | à faire (contenu final = décision fondateur) |
-| 12 | Phase C — découpage `ui.js` (7 850 lignes) en sous-vues | P3 | Opus 5 | 🟡 en cours |
+| 12 | Phase C1 — découpage `ui.js` (7 850 lignes) en 14 sous-vues `js/ui/*.js` | P3 | Opus 5 | ✅ fait |
+| 12b | Phase C2 — vrais modules ES (`import`/`export`) partout | P3 | Opus 5 | à faire (voir `ARCHITECTURE.md` Phase C ; à reprendre après le chantier 10) |
 | 13 | Phase F — build/lint/CI | P3 | Sonnet 5 | à faire |
 | 14 | Découper `schema.sql` en migrations numérotées (si le fichier continue de grossir) | P3 | Sonnet 5 | à faire |
 
@@ -128,11 +129,28 @@ cocher la case « Contenu blagues » (Admin → Contenu, `app_config.blagues_act
   double). Les chantiers 3, 4, 5, 6, 8 sont mécaniques ou à faible impact
   (un seul déclencheur simple, ou un seul destinataire admin, ou du contenu
   statique) : Sonnet 5 suffit.
-- **#12 (découpage `ui.js`)** : fichier de ~4000 lignes, très nombreux points
-  d'appel croisés (`ui.js` ↔ `app.js` ↔ `auth.js`), risque de régression
-  visuelle subtile non couverte par la suite de tests actuelle (qui ne charge
-  pas `ui.js`, cf. chantier #10). Un refactor de cette ampleur mérite le
-  raisonnement le plus prudent disponible.
+- **#12 (découpage `ui.js`)** : fichier de 7 850 lignes (et non ~4 000 comme
+  l'annonçait ce document), très nombreux points d'appel croisés
+  (`ui` ↔ `app.js` ↔ `auth.js`), risque de régression visuelle subtile que la
+  suite de tests ne voyait pas (elle ne chargeait pas `ui.js`, cf. #10). Un
+  refactor de cette ampleur mérite le raisonnement le plus prudent disponible.
+  **Méthode retenue le 04/09/2026**, et à reprendre pour tout découpage futur :
+  1. couper en **tranches contiguës**, sans déplacer, réécrire ni renommer une
+     seule ligne — le recollage des morceaux doit redonner l'original **au
+     caractère près**, vérifié par un script avant le commit ;
+  2. garder des **scripts classiques** dans l'ordre d'`index.html` : la portée
+     globale reste celle du fichier unique, donc aucun appelant ne change ;
+  3. faire **exécuter** les morceaux par le banc d'essai (pas seulement lire
+     leur texte) : c'est le seul moyen de voir un `const` déclaré deux fois,
+     qui casserait l'app entière au chargement ;
+  4. remettre à un chantier distinct la conversion en modules ES (#12b) : elle
+     touche `index.html`, les cinq autres fichiers `js/`, le banc d'essai et le
+     chargement des langues — mélanger les deux, c'est perdre la garantie du
+     point 1.
+  Certitude qu'aucun comportement n'a changé : **97 %** (les 3 % restants sont
+  ce qu'aucun test headless ne voit — le rendu réel dans un navigateur, à
+  vérifier d'un coup d'œil sur les écrans Accueil, Parents et Admin après
+  déploiement).
 
 ## 4. Chantiers non-agents (pour mémoire, fondateur uniquement)
 
