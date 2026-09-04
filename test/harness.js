@@ -19,6 +19,34 @@ const vm = require("vm");
 const racine = path.join(__dirname, "..");
 const lire = (rel) => fs.readFileSync(path.join(racine, rel), "utf8");
 
+// ---------- Les morceaux d'interface (js/ui/*.js, Phase C) ----------
+// L'ordre de chargement fait foi et n'est écrit qu'à UN endroit : index.html.
+// Le banc d'essai le relit, plutôt que d'entretenir une deuxième liste qui
+// finirait par mentir (un morceau ajouté à la page et oublié ici).
+// Une fonction nommée, extraite telle quelle d'un fichier source. Sert à
+// emprunter à js/auth.js les rares aides dont l'interface a besoin (echapper)
+// sans charger tout auth.js — qui, lui, exige le réseau et un vrai DOM. On
+// l'extrait plutôt que de la recopier ici : une copie finirait par diverger.
+function extraireFonction(rel, nom) {
+  const src = lire(rel);
+  const debut = src.indexOf("function " + nom + "(");
+  if (debut < 0) throw new Error("fonction introuvable : " + nom + " dans " + rel);
+  let profondeur = 0, fin = -1;
+  for (let j = src.indexOf("{", debut); j < src.length; j++) {
+    if (src[j] === "{") profondeur++;
+    else if (src[j] === "}") { profondeur--; if (!profondeur) { fin = j + 1; break; } }
+  }
+  if (fin < 0) throw new Error("corps non délimité : " + nom);
+  return src.slice(debut, fin);
+}
+
+function fichiersInterface() {
+  const html = lire("index.html");
+  const liste = (html.match(/js\/ui\/[\w.-]+\.js/g) || []).map(s => s.split("?")[0]);
+  if (!liste.length) throw new Error("index.html ne charge aucun morceau d'interface");
+  return liste;
+}
+
 // ---------- Bouchons DOM / navigateur ----------
 function elementFactice() {
   const noeud = {
@@ -184,9 +212,48 @@ function construireContexte(options) {
       get modeParents() { return modeParents; }, set modeParents(v) { modeParents = v; },
     };
   `;
-  const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/croissance.js"), lire("js/qr.js"), lire("js/app.js"), lire("js/store.js"), epilogue].join("\n;\n");
+  /* `options.avecInterface` : charge en plus les morceaux de js/ui/, et expose
+   * leurs fonctions sous `api.interface`. Réservé aux tests d'interface — les
+   * autres tests s'en passent, pour continuer d'éprouver la logique seule.
+   * Deux précautions dans l'épilogue ci-dessous : on garde une référence aux
+   * vraies fonctions AVANT de neutraliser `rendre` et `demanderPin`, sinon les
+   * mutateurs de app.js repeindraient tout l'écran à chaque appel de test. */
+  const epilogueUi = `
+    contexteExports.interface = {
+      rendre, demanderPin,
+      // minuteur & formats
+      mmss, montantLisible, octetsLisibles, versionChargeeActuelle,
+      // dépliant, carte d'ami, arbre des familles
+      normaliserSourceDepliant, lienDepliant, carteAmiLignes, arbreSvgFamilles,
+      // jours, semaines, feuille papier
+      libelleJour, jourLisible, debutSemaine, joursSemaine, decalerSemaine, libelleSemaine,
+      missionsFeuille, missionActiveJour,
+      // statistiques de l'enfant
+      statsJournalieres, joursActifsSet, serieActuelle, meilleureSerie, topMissions,
+      joursDepuisActivite, actifsDerniers, missionsParCat,
+      // cartes surprises & tournantes
+      texteDecompteCarte, joursOffLisibles, phraseTournante,
+      // espace parents : premiers pas, onglets, mode expert
+      profilsRenseignes, missionsChoisies, journeeEntamee,
+      estModeExpert, definirModeExpert, sectionVisible, libelleOnglet,
+      get ongletParent() { return ongletParent; }, set ongletParent(v) { ongletParent = v; },
+      // admin & croissance
+      coefficientViral, miniGraphBarres, coutAnnuelCents,
+      croissanceAvancement, croissanceProchaine, croissanceCleEtape,
+      // divers rendu
+      emojiOuRepli, repeterEmoji, heureCourte,
+    };
+    rendre = function () {};          // aucun repaint pendant un test
+    demanderPin = function () {};     // aucun dialogue bloquant
+  `;
+  const morceauxUi = opt.avecInterface
+    ? [extraireFonction("js/auth.js", "echapper")]
+        .concat(fichiersInterface().map(lire))
+        .concat([epilogueUi])
+    : [];
+  const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/croissance.js"), lire("js/qr.js"), lire("js/app.js"), lire("js/store.js"), epilogue].concat(morceauxUi).join("\n;\n");
   vm.runInContext(source, contexte, { filename: "famiteam-bundle.js" });
   return { contexte, api: contexte.contexteExports };
 }
 
-module.exports = { construireContexte };
+module.exports = { construireContexte, fichiersInterface };

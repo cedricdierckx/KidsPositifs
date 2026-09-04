@@ -52,12 +52,21 @@ Chaque phase est **indépendante**, livrable seule, et **réversible**.
   crédit/décrédit mission, plan « jours suivants », écosystème (prérequis,
   coûts), **sync** (anti inter-familles, anti-vide), migrations `normaliser`,
   auto-évaluation, i18n (parité des traductions), etc.
-- **299 tests** au 04/09/2026 (`node test/run.js`). L'interface (`js/ui/*.js`)
-  est désormais **chargée et exécutée** par le banc d'essai : intégrité du
-  découpage, présence de tous les points d'entrée, absence de doublon de
-  déclaration, et premières fonctions pures (`mmss`, `montantLisible`,
-  `octetsLisibles`, `lienDepliant`, `coefficientViral`, `miniGraphBarres`).
-  Le reste des fonctions de rendu attend toujours le chantier 10.
+- **306 tests** au 04/09/2026 (`node test/run.js`). L'interface (`js/ui/*.js`)
+  est désormais **chargée et exécutée** par le banc d'essai, de deux façons
+  complémentaires :
+  - `construireContexte({ avecInterface: true })` charge i18n + data + app +
+    store **et** les morceaux d'interface, et expose leurs fonctions sous
+    `api.interface` : c'est là qu'on teste un comportement (statistiques de
+    l'enfant, semaines, premiers pas, onglets, carte d'ami, formats, mini-graphe).
+    `rendre` et `demanderPin` y sont neutralisés après coup, pour qu'un
+    mutateur de `app.js` ne repeigne pas l'écran en pleine assertion ;
+  - un contexte **isolé** (dans `test/run.js`) exécute les morceaux d'interface
+    *seuls* : c'est ce qui prouve l'intégrité du découpage (tous les points
+    d'entrée déclarés, aucun symbole en double, chaque fichier analysable seul).
+  Reste à couvrir : les fonctions qui construisent réellement du DOM
+  (`blocXxx`, `vueXxx`) — elles demandent un faux DOM plus complet que le
+  bouchon actuel.
 
 ### Phase B — Validation de schéma à l'écriture (risque faible) ✅ FAIT
 - `etatValide(e)` (enfants non vides, types corrects) appelée **avant chaque**
@@ -84,17 +93,37 @@ plus haut : `pin`, `partage`, `systeme`, `squelette`, `minuteur`, `admin`,
 - Un morceau au-delà de 1 400 lignes fait échouer un test : le but du
   chantier est la relecture, il ne doit pas se reperdre.
 
-**C2 — vrais modules ES (`import`/`export`) — pas commencé, et pas urgent.**
-Ce qu'il faudrait changer d'un bloc, et pourquoi c'est un autre chantier :
-`index.html` (14 + 9 balises en `type="module"`), les ~250 symboles partagés
-entre `ui/*`, `app.js`, `auth.js`, `data.js`, `i18n.js` (chacun devient un
-`export`/`import` explicite), le banc d'essai (`test/harness.js` concatène
-aujourd'hui les fichiers dans un contexte `vm` et compte sur la portée
-partagée), et le chargement conditionnel des langues par `document.write`
-(inopérant dans un module). Bénéfice réel : plus d'effets de bord globaux.
-Coût : une journée de vérification, sur une app en production, pour un gain
-invisible pour les familles. À reprendre **après** le chantier 10 (couverture
-de test de l'interface), pas avant.
+**C2 — vrais modules ES (`import`/`export`) : recommandation de ne PAS le
+faire.** Le chantier était prévu comme la suite naturelle de C1. Examen fait,
+la recommandation s'inverse — et la décision revient au fondateur :
+
+- **Ce serait forcément un « big bang »**, ce que `§4` interdit : un module ne
+  voit pas les globals d'un script classique. Il faudrait convertir d'un seul
+  coup `index.html`, les 14 morceaux d'interface **et** `app.js`, `auth.js`,
+  `data.js`, `i18n.js`, `store.js`, `avatar.js`, `qr.js`, `croissance.js`, en
+  déclarant explicitement les ~250 symboles qu'ils se partagent. Aucun
+  découpage en petites étapes vérifiables n'existe ici.
+- **Le banc d'essai y perdrait sa force**. Il concatène aujourd'hui les
+  fichiers dans un contexte `vm` et atteint **n'importe quelle** fonction ou
+  variable interne par la portée lexicale partagée (voir `test/harness.js`).
+  Avec des modules, un test ne voit plus que ce qui est `export`é : soit on
+  exporte tout « pour les tests » (ce qui vide le bénéfice de la conversion),
+  soit on perd des tests. Les 306 tests actuels sont un actif plus précieux
+  que la propreté des imports.
+- **Deux mécanismes en place cesseraient de fonctionner** : le chargement
+  conditionnel des fichiers de langue par `document.write` (inopérant depuis
+  un module) et le repli `versionChargeeActuelle()` qui lit les balises
+  `<script src>`.
+- **Bénéfice pour les familles : nul.** Aucune fonctionnalité, aucune vitesse,
+  aucune sûreté de données en plus. Le gain (moins d'effets de bord globaux)
+  est réel mais théorique à cette échelle, et C1 a déjà réglé le problème
+  concret — la relisibilité.
+
+Certitude que ce raisonnement tient : **85 %**. Si le projet grossit au point
+d'avoir besoin d'un outil de build (Phase F), la conversion redeviendra
+naturelle : esbuild/Vite la rend beaucoup moins risquée, et le banc d'essai
+pourra alors importer les modules réels. **Décision proposée : garder les
+scripts classiques, et rouvrir la question seulement avec la Phase F.**
 
 ### Phase D — Couche de données isolée (risque moyen) ✅ FAIT
 - Toute la sync `family_state(_history)` (lecture/écriture, realtime, garde-fous)

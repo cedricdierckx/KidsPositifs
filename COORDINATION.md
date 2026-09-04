@@ -73,10 +73,10 @@ de choix.
 | 7 | Corpus de blagues éprouvées et libres de droits (remplace le corpus désactivé) | P1 | Sonnet 5* | à faire |
 | 8 | SEO de base de la page publique — titres, meta description, Open Graph, sitemap (`c_preuve_5`) | P1 | Sonnet 5 | ✅ fait (`index.html`, `sitemap.xml`) |
 | 9 | Relance d'activation J+3 automatique, si aucune mission validée (`c_auto_2`) | P2 | Opus 5 | ✅ fait (voir §3.1) |
-| 10 | Étendre le banc d'essai (`test/`) à l'interface (`js/ui/*.js`) | P2 | Sonnet 5 | 🟠 amorcé (6 fonctions pures + intégrité du découpage ; le reste du rendu à couvrir) |
+| 10 | Étendre le banc d'essai (`test/`) à l'interface (`js/ui/*.js`) | P2 | Sonnet 5 | ✅ fait (15 tests ; `construireContexte({ avecInterface: true })`) — reste les fonctions qui construisent du DOM |
 | 11 | Captures d'écran + promesse en une phrase pour la page publique (`c_preuve_1`, `c_preuve_2`) | P2 | Sonnet 5 | à faire (contenu final = décision fondateur) |
 | 12 | Phase C1 — découpage `ui.js` (7 850 lignes) en 14 sous-vues `js/ui/*.js` | P3 | Opus 5 | ✅ fait |
-| 12b | Phase C2 — vrais modules ES (`import`/`export`) partout | P3 | Opus 5 | à faire (voir `ARCHITECTURE.md` Phase C ; à reprendre après le chantier 10) |
+| 12b | Phase C2 — vrais modules ES (`import`/`export`) partout | P3 | Opus 5 | ⛔ **déconseillé** — analyse dans `ARCHITECTURE.md` Phase C2 ; décision fondateur, à rouvrir avec la Phase F |
 | 13 | Phase F — build/lint/CI | P3 | Sonnet 5 | à faire |
 | 14 | Découper `schema.sql` en migrations numérotées (si le fichier continue de grossir) | P3 | Sonnet 5 | à faire |
 

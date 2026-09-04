@@ -5839,9 +5839,12 @@ test("navigation : changer d'onglet dans l'espace parents remonte aussi en haut 
  * chargement, sans qu'aucun test de logique ne s'en aperçoive.
  * ===================================================================== */
 
-// Contexte d'exécution des morceaux d'interface : bouchons minimalistes,
-// suffisants pour que les déclarations s'exécutent. Renvoie les fonctions
-// demandées (portée lexicale partagée, comme dans le navigateur).
+// Contexte d'exécution des morceaux d'interface SEULS : bouchons
+// minimalistes, aucun autre fichier de l'app. C'est ce qui prouve que le
+// découpage se tient tout seul (aucune déclaration perdue, aucun doublon).
+// Pour tester le COMPORTEMENT d'une fonction d'interface, utiliser plutôt
+// construireContexte({ avecInterface: true }).api.interface : le contexte y
+// est complet (i18n, data, app), donc les assertions valent quelque chose.
 function chargerUi(noms) {
   const vm = require("vm");
   const el = () => ({
@@ -5925,7 +5928,7 @@ test("découpage : aucun symbole d'interface déclaré deux fois", () => {
  * js/ui.js. Le découpage donne l'occasion de les couvrir vraiment (appel
  * réel, pas simple lecture du source). */
 test("interface : mmss formate un décompte, et ne descend jamais sous zéro", () => {
-  const { mmss } = chargerUi(["mmss"]);
+  const { mmss } = construireContexte({ avecInterface: true }).api.interface;
   assert.strictEqual(mmss(0), "0:00");
   assert.strictEqual(mmss(1000), "0:01");
   assert.strictEqual(mmss(59_000), "0:59");
@@ -5936,7 +5939,7 @@ test("interface : mmss formate un décompte, et ne descend jamais sous zéro", (
 });
 
 test("interface : montantLisible et octetsLisibles restent lisibles aux bornes", () => {
-  const { montantLisible, octetsLisibles } = chargerUi(["montantLisible", "octetsLisibles"]);
+  const { montantLisible, octetsLisibles } = construireContexte({ avecInterface: true }).api.interface;
   assert.ok(/^10,00\s?€$/.test(montantLisible(1000)), "1000 centimes = 10,00 € (got: " + montantLisible(1000) + ")");
   assert.ok(/€$/.test(montantLisible(0)), "0 reste un montant, pas un vide");
   assert.ok(/USD$/.test(montantLisible(1234, "usd")), "une devise inconnue s'affiche en capitales");
@@ -5950,7 +5953,7 @@ test("interface : montantLisible et octetsLisibles restent lisibles aux bornes",
 });
 
 test("interface : le lien du dépliant nettoie la source sans jamais rester vide", () => {
-  const { lienDepliant, normaliserSourceDepliant } = chargerUi(["lienDepliant", "normaliserSourceDepliant"]);
+  const { lienDepliant, normaliserSourceDepliant } = construireContexte({ avecInterface: true }).api.interface;
   assert.strictEqual(normaliserSourceDepliant("  École Saint-Josse  "), "ecole-saint-josse");
   assert.strictEqual(normaliserSourceDepliant("Crèche l'Écureuil !"), "creche-l-ecureuil");
   assert.strictEqual(normaliserSourceDepliant("???"), "", "sans lettre exploitable, la source est vide");
@@ -5960,7 +5963,7 @@ test("interface : le lien du dépliant nettoie la source sans jamais rester vide
 });
 
 test("interface : le coefficient viral ne divise jamais par zéro", () => {
-  const { coefficientViral } = chargerUi(["coefficientViral"]);
+  const { coefficientViral } = construireContexte({ avecInterface: true }).api.interface;
   assert.strictEqual(coefficientViral({ referrals_30j: 4 }, { actifs_7j: 10 }), "0,4");
   assert.strictEqual(coefficientViral({ referrals_30j: 4 }, { actifs_7j: 0 }), "—", "aucune famille active : pas de coefficient");
   assert.strictEqual(coefficientViral({}, { actifs_7j: 10 }), "—", "chiffre manquant : on n'invente pas un 0");
@@ -5968,13 +5971,161 @@ test("interface : le coefficient viral ne divise jamais par zéro", () => {
 });
 
 test("interface : le mini-graphe supporte une série vide et une série plate", () => {
-  const { miniGraphBarres } = chargerUi(["miniGraphBarres"]);
+  const { miniGraphBarres } = construireContexte({ avecInterface: true }).api.interface;
   assert.ok(!/svg/.test(miniGraphBarres([], "#000")), "série vide : un message, pas un cadre vide");
   assert.ok(!/svg/.test(miniGraphBarres(null, "#000")), "série absente : même traitement, sans planter");
   const plat = miniGraphBarres([{ semaine: "2026-01-05", n: 0 }, { semaine: "2026-02-02", n: 0 }], "#f6a623");
   assert.ok(/<svg/.test(plat) && !/NaN/.test(plat), "une série toute à zéro se dessine sans NaN (division par le maximum)");
   const svg = miniGraphBarres([{ semaine: "2026-01-05", n: 3 }, { semaine: "2026-01-12", n: 7 }], "#f6a623");
   assert.ok(/<svg/.test(svg) && /#f6a623/.test(svg) && !/NaN/.test(svg));
+});
+
+/* ---------- Statistiques de l'enfant (js/ui/enfant.js) --------------------
+ * Ces fonctions décident de ce qu'un parent lit sur la page Statistiques.
+ * Personne ne les avait jamais appelées dans un test : elles lisent le
+ * journal, donc une erreur d'un jour de décalage y passerait inaperçue. */
+function enfantAvecJournal(api, joursEtMissions) {
+  const e = api.etatVierge();
+  const enf = e.enfants[Object.keys(e.enfants)[0]];
+  enf.journal = joursEtMissions;
+  return enf;
+}
+// Jour AAAA-MM-JJ décalé de n jours par rapport à aujourd'hui.
+function jourRelatif(api, n) { return decalerJour(api.aujourdHui(), n); }
+
+test("interface : la série en cours tolère un démarrage hier, mais pas un trou", () => {
+  const { api } = construireContexte({ avecInterface: true });
+  const ui = api.interface;
+  const m = missionFamille(api).id;
+  const j = (n) => ({ [jourRelatif(api, n)]: { [m]: 1 } });
+
+  assert.strictEqual(ui.serieActuelle(enfantAvecJournal(api, {})), 0, "journal vide : aucune série");
+  assert.strictEqual(ui.serieActuelle(enfantAvecJournal(api, j(0))), 1, "une prise aujourd'hui : série de 1");
+  assert.strictEqual(ui.serieActuelle(enfantAvecJournal(api, j(-1))), 1,
+    "rien encore aujourd'hui : la série d'hier tient toujours, on ne punit pas le matin");
+  assert.strictEqual(ui.serieActuelle(enfantAvecJournal(api,
+    Object.assign(j(0), j(-1), j(-2)))), 3);
+  assert.strictEqual(ui.serieActuelle(enfantAvecJournal(api,
+    Object.assign(j(0), j(-1), j(-3)))), 2, "un jour manquant coupe la série");
+  assert.strictEqual(ui.serieActuelle(enfantAvecJournal(api, j(-2))), 0,
+    "avant-hier seulement : la série est bel et bien perdue");
+});
+
+test("interface : meilleure série, jours d'activité et dernier jour actif", () => {
+  const { api } = construireContexte({ avecInterface: true });
+  const ui = api.interface;
+  const m = missionFamille(api).id;
+  const jours = (liste) => {
+    const o = {};
+    liste.forEach(n => { o[jourRelatif(api, n)] = { [m]: 1 }; });
+    return o;
+  };
+  const enf = enfantAvecJournal(api, jours([0, -1, -2, -5, -6]));
+  assert.strictEqual(ui.meilleureSerie(enf), 3, "la plus longue suite de jours consécutifs");
+  assert.strictEqual(ui.joursDepuisActivite(enf), 0, "actif aujourd'hui");
+  assert.strictEqual(ui.actifsDerniers(enf, 7), 5);
+  assert.strictEqual(ui.actifsDerniers(enf, 3), 3, "la fenêtre est bien bornée");
+  assert.strictEqual(ui.joursActifsSet(enf).size, 5);
+
+  assert.strictEqual(ui.meilleureSerie(enfantAvecJournal(api, {})), 0);
+  assert.strictEqual(ui.joursDepuisActivite(enfantAvecJournal(api, {})), null,
+    "jamais actif : null, pas 0 — sinon la page annonce « actif aujourd'hui »");
+  assert.strictEqual(ui.joursDepuisActivite(enfantAvecJournal(api, jours([-4]))), 4);
+});
+
+test("interface : le détail par jour compte les points réels, cœurs et gouttes séparés", () => {
+  const { api } = construireContexte({ avecInterface: true });
+  const ui = api.interface;
+  const fam = missionFamille(api), pla = missionPlanete(api);
+  const enf = enfantAvecJournal(api, {
+    [jourRelatif(api, 0)]: { [fam.id]: 2, [pla.id]: 1 },
+    [jourRelatif(api, -1)]: { [fam.id]: 1 },
+  });
+  const serie = ui.statsJournalieres(enf, 3);
+  assert.strictEqual(serie.length, 3, "trois jours demandés, trois jours rendus (même vides)");
+  assert.strictEqual(serie[2].cle, api.aujourdHui(), "le dernier point est aujourd'hui");
+  assert.strictEqual(serie[0].total, 0, "un jour sans rien reste dans la série, à zéro");
+  assert.strictEqual(serie[2].coeurs, api.pointsMission(enf, fam) * 2);
+  assert.strictEqual(serie[2].gouttes, api.pointsMission(enf, pla));
+  assert.strictEqual(serie[2].total, serie[2].coeurs + serie[2].gouttes);
+  // Une mission supprimée depuis reste dans le journal : elle ne doit pas
+  // compter pour des points inconnus, ni faire planter la page.
+  const enf2 = enfantAvecJournal(api, { [jourRelatif(api, 0)]: { "mission-disparue": 3 } });
+  assert.strictEqual(ui.statsJournalieres(enf2, 1)[0].total, 0);
+  assert.deepStrictEqual(ui.topMissions(enf, 1), [[fam.id, 3]], "la mission la plus faite d'abord");
+});
+
+/* ---------- Semaines et jours (js/ui/rendu.js, js/ui/semaine-papier.js) ---- */
+test("interface : la semaine commence toujours un lundi, et se décale sans dériver", () => {
+  const { api } = construireContexte({ avecInterface: true });
+  const ui = api.interface;
+  // 2026-09-04 est un vendredi ; le lundi de sa semaine est le 31 août.
+  assert.strictEqual(ui.debutSemaine("2026-09-04"), "2026-08-31");
+  assert.strictEqual(ui.debutSemaine("2026-08-31"), "2026-08-31", "un lundi est déjà son propre début");
+  assert.strictEqual(ui.debutSemaine("2026-09-06"), "2026-08-31", "le dimanche appartient à la semaine qui s'achève");
+  const sem = ui.joursSemaine("2026-08-31");
+  assert.strictEqual(sem.length, 7);
+  assert.strictEqual(sem[0], "2026-08-31");
+  assert.strictEqual(sem[6], "2026-09-06");
+  assert.strictEqual(ui.decalerSemaine("2026-08-31", 7), "2026-09-07");
+  assert.strictEqual(ui.decalerSemaine("2026-03-30", -7), "2026-03-23",
+    "un passage à l'heure d'été ne doit pas décaler d'un jour");
+  assert.ok(/31/.test(ui.libelleSemaine("2026-08-31", "2026-09-06")));
+  assert.ok(/vendredi/i.test(ui.libelleJour("2026-09-04")));
+  assert.ok(/vendredi/i.test(ui.jourLisible("2026-09-04", false)));
+  assert.strictEqual(ui.jourLisible("2026-09-04", false).indexOf("4"), -1,
+    "sans le mois, on n'affiche pas le numéro du jour");
+});
+
+/* ---------- Espace parents : premiers pas et onglets (js/ui/reglages.js) --- */
+test("interface : « Premiers pas » ne se croit pas fait tant que les prénoms sont ceux de la démo", () => {
+  const { api } = construireContexte({ avecInterface: true });
+  const ui = api.interface;
+  api.etat = api.etatVierge();
+  assert.strictEqual(ui.profilsRenseignes(), false,
+    "les prénoms d'exemple ne comptent pas pour des profils renseignés");
+  Object.values(api.etat.enfants).forEach((e, i) => { e.prenom = "Prénom" + i; });
+  assert.strictEqual(ui.profilsRenseignes(), true);
+  Object.values(api.etat.enfants)[0].prenom = "   ";
+  assert.strictEqual(ui.profilsRenseignes(), false, "un prénom d'espaces n'est pas un prénom");
+});
+
+test("interface : les sections de l'espace parents suivent l'onglet et le mode", () => {
+  const { api } = construireContexte({ avecInterface: true });
+  const ui = api.interface;
+  ui.definirModeExpert(false);
+  ui.ongletParent = "compte";
+  assert.strictEqual(ui.sectionVisible("famille"), true,
+    "en mode standard, Famille & invitations vit dans l'onglet Réglages");
+  assert.strictEqual(ui.sectionVisible("stats"), false, "les statistiques restent un outil avancé");
+  ui.definirModeExpert(true);
+  assert.strictEqual(ui.sectionVisible("famille"), false, "en expert, Famille a son propre onglet");
+  ui.ongletParent = "famille";
+  assert.strictEqual(ui.sectionVisible("famille"), true);
+  ui.ongletParent = "stats";
+  assert.strictEqual(ui.sectionVisible("stats"), true);
+  ui.ongletParent = "papier";
+  assert.strictEqual(ui.sectionVisible("papier"), true, "la feuille papier est visible dans les deux modes");
+  ui.definirModeExpert(false);
+  assert.strictEqual(ui.sectionVisible("papier"), true);
+});
+
+/* ---------- Carte d'ami : découpe du texte au canvas (js/ui/partage.js) ---- */
+test("interface : le texte de la carte d'ami se coupe entre les mots, jamais dedans", () => {
+  const { api } = construireContexte({ avecInterface: true });
+  const ui = api.interface;
+  // Bouchon de contexte canvas : 10 pixels par caractère, c'est mesurable.
+  const ctx = { measureText: (s) => ({ width: s.length * 10 }) };
+  // Array.from : les tableaux nés dans le contexte `vm` n'ont pas le prototype
+  // du contexte de test, ce qui suffirait à faire échouer deepStrictEqual.
+  const lignes = (txt, max) => Array.from(ui.carteAmiLignes(ctx, txt, max));
+  assert.deepStrictEqual(lignes("un deux trois", 1000), ["un deux trois"],
+    "assez large : une seule ligne");
+  assert.deepStrictEqual(lignes("un deux trois", 80), ["un deux", "trois"]);
+  assert.deepStrictEqual(lignes("", 80), [], "texte vide : aucune ligne");
+  const long = lignes("anticonstitutionnellement", 50);
+  assert.deepStrictEqual(long, ["anticonstitutionnellement"],
+    "un mot plus large que la carte reste entier : mieux vaut déborder que couper un mot");
 });
 
 /* ---------- Exécution ----------
