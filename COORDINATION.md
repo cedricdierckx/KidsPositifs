@@ -66,18 +66,48 @@ de choix.
 |---|---|---|---|---|
 | 1 | Ce document (protocole + catalogue) | P0 | Sonnet 5 | ✅ fait (ce commit) |
 | 2 | Rafraîchir `ARCHITECTURE.md` (phases A/B/E réellement faites) | P0 | Sonnet 5 | ✅ fait (ce commit) |
-| 3 | E-mail de bienvenue automatique à la création d'une famille (`c_auto_1`) | P1 | Sonnet 5 | à faire |
-| 4 | Rapport mensuel par e-mail à l'admin (`c_auto_3`) | P1 | Sonnet 5 | à faire |
-| 5 | Réponses types (canned replies) dans l'onglet Retours (`c_auto_5`) | P1 | Sonnet 5 | à faire |
-| 6 | FAQ publique (`c_auto_4`) | P1 | Sonnet 5 | à faire |
+| 3 | E-mail de bienvenue automatique à la création d'une famille (`c_auto_1`) | P1 | Sonnet 5 | ✅ fait (`envoyerBienvenue`, js/auth.js) |
+| 4 | Rapport mensuel par e-mail à l'admin (`c_auto_3`) | P1 | Sonnet 5 | ✅ fait (`envoyerRapportMensuel`, js/auth.js) |
+| 5 | Réponses types (canned replies) — finalement dans Croissance → Envois automatiques (`c_auto_5`) | P1 | Sonnet 5 | ✅ fait (`REPONSES_TYPES`) |
+| 6 | FAQ publique (`c_auto_4`) | P1 | Sonnet 5 | ✅ fait (`faq.html`, au sitemap) |
 | 7 | Corpus de blagues éprouvées et libres de droits (remplace le corpus désactivé) | P1 | Sonnet 5* | à faire |
-| 8 | SEO de base de la page publique — titres, meta description, Open Graph, sitemap (`c_preuve_5`) | P1 | Sonnet 5 | à faire |
-| 9 | Relance d'activation J+3 automatique, si aucune mission validée (`c_auto_2`) | P2 | Opus 5 | à faire |
+| 8 | SEO de base de la page publique — titres, meta description, Open Graph, sitemap (`c_preuve_5`) | P1 | Sonnet 5 | ✅ fait (`index.html`, `sitemap.xml`) |
+| 9 | Relance d'activation J+3 automatique, si aucune mission validée (`c_auto_2`) | P2 | Opus 5 | ✅ fait (voir §3.1) |
 | 10 | Étendre le banc d'essai (`test/`) à `js/ui.js` (au moins les fonctions pures : `montantLisible`, `octetsLisibles`, `miniGraphBarres`…) | P2 | Sonnet 5 | à faire |
 | 11 | Captures d'écran + promesse en une phrase pour la page publique (`c_preuve_1`, `c_preuve_2`) | P2 | Sonnet 5 | à faire (contenu final = décision fondateur) |
-| 12 | Phase C — découpage `ui.js` en modules ES | P3 | Opus 5 | à faire |
+| 12 | Phase C — découpage `ui.js` (7 850 lignes) en sous-vues | P3 | Opus 5 | 🟡 en cours |
 | 13 | Phase F — build/lint/CI | P3 | Sonnet 5 | à faire |
 | 14 | Découper `schema.sql` en migrations numérotées (si le fichier continue de grossir) | P3 | Sonnet 5 | à faire |
+
+### 3.1 Chantier 9 (relance J+3) — fait, mais pas par un cron
+
+Statut relevé dans le code le 04/09/2026, et non pas simplement recopié du
+tableau : la relance d'activation existe de bout en bout, et le tableau
+ci-dessus était périmé (il annonçait « à faire » cinq chantiers déjà livrés).
+
+- **Sélection** : `admin_mails_en_attente()` (`supabase/schema.sql`) — familles
+  créées il y a 3 à 14 jours, aucun état jamais enregistré et aucun événement
+  d'usage (donc aucune mission validée), aucune relance déjà journalisée.
+- **Anti-doublon** : table `mails_auto` (clé `('activation', id_famille)`) +
+  `mail_auto_deja()` / `mail_auto_marquer()`. En cas de doute (erreur réseau
+  sur la vérification), `mailAutoDeja()` renvoie `true` : on préfère ne pas
+  envoyer plutôt qu'envoyer deux fois.
+- **Envoi** : `envoyerRelancesActivation()` (`js/auth.js`), modèle
+  `m_activation` (`js/croissance.js`), coupé par défaut
+  (`app_config.mails_auto` ≠ `on`), jamais hors production ni en démo.
+- **Déclencheur** : `declencherEnvoisAuto()` à la première ouverture de l'app
+  par l'administrateur chaque jour — **pas** un cron ni une Edge Function,
+  contrairement à ce que supposait le §« Pourquoi Opus 5 » ci-dessous. Raison
+  assumée : `send-mail` exige une session authentifiée ; un cron demanderait
+  soit une clé de service dans la fonction, soit un secret partagé, donc une
+  surface d'attaque nouvelle pour un gain de quelques heures de latence.
+  Conséquence à connaître : si l'administrateur n'ouvre pas l'app pendant une
+  semaine, les relances attendent (la fenêtre de sélection va jusqu'à J+14,
+  ce qui laisse de la marge).
+
+Certitude que le mécanisme est complet et sans doublon possible : **90 %**. Le
+seul chemin non couvert par un test est l'envoi réel (SMTP), qui n'est pas
+testable hors production.
 
 *\* Chantier 7 : certitude ≈ 60 % seulement sur le caractère réellement
 « libre de droits » de toute liste compilée par un agent — aucun modèle ne
