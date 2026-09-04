@@ -92,6 +92,18 @@ plus haut : `pin`, `partage`, `systeme`, `squelette`, `minuteur`, `admin`,
   (un `const` en double casserait l'app entière au chargement).
 - Un morceau au-delà de 1 400 lignes fait échouer un test : le but du
   chantier est la relecture, il ne doit pas se reperdre.
+- **Vérifié en plus dans un vrai navigateur** (Chromium sans interface) :
+  mode démo, les cinq vues (accueil, famille, planète, avatar, réglages) et
+  les six onglets de l'espace parents dans les deux modes (standard et
+  expert) — **zéro erreur JavaScript**, et chaque écran peint bien son
+  contenu. Recette, si le contrôle doit être refait après un futur
+  découpage : servir le dossier (`python3 -m http.server 8137`), copier
+  `index.html` en ajoutant à la fin un script qui, sur `DOMContentLoaded`,
+  appelle `demarrerDemo()` puis parcourt `etat.vue` / `ongletParent` en
+  collectant `window.onerror`, et charger cette page avec
+  `chrome --headless=new --virtual-time-budget=15000 --dump-dom`. Ce contrôle
+  n'entre pas dans `npm test` : il exige un navigateur, que le dépôt
+  n'installe pas (voir Phase F).
 
 **C2 — vrais modules ES (`import`/`export`) : recommandation de ne PAS le
 faire.** Le chantier était prévu comme la suite naturelle de C1. Examen fait,

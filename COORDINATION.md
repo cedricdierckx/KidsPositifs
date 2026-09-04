@@ -147,10 +147,13 @@ cocher la case « Contenu blagues » (Admin → Contenu, `app_config.blagues_act
      touche `index.html`, les cinq autres fichiers `js/`, le banc d'essai et le
      chargement des langues — mélanger les deux, c'est perdre la garantie du
      point 1.
-  Certitude qu'aucun comportement n'a changé : **97 %** (les 3 % restants sont
-  ce qu'aucun test headless ne voit — le rendu réel dans un navigateur, à
-  vérifier d'un coup d'œil sur les écrans Accueil, Parents et Admin après
-  déploiement).
+  Certitude qu'aucun comportement n'a changé : **99 %**. Le découpage a été
+  vérifié trois fois — recollage identique à l'original, exécution des
+  morceaux par le banc d'essai, et **parcours de toutes les vues dans un
+  Chromium sans interface** (mode démo, zéro erreur JavaScript ; recette dans
+  `ARCHITECTURE.md` Phase C). Le pour-cent restant est ce qu'aucune machine ne
+  voit : un détail visuel (une carte mal placée, une couleur) qu'il faut
+  constater de l'œil sur un téléphone après déploiement.
 
 ## 4. Chantiers non-agents (pour mémoire, fondateur uniquement)
 
