@@ -70,7 +70,7 @@ de choix.
 | 4 | Rapport mensuel par e-mail à l'admin (`c_auto_3`) | P1 | Sonnet 5 | ✅ fait (`envoyerRapportMensuel`, js/auth.js) |
 | 5 | Réponses types (canned replies) — finalement dans Croissance → Envois automatiques (`c_auto_5`) | P1 | Sonnet 5 | ✅ fait (`REPONSES_TYPES`) |
 | 6 | FAQ publique (`c_auto_4`) | P1 | Sonnet 5 | ✅ fait (`faq.html`, au sitemap) |
-| 7 | Corpus de blagues éprouvées et libres de droits (remplace le corpus désactivé) | P1 | Sonnet 5* | à faire |
+| 7 | Corpus de blagues éprouvées et libres de droits (remplace le corpus désactivé) | P1 | Sonnet 5* | 🟡 en cours |
 | 8 | SEO de base de la page publique — titres, meta description, Open Graph, sitemap (`c_preuve_5`) | P1 | Sonnet 5 | ✅ fait (`index.html`, `sitemap.xml`) |
 | 9 | Relance d'activation J+3 automatique, si aucune mission validée (`c_auto_2`) | P2 | Opus 5 | ✅ fait (voir §3.1) |
 | 10 | Étendre le banc d'essai (`test/`) à l'interface (`js/ui/*.js`) | P2 | Sonnet 5 | ✅ fait (15 tests ; `construireContexte({ avecInterface: true })`) — reste les fonctions qui construisent du DOM |
