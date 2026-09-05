@@ -52,7 +52,7 @@ Chaque phase est **indépendante**, livrable seule, et **réversible**.
   crédit/décrédit mission, plan « jours suivants », écosystème (prérequis,
   coûts), **sync** (anti inter-familles, anti-vide), migrations `normaliser`,
   auto-évaluation, i18n (parité des traductions), etc.
-- **306 tests** au 04/09/2026 (`node test/run.js`). L'interface (`js/ui/*.js`)
+- **311 tests** au 05/09/2026 (`node test/run.js`). L'interface (`js/ui/*.js`)
   est désormais **chargée et exécutée** par le banc d'essai, de deux façons
   complémentaires :
   - `construireContexte({ avecInterface: true })` charge i18n + data + app +

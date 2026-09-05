@@ -70,7 +70,7 @@ de choix.
 | 4 | Rapport mensuel par e-mail à l'admin (`c_auto_3`) | P1 | Sonnet 5 | ✅ fait (`envoyerRapportMensuel`, js/auth.js) |
 | 5 | Réponses types (canned replies) — finalement dans Croissance → Envois automatiques (`c_auto_5`) | P1 | Sonnet 5 | ✅ fait (`REPONSES_TYPES`) |
 | 6 | FAQ publique (`c_auto_4`) | P1 | Sonnet 5 | ✅ fait (`faq.html`, au sitemap) |
-| 7 | Corpus de blagues éprouvées et libres de droits (remplace le corpus désactivé) | P1 | Sonnet 5* | 🟡 en cours |
+| 7 | Corpus de blagues éprouvées et libres de droits (remplace le corpus désactivé) | P1 | Opus 5* | ✅ fait, **sauf la relecture humaine** (voir §3.2) — l'interrupteur reste coupé tant qu'elle n'a pas eu lieu |
 | 8 | SEO de base de la page publique — titres, meta description, Open Graph, sitemap (`c_preuve_5`) | P1 | Sonnet 5 | ✅ fait (`index.html`, `sitemap.xml`) |
 | 9 | Relance d'activation J+3 automatique, si aucune mission validée (`c_auto_2`) | P2 | Opus 5 | ✅ fait (voir §3.1) |
 | 10 | Étendre le banc d'essai (`test/`) à l'interface (`js/ui/*.js`) | P2 | Sonnet 5 | ✅ fait (15 tests ; `construireContexte({ avecInterface: true })`) — reste les fonctions qui construisent du DOM |
@@ -109,6 +109,44 @@ ci-dessus était périmé (il annonçait « à faire » cinq chantiers déjà li
 Certitude que le mécanisme est complet et sans doublon possible : **90 %**. Le
 seul chemin non couvert par un test est l'envoi réel (SMTP), qui n'est pas
 testable hors production.
+
+### 3.2 Chantier 7 (corpus de blagues) — ce qui a été fait, et ce qui reste
+
+Corpus revu le 05/09/2026 : **193 blagues** (fr 71, en 42, nl 40, de 40), là où
+il y en avait 179 dont une partie inutilisable.
+
+**Retiré, avec le motif écrit dans le commit :**
+- une **marque déposée** (Lacoste) et un **personnage sous droits** (Elsa) :
+  ni libres de droits, ni neutres — FamiTeam ne fait de publicité pour personne ;
+- ce qui n'a pas sa place devant un enfant de trois ans : « la salade se
+  déshabiller » (et ses calques néerlandais et allemand), la vache sans pattes
+  servie en viande hachée, le chien sans pattes ;
+- **onze traductions littérales dont le jeu de mots était mort** : « brown and
+  sticky : a stick » devenu « bruin en plakt : een stok », « two-tired » devenu
+  « twee-moe », « piece of cake » devenu « een makkie »… Un parent néerlandophone
+  le voit en une seconde ; c'était le vrai défaut du corpus, plus encore que les
+  droits ;
+- les doublons et une dizaine de chutes emmêlées ou fautives.
+
+**Ajouté : 52 devinettes traditionnelles et anonymes**, propres à chaque langue
+(pas des traductions) — le champignon qui a un chapeau sans tête, le mois qui a
+28 jours, l'éléphant dans le frigo, la *Wanderine* allemande, la *wandarijn*
+néerlandaise. Domaine public avéré : ce sont des devinettes de cour de récréation,
+sans auteur identifiable.
+
+**Cinq tests tiennent maintenant la frontière** (`node test/run.js`) : forme et
+longueur (la carte de l'accueil est petite), aucun doublon dans une langue,
+aucune marque ni personnage sous droits, aucun vocabulaire écarté, et pas plus
+de trois chutes identiques entre deux langues — au-delà, c'est qu'on a recopié
+un corpus au lieu de l'écrire.
+
+**Ce qu'aucun test ne peut faire, et qui reste à faire par un humain** : dire si
+une blague est drôle, et si le jeu de mots existe vraiment dans la langue. Le
+commutateur `app_config.blagues_actives` **reste donc coupé** (Admin → Contenu) :
+c'est le fondateur qui l'arme, après lecture. Certitude que le corpus est
+réellement libre de droits : **80 %** (contre 60 % avant ce tri) — le risque
+résiduel n'est pas nul, aucune machine ne peut certifier l'origine d'une
+devinette de cour de récréation.
 
 *\* Chantier 7 : certitude ≈ 60 % seulement sur le caractère réellement
 « libre de droits » de toute liste compilée par un agent — aucun modèle ne

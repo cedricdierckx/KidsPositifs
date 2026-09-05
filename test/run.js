@@ -6128,6 +6128,114 @@ test("interface : le texte de la carte d'ami se coupe entre les mots, jamais ded
     "un mot plus large que la carte reste entier : mieux vaut déborder que couper un mot");
 });
 
+/* =====================================================================
+ * CORPUS DE BLAGUES (chantier 7)
+ * ---------------------------------------------------------------------
+ * Les blagues s'affichent à des enfants de 3 à 12 ans, sans qu'un adulte
+ * les relise une par une à chaque mise à jour. Ces tests tiennent la
+ * frontière de ce qu'une machine peut vérifier : la forme, les doublons,
+ * les marques déposées, le vocabulaire à écarter. Ce qu'ils ne vérifient
+ * pas — si la blague est drôle, et si le jeu de mots existe vraiment dans
+ * la langue — reste du ressort d'une relecture humaine.
+ * ===================================================================== */
+
+// Marques, enseignes et personnages sous droits : jamais dans le corpus.
+// Une blague qui repose sur une marque n'est pas « libre de droits », et
+// FamiTeam ne fait de publicité pour personne.
+const MARQUES_INTERDITES = [
+  "lacoste", "disney", "elsa", "mickey", "pokemon", "pokémon", "lego", "barbie",
+  "nutella", "coca-cola", "pepsi", "nike", "adidas", "youtube", "tiktok", "netflix",
+  "playstation", "nintendo", "super mario", "harry potter", "star wars", "marvel",
+  "spiderman", "spider-man", "batman", "minecraft", "fortnite", "ikea", "mcdonald",
+];
+// Vocabulaire à écarter, par langue : sous-entendus, cruauté, moqueries.
+const MOTS_ECARTES = {
+  fr: ["déshabill", "viande hachée", "stupide", "idiot", "imbécile", "sans pattes"],
+  en: ["undress", "ground beef", "stupid", "idiot", "dumb"],
+  nl: ["uitkleden", "uitkleedt", "gehakt", "stom", "dom", "idioot"],
+  de: ["ausziehen", "auszieht", "hackfleisch", "dumm", "blöd", "idiot"],
+};
+
+test("blagues : chaque langue a un corpus fourni et bien formé", () => {
+  const { api } = construireContexte();
+  ["fr", "en", "nl", "de"].forEach(lg => {
+    const liste = api.BLAGUES_DEFAUT[lg];
+    assert.ok(Array.isArray(liste), `corpus manquant : ${lg}`);
+    assert.ok(liste.length >= 40,
+      `${lg} : ${liste.length} blagues seulement — une blague par jour doit pouvoir tourner plus d'un mois sans se répéter`);
+    liste.forEach((b, i) => {
+      assert.ok(typeof b.q === "string" && b.q.trim(), `${lg}[${i}] : question vide`);
+      assert.ok(typeof b.r === "string" && b.r.trim(), `${lg}[${i}] : chute vide`);
+      assert.ok(/\?\s*$/.test(b.q), `${lg}[${i}] : la question ne se termine pas par « ? » — « ${b.q} »`);
+      // La carte de l'accueil est petite : au-delà, le texte déborde.
+      assert.ok(b.q.length <= 110, `${lg}[${i}] : question trop longue (${b.q.length})`);
+      assert.ok(b.r.length <= 110, `${lg}[${i}] : chute trop longue (${b.r.length})`);
+    });
+  });
+});
+
+test("blagues : aucune répétition à l'intérieur d'une même langue", () => {
+  const { api } = construireContexte();
+  const normaliser = (q) => q.toLowerCase().replace(/[^a-zà-ÿ0-9]/g, "");
+  ["fr", "en", "nl", "de"].forEach(lg => {
+    const vues = new Map();
+    api.BLAGUES_DEFAUT[lg].forEach((b, i) => {
+      const cle = normaliser(b.q);
+      assert.ok(!vues.has(cle),
+        `${lg} : la blague ${i} répète la ${vues.get(cle)} — « ${b.q} »`);
+      vues.set(cle, i);
+    });
+  });
+});
+
+test("blagues : ni marque déposée, ni personnage sous droits", () => {
+  const { api } = construireContexte();
+  ["fr", "en", "nl", "de"].forEach(lg => {
+    api.BLAGUES_DEFAUT[lg].forEach((b, i) => {
+      const texte = (b.q + " " + b.r).toLowerCase();
+      MARQUES_INTERDITES.forEach(marque => {
+        assert.ok(texte.indexOf(marque) === -1,
+          `${lg}[${i}] cite « ${marque} » : ni libre de droits, ni neutre — « ${b.q} »`);
+      });
+    });
+  });
+});
+
+test("blagues : rien qui n'ait pas sa place devant un enfant de trois ans", () => {
+  const { api } = construireContexte();
+  ["fr", "en", "nl", "de"].forEach(lg => {
+    api.BLAGUES_DEFAUT[lg].forEach((b, i) => {
+      const texte = (b.q + " " + b.r).toLowerCase();
+      MOTS_ECARTES[lg].forEach(mot => {
+        // Frontière de mot : « dom » ne doit pas accuser « domino ».
+        const motif = new RegExp("(^|[^a-zà-ÿ])" + mot.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^a-zà-ÿ]|$)");
+        assert.ok(!motif.test(texte),
+          `${lg}[${i}] contient « ${mot} » — à réécrire : « ${b.q} / ${b.r} »`);
+      });
+    });
+  });
+});
+
+test("blagues : chaque langue a ses propres blagues, pas des traductions mot à mot", () => {
+  const { api } = construireContexte();
+  // Les jeux de mots ne se traduisent pas : une chute identique d'une langue
+  // à l'autre (aux emojis près) est le signe d'une traduction littérale, qui
+  // ne fait plus rire personne. Quelques classiques universels (l'éléphant
+  // dans le frigo, le mois de 28 jours) sont des devinettes, pas des jeux de
+  // mots : elles ont le droit de voyager.
+  const empreinte = (b) => b.r.toLowerCase().replace(/[^a-zà-ÿ0-9]/g, "");
+  const parLangue = {};
+  ["fr", "en", "nl", "de"].forEach(lg => {
+    parLangue[lg] = new Set(api.BLAGUES_DEFAUT[lg].map(empreinte));
+  });
+  const paires = [["fr", "en"], ["fr", "nl"], ["fr", "de"], ["en", "nl"], ["en", "de"], ["nl", "de"]];
+  paires.forEach(([a, b]) => {
+    const communes = [...parLangue[a]].filter(x => parLangue[b].has(x));
+    assert.ok(communes.length <= 3,
+      `${a}/${b} : ${communes.length} chutes identiques — corpus recopié d'une langue à l'autre`);
+  });
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async
