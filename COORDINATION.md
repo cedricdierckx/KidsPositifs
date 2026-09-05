@@ -76,7 +76,7 @@ de choix.
 | 10 | Étendre le banc d'essai (`test/`) à l'interface (`js/ui/*.js`) | P2 | Sonnet 5 | ✅ fait (15 tests ; `construireContexte({ avecInterface: true })`) — reste les fonctions qui construisent du DOM |
 | 11 | Captures d'écran + promesse en une phrase pour la page publique (`c_preuve_1`, `c_preuve_2`) | P2 | Sonnet 5 | à faire (contenu final = décision fondateur) |
 | 12 | Phase C1 — découpage `ui.js` (7 850 lignes) en 14 sous-vues `js/ui/*.js` | P3 | Opus 5 | ✅ fait |
-| 12b | Phase C2 — vrais modules ES (`import`/`export`) partout | P3 | Opus 5 | ⛔ **déconseillé** — analyse dans `ARCHITECTURE.md` Phase C2 ; décision fondateur, à rouvrir avec la Phase F |
+| 12b | Phase C2 — vrais modules ES (`import`/`export`) partout | P3 | Opus 5 | ⏸️ **en pause, par décision du fondateur** (05/09/2026). Ne pas reprendre sans son accord explicite — analyse dans `ARCHITECTURE.md` Phase C2, à rouvrir avec la Phase F |
 | 13 | Phase F — build/lint/CI | P3 | Sonnet 5 | à faire |
 | 14 | Découper `schema.sql` en migrations numérotées (si le fichier continue de grossir) | P3 | Sonnet 5 | à faire |
 

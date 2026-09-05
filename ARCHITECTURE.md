@@ -105,8 +105,9 @@ plus haut : `pin`, `partage`, `systeme`, `squelette`, `minuteur`, `admin`,
   n'entre pas dans `npm test` : il exige un navigateur, que le dépôt
   n'installe pas (voir Phase F).
 
-**C2 — vrais modules ES (`import`/`export`) : recommandation de ne PAS le
-faire.** Le chantier était prévu comme la suite naturelle de C1. Examen fait,
+**C2 — vrais modules ES (`import`/`export`) : ⏸️ EN PAUSE (décision du
+fondateur, 05/09/2026). Aucun agent ne reprend ce chantier sans son accord
+explicite.** Recommandation qui a mené à cette pause : Le chantier était prévu comme la suite naturelle de C1. Examen fait,
 la recommandation s'inverse — et la décision revient au fondateur :
 
 - **Ce serait forcément un « big bang »**, ce que `§4` interdit : un module ne
