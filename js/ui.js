@@ -4643,6 +4643,14 @@ async function imprimerFeuilleSemaine(mode) {
   const w = window.open("", "_blank");
   if (!w) { toast(t("papier.popup_bloque"), "info"); return; }
   w.document.open(); w.document.write(htmlFeuilleSemaine(mode)); w.document.close();
+  // Signalé : le pied d'impression de Chrome (activé par défaut, hors de
+  // notre contrôle — un réglage du navigateur, pas de l'app) affichait
+  // littéralement « about:blank ». En cause : une fenêtre ouverte via
+  // window.open("", ...) garde cette adresse même après y avoir écrit un
+  // autre contenu, puisqu'aucune navigation n'a eu lieu. On lui donne donc
+  // une adresse lisible, sans recharger la fenêtre ni toucher au contenu
+  // déjà écrit.
+  try { w.history.replaceState(null, "", location.origin + "/semaine-papier"); } catch (e) { /* au pire, about:blank reste affiché */ }
   setTimeout(() => { try { w.focus(); w.print(); } catch (e) { /* impression annulée */ } }, 350);
 }
 

@@ -5202,6 +5202,22 @@ test("app installée : aucun bouton ne peut échouer en silence", () => {
     "dans l'app, le PDF doit être tenté avant tout window.open, jamais après");
 });
 
+test("feuille papier imprimée (voie web) : le pied d'impression n'affiche plus « about:blank »", () => {
+  // Signalé (capture à l'appui) : une fenêtre ouverte via window.open("",
+  // "_blank") reste sur about:blank pour le navigateur même après y avoir
+  // écrit un autre contenu (document.write) — Chrome, avec son pied
+  // d'impression par défaut, y affichait donc littéralement « about:blank ».
+  const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  const iDebut = ui.indexOf("async function imprimerFeuilleSemaine");
+  const iOuvre = ui.indexOf("window.open(", iDebut);
+  const iEcrit = ui.indexOf("document.write(htmlFeuilleSemaine(mode))", iDebut);
+  const iRemplace = ui.indexOf("history.replaceState(", iDebut);
+  const iPrint = ui.indexOf("w.print()", iDebut);
+  assert.ok(iOuvre > 0 && iEcrit > iOuvre && iRemplace > iEcrit && iPrint > iRemplace,
+    "après avoir écrit le contenu, l'adresse affichée doit être remplacée AVANT l'impression");
+});
+
 /* ---------- Repère de version dans l'espace admin ----------
  * Demandé après une session de dépannage où l'app installée tournait sur du
  * code périmé sans que personne ne puisse le voir : un numéro comparable
