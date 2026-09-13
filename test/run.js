@@ -4637,6 +4637,45 @@ test("parents : noter le comportement est un geste d'expert, et il vient après 
     "l'auto-évaluation de l'enfant ne doit pas avoir disparu au passage");
 });
 
+test("enfant : on lui demande s'il a fait de son mieux, jamais de juger son comportement", () => {
+  // Choix pédagogique explicite : « comment je me suis comporté·e ? » demande
+  // à un enfant de 3 à 12 ans de se coller une étiquette sur lui-même. « As-tu
+  // fait de ton mieux ? » porte sur l'effort — ça reste répondable un jour
+  // raté, sans se dévaloriser. Le regard sur le comportement reste au parent.
+  const { api } = construireContexte();
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+
+  const juge = /comport|behav|gedrag|verhalt/i;
+  Object.keys(api.LANGUES).forEach(lg => {
+    const q = api.I18N[lg]["eval.titre_enfant"];
+    assert.ok(typeof q === "string" && q.length, "question enfant manquante en " + lg);
+    assert.ok(!juge.test(q),
+      "la question posée à l'enfant ne doit pas porter sur son comportement (" + lg + " : " + q + ")");
+    // Côté parent, au contraire, c'est bien du comportement qu'il s'agit.
+    assert.ok(juge.test(api.I18N[lg]["eval.titre_parent"]),
+      "l'évaluation du parent, elle, porte bien sur le comportement (" + lg + ")");
+    ["bien", "moyen", "mauvais"].forEach(v => {
+      const lbl = api.I18N[lg]["eval.enf_" + v];
+      assert.ok(typeof lbl === "string" && lbl.length,
+        "libellé de réponse enfant manquant : " + lg + " → eval.enf_" + v);
+    });
+  });
+
+  // Les boutons de l'enfant doivent utiliser CES libellés-là : « Bien / Moyen
+  // / Pas top » (juste côté parent) ne répond pas à « as-tu fait de ton mieux ? ».
+  const bloc = ui.slice(ui.indexOf('sec.className = "carte eval-carte eval-enfant"'));
+  assert.ok(/t\("eval\.enf_" \+ v\)/.test(bloc.slice(0, 900)),
+    "les trois boutons de l'enfant doivent porter les libellés d'effort, pas ceux du parent");
+
+  // Même valeur stockée qu'avant (bien/moyen/mauvais) : l'historique déjà
+  // enregistré et les statistiques restent lisibles d'un seul tenant.
+  const enf = api.etatVierge().enfants[Object.keys(api.etatVierge().enfants)[0]];
+  const j = api.aujourdHui();
+  api.cyclerAutoEvalJour(enf, j);
+  assert.strictEqual(enf.autoEval[j], "bien", "les valeurs stockées ne doivent pas changer de vocabulaire");
+});
+
 /* ---------- Accueil public : agencement ---------- */
 test("accueil : on dit ce qu'est l'app avant de demander un compte", () => {
   const fs = require("fs"), path = require("path");

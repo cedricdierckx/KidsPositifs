@@ -4791,7 +4791,12 @@ function blocEval(enf, mode) {
   const row = el("div", "eval-choix-grand");
   CHOIX.forEach(([v, e]) => {
     const b = el("button", "eval-gros eval-" + v + (courant === v ? " actif" : ""));
-    b.innerHTML = `<span class="eval-gros-emoji">${e}</span><span class="eval-gros-lbl">${t("eval." + v)}</span>`;
+    // Libellés propres à l'enfant : ici la question porte sur l'EFFORT
+    // (« as-tu fait de ton mieux ? »), pas sur le comportement — « Bien /
+    // Moyen / Pas top », qui reste la réponse juste côté parent, n'y
+    // répondrait pas. Même valeur stockée (bien/moyen/mauvais) : l'historique
+    // et les statistiques restent lisibles d'un seul tenant.
+    b.innerHTML = `<span class="eval-gros-emoji">${e}</span><span class="eval-gros-lbl">${t("eval.enf_" + v)}</span>`;
     b.onclick = () => definirAutoEval(v);
     row.appendChild(b);
   });

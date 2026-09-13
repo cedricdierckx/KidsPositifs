@@ -1880,7 +1880,7 @@ Object.assign(I18N.fr, {
   "sys.version_inconnue": "Numéro de version introuvable",
   "sys.version_app": "application installée",
   "sys.version_site": "site web",
-  "papier.humeur": "Mon comportement du jour (entoure 😄 😐 😠)", "papier.humeur_jour": "Comment je me suis comporté",
+  "papier.humeur": "Ai-je fait de mon mieux ? (entoure 😄 😐 😠)", "papier.humeur_jour": "J'ai fait de mon mieux",
   "papier.encoder_titre": "⌨️ Encoder la feuille de la semaine",
   "papier.encoder_note": "Reporte ici la feuille remplie. Choisis le niveau de détail.",
   "papier.mode_detaille": "Détaillé (stats complètes)", "papier.mode_express": "Rapide (juste les totaux)",
@@ -1909,7 +1909,7 @@ Object.assign(I18N.en, {
   "sys.version_inconnue": "Version number not found",
   "sys.version_app": "installed app",
   "sys.version_site": "website",
-  "papier.humeur": "My behavior each day (circle 😄 😐 😠)", "papier.humeur_jour": "How I behaved",
+  "papier.humeur": "Did I do my best? (circle 😄 😐 😠)", "papier.humeur_jour": "I did my best",
   "papier.encoder_titre": "⌨️ Enter the week's sheet",
   "papier.encoder_note": "Report the completed sheet here. Choose the level of detail.",
   "papier.mode_detaille": "Detailed (full stats)", "papier.mode_express": "Quick (totals only)",
@@ -1938,7 +1938,7 @@ Object.assign(I18N.nl, {
   "sys.version_inconnue": "Versienummer niet gevonden",
   "sys.version_app": "geïnstalleerde app",
   "sys.version_site": "website",
-  "papier.humeur": "Mijn gedrag van de dag (omcirkel 😄 😐 😠)", "papier.humeur_jour": "Hoe ik me gedroeg",
+  "papier.humeur": "Heb ik mijn best gedaan? (omcirkel 😄 😐 😠)", "papier.humeur_jour": "Ik heb mijn best gedaan",
   "papier.encoder_titre": "⌨️ Het weekblad invoeren",
   "papier.encoder_note": "Voer het ingevulde blad hier in. Kies het detailniveau.",
   "papier.mode_detaille": "Gedetailleerd (volledige stats)", "papier.mode_express": "Snel (alleen totalen)",
@@ -1967,7 +1967,7 @@ Object.assign(I18N.de, {
   "sys.version_inconnue": "Versionsnummer nicht gefunden",
   "sys.version_app": "installierte App",
   "sys.version_site": "Website",
-  "papier.humeur": "Mein Verhalten am Tag (kreise 😄 😐 😠 ein)", "papier.humeur_jour": "Wie ich mich verhalten habe",
+  "papier.humeur": "Habe ich mein Bestes gegeben? (kreise 😄 😐 😠 ein)", "papier.humeur_jour": "Ich habe mein Bestes gegeben",
   "papier.encoder_titre": "⌨️ Das Wochenblatt eingeben",
   "papier.encoder_note": "Übertrage das ausgefüllte Blatt hier. Wähle den Detailgrad.",
   "papier.mode_detaille": "Detailliert (volle Statistik)", "papier.mode_express": "Schnell (nur Summen)",
@@ -2707,21 +2707,33 @@ Object.assign(I18N.en, { "stats.ressenti": "Daily mood (14 d) — 🧒 child / �
 Object.assign(I18N.nl, { "stats.ressenti": "Dagelijks gevoel (14 d) — 🧒 kind / 👤 ouder" });
 Object.assign(I18N.de, { "stats.ressenti": "Tägliches Gefühl (14 T) — 🧒 Kind / 👤 Eltern" });
 
-/* ---- Évaluation : porte sur le COMPORTEMENT (corrige les libellés) ---- */
+/* ---- Évaluation ----
+ * Côté PARENT, la question porte sur le comportement : c'est son regard, et
+ * il sert à repérer les jours difficiles.
+ * Côté ENFANT, elle porte sur l'EFFORT, jamais sur le comportement : on ne
+ * demande pas à un enfant de 3 à 12 ans de se juger lui-même (« je me suis
+ * mal comporté » est une étiquette, pas un constat), on lui demande s'il a
+ * fait de son mieux — ce qui reste vrai même un jour raté, et se répond sans
+ * se dévaloriser. Les réponses ont donc leurs propres libellés : « Bien /
+ * Moyen / Pas top » ne répond pas à « as-tu fait de ton mieux ? ». */
 Object.assign(I18N.fr, {
-  "eval.titre_enfant": "Comment je me suis comporté·e aujourd'hui ?",
+  "eval.titre_enfant": "As-tu fait de ton mieux aujourd'hui ?",
+  "eval.enf_bien": "Oui, vraiment !", "eval.enf_moyen": "Un peu", "eval.enf_mauvais": "Pas vraiment",
   "eval.titre_parent": "Comportement de {prenom} aujourd'hui (facultatif)"
 });
 Object.assign(I18N.en, {
-  "eval.titre_enfant": "How did I behave today?",
+  "eval.titre_enfant": "Did you do your best today?",
+  "eval.enf_bien": "Yes, really!", "eval.enf_moyen": "A little", "eval.enf_mauvais": "Not really",
   "eval.titre_parent": "{prenom}'s behaviour today (optional)"
 });
 Object.assign(I18N.nl, {
-  "eval.titre_enfant": "Hoe heb ik me vandaag gedragen?",
+  "eval.titre_enfant": "Heb je vandaag je best gedaan?",
+  "eval.enf_bien": "Ja, echt!", "eval.enf_moyen": "Een beetje", "eval.enf_mauvais": "Niet echt",
   "eval.titre_parent": "Gedrag van {prenom} vandaag (optioneel)"
 });
 Object.assign(I18N.de, {
-  "eval.titre_enfant": "Wie habe ich mich heute verhalten?",
+  "eval.titre_enfant": "Hast du heute dein Bestes gegeben?",
+  "eval.enf_bien": "Ja, wirklich!", "eval.enf_moyen": "Ein bisschen", "eval.enf_mauvais": "Nicht wirklich",
   "eval.titre_parent": "{prenom}s Verhalten heute (optional)"
 });
 
