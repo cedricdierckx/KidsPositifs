@@ -506,17 +506,30 @@ async function scanDepuisFichier(fichier, plans) {
     catch (e) { return { ok: false, raison: "image" }; }
     const pages = scanJpegsDansPdf(octets);
     if (!pages.length) return { ok: false, raison: "pdf_sans_image" };
+    // Toutes les pages sont lues, pas seulement la première qui répond : on
+    // numérise volontiers la fratrie entière d'un coup, parfois plusieurs
+    // semaines à la fois, et s'arrêter à la première feuille reconnue
+    // obligerait à recommencer autant de fois qu'il y a d'enfants.
+    const lectures = [];
+    const vues = {};
     let dernier = { ok: false, raison: "reperes" };
     for (const page of pages) {
       const px = await scanPixelsDepuisBlob(new Blob([page], { type: "image/jpeg" }));
       if (!px) continue;
       const r = scanFeuilles(px.gris, px.l, px.h, plans);
-      if (r.ok) return r;
-      dernier = r;
+      if (!r.ok) { dernier = r; continue; }
+      // Une même feuille numérisée deux fois (recto photographié puis
+      // rescanné) ne doit pas compter double.
+      const cle = (r.plan.enfantId || "") + "|" + (r.plan.semaine || "");
+      if (vues[cle]) continue;
+      vues[cle] = 1;
+      lectures.push(r);
     }
-    return dernier;
+    if (!lectures.length) return dernier;
+    return { ok: true, lectures, pages: pages.length };
   }
   const px = await scanPixelsDepuisBlob(fichier);
   if (!px) return { ok: false, raison: "image" };
-  return scanFeuilles(px.gris, px.l, px.h, plans);
+  const r = scanFeuilles(px.gris, px.l, px.h, plans);
+  return r.ok ? { ok: true, lectures: [r], pages: 1 } : r;
 }

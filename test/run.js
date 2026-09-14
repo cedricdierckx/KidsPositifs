@@ -3663,7 +3663,7 @@ test("impression : le PDF part par le même mécanisme que l'agenda, jamais par 
   // La feuille de la semaine : même exigence, et html construit UNE FOIS
   // (htmlFeuilleSemaine), réutilisé par les deux voies — sinon un correctif
   // apporté à l'une des deux pourrait ne jamais atteindre l'autre.
-  assert.ok(/function htmlFeuilleSemaine\(mode\)/.test(ui), "la construction du HTML doit être isolée, réutilisable");
+  assert.ok(/function htmlFeuilleSemaine\(\)/.test(ui), "la construction du HTML doit être isolée, réutilisable");
   const ifs = ui.slice(ui.indexOf("async function imprimerFeuilleSemaine"),
                        ui.indexOf("async function imprimerFeuilleSemaine") + 1300);
   assert.ok(/greffonNatif\("Filesystem"\)/.test(ifs), "la feuille doit aussi tenter le PDF en premier dans l'app");
@@ -3671,7 +3671,7 @@ test("impression : le PDF part par le même mécanisme que l'agenda, jamais par 
   const iOpen = ifs.indexOf("window.open(");
   assert.ok(iCal2 > 0 && iOpen > 0 && iCal2 < iOpen,
     "dans l'app, le PDF doit être tenté avant tout window.open() — celui-ci a déjà bloqué l'app");
-  assert.ok(/pdfDepuisHtmlEtEnvoyer\(htmlFeuilleSemaine\(mode\)/.test(ifs),
+  assert.ok(/pdfDepuisHtmlEtEnvoyer\(htmlFeuilleSemaine\(\)/.test(ifs),
     "la voie native doit utiliser le même HTML que la voie web, pas une copie");
 
   // Un cadre hors écran oublié resterait invisible mais réel : il doit être
@@ -5250,7 +5250,7 @@ test("feuille papier imprimée (voie web) : le pied d'impression n'affiche plus 
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
   const iDebut = ui.indexOf("async function imprimerFeuilleSemaine");
   const iOuvre = ui.indexOf("window.open(", iDebut);
-  const iEcrit = ui.indexOf("document.write(htmlFeuilleSemaine(mode))", iDebut);
+  const iEcrit = ui.indexOf("document.write(htmlFeuilleSemaine())", iDebut);
   const iRemplace = ui.indexOf("history.replaceState(", iDebut);
   const iPrint = ui.indexOf("w.print()", iDebut);
   assert.ok(iOuvre > 0 && iEcrit > iOuvre && iRemplace > iEcrit && iPrint > iRemplace,
@@ -6106,10 +6106,10 @@ test("scan : une seule source décrit les lignes, pour l'impression comme pour l
 test("scan : la photo ne propose jamais, elle n'écrit pas — seule la validation touche au journal", () => {
   const fs = require("fs"), path = require("path");
   const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
-  const lancement = ui.slice(ui.indexOf("async function lancerScanFeuille"), ui.indexOf("function scanPropositionActive"));
+  const lancement = ui.slice(ui.indexOf("async function lancerScanFeuille"), ui.indexOf("function allerAFeuilleScan"));
   assert.ok(!/modifierHistorique|ajusterMonnaie|crediterMission/.test(lancement),
     "lire une photo ne doit RIEN écrire : une ombre mal placée inventerait une mission accomplie");
-  assert.ok(/scanProposition = \{/.test(lancement), "elle ne produit qu'une proposition");
+  assert.ok(/scanProposition = \{ feuilles/.test(lancement), "elle ne produit qu'une proposition");
 
   // La validation, elle, écrit — mais seulement les cases franches.
   const valide = ui.slice(ui.indexOf("function validerScanProposition"));
@@ -6120,16 +6120,22 @@ test("scan : la photo ne propose jamais, elle n'écrit pas — seule la validati
 
   // Changer d'enfant ou de semaine ne doit pas faire glisser une proposition
   // d'un dossier à l'autre.
-  assert.ok(/scanProposition\.enfantId === enf\.id[\s\S]{0,120}scanProposition\.semaine === semaine/
-    .test(ui), "la proposition est liée à un enfant ET à une semaine");
+  assert.ok(/f\.enfantId === enf\.id && f\.semaine === semaine/.test(ui),
+    "chaque feuille proposée reste liée à un enfant ET à une semaine");
 });
 
-test("scan : la feuille imprimée porte ses repères et sa bande de contrôle (mode détaillé seulement)", () => {
+test("scan : la feuille imprimée porte ses repères et sa bande de contrôle", () => {
   const fs = require("fs"), path = require("path");
   const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
   const feuille = ui.slice(ui.indexOf("function htmlFeuilleSemaine"), ui.indexOf("function imprimerFeuilleSemaine"));
-  assert.ok(/if \(mode === "jours"\) lignes = rangOmr\(false\) \+ lignes \+ rangOmr\(true\)/.test(feuille),
-    "les deux rangs de repères encadrent la grille, et seulement en mode détaillé");
+  assert.ok(/lignes = rangOmr\(false\) \+ lignes \+ rangOmr\(true\)/.test(feuille),
+    "les deux rangs de repères encadrent la grille");
+  // Il n'y a plus qu'une feuille : celle qui se relit. La seconde mise en page
+  // (« Rapide », un total écrit à la main) ne portait pas de repères, ne
+  // pouvait donc pas se photographier, et obligeait à choisir avant d'avoir
+  // imprimé quoi que ce soit.
+  assert.ok(!/mode === "jours"|mode === "total"/.test(feuille),
+    "aucune mise en page alternative ne doit subsister dans la feuille");
   assert.ok(/omr-case/.test(feuille) && !/return `<td class="c\$\{we\}">☆<\/td>`/.test(feuille),
     "la case à cocher doit être un carré VIDE : une étoile imprimée rendrait « cochée » indiscernable de « vide »");
   // Régularité de la grille : c'est elle qui permet de retrouver une case.
@@ -6144,8 +6150,9 @@ test("scan : la feuille imprimée porte ses repères et sa bande de contrôle (m
 
 test("scan : messages traduits dans les 4 langues, sans jamais annoncer d'envoi", () => {
   const { api } = construireContexte();
-  const cles = ["scan.intro", "scan.bouton", "scan.bouton_fichier", "scan.aide", "scan.lecture",
-    "scan.lu", "scan.rien", "scan.echec_pdf",
+  const cles = ["scan.intro", "scan.aide", "scan.lecture",
+    "scan.lu_multi", "scan.revue_lot", "scan.revue_ailleurs", "scan.retirer_feuille",
+    "scan.rien", "scan.echec_pdf",
     "scan.echec_reperes", "scan.echec_feuille", "scan.echec_image", "scan.echec_ambigu",
     "scan.lu_de", "scan.rien_de", "scan.revue_qui", "scan.revue_aide", "scan.case_aide",
     "scan.doutes_tous", "scan.doutes_aucun",
@@ -6232,11 +6239,12 @@ test("scan : l'empreinte imprimée porte l'enfant et la semaine, et la lecture l
   assert.ok(/empreinte: \[enf\.id, jours\[0\]\]\.concat\(missions\)/.test(plan),
     "sans l'enfant NI la semaine dans l'empreinte, deux feuilles de la fratrie seraient indiscernables");
   // Et l'écran suit la feuille : enfant reconnu, semaine reconnue, avant de rendre.
-  const lancement = ui.slice(ui.indexOf("async function lancerScanFeuille"), ui.indexOf("function scanPropositionActive"));
-  assert.ok(/etat\.enfants\[res\.plan\.enfantId\]/.test(lancement) && /semainePapierDebut = semaine/.test(lancement),
+  const lancement = ui.slice(ui.indexOf("async function lancerScanFeuille"), ui.indexOf("function allerAFeuilleScan"));
+  assert.ok(/etat\.enfants\[lec\.plan\.enfantId\]/.test(lancement) && /allerAFeuilleScan\(0\)/.test(lancement),
     "la proposition doit s'afficher là où la feuille dit qu'elle va");
-  assert.ok(/etat\.enfantActif = enf\.id[\s\S]{0,200}ecrireCache\(\)/.test(lancement),
-    "l'onglet de l'enfant reconnu doit s'ouvrir, sinon la proposition reste invisible");
+  const aller = ui.slice(ui.indexOf("function allerAFeuilleScan"), ui.indexOf("function feuilleScanProposee"));
+  assert.ok(/etat\.enfantActif = f\.enfantId/.test(aller) && /semainePapierDebut = f\.semaine/.test(aller),
+    "l'onglet de l'enfant reconnu ET sa semaine doivent s'ouvrir, sinon la proposition reste invisible");
   // Le prénom reconnu est écrit en toutes lettres : c'est ce qui permet au
   // parent de rattraper une reconnaissance erronée avant d'enregistrer.
   const bloc = ui.slice(ui.indexOf("function blocEncoderSemaine"), ui.indexOf("function decalerSemaine"));
@@ -6256,8 +6264,8 @@ test("scan : pendant la relecture, chaque case se corrige d'un doigt — sans ja
     "et dire ce qu'un doigt y fera");
   // Les raccourcis « douteuses » ne font qu'ajuster la proposition.
   const rapide = bloc.slice(bloc.indexOf("scan-revue-doutes"), bloc.indexOf("scan-revue-actions"));
-  assert.ok(/scanProposition\.cases\[c\] = "cochee"/.test(rapide) && /delete scanProposition\.cases\[c\]/.test(rapide),
-    "accepter ou écarter les douteuses d'un coup doit rester possible");
+  assert.ok(/feuilleLue\.cases\[c\] = "cochee"/.test(rapide) && /delete feuilleLue\.cases\[c\]/.test(rapide),
+    "accepter ou écarter les douteuses d'un coup doit rester possible, sur la feuille affichée");
   assert.ok(!/modifierHistorique|ajusterMonnaie|crediterMission/.test(rapide),
     "aucun raccourci ne doit écrire dans le journal : seule la validation le fait");
 });
@@ -6304,6 +6312,83 @@ test("minuteur : quand le décompte passe à un autre enfant, c'est sa page d'ac
   // feuille ne doit pas renvoyer le parent à l'accueil au milieu de sa saisie.
   assert.ok(/&& !modeParents\)/.test(ui),
     "le renvoi à l'accueil ne vaut que côté enfant");
+});
+
+test("feuille papier : une seule feuille à imprimer, et elle donne envie", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const carte = ui.slice(ui.indexOf("function blocSemainePapier"), ui.indexOf("/* ---------- Scanner la feuille"));
+  // La feuille « Rapide » (un total écrit à la main) demandait de choisir une
+  // mise en page avant même d'avoir imprimé, ne portait pas les repères, et ne
+  // pouvait donc pas se relire en photo. Il n'en reste qu'une.
+  assert.ok(!/imprimer_jours|imprimer_total|papier\.format/.test(carte),
+    "plus aucun choix de mise en page ne doit être proposé");
+  assert.ok(/imprimerFeuilleSemaine\(\)/.test(carte), "un seul bouton, sans paramètre de mise en page");
+  assert.ok(/papier-affiche/.test(carte) && /papier\.affiche_titre/.test(carte) && /papier-atouts/.test(carte),
+    "ce qui sort de l'imprimante finit sur le frigo : la carte doit le présenter comme une affiche, pas comme un formulaire");
+  // Et le HTML imprimé n'a plus qu'une forme.
+  assert.ok(!/htmlFeuilleSemaine\((mode|"[a-z]+")\)/.test(ui),
+    "htmlFeuilleSemaine() ne prend plus de mise en page");
+});
+
+test("encoder : quatre chemins vers la même semaine, dont deux qui lisent la feuille tout seuls", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const bloc = ui.slice(ui.indexOf("function blocEncoderSemaine"), ui.indexOf("function decalerSemaine"));
+  ["papier.mode_photo", "papier.mode_fichier", "papier.mode_detaille", "papier.mode_express"]
+    .forEach(k => assert.ok(bloc.includes(k), "façon d'encoder absente : " + k));
+  // Photo et Scan sont des ACTIONS : elles ouvrent l'objectif ou les fichiers
+  // et ne doivent jamais rester « sélectionnées », sans quoi la grille
+  // disparaîtrait au profit d'un mode qui n'affiche rien.
+  assert.ok(/\["photo",[\s\S]{0,120}choisirFeuilleAScanner\(true\)/.test(bloc)
+    && /\["fichier",[\s\S]{0,120}choisirFeuilleAScanner\(false\)/.test(bloc),
+    "Photo et Scan doivent agir immédiatement");
+  assert.ok(!/encodeMode = "photo"|encodeMode = "fichier"/.test(bloc),
+    "ni Photo ni Scan ne sont des affichages : les retenir comme mode laisserait un écran vide");
+  assert.ok(/\["detaille",[\s\S]{0,120}encodeMode = "detaille"/.test(bloc)
+    && /\["express",[\s\S]{0,120}encodeMode = "express"/.test(bloc),
+    "Manuel et Rapide, eux, changent bien l'affichage");
+});
+
+test("scan : un PDF de toute la fratrie se lit d'un coup, sans compter deux fois la même feuille", () => {
+  const fs = require("fs"), path = require("path");
+  const scan = fs.readFileSync(path.join(__dirname, "..", "js/scan.js"), "utf8");
+  const pdf = scan.slice(scan.indexOf("if (scanEstPdf(fichier))"), scan.indexOf("const px = await scanPixelsDepuisBlob(fichier)"));
+  // S'arrêter à la première page reconnue obligerait à recommencer autant de
+  // fois qu'il y a d'enfants — c'est justement ce qu'on numérise d'un coup.
+  assert.ok(/lectures\.push\(r\)/.test(pdf) && !/if \(r\.ok\) return r;/.test(pdf),
+    "toutes les pages doivent être lues, pas seulement la première qui répond");
+  assert.ok(/const cle = \(r\.plan\.enfantId \|\| ""\) \+ "\|" \+ \(r\.plan\.semaine \|\| ""\)/.test(pdf)
+    && /if \(vues\[cle\]\) continue;/.test(pdf),
+    "une même feuille numérisée deux fois ne doit pas compter double");
+  assert.ok(/if \(!lectures\.length\) return dernier;/.test(pdf),
+    "si rien n'a été reconnu, il faut le dire — avec la raison, pas un silence");
+});
+
+test("scan : plusieurs feuilles se relisent une à une, puis s'enregistrent d'un seul geste", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const bloc = ui.slice(ui.indexOf("function blocEncoderSemaine"), ui.indexOf("function decalerSemaine"));
+  // Un onglet par feuille : prénom, semaine, et ce qu'on y a lu. Sans cela, la
+  // deuxième feuille du lot resterait invisible.
+  assert.ok(/scan-revue-feuilles/.test(bloc) && /allerAFeuilleScan\(i\)/.test(bloc),
+    "chaque feuille du lot doit être atteignable");
+  assert.ok(/scan\.revue_ailleurs/.test(bloc),
+    "afficher un enfant hors du lot ne doit pas laisser croire que la lecture est perdue");
+  // Le bouton d'enregistrement annonce le TOTAL du lot, pas la feuille affichée.
+  assert.ok(/const total = scanCasesRetenues\(\)[\s\S]{0,4000}t\("scan\.valider", \{ n: total \}\)/.test(bloc),
+    "« Enregistrer » vaut pour tout le lot : il doit en annoncer le total");
+  assert.ok(/scan\.retirer_feuille/.test(bloc),
+    "une page mal numérisée doit pouvoir être retirée sans abandonner les autres");
+  // Et la validation parcourt bien toutes les feuilles, chacune dans le
+  // journal de SON enfant et de SA semaine.
+  const valide = ui.slice(ui.indexOf("function validerScanProposition"), ui.indexOf("let encodeMode"));
+  assert.ok(/scanProposition\.feuilles\.forEach\(f => \{/.test(valide)
+    && /const enf = etat\.enfants\[f\.enfantId\]/.test(valide)
+    && /joursSemaine\(f\.semaine\)/.test(valide),
+    "chaque feuille doit aller dans le dossier et la semaine qu'elle désigne");
+  assert.ok(/if \(f\.cases\[cle\] !== "cochee"\) return;/.test(valide),
+    "et une case restée douteuse ne s'enregistre toujours pas d'office");
 });
 
 /* Un JPEG minimal mais crédible : en-tête FF D8 FF, un corps qui ne contient
@@ -6375,8 +6460,9 @@ test("scan : deux portes vers la même lecture, et seule la photo force l'object
   assert.ok(/if \(appareilPhoto\) inp\.capture = "environment"/.test(choix),
     "« capture » ne doit s'appliquer qu'au bouton photo, sinon le PDF devient inatteignable");
   // Les deux boutons sont réellement offerts au parent.
-  assert.ok(/t\("scan\.bouton"\)[\s\S]{0,400}t\("scan\.bouton_fichier"\)/.test(ui),
-    "les deux portes doivent apparaître sur la feuille papier");
+  assert.ok(/t\("papier\.mode_photo"\)[\s\S]{0,200}choisirFeuilleAScanner\(true\)/.test(ui)
+    && /t\("papier\.mode_fichier"\)[\s\S]{0,200}choisirFeuilleAScanner\(false\)/.test(ui),
+    "les deux portes doivent figurer parmi les façons d'encoder la feuille");
   // Un PDF de texte pur doit être expliqué, pas signalé comme une image illisible.
   assert.ok(/pdf_sans_image[\s\S]{0,200}scan\.echec_pdf|scan\.echec_pdf[\s\S]{0,200}pdf_sans_image/
     .test(ui), "un PDF sans image encapsulée doit avoir son propre message");

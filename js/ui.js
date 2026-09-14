@@ -4278,41 +4278,27 @@ function blocSemainePapier() {
   nav.appendChild(prev); nav.appendChild(lbl); nav.appendChild(next);
   sec.appendChild(nav);
 
-  // Deux mises en page possibles (choix à l'impression) — mêmes deux mots
-  // (Détaillé / Rapide) et la même présentation « icône + titre + précision »
-  // que le choix de mode plus bas, pour qu'imprimer et encoder se lisent
-  // comme un seul et même choix, pas deux vocabulaires différents.
-  sec.appendChild(el("p", "planif-sous", t("papier.format")));
-  const impressions = el("div", "enc-modes segmente");
-  [["jours", "📋", t("papier.imprimer_jours")], ["total", "⚡", t("papier.imprimer_total")]].forEach(([val, ico, lab]) => {
-    const m = /^(.*?)\s*\((.*)\)\s*$/.exec(lab);
-    const titre = m ? m[1] : lab;
-    const hint = m ? m[2] : "";
-    const b = el("button", "seg seg-mode");
-    b.innerHTML = `<span class="seg-ico">${ico}</span><span class="seg-txt"><span class="seg-titre">${echapper(titre)}</span>${hint ? `<span class="seg-hint">${echapper(hint)}</span>` : ""}</span>`;
-    b.onclick = () => imprimerFeuilleSemaine(val);
-    impressions.appendChild(b);
+  // Une seule feuille, et donc aucun choix de mise en page à faire. La
+  // deuxième (« Rapide », un total à écrire à la main) demandait au parent de
+  // trancher avant même d'avoir imprimé quoi que ce soit, ne portait pas les
+  // repères, et ne pouvait donc pas se relire en photo : deux feuilles dont
+  // une seule marchait vraiment. Reste l'affiche : ce qu'on imprime, ce n'est
+  // pas un formulaire, c'est ce qui va sur le frigo.
+  const affiche = el("div", "papier-affiche");
+  affiche.innerHTML = `<div class="papier-affiche-ico" aria-hidden="true">📋</div>
+    <div class="papier-affiche-txt">
+      <p class="papier-affiche-t">${t("papier.affiche_titre")}</p>
+      <p class="papier-affiche-d">${t("papier.affiche_note")}</p>
+    </div>`;
+  const bImp = el("button", "gros-bouton planete papier-affiche-btn", t("papier.imprimer"));
+  bImp.onclick = () => imprimerFeuilleSemaine();
+  affiche.appendChild(bImp);
+  sec.appendChild(affiche);
+  const atouts = el("ul", "papier-atouts");
+  ["papier.atout_ecran", "papier.atout_frigo", "papier.atout_photo"].forEach(k => {
+    atouts.appendChild(el("li", "", t(k)));
   });
-  sec.appendChild(impressions);
-
-  // ----- Scanner la feuille remplie -----
-  // Seule la feuille « Détaillé » porte les repères : la feuille « Rapide » ne
-  // contient qu'un total écrit à la main, et lire un chiffre manuscrit est un
-  // tout autre métier que mesurer une case noircie.
-  sec.appendChild(el("p", "planif-sous", t("scan.intro")));
-  // Deux portes vers la même lecture : l'appareil photo (le plus souvent, sur
-  // un téléphone) ou un fichier déjà numérisé — un scanner de bureau rend un
-  // PDF, qu'on sait désormais ouvrir. Deux boutons plutôt qu'un seul choix
-  // ambigu : sur mobile, « capture » ouvre directement l'appareil photo, et
-  // rien n'indiquerait sinon qu'on peut aussi aller chercher un fichier.
-  const portes = el("div", "scan-portes");
-  const bPhoto = el("button", "gros-bouton planete", t("scan.bouton"));
-  bPhoto.onclick = () => choisirFeuilleAScanner(true);
-  const bFichier = el("button", "btn-secondaire", t("scan.bouton_fichier"));
-  bFichier.onclick = () => choisirFeuilleAScanner(false);
-  portes.appendChild(bPhoto); portes.appendChild(bFichier);
-  sec.appendChild(portes);
-  sec.appendChild(el("p", "note", t("scan.aide")));
+  sec.appendChild(atouts);
   return sec;
 }
 
@@ -4324,7 +4310,11 @@ function blocSemainePapier() {
  * Le calcul est entièrement local (voir js/scan.js) — la photo porte les
  * prénoms des enfants et une semaine de leur vie, elle ne sort pas du
  * téléphone. */
-let scanProposition = null;   // { enfantId, semaine, cases: { "mission:jour": "cochee"|"douteuse" } }
+// { pages, feuilles: [ { enfantId, semaine, cases: { "mission:jour": "cochee"|"douteuse" } } ] }
+// PLUSIEURS feuilles : un PDF de scanner porte souvent toute la fratrie, et
+// parfois plusieurs semaines. Elles se relisent l'une après l'autre, se
+// corrigent, et s'enregistrent d'un seul geste à la fin.
+let scanProposition = null;
 
 // `appareilPhoto` : ouvrir directement l'objectif (téléphone), ou laisser
 // choisir un fichier déjà numérisé (image ou PDF de scanner).
@@ -4385,63 +4375,95 @@ async function lancerScanFeuille(fichier) {
     return;
   }
 
-  // La feuille s'est fait reconnaître : c'est elle qui dit de quel enfant et
-  // de quelle semaine elle est, pas le dernier onglet ouvert.
-  const enf = etat.enfants[res.plan.enfantId];
-  if (!enf) { toast(t("scan.echec_feuille"), "info"); return; }
-  const semaine = res.plan.semaine;
-  const jours = joursSemaine(semaine);
-
-  // On ne propose que du NOUVEAU : une case déjà consignée dans le journal
-  // (cochée dans l'app pendant la semaine, ou déjà imprimée avec son ✓) n'a
-  // rien à faire dans une proposition — elle est déjà acquise.
-  const cases = {};
+  // Chaque feuille s'est fait reconnaître : c'est elle qui dit de quel enfant
+  // et de quelle semaine elle est, pas le dernier onglet ouvert.
+  const feuilles = [];
   let nettes = 0, aConfirmer = 0;
-  res.cases.forEach(c => {
-    if (c.etat === "vide") return;
-    if (((enf.journal[jours[c.jour]] || {})[c.mission] || 0) > 0) return;
-    cases[c.mission + ":" + c.jour] = c.etat;
-    if (c.etat === "cochee") nettes++; else aConfirmer++;
+  res.lectures.forEach(lec => {
+    const enf = etat.enfants[lec.plan.enfantId];
+    if (!enf) return;
+    const jours = joursSemaine(lec.plan.semaine);
+    // On ne propose que du NOUVEAU : une case déjà consignée dans le journal
+    // (cochée dans l'app pendant la semaine, ou déjà imprimée avec son ✓) n'a
+    // rien à faire dans une proposition — elle est déjà acquise.
+    const cases = {};
+    let n = 0;
+    lec.cases.forEach(c => {
+      if (c.etat === "vide") return;
+      if (((enf.journal[jours[c.jour]] || {})[c.mission] || 0) > 0) return;
+      cases[c.mission + ":" + c.jour] = c.etat;
+      n++;
+      if (c.etat === "cochee") nettes++; else aConfirmer++;
+    });
+    // Une feuille entièrement vierge (ou déjà encodée) n'ouvre pas de revue :
+    // elle serait une ligne de plus à relire pour rien.
+    if (n) feuilles.push({ enfantId: enf.id, semaine: lec.plan.semaine, cases });
   });
 
-  // Se placer sur l'enfant et la semaine reconnus AVANT de rendre : sans cela,
-  // la proposition resterait invisible, rattachée à un onglet que le parent
-  // n'a pas ouvert.
-  etat.enfantActif = enf.id;
-  semainePapierDebut = semaine;
-  ecrireCache();
+  if (!feuilles.length) {
+    const enf = etat.enfants[(res.lectures[0] || {}).plan && res.lectures[0].plan.enfantId];
+    toast(enf ? t("scan.rien_de", { prenom: enf.prenom }) : t("scan.rien"), "info");
+    return;
+  }
 
-  if (!nettes && !aConfirmer) { toast(t("scan.rien_de", { prenom: enf.prenom }), "info"); rendre(); return; }
-  scanProposition = { enfantId: enf.id, semaine, cases };
+  scanProposition = { feuilles, pages: res.pages || feuilles.length };
   encodeMode = "detaille";            // la relecture se fait dans la grille, pas ailleurs
-  toast(t("scan.lu_de", { prenom: enf.prenom, n: nettes }), "succes");
+  // Se placer sur la première feuille reconnue AVANT de rendre : sans cela, la
+  // proposition resterait invisible, rattachée à un onglet que le parent n'a
+  // pas ouvert.
+  allerAFeuilleScan(0);
+  const prem = etat.enfants[feuilles[0].enfantId];
+  toast(feuilles.length > 1
+    ? t("scan.lu_multi", { f: feuilles.length, n: nettes })
+    : t("scan.lu_de", { prenom: prem.prenom, n: nettes }), "succes");
+}
+
+// Ouvre la i-ième feuille lue : c'est l'enfant et la semaine de CETTE feuille
+// qui s'affichent, puisque la grille de relecture est celle de l'écran.
+function allerAFeuilleScan(i) {
+  const f = scanProposition && scanProposition.feuilles[i];
+  if (!f) return;
+  etat.enfantActif = f.enfantId;
+  semainePapierDebut = f.semaine;
+  ecrireCache();
   rendre();
 }
 
-// La proposition en cours porte-t-elle bien sur l'enfant et la semaine affichés ?
+// La feuille proposée pour l'enfant et la semaine affichés, s'il y en a une.
 // Changer d'enfant ou de semaine ne doit jamais faire glisser une proposition
 // d'un dossier à l'autre.
-function scanPropositionActive(enf, semaine) {
-  return !!(scanProposition && enf && scanProposition.enfantId === enf.id
-    && scanProposition.semaine === semaine);
+function feuilleScanProposee(enf, semaine) {
+  if (!scanProposition || !enf) return null;
+  return scanProposition.feuilles.find(f => f.enfantId === enf.id && f.semaine === semaine) || null;
+}
+// Total des cases franches en attente, toutes feuilles confondues : c'est ce
+// nombre-là que le bouton d'enregistrement annonce.
+function scanCasesRetenues() {
+  if (!scanProposition) return 0;
+  return scanProposition.feuilles.reduce((s, f) =>
+    s + Object.values(f.cases).filter(v => v === "cochee").length, 0);
 }
 
+// Enregistre TOUTES les feuilles relues, d'un seul geste.
 function validerScanProposition() {
   if (!scanProposition) return;
-  const enf = etat.enfants[scanProposition.enfantId];
-  const jours = joursSemaine(scanProposition.semaine);
   let n = 0;
-  Object.keys(scanProposition.cases).forEach(cle => {
-    // Une case restée « à confirmer » n'est PAS enregistrée : le doute
-    // profite au silence, pas à l'invention.
-    if (scanProposition.cases[cle] !== "cochee") return;
-    const sep = cle.lastIndexOf(":");
-    const m = trouverMission(cle.slice(0, sep));
-    const jour = jours[+cle.slice(sep + 1)];
-    if (!m || !jour) return;
-    if (((enf.journal[jour] || {})[m.id] || 0) > 0) return;   // entre-temps déjà coché
-    modifierHistorique(enf, jour, m, +1);
-    n++;
+  scanProposition.feuilles.forEach(f => {
+    const enf = etat.enfants[f.enfantId];
+    if (!enf) return;
+    const jours = joursSemaine(f.semaine);
+    Object.keys(f.cases).forEach(cle => {
+      // Une case restée « à confirmer » n'est PAS enregistrée : le doute
+      // profite au silence, pas à l'invention.
+      if (f.cases[cle] !== "cochee") return;
+      const sep = cle.lastIndexOf(":");
+      const m = trouverMission(cle.slice(0, sep));
+      const jour = jours[+cle.slice(sep + 1)];
+      if (!m || !jour) return;
+      if (((enf.journal[jour] || {})[m.id] || 0) > 0) return;   // entre-temps déjà coché
+      modifierHistorique(enf, jour, m, +1);
+      n++;
+    });
   });
   scanProposition = null;
   toast(t("scan.applique", { n }), "succes");
@@ -4483,19 +4505,31 @@ function blocEncoderSemaine() {
   });
   sec.appendChild(enfRow);
 
-  // Bascule de mode (contrôle segmenté : icône + titre + courte explication).
-  const modes = el("div", "enc-modes segmente");
-  [["detaille", "📋", t("papier.mode_detaille")], ["express", "⚡", t("papier.mode_express")]].forEach(([val, ico, lab]) => {
+  // Quatre façons d'encoder une feuille, présentées ensemble parce que ce sont
+  // quatre réponses à la MÊME question (« j'ai la feuille remplie, et
+  // maintenant ? ») : deux qui lisent la feuille toutes seules, deux qui
+  // demandent de saisir. Photo et Scan sont des ACTIONS (elles ouvrent
+  // l'objectif ou les fichiers) et ne restent donc jamais « sélectionnées » ;
+  // Manuel et Rapide sont des affichages.
+  sec.appendChild(el("p", "planif-sous", t("scan.intro")));
+  const modes = el("div", "enc-modes segmente enc-modes-4");
+  [
+    ["photo",    "📷", t("papier.mode_photo"),    () => choisirFeuilleAScanner(true)],
+    ["fichier",  "🖼️", t("papier.mode_fichier"),  () => choisirFeuilleAScanner(false)],
+    ["detaille", "📋", t("papier.mode_detaille"), () => { encodeMode = "detaille"; rendre(); }],
+    ["express",  "⚡", t("papier.mode_express"),  () => { encodeMode = "express"; rendre(); }]
+  ].forEach(([val, ico, lab, action]) => {
     // Le libellé est de la forme « Titre (explication) » : on sépare les deux.
     const m = /^(.*?)\s*\((.*)\)\s*$/.exec(lab);
     const titre = m ? m[1] : lab;
     const hint = m ? m[2] : "";
     const b = el("button", "seg seg-mode" + (encodeMode === val ? " actif" : ""));
     b.innerHTML = `<span class="seg-ico">${ico}</span><span class="seg-txt"><span class="seg-titre">${echapper(titre)}</span>${hint ? `<span class="seg-hint">${echapper(hint)}</span>` : ""}</span>`;
-    b.onclick = () => { encodeMode = val; rendre(); };
+    b.onclick = action;
     modes.appendChild(b);
   });
   sec.appendChild(modes);
+  sec.appendChild(el("p", "note", t("scan.aide")));
 
   if (encodeMode === "express") {
     // -- Mode express : totaux de la semaine --
@@ -4538,19 +4572,51 @@ function blocEncoderSemaine() {
   // Tant qu'il est là, la grille ne modifie plus le journal — elle ajuste la
   // proposition, et c'est le bouton « enregistrer » qui tranche.
   const semaineCourante = semainePapierDebut || debutSemaine(aujourdHui());
-  const propActive = scanPropositionActive(enf, semaineCourante);
-  if (propActive) {
-    const vals = Object.values(scanProposition.cases);
+  const feuilleLue = feuilleScanProposee(enf, semaineCourante);
+  const propActive = !!feuilleLue;
+  if (scanProposition) {
+    const vals = feuilleLue ? Object.values(feuilleLue.cases) : [];
     const nettes = vals.filter(v => v === "cochee").length;
     const doutes = vals.filter(v => v === "douteuse").length;
+    const total = scanCasesRetenues();
     const bandeau = el("div", "scan-revue");
     // Le prénom et la semaine RECONNUS sont écrits en toutes lettres : c'est
     // la feuille qui les a désignés, pas le parent — il doit donc pouvoir
     // vérifier d'un coup d'œil qu'on ne s'apprête pas à écrire chez l'autre.
-    bandeau.innerHTML = `<p class="scan-revue-t">📷 ${t("scan.revue_qui", {
-        prenom: echapper(enf.prenom), semaine: libelleSemaine(jours[0], jours[6]) })}</p>
-      <p class="scan-revue-d">${t("scan.revue", { n: nettes })}${doutes ? " " + t("scan.revue_doutes", { n: doutes }) : ""}</p>
-      <p class="scan-revue-aide">👆 ${t("scan.revue_aide")}</p>`;
+    bandeau.innerHTML = `<p class="scan-revue-t">📷 ${scanProposition.feuilles.length > 1
+        ? t("scan.revue_lot", { f: scanProposition.feuilles.length, p: scanProposition.pages })
+        : t("scan.revue_qui", { prenom: echapper(enf.prenom), semaine: libelleSemaine(jours[0], jours[6]) })}</p>`;
+    // Plusieurs feuilles numérisées d'un coup : chacune a son onglet, et
+    // l'enregistrement les prend toutes. Passer de l'une à l'autre change
+    // l'enfant et la semaine affichés, puisque la relecture se fait dans la
+    // grille de l'écran.
+    if (scanProposition.feuilles.length > 1) {
+      const liste = el("div", "scan-revue-feuilles");
+      scanProposition.feuilles.forEach((f, i) => {
+        const e2 = etat.enfants[f.enfantId];
+        if (!e2) return;
+        const j2 = joursSemaine(f.semaine);
+        const ici = f === feuilleLue;
+        const n2 = Object.values(f.cases).filter(v => v === "cochee").length;
+        const d2 = Object.values(f.cases).filter(v => v === "douteuse").length;
+        const b = el("button", "scan-feuille-chip" + (ici ? " on" : "") + (d2 ? " doute" : ""),
+          `${echapper(e2.prenom)} · ${echapper(libelleSemaine(j2[0], j2[6]))} · ${n2}${d2 ? " +" + d2 + "?" : ""}`);
+        b.onclick = () => allerAFeuilleScan(i);
+        liste.appendChild(b);
+      });
+      bandeau.appendChild(liste);
+    }
+    if (feuilleLue) {
+      const d = el("p", "scan-revue-d");
+      d.textContent = t("scan.revue", { n: nettes }) + (doutes ? " " + t("scan.revue_doutes", { n: doutes }) : "");
+      bandeau.appendChild(d);
+      bandeau.appendChild(el("p", "scan-revue-aide", "👆 " + t("scan.revue_aide")));
+    } else {
+      // On affiche une semaine ou un enfant qui n'a pas été numérisé : la
+      // proposition existe toujours, elle est juste ailleurs — le dire plutôt
+      // que de laisser croire que la lecture a été perdue.
+      bandeau.appendChild(el("p", "scan-revue-d", t("scan.revue_ailleurs")));
+    }
     // Corriger case par case reste la règle ; mais relire dix « ? » un à un
     // quand la photo est simplement un peu pâle (ou un peu trop nette) est une
     // corvée dont on peut faire l'économie — en la rendant explicite, jamais
@@ -4559,25 +4625,36 @@ function blocEncoderSemaine() {
       const rapide = el("div", "scan-revue-doutes");
       const tous = el("button", "btn-secondaire", t("scan.doutes_tous", { n: doutes }));
       tous.onclick = () => majSansSaut(() => {
-        Object.keys(scanProposition.cases).forEach(c => {
-          if (scanProposition.cases[c] === "douteuse") scanProposition.cases[c] = "cochee";
+        Object.keys(feuilleLue.cases).forEach(c => {
+          if (feuilleLue.cases[c] === "douteuse") feuilleLue.cases[c] = "cochee";
         });
       });
       const aucun = el("button", "btn-secondaire", t("scan.doutes_aucun"));
       aucun.onclick = () => majSansSaut(() => {
-        Object.keys(scanProposition.cases).forEach(c => {
-          if (scanProposition.cases[c] === "douteuse") delete scanProposition.cases[c];
+        Object.keys(feuilleLue.cases).forEach(c => {
+          if (feuilleLue.cases[c] === "douteuse") delete feuilleLue.cases[c];
         });
       });
       rapide.appendChild(tous); rapide.appendChild(aucun);
       bandeau.appendChild(rapide);
     }
     const actions = el("div", "scan-revue-actions");
-    const ok = el("button", "gros-bouton planete", t("scan.valider", { n: nettes }));
+    const ok = el("button", "gros-bouton planete", t("scan.valider", { n: total }));
     ok.onclick = () => validerScanProposition();
     const non = el("button", "btn-secondaire", t("scan.annuler"));
     non.onclick = () => { scanProposition = null; toast(t("scan.annule"), "info"); rendre(); };
     actions.appendChild(ok); actions.appendChild(non);
+    // Retirer UNE feuille du lot sans tout abandonner : une page mal numérisée
+    // ne doit pas obliger à recommencer les autres.
+    if (feuilleLue && scanProposition.feuilles.length > 1) {
+      const retirer = el("button", "btn-secondaire", t("scan.retirer_feuille"));
+      retirer.onclick = () => {
+        scanProposition.feuilles = scanProposition.feuilles.filter(f => f !== feuilleLue);
+        if (!scanProposition.feuilles.length) { scanProposition = null; toast(t("scan.annule"), "info"); rendre(); return; }
+        allerAFeuilleScan(0);
+      };
+      actions.appendChild(retirer);
+    }
     bandeau.appendChild(actions);
     sec.appendChild(bandeau);
   }
@@ -4606,7 +4683,7 @@ function blocEncoderSemaine() {
         // du regard du parent, et visuellement distincte de ce qui est déjà
         // enregistré, pour qu'aucune des deux ne se fasse passer pour l'autre.
         const cle = m.id + ":" + i;
-        const prop = (propActive && !n) ? scanProposition.cases[cle] : null;
+        const prop = (propActive && !n) ? feuilleLue.cases[cle] : null;
         // Pendant la relecture, TOUTE case se corrige d'un doigt — y compris
         // celle que la photo a cru vide. On le montre (la case se distingue)
         // plutôt que de compter sur le parent pour deviner qu'elle est
@@ -4624,8 +4701,8 @@ function blocEncoderSemaine() {
           // Pendant la relecture d'une photo, on ne touche pas au journal : on
           // ajuste la proposition, et c'est la validation qui écrit.
           if (enRevue) {
-            if (scanProposition.cases[cle] === "cochee") delete scanProposition.cases[cle];
-            else scanProposition.cases[cle] = "cochee";
+            if (feuilleLue.cases[cle] === "cochee") delete feuilleLue.cases[cle];
+            else feuilleLue.cases[cle] = "cochee";
             return;
           }
           modifierHistorique(enf, j, m, n > 0 ? -1 : +1);
@@ -4707,7 +4784,7 @@ function planFeuilleScan(enf, jours) {
     empreinte: [enf.id, jours[0]].concat(missions) };
 }
 
-function htmlFeuilleSemaine(mode) {
+function htmlFeuilleSemaine() {
   const jours = joursSemaine(semainePapierDebut);
   const lettres = t("planif.jours_courts").split(",");
   const famille = (typeof familleActive !== "undefined" && familleActive && familleActive.name) ? familleActive.name : "";
@@ -4724,11 +4801,11 @@ function htmlFeuilleSemaine(mode) {
     // ligne par ligne, qui permet à une photo de savoir quelle case appartient
     // à quelle mission — les deux ne doivent donc jamais être écrites deux fois.
     const plan = planFeuilleScan(enf, jours);
-    const bits = (mode === "jours") ? scanBitsAttendus(plan.lignes.length, plan.empreinte) : [];
+    const bits = scanBitsAttendus(plan.lignes.length, plan.empreinte);
     plan.lignes.forEach(ligne => {
       if (ligne.type === "cat") {
         const cat = CATEGORIES[ligne.cat];
-        lignes += `<tr class="cat"><td colspan="${mode === "jours" ? 8 : 2}">${cat.monnaieEmoji} ${trData("cat", ligne.cat + ".nom", cat.nom)}</td></tr>`;
+        lignes += `<tr class="cat"><td colspan="8">${cat.monnaieEmoji} ${trData("cat", ligne.cat + ".nom", cat.nom)}</td></tr>`;
         return;
       }
       const m = ligne.m, cat = CATEGORIES[ligne.cat];
@@ -4738,23 +4815,19 @@ function htmlFeuilleSemaine(mode) {
       jours.forEach(j => { if (j <= auj) totMission += (enf.journal[j] || {})[m.id] || 0; });
       if (ligne.cat === "planete") gouttesSem += totMission * pointsMission(enf, m);
       else coeursSem += totMission * pointsMission(enf, m);
-      if (mode === "jours") {
-        lignes += `<tr><td class="m">${nom}</td>` + lettres.map((_, i) => {
-          // Week-end teinté (voir plus bas) : un petit repère visuel et coloré
-          // dans une grille par ailleurs assez austère.
-          const we = i >= 5 ? " we" : "";
-          const j = jours[i];
-          if (!ligne.jours[i]) return `<td class="c hors${we}">·</td>`;                   // jour non prévu
-          const fait = (enf.journal[j] || {})[m.id] || 0;
-          // Case à cocher : un carré VIDE, jamais un décor. C'est lui que la
-          // photo mesure ; une étoile imprimée aurait mis de l'encre partout
-          // et rendu « cochée » indiscernable de « vide ».
-          const dedans = (j <= auj && fait) ? "✓" : "";
-          return `<td class="c${we}"><span class="omr-case${dedans ? " faite" : ""}">${dedans}</span></td>`;
-        }).join("") + `</tr>`;
-      } else {
-        lignes += `<tr><td class="m">${nom}</td><td class="c large">${totMission || ""}</td></tr>`;
-      }
+      lignes += `<tr><td class="m">${nom}</td>` + lettres.map((_, i) => {
+        // Week-end teinté (voir plus bas) : un petit repère visuel et coloré
+        // dans une grille par ailleurs assez austère.
+        const we = i >= 5 ? " we" : "";
+        const j = jours[i];
+        if (!ligne.jours[i]) return `<td class="c hors${we}">·</td>`;                   // jour non prévu
+        const fait = (enf.journal[j] || {})[m.id] || 0;
+        // Case à cocher : un carré VIDE, jamais un décor. C'est lui que la
+        // photo mesure ; une étoile imprimée aurait mis de l'encre partout
+        // et rendu « cochée » indiscernable de « vide ».
+        const dedans = (j <= auj && fait) ? "✓" : "";
+        return `<td class="c${we}"><span class="omr-case${dedans ? " faite" : ""}">${dedans}</span></td>`;
+      }).join("") + `</tr>`;
     });
     // Rangs de repères : quatre taches pleines aux coins de la grille des jours
     // (de petites planètes, à l'impression), et vingt marques de contrôle
@@ -4769,15 +4842,13 @@ function htmlFeuilleSemaine(mode) {
         `<span class="omr-bit g${bits[j0] ? " on" : ""}"></span>` +
         `<span class="omr-bit d${bits[j0 + 1] ? " on" : ""}"></span></td>`;
     }).join("") + `</tr>`;
-    if (mode === "jours") lignes = rangOmr(false) + lignes + rangOmr(true);
+    lignes = rangOmr(false) + lignes + rangOmr(true);
     // Répétée sur chaque page où la carte se poursuit (voir <thead> plus
     // bas) : sans elle, une liste assez longue pour déborder sur une
     // deuxième page y perdait le nom de l'enfant ET l'en-tête des jours —
     // rien ne disait alors à qui appartenait la suite du tableau.
-    const nomRepete = `<tr class="cat nom-repete"><th colspan="${mode === "jours" ? 8 : 2}">${vignetteEnfant(enf, "mini")} ${echapper(enf.prenom)}</th></tr>`;
-    const entete = (mode === "jours")
-      ? `<tr class="head"><th></th>${lettres.map((l, i) => `<th${i >= 5 ? ' class="we"' : ""}>${l}</th>`).join("")}</tr>`
-      : `<tr class="head"><th></th><th>${t("papier.total")}</th></tr>`;
+    const nomRepete = `<tr class="cat nom-repete"><th colspan="8">${vignetteEnfant(enf, "mini")} ${echapper(enf.prenom)}</th></tr>`;
+    const entete = `<tr class="head"><th></th>${lettres.map((l, i) => `<th${i >= 5 ? ' class="we"' : ""}>${l}</th>`).join("")}</tr>`;
     // Auto-évaluation du comportement : pré-remplie pour les jours écoulés.
     const humeur = `<div class="humeur">
         <div class="humeur-t">😊 ${t("papier.humeur")}</div>
@@ -4797,7 +4868,7 @@ function htmlFeuilleSemaine(mode) {
     return `<div class="enfant enf-${k}" style="--c:${coul}">
         <h3>${vignetteEnfant(enf, "mini")} ${echapper(enf.prenom)} <span class="stars">★ ★ ★</span></h3>
         <p class="fun-msg">${t("papier.encourage", { prenom: enf.prenom })}</p>
-        <table class="${mode === "jours" ? "omr" : ""}"><thead>${nomRepete}${entete}</thead><tbody>${lignes}</tbody></table>
+        <table class="omr"><thead>${nomRepete}${entete}</thead><tbody>${lignes}</tbody></table>
         ${humeur}
         <div class="totaux">💛 ${t("money.coeurs")} : ${tC}&nbsp;&nbsp; 💧 ${t("money.gouttes")} : ${tG}</div>
         <div class="bravo">🎉 ${t("papier.bravo")} <span class="sticker-slot" aria-hidden="true"></span></div>
@@ -4954,13 +5025,13 @@ function htmlFeuilleSemaine(mode) {
     <div class="tete"><div class="logo">🌟 ${APP_NOM}${famille ? " · " + echapper(famille) : ""}</div><div class="sem">🗓️ ${titreSem}</div></div>
     <p class="intro">${t("papier.feuille_intro")}</p>
     <div class="grille">${corps}</div>
-    ${mode === "jours" ? `<p class="pied omr-note">🪐 ${t("papier.omr_note")}</p>` : ""}
+    <p class="pied omr-note">🪐 ${t("papier.omr_note")}</p>
     <p class="pied">${t("papier.feuille_pied")}</p>
     </body></html>`;
   return html;
 }
 
-async function imprimerFeuilleSemaine(mode) {
+async function imprimerFeuilleSemaine() {
   // Dans l'app installée, ouvrir une fenêtre pour y imprimer déclenchait
   // l'aperçu d'impression NATIF du système sur une fenêtre que l'app
   // n'avait jamais pu créer proprement — puis restait coincée derrière,
@@ -4969,7 +5040,7 @@ async function imprimerFeuilleSemaine(mode) {
   // voir pdfDepuisHtmlEtEnvoyer plus haut), tenté avant toute autre voie.
   if (greffonNatif("Filesystem")) {
     try {
-      const ok = await pdfDepuisHtmlEtEnvoyer(htmlFeuilleSemaine(mode), "famiteam-semaine-" + aujourdHui() + ".pdf", APP_NOM);
+      const ok = await pdfDepuisHtmlEtEnvoyer(htmlFeuilleSemaine(), "famiteam-semaine-" + aujourdHui() + ".pdf", APP_NOM);
       toast(ok ? t("impr.pdf_pret") : t("impr.echec"), ok ? "ok" : "info");
     } catch (e) { toast(t("impr.echec"), "info"); }
     return;
@@ -4980,7 +5051,7 @@ async function imprimerFeuilleSemaine(mode) {
   }
   const w = window.open("", "_blank");
   if (!w) { toast(t("papier.popup_bloque"), "info"); return; }
-  w.document.open(); w.document.write(htmlFeuilleSemaine(mode)); w.document.close();
+  w.document.open(); w.document.write(htmlFeuilleSemaine()); w.document.close();
   // Signalé : le pied d'impression de Chrome (activé par défaut, hors de
   // notre contrôle — un réglage du navigateur, pas de l'app) affichait
   // littéralement « about:blank ». En cause : une fenêtre ouverte via

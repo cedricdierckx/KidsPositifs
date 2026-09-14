@@ -472,6 +472,18 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .papier-intro{background:linear-gradient(135deg,#fff1d6,#e3f3ff);border:2px dashed #9fd9ff;
   border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.5;color:#3a4a5a;margin-bottom:6px}
 .papier-carte .gros-bouton,.papier-carte .btn-secondaire{width:100%;margin-top:8px}
+/* Imprimer n'est plus un choix de mise en page mais une seule proposition, et
+   elle doit donner envie : ce qui sort de l'imprimante finit sur le frigo. */
+.papier-affiche{display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:10px;
+  background:linear-gradient(135deg,#fff8e6,#eef7ff); border:2px solid #ffd894;
+  border-radius:16px; padding:14px}
+.papier-affiche-ico{font-size:34px; line-height:1; flex:0 0 auto}
+.papier-affiche-txt{flex:1 1 180px; min-width:0}
+.papier-affiche-t{margin:0 0 2px; font-weight:800; font-size:16px; color:#27384a}
+.papier-affiche-d{margin:0; font-size:13px; line-height:1.45; color:#5a6a7a}
+.papier-carte .papier-affiche-btn{flex:1 1 100%; margin-top:2px}
+.papier-atouts{list-style:none; margin:10px 0 0; padding:0; display:flex; flex-direction:column; gap:6px}
+.papier-atouts li{font-size:13.5px; color:#3a4a5a; line-height:1.35}
 /* Encodage de la semaine (grille missions × jours) */
 .enc-modes{display:flex;gap:8px;margin:8px 0 12px}
 .enc-modes .rituel-chip{flex:1;text-align:center;justify-content:center;padding:11px 8px;line-height:1.2}
@@ -504,6 +516,14 @@ main{max-width:680px; margin:0 auto; padding:14px}
   background:rgba(255,255,255,.6); border-radius:10px; padding:7px 9px}
 .scan-revue-doutes{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 8px}
 .scan-revue-doutes .btn-secondaire{flex:1 1 150px; margin:0; font-size:13px}
+/* Plusieurs feuilles numérisées d'un coup : chacune a son onglet, avec son
+   prénom, sa semaine et ce qu'on y a lu — c'est ce qui permet de les relire
+   une à une, puis de tout enregistrer d'un seul geste. */
+.scan-revue-feuilles{display:flex; gap:6px; flex-wrap:wrap; margin:0 0 8px}
+.scan-feuille-chip{border:2px solid #f0d9a8; background:rgba(255,255,255,.75); color:#6b5a38;
+  border-radius:999px; padding:6px 11px; font-size:12.5px; font-weight:700; cursor:pointer}
+.scan-feuille-chip.doute{border-style:dashed}
+.scan-feuille-chip.on{background:#f6a623; border-color:#f6a623; color:#fff}
 /* Une case relue est une case qu'on peut corriger d'un doigt : elle doit en
    avoir l'air, sinon les « ? » restent tels quels et la relecture ne sert à
    rien. Le doute, lui, respire doucement pour appeler le regard. */
@@ -513,9 +533,6 @@ main{max-width:680px; margin:0 auto; padding:14px}
 @media (prefers-reduced-motion: reduce){ .enc-case.doute{animation:none} }
 .scan-revue-actions{display:flex; gap:8px; flex-wrap:wrap}
 .scan-revue-actions .gros-bouton, .scan-revue-actions .btn-secondaire{flex:1 1 150px; margin:0}
-/* Deux portes d'entrée équivalentes : l'appareil photo et le fichier déjà scanné. */
-.scan-portes{display:flex; gap:8px; flex-wrap:wrap; margin:8px 0}
-.scan-portes .gros-bouton, .scan-portes .btn-secondaire{flex:1 1 160px; margin:0}
 
 /* Tutoriel = visite guidée superposée à l'application */
 .tuto-tour{position:fixed; inset:0; z-index:1100}
@@ -1549,6 +1566,10 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .enc-nav-semaine{margin:6px 0 12px}
 /* Contrôle segmenté riche (Détaillé / Express de la semaine papier) */
 .enc-modes.segmente{margin:8px 0 12px}
+/* Quatre façons d'encoder : deux par deux, sinon chaque colonne devient trop
+   étroite pour son libellé sur un téléphone. */
+.enc-modes-4{flex-wrap:wrap}
+.enc-modes-4 .seg{flex:1 1 calc(50% - 4px); min-width:150px}
 .seg-mode{display:flex; align-items:center; gap:10px; text-align:left; padding:11px 12px; transition:.15s}
 .seg-mode:hover{transform:translateY(-1px)}
 .seg-mode .seg-ico{font-size:22px; line-height:1}
