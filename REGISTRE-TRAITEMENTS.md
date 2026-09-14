@@ -142,6 +142,25 @@ jamais l'identité de la famille qu'il a amenée, seulement un compteur.
 Ce dispositif est **délibérément séparé** de l'application : celle-ci ne
 comporte aucun classement, et rien de ce qui précède n'y apparaît.
 
+### T8 — Photographie de la feuille papier (lecture optique)
+
+| | |
+|---|---|
+| Finalité | Éviter de recopier à la main une semaine entière de cases : le parent photographie la feuille, l'application en déduit les cases cochées |
+| Base légale | **Intérêt légitime — art. 6.1.f.** Geste demandé par le parent, sur sa propre feuille, pour alimenter des données qu'il saisirait sinon au doigt |
+| Personnes concernées | Les enfants de la famille (prénoms et missions figurant sur la feuille) |
+| Catégories de données | L'image, **en mémoire vive uniquement**, le temps du calcul |
+| Données **non** traitées | Aucune donnée nouvelle n'est créée : le résultat se limite à des cases du journal que le parent aurait cochées lui-même |
+| Destinataires | **Aucun.** Le calcul est intégralement local (`js/scan.js`) : pas d'appel réseau, pas de service de reconnaissance d'image, aucun sous-traitant |
+| Conservation | **Nulle.** La photo n'est ni enregistrée, ni recopiée, ni mise en cache : elle est lue puis abandonnée. Seules les cases validées par le parent sont écrites |
+| Mesures | Lecture hors ligne ; résultat présenté comme une **proposition** que le parent relit et corrige — rien n'est inscrit sans sa validation explicite |
+
+C'est la raison pour laquelle **aucun sous-traitant n'est ajouté ci-dessous** :
+confier ces photos à un service de vision par ordinateur aurait été plus simple
+à écrire, mais aurait envoyé à un tiers les prénoms des enfants et le détail de
+leur semaine — en contradiction directe avec la phrase imprimée sur la feuille
+elle-même.
+
 ---
 
 ## 3. Sous-traitants

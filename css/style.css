@@ -489,6 +489,20 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .enc-humeur{font-size:16px}
 .enc-case.hors{background:repeating-linear-gradient(45deg,#f4f6f9,#f4f6f9 4px,#eaeef3 4px,#eaeef3 8px);color:#c0c8d0;border-color:#eef2f7}
 
+/* ---- Relecture d'une feuille photographiée ----
+   Une case LUE sur une photo n'est pas une case enregistrée : tant que le
+   parent n'a pas validé, elle doit se distinguer au premier coup d'œil de ce
+   qui est déjà acquis (vert plein). D'où le trait discontinu — « proposé,
+   pas encore inscrit » — et l'ambre pour ce qui reste douteux. */
+.enc-case.propose{background:#fff8e8; border-color:#f0b429; border-style:dashed; color:#8a6a2c; font-weight:800}
+.enc-case.doute{background:#fff3f3; border-color:#e59a9a; border-style:dashed; color:#b35555; font-weight:800}
+.scan-revue{background:linear-gradient(135deg,#fff3d6,#ffe0ec); border:2px solid #f0b429;
+  border-radius:14px; padding:12px; margin:10px 0}
+.scan-revue-t{margin:0 0 4px; font-weight:800; font-size:15px}
+.scan-revue-d{margin:0 0 10px; font-size:13px; line-height:1.4; color:#5a4a2a}
+.scan-revue-actions{display:flex; gap:8px; flex-wrap:wrap}
+.scan-revue-actions .gros-bouton, .scan-revue-actions .btn-secondaire{flex:1 1 150px; margin:0}
+
 /* Tutoriel = visite guidée superposée à l'application */
 .tuto-tour{position:fixed; inset:0; z-index:1100}
 .tour-trou{position:fixed; border-radius:14px; border:3px solid #fff;

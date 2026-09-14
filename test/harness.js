@@ -182,9 +182,14 @@ function construireContexte(options) {
       verrouillerAppPermanent, contournerVerrouPermanent, restesDisponibles, finDeTempsEnfant,
       demarrerTimerPourEnfant,
       get modeParents() { return modeParents; }, set modeParents(v) { modeParents = v; },
+      // lecture optique de la feuille papier (tout se calcule hors navigateur)
+      scanGrisDepuisRgba, scanReduire, scanBinariser, scanComposantes, scanReperes,
+      scanHomographie, scanProjeter, scanEncre, scanFeuille,
+      scanXJour, scanYLigne, scanPosBit, scanEmpreinteMissions, scanBitsAttendus,
+      SCAN_BITS, SCAN_BITS_LIGNES, SCAN_BITS_EMPREINTE, SCAN_SEUIL_COCHE, SCAN_SEUIL_VIDE, SCAN_LARGEUR_TRAVAIL,
     };
   `;
-  const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/croissance.js"), lire("js/qr.js"), lire("js/app.js"), lire("js/store.js"), epilogue].join("\n;\n");
+  const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/croissance.js"), lire("js/qr.js"), lire("js/scan.js"), lire("js/app.js"), lire("js/store.js"), epilogue].join("\n;\n");
   vm.runInContext(source, contexte, { filename: "famiteam-bundle.js" });
   return { contexte, api: contexte.contexteExports };
 }

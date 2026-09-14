@@ -2707,6 +2707,87 @@ Object.assign(I18N.en, { "stats.ressenti": "Daily mood (14 d) — 🧒 child / �
 Object.assign(I18N.nl, { "stats.ressenti": "Dagelijks gevoel (14 d) — 🧒 kind / 👤 ouder" });
 Object.assign(I18N.de, { "stats.ressenti": "Tägliches Gefühl (14 T) — 🧒 Kind / 👤 Eltern" });
 
+/* ---- Scanner la feuille papier remplie ----
+ * Tout se calcule sur le téléphone : ces messages n'annoncent donc jamais un
+ * envoi, et disent franchement quand la lecture n'aboutit pas — une photo mal
+ * cadrée doit se reprendre, pas se deviner. */
+Object.assign(I18N.fr, {
+  "scan.intro": "Plutôt que de tout recopier : prends la feuille en photo.",
+  "scan.bouton": "📷 Scanner la feuille remplie",
+  "scan.aide": "Pose la feuille à plat, bien éclairée, et cadre toute la grille avec ses quatre carrés noirs. La photo reste sur ton téléphone : rien n'est envoyé.",
+  "scan.lecture": "Lecture de la photo…",
+  "scan.lu": "{n} case(s) lue(s) — à vérifier avant d'enregistrer",
+  "scan.rien": "Aucune nouvelle case cochée détectée sur cette feuille.",
+  "scan.echec_reperes": "Les quatre carrés noirs n'ont pas été trouvés. Reprends la photo bien à plat, avec toute la grille dans le cadre.",
+  "scan.echec_feuille": "Cette feuille ne correspond pas à l'enfant ou à la semaine choisis — ou la liste des missions a changé depuis l'impression.",
+  "scan.echec_image": "Photo illisible. Réessaie avec une autre prise de vue.",
+  "scan.titre_revue": "Photo lue — à confirmer",
+  "scan.revue": "{n} case(s) détectée(s).",
+  "scan.revue_doutes": "{n} autre(s) sont douteuses : touche-les pour les accepter.",
+  "scan.doute_aide": "Marque hésitante : touche pour confirmer",
+  "scan.valider": "✅ Enregistrer ces {n} case(s)",
+  "scan.annuler": "Annuler la lecture",
+  "scan.annule": "Lecture abandonnée, rien n'a été enregistré",
+  "scan.applique": "{n} case(s) enregistrée(s) ✅"
+});
+Object.assign(I18N.en, {
+  "scan.intro": "Rather than typing it all back in: photograph the sheet.",
+  "scan.bouton": "📷 Scan the filled-in sheet",
+  "scan.aide": "Lay the sheet flat in good light, and frame the whole grid with its four black squares. The photo stays on your phone: nothing is sent.",
+  "scan.lecture": "Reading the photo…",
+  "scan.lu": "{n} box(es) read — check before saving",
+  "scan.rien": "No newly ticked box found on this sheet.",
+  "scan.echec_reperes": "The four black squares weren't found. Retake the photo flat, with the whole grid in frame.",
+  "scan.echec_feuille": "This sheet doesn't match the selected child or week — or the mission list changed since it was printed.",
+  "scan.echec_image": "Unreadable photo. Try another shot.",
+  "scan.titre_revue": "Photo read — please confirm",
+  "scan.revue": "{n} box(es) detected.",
+  "scan.revue_doutes": "{n} more are unclear: tap them to accept.",
+  "scan.doute_aide": "Unclear mark: tap to confirm",
+  "scan.valider": "✅ Save these {n} box(es)",
+  "scan.annuler": "Cancel the reading",
+  "scan.annule": "Reading discarded, nothing was saved",
+  "scan.applique": "{n} box(es) saved ✅"
+});
+Object.assign(I18N.nl, {
+  "scan.intro": "In plaats van alles over te typen: neem een foto van het blad.",
+  "scan.bouton": "📷 Ingevuld blad scannen",
+  "scan.aide": "Leg het blad plat en goed verlicht, en breng het hele raster met zijn vier zwarte vierkanten in beeld. De foto blijft op je telefoon: er wordt niets verstuurd.",
+  "scan.lecture": "De foto wordt gelezen…",
+  "scan.lu": "{n} vakje(s) gelezen — controleer voor je opslaat",
+  "scan.rien": "Geen nieuw aangekruist vakje gevonden op dit blad.",
+  "scan.echec_reperes": "De vier zwarte vierkanten zijn niet gevonden. Maak de foto opnieuw, plat, met het hele raster in beeld.",
+  "scan.echec_feuille": "Dit blad hoort niet bij het gekozen kind of de gekozen week — of de lijst met missies is sinds het afdrukken gewijzigd.",
+  "scan.echec_image": "Onleesbare foto. Probeer een andere opname.",
+  "scan.titre_revue": "Foto gelezen — te bevestigen",
+  "scan.revue": "{n} vakje(s) gevonden.",
+  "scan.revue_doutes": "{n} andere zijn twijfelachtig: tik erop om ze te aanvaarden.",
+  "scan.doute_aide": "Twijfelachtig teken: tik om te bevestigen",
+  "scan.valider": "✅ Deze {n} vakje(s) opslaan",
+  "scan.annuler": "Lezing annuleren",
+  "scan.annule": "Lezing geannuleerd, er is niets opgeslagen",
+  "scan.applique": "{n} vakje(s) opgeslagen ✅"
+});
+Object.assign(I18N.de, {
+  "scan.intro": "Statt alles abzutippen: fotografiere das Blatt.",
+  "scan.bouton": "📷 Ausgefülltes Blatt scannen",
+  "scan.aide": "Lege das Blatt flach und gut beleuchtet hin und bringe das ganze Raster mit seinen vier schwarzen Quadraten ins Bild. Das Foto bleibt auf deinem Telefon: Es wird nichts gesendet.",
+  "scan.lecture": "Das Foto wird gelesen…",
+  "scan.lu": "{n} Kästchen gelesen — vor dem Speichern prüfen",
+  "scan.rien": "Auf diesem Blatt wurde kein neu angekreuztes Kästchen gefunden.",
+  "scan.echec_reperes": "Die vier schwarzen Quadrate wurden nicht gefunden. Fotografiere erneut, flach, mit dem ganzen Raster im Bild.",
+  "scan.echec_feuille": "Dieses Blatt passt nicht zum gewählten Kind oder zur gewählten Woche — oder die Missionsliste hat sich seit dem Druck geändert.",
+  "scan.echec_image": "Unlesbares Foto. Versuche eine andere Aufnahme.",
+  "scan.titre_revue": "Foto gelesen — bitte bestätigen",
+  "scan.revue": "{n} Kästchen erkannt.",
+  "scan.revue_doutes": "{n} weitere sind unklar: tippe sie an, um sie zu übernehmen.",
+  "scan.doute_aide": "Unklares Zeichen: zum Bestätigen antippen",
+  "scan.valider": "✅ Diese {n} Kästchen speichern",
+  "scan.annuler": "Lesung abbrechen",
+  "scan.annule": "Lesung verworfen, es wurde nichts gespeichert",
+  "scan.applique": "{n} Kästchen gespeichert ✅"
+});
+
 /* ---- Évaluation ----
  * Côté PARENT, la question porte sur le comportement : c'est son regard, et
  * il sert à repérer les jours difficiles.

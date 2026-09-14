@@ -5859,6 +5859,297 @@ test("navigation : changer d'onglet dans l'espace parents remonte aussi en haut 
     "ces points d'entrée doivent appeler changerOngletParent(), pas réassigner ongletParent directement");
 });
 
+/* ---------- Lecture optique de la feuille papier ----------
+ * On ne peut pas photographier une vraie feuille depuis une suite de tests :
+ * on la FABRIQUE. `feuilleDeSynthese` peint la feuille telle qu'elle sort de
+ * l'imprimante (repères, bande de contrôle, cases vides ou cochées), puis la
+ * dépose dans l'image à travers une perspective choisie, avec un dégradé
+ * d'ombre et du bruit — ce que produit une photo prise à main levée. Le
+ * pipeline doit en ressortir exactement les cases cochées.
+ *
+ * Tout est en millimètres dans la peinture : c'est le vocabulaire de la
+ * feuille imprimée (pas de colonne 13 mm, pas de ligne 7 mm, case 5 mm), donc
+ * le seul où une erreur de proportion se voit tout de suite. */
+function feuilleDeSynthese(api, opts) {
+  const o = opts || {};
+  const lignes = o.lignes;                       // [{type:"cat"} | {type:"mission", id, jours:[…]}]
+  const coches = o.coches || {};                 // { "idMission:jour": true }
+  const R = lignes.length;
+  const L = o.largeur || 900, H = o.hauteur || 680;
+  // Coins de la grille dans l'image : de travers, comme une photo réelle.
+  const coins = o.coins || [[150, 90], [760, 130], [120, 560], [790, 600]];
+  const versCanon = api.scanHomographie(coins, [[0, 0], [1, 0], [0, 1], [1, 1]]);
+
+  const MM_X = 78;                               // 6 pas de 13 mm entre les repères
+  const MM_Y = 7 * (R + 1);                      // R+1 pas de 7 mm
+  const dansCarre = (dx, dy, demi) => Math.abs(dx) <= demi && Math.abs(dy) <= demi;
+
+  // Noir (0) ou blanc (255) en un point de la feuille, exprimé en millimètres.
+  const encreEnMm = (xm, ym) => {
+    // Repères des quatre coins : carrés pleins de 5 mm.
+    const coinsMm = [[0, 0], [MM_X, 0], [0, MM_Y], [MM_X, MM_Y]];
+    for (const [cx, cy] of coinsMm) if (dansCarre(xm - cx, ym - cy, 2.5)) return true;
+    // Bande de contrôle : une marque pleine par bit à 1.
+    const bits = api.scanBitsAttendus(R, (o.missions || []));
+    for (let j = 0; j < api.SCAN_BITS; j++) {
+      if (!bits[j]) continue;
+      const [bx, by] = api.scanPosBit(j);
+      if (dansCarre(xm - bx * MM_X, ym - by * MM_Y, 2.5)) return true;
+    }
+    // Cases : contour vide de 5 mm, et une croix tracée à la main si cochée.
+    for (let k = 0; k < R; k++) {
+      const ligne = lignes[k];
+      if (ligne.type !== "mission") continue;
+      const cy = (k + 1) * 7;
+      if (Math.abs(ym - cy) > 3) continue;
+      for (let i = 0; i < 7; i++) {
+        if (!ligne.jours[i]) continue;
+        const cx = i * 13;
+        const dx = xm - cx, dy = ym - cy;
+        if (Math.abs(dx) > 3) continue;
+        const dehors = dansCarre(dx, dy, 2.5), dedans = dansCarre(dx, dy, 2.2);
+        if (dehors && !dedans) return true;                      // trait de la case
+        if (coches[ligne.id + ":" + i] && dansCarre(dx, dy, 2.0)) {
+          // Croix : deux diagonales de 0,9 mm d'épaisseur.
+          if (Math.abs(dx - dy) < 0.45 || Math.abs(dx + dy) < 0.45) return true;
+        }
+      }
+    }
+    // Quelques barres allongées à gauche, comme les noms de missions : elles
+    // doivent être écartées par le filtre de forme, jamais prises pour un repère.
+    if (o.texte !== false && xm < -6 && xm > -40) {
+      for (let k = 0; k < R; k++) if (Math.abs(ym - (k + 1) * 7) < 1.2) return true;
+    }
+    // Leurre : un carré plein juste à gauche de la grille, comme un émoji de
+    // mission — petit, sombre, carré, bien rempli. Placé exprès plus haut ET
+    // plus à gauche que le repère du coin, de façon à REMPORTER le coin si
+    // rien ne l'en empêche.
+    if (o.leurre && dansCarre(xm + 11, ym - 5, 2.0)) return true;
+    return false;
+  };
+
+  const img = new Uint8Array(L * H);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < L; x++) {
+      // Papier : blanc cassé, assombri en diagonale — l'ombre de la main.
+      const ombre = o.ombre === false ? 0 : Math.round(46 * (x / L) * (y / H));
+      let v = 244 - ombre;
+      const [xc, yc] = api.scanProjeter(versCanon, x + 0.5, y + 0.5);
+      if (xc > -0.6 && xc < 1.6 && yc > -0.15 && yc < 1.15) {
+        if (encreEnMm(xc * MM_X, yc * MM_Y)) v = 26 + Math.round(ombre / 3);
+      }
+      if (o.bruit !== false) v += ((x * 7 + y * 13) % 11) - 5;     // grain, reproductible
+      img[y * L + x] = Math.max(0, Math.min(255, v));
+    }
+  }
+  return { gris: img, l: L, h: H };
+}
+
+// Un plan de feuille réaliste : deux catégories, cinq missions, la semaine.
+function planDeSynthese(joursParMission) {
+  const lignes = [{ type: "cat" }];
+  const ids = ["ranger", "dents", "merci"];
+  ids.forEach(id => lignes.push({ type: "mission", id, jours: joursParMission || [1, 1, 1, 1, 1, 0, 0] }));
+  lignes.push({ type: "cat" });
+  ["lumiere", "compost"].forEach(id => { ids.push(id); lignes.push({ type: "mission", id, jours: [1, 1, 1, 1, 1, 1, 1] }); });
+  return { lignes, missions: ids };
+}
+
+test("scan : une feuille photographiée de travers, ombrée et bruitée, rend exactement les cases cochées", () => {
+  const { api } = construireContexte();
+  const plan = planDeSynthese();
+  const coches = { "ranger:0": true, "ranger:3": true, "dents:1": true, "compost:6": true, "lumiere:2": true };
+  const img = feuilleDeSynthese(api, { lignes: plan.lignes, missions: plan.missions, coches });
+
+  const res = api.scanFeuille(img.gris, img.l, img.h, plan);
+  assert.strictEqual(res.ok, true, "la lecture doit aboutir : " + res.raison);
+  assert.strictEqual(res.douteuses, 0, "aucune case ne devrait être douteuse sur une feuille nette");
+
+  const lues = {};
+  res.cases.forEach(c => { if (c.etat === "cochee") lues[c.mission + ":" + c.jour] = true; });
+  assert.deepStrictEqual(lues, coches, "les cases lues doivent être exactement celles qui étaient cochées");
+
+  // Et le nombre de cases mesurées correspond aux cases réellement imprimées :
+  // une mission non prévue un jour n'a pas de case, donc rien à y lire.
+  const attendues = plan.lignes.filter(l => l.type === "mission")
+    .reduce((n, l) => n + l.jours.filter(Boolean).length, 0);
+  assert.strictEqual(res.cases.length, attendues);
+});
+
+test("scan : une feuille vierge ne coche rien (aucune invention)", () => {
+  const { api } = construireContexte();
+  const plan = planDeSynthese();
+  const img = feuilleDeSynthese(api, { lignes: plan.lignes, missions: plan.missions, coches: {} });
+  const res = api.scanFeuille(img.gris, img.l, img.h, plan);
+  assert.strictEqual(res.ok, true, "raison : " + res.raison);
+  assert.strictEqual(res.cases.filter(c => c.etat === "cochee").length, 0,
+    "le trait imprimé d'une case vide ne doit jamais passer pour une croix");
+  assert.strictEqual(res.douteuses, 0);
+});
+
+test("scan : la bande de contrôle refuse une feuille qui ne correspond pas à la semaine choisie", () => {
+  const { api } = construireContexte();
+  const plan = planDeSynthese();
+  const img = feuilleDeSynthese(api, { lignes: plan.lignes, missions: plan.missions, coches: {} });
+
+  // Même feuille, mais le parent a changé la liste des missions depuis
+  // l'impression : les lignes ne veulent plus dire la même chose.
+  const autre = planDeSynthese();
+  autre.missions = autre.missions.slice(0, 4).concat(["autre_mission"]);
+  const res = api.scanFeuille(img.gris, img.l, img.h, autre);
+  assert.strictEqual(res.ok, false);
+  assert.strictEqual(res.raison, "feuille_differente",
+    "mieux vaut refuser que d'écrire des croix sur les mauvaises missions");
+
+  // Et une feuille d'une semaine à plus de lignes est refusée de la même façon.
+  const plusLong = planDeSynthese();
+  plusLong.lignes = plusLong.lignes.concat([{ type: "mission", id: "zz", jours: [1, 1, 1, 1, 1, 1, 1] }]);
+  plusLong.missions = plusLong.missions.concat(["zz"]);
+  assert.strictEqual(api.scanFeuille(img.gris, img.l, img.h, plusLong).raison, "feuille_differente");
+});
+
+test("scan : sans les quatre repères, on le dit au lieu de deviner", () => {
+  const { api } = construireContexte();
+  const plan = planDeSynthese();
+  // Une photo où la feuille n'apparaît pas : du papier, rien d'autre.
+  const vide = new Uint8Array(600 * 400).fill(240);
+  const res = api.scanFeuille(vide, 600, 400, plan);
+  assert.strictEqual(res.ok, false);
+  assert.strictEqual(res.raison, "reperes");
+});
+
+test("scan : les mêmes cases sont lues quelle que soit l'inclinaison de la photo", () => {
+  const { api } = construireContexte();
+  const plan = planDeSynthese();
+  const coches = { "dents:2": true, "merci:4": true, "lumiere:5": true };
+  // Trois cadrages très différents, jusqu'à une perspective marquée.
+  const cadrages = [
+    [[120, 70], [780, 70], [120, 590], [780, 590]],          // bien à plat
+    [[200, 60], [800, 150], [140, 520], [770, 640]],          // de biais
+    [[140, 120], [820, 60], [190, 600], [860, 560]]           // penchée dans l'autre sens
+  ];
+  cadrages.forEach((coins, n) => {
+    const img = feuilleDeSynthese(api, { lignes: plan.lignes, missions: plan.missions, coches, coins });
+    const res = api.scanFeuille(img.gris, img.l, img.h, plan);
+    assert.strictEqual(res.ok, true, "cadrage " + n + " : " + res.raison);
+    const lues = {};
+    res.cases.forEach(c => { if (c.etat === "cochee") lues[c.mission + ":" + c.jour] = true; });
+    assert.deepStrictEqual(lues, coches, "cadrage " + n + " : lecture différente");
+  });
+});
+
+test("scan : une marque hésitante part en « à confirmer », jamais en case cochée d'office", () => {
+  const { api } = construireContexte();
+  const plan = planDeSynthese();
+  const img = feuilleDeSynthese(api, { lignes: plan.lignes, missions: plan.missions, coches: {} });
+  // On mesure directement l'encre sur une case volontairement peu marquée :
+  // la décision doit rester au parent dès que ce n'est pas franc.
+  const entreDeux = (api.SCAN_SEUIL_COCHE + api.SCAN_SEUIL_VIDE) / 2;
+  assert.ok(entreDeux > api.SCAN_SEUIL_VIDE && entreDeux < api.SCAN_SEUIL_COCHE,
+    "il doit exister une zone d'hésitation entre les deux seuils");
+  const res = api.scanFeuille(img.gris, img.l, img.h, plan);
+  assert.ok(res.cases.every(c => c.etat !== "cochee"));
+});
+
+test("scan : un émoji dense dans la colonne des noms ne peut pas voler un coin de la grille", () => {
+  const { api } = construireContexte();
+  const plan = planDeSynthese();
+  const coches = { "dents:1": true, "compost:3": true };
+  // `leurre` peint un carré plein à gauche de la grille, à la place d'un
+  // émoji de mission : petit, sombre, carré, bien rempli — tout ce qu'il faut
+  // pour être pris pour un repère, et placé plus à gauche que les vrais.
+  const img = feuilleDeSynthese(api, {
+    lignes: plan.lignes, missions: plan.missions, coches, texte: false, leurre: true
+  });
+  const res = api.scanFeuille(img.gris, img.l, img.h, plan);
+  // Deux issues acceptables, une seule inacceptable : lire de travers.
+  if (res.ok) {
+    const lues = {};
+    res.cases.forEach(c => { if (c.etat === "cochee") lues[c.mission + ":" + c.jour] = true; });
+    assert.deepStrictEqual(lues, coches, "si la lecture aboutit, elle doit être juste");
+  } else {
+    assert.ok(res.raison === "reperes" || res.raison === "feuille_differente",
+      "sinon, il faut le dire clairement plutôt que d'encoder de travers : " + res.raison);
+  }
+});
+
+test("scan : une seule source décrit les lignes, pour l'impression comme pour la lecture", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  assert.ok(/function planFeuilleScan\(enf, jours\)/.test(ui),
+    "la séquence des lignes doit être décrite une seule fois");
+  // L'impression s'en sert (sinon les deux listes finiraient par diverger, et
+  // la photo cocherait les mauvaises missions sans que rien ne le signale).
+  const feuille = ui.slice(ui.indexOf("function htmlFeuilleSemaine"), ui.indexOf("function imprimerFeuilleSemaine"));
+  assert.ok(/const plan = planFeuilleScan\(enf, jours\)/.test(feuille),
+    "htmlFeuilleSemaine doit imprimer À PARTIR de ce plan");
+  assert.ok(/scanBitsAttendus\(plan\.lignes\.length, plan\.missions\)/.test(feuille),
+    "la bande de contrôle imprimée doit décrire ce même plan");
+  // Et la lecture aussi, sur l'enfant et la semaine choisis.
+  const lancement = ui.slice(ui.indexOf("async function lancerScanFeuille"), ui.indexOf("function scanPropositionActive"));
+  assert.ok(/planFeuilleScan\(enf, jours\)/.test(lancement) && /scanDepuisFichier\(fichier, plan\)/.test(lancement),
+    "la lecture doit interroger le même plan que l'impression");
+});
+
+test("scan : la photo ne propose jamais, elle n'écrit pas — seule la validation touche au journal", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const lancement = ui.slice(ui.indexOf("async function lancerScanFeuille"), ui.indexOf("function scanPropositionActive"));
+  assert.ok(!/modifierHistorique|ajusterMonnaie|crediterMission/.test(lancement),
+    "lire une photo ne doit RIEN écrire : une ombre mal placée inventerait une mission accomplie");
+  assert.ok(/scanProposition = \{/.test(lancement), "elle ne produit qu'une proposition");
+
+  // La validation, elle, écrit — mais seulement les cases franches.
+  const valide = ui.slice(ui.indexOf("function validerScanProposition"));
+  assert.ok(/!== "cochee"\) return;/.test(valide.slice(0, 900)),
+    "une case restée « à confirmer » ne doit jamais être enregistrée d'office");
+  assert.ok(/modifierHistorique\(enf, jour, m, \+1\)/.test(valide.slice(0, 1200)),
+    "la validation doit passer par le journal comme n'importe quelle saisie");
+
+  // Changer d'enfant ou de semaine ne doit pas faire glisser une proposition
+  // d'un dossier à l'autre.
+  assert.ok(/scanProposition\.enfantId === enf\.id[\s\S]{0,120}scanProposition\.semaine === semaine/
+    .test(ui), "la proposition est liée à un enfant ET à une semaine");
+});
+
+test("scan : la feuille imprimée porte ses repères et sa bande de contrôle (mode détaillé seulement)", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const feuille = ui.slice(ui.indexOf("function htmlFeuilleSemaine"), ui.indexOf("function imprimerFeuilleSemaine"));
+  assert.ok(/if \(mode === "jours"\) lignes = rangOmr\(false\) \+ lignes \+ rangOmr\(true\)/.test(feuille),
+    "les deux rangs de repères encadrent la grille, et seulement en mode détaillé");
+  assert.ok(/omr-case/.test(feuille) && !/return `<td class="c\$\{we\}">☆<\/td>`/.test(feuille),
+    "la case à cocher doit être un carré VIDE : une étoile imprimée rendrait « cochée » indiscernable de « vide »");
+  // Régularité de la grille : c'est elle qui permet de retrouver une case.
+  assert.ok(/table\.omr\{width:auto; table-layout:fixed\}/.test(feuille),
+    "colonnes de largeur fixe : étirées, elles décaleraient la lecture");
+  assert.ok(/table\.omr tbody tr\{height:7mm\}/.test(feuille), "lignes de hauteur imposée");
+  assert.ok(/white-space:nowrap/.test(feuille),
+    "un nom de mission qui passe à la ligne grandirait sa ligne et décalerait tout");
+  assert.ok(/table\.omr\{break-inside:avoid/.test(feuille),
+    "une grille coupée par un saut de page aurait ses repères sur deux feuilles : illisible");
+});
+
+test("scan : messages traduits dans les 4 langues, sans jamais annoncer d'envoi", () => {
+  const { api } = construireContexte();
+  const cles = ["scan.intro", "scan.bouton", "scan.aide", "scan.lecture", "scan.lu", "scan.rien",
+    "scan.echec_reperes", "scan.echec_feuille", "scan.echec_image", "scan.titre_revue",
+    "scan.revue", "scan.revue_doutes", "scan.doute_aide", "scan.valider", "scan.annuler",
+    "scan.annule", "scan.applique"];
+  const manquantes = [];
+  Object.keys(api.LANGUES).forEach(lg => cles.forEach(k => {
+    const v = api.I18N[lg][k];
+    if (typeof v !== "string" || !v.length) manquantes.push(lg + " → " + k);
+  }));
+  assert.strictEqual(manquantes.length, 0, manquantes.join(", "));
+  // La promesse « rien ne part » est écrite noir sur blanc, dans chaque langue :
+  // c'est elle qui justifie de ne rien inscrire au registre des traitements.
+  Object.keys(api.LANGUES).forEach(lg => {
+    assert.ok(/rien n'est envoyé|nothing is sent|er wordt niets verstuurd|wird nichts gesendet/i
+      .test(api.I18N[lg]["scan.aide"]), "la promesse doit être dite en " + lg);
+  });
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async

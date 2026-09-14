@@ -4283,7 +4283,110 @@ function blocSemainePapier() {
     impressions.appendChild(b);
   });
   sec.appendChild(impressions);
+
+  // ----- Scanner la feuille remplie -----
+  // Seule la feuille « Détaillé » porte les repères : la feuille « Rapide » ne
+  // contient qu'un total écrit à la main, et lire un chiffre manuscrit est un
+  // tout autre métier que mesurer une case noircie.
+  sec.appendChild(el("p", "planif-sous", t("scan.intro")));
+  const bScan = el("button", "gros-bouton planete", t("scan.bouton"));
+  bScan.onclick = () => choisirPhotoFeuille();
+  sec.appendChild(bScan);
+  sec.appendChild(el("p", "note", t("scan.aide")));
   return sec;
+}
+
+/* ---------- Scanner la feuille papier remplie ----------
+ * Le parent photographie la feuille ; l'application en déduit une PROPOSITION
+ * de cases cochées, qu'il relit et corrige avant qu'elle ne touche au journal.
+ * Rien n'est jamais écrit sur la seule foi d'une photo : une croix mal cadrée
+ * ou une ombre mal placée ne doit pas pouvoir inventer une mission accomplie.
+ * Le calcul est entièrement local (voir js/scan.js) — la photo porte les
+ * prénoms des enfants et une semaine de leur vie, elle ne sort pas du
+ * téléphone. */
+let scanProposition = null;   // { enfantId, semaine, cases: { "mission:jour": "cochee"|"douteuse" } }
+
+function choisirPhotoFeuille() {
+  if (typeof document === "undefined") return;
+  const inp = el("input");
+  inp.type = "file";
+  inp.accept = "image/*";
+  inp.capture = "environment";        // ouvre directement l'appareil photo sur mobile
+  inp.style.display = "none";
+  inp.onchange = () => {
+    const f = inp.files && inp.files[0];
+    inp.remove();
+    if (f) lancerScanFeuille(f);
+  };
+  document.body.appendChild(inp);
+  inp.click();
+}
+
+async function lancerScanFeuille(fichier) {
+  const enf = enfantActif();
+  if (!enf) return;
+  const semaine = semainePapierDebut || debutSemaine(aujourdHui());
+  const jours = joursSemaine(semaine);
+  const plan = planFeuilleScan(enf, jours);
+  toast(t("scan.lecture"), "info");
+  let res;
+  try { res = await scanDepuisFichier(fichier, plan); }
+  catch (e) { res = { ok: false, raison: "image" }; }
+
+  if (!res.ok) {
+    const cle = res.raison === "feuille_differente" ? "scan.echec_feuille"
+              : res.raison === "reperes" ? "scan.echec_reperes" : "scan.echec_image";
+    toast(t(cle), "info");
+    return;
+  }
+
+  // On ne propose que du NOUVEAU : une case déjà consignée dans le journal
+  // (cochée dans l'app pendant la semaine, ou déjà imprimée avec son ✓) n'a
+  // rien à faire dans une proposition — elle est déjà acquise.
+  const cases = {};
+  let nettes = 0, aConfirmer = 0;
+  res.cases.forEach(c => {
+    if (c.etat === "vide") return;
+    if (((enf.journal[jours[c.jour]] || {})[c.mission] || 0) > 0) return;
+    cases[c.mission + ":" + c.jour] = c.etat;
+    if (c.etat === "cochee") nettes++; else aConfirmer++;
+  });
+
+  if (!nettes && !aConfirmer) { toast(t("scan.rien"), "info"); return; }
+  scanProposition = { enfantId: enf.id, semaine, cases };
+  encodeMode = "detaille";            // la relecture se fait dans la grille, pas ailleurs
+  toast(t("scan.lu", { n: nettes }), "succes");
+  rendre();
+}
+
+// La proposition en cours porte-t-elle bien sur l'enfant et la semaine affichés ?
+// Changer d'enfant ou de semaine ne doit jamais faire glisser une proposition
+// d'un dossier à l'autre.
+function scanPropositionActive(enf, semaine) {
+  return !!(scanProposition && enf && scanProposition.enfantId === enf.id
+    && scanProposition.semaine === semaine);
+}
+
+function validerScanProposition() {
+  if (!scanProposition) return;
+  const enf = etat.enfants[scanProposition.enfantId];
+  const jours = joursSemaine(scanProposition.semaine);
+  let n = 0;
+  Object.keys(scanProposition.cases).forEach(cle => {
+    // Une case restée « à confirmer » n'est PAS enregistrée : le doute
+    // profite au silence, pas à l'invention.
+    if (scanProposition.cases[cle] !== "cochee") return;
+    const sep = cle.lastIndexOf(":");
+    const m = trouverMission(cle.slice(0, sep));
+    const jour = jours[+cle.slice(sep + 1)];
+    if (!m || !jour) return;
+    if (((enf.journal[jour] || {})[m.id] || 0) > 0) return;   // entre-temps déjà coché
+    modifierHistorique(enf, jour, m, +1);
+    n++;
+  });
+  scanProposition = null;
+  toast(t("scan.applique", { n }), "succes");
+  rendre();
 }
 
 let encodeMode = "detaille";   // "detaille" | "express" (session)
@@ -4372,6 +4475,28 @@ function blocEncoderSemaine() {
   navS.appendChild(prevS); navS.appendChild(lblS); navS.appendChild(nextS);
   sec.appendChild(navS);
 
+  // Relecture d'une photo : bandeau de confirmation au-dessus de la grille.
+  // Tant qu'il est là, la grille ne modifie plus le journal — elle ajuste la
+  // proposition, et c'est le bouton « enregistrer » qui tranche.
+  const semaineCourante = semainePapierDebut || debutSemaine(aujourdHui());
+  const propActive = scanPropositionActive(enf, semaineCourante);
+  if (propActive) {
+    const vals = Object.values(scanProposition.cases);
+    const nettes = vals.filter(v => v === "cochee").length;
+    const doutes = vals.filter(v => v === "douteuse").length;
+    const bandeau = el("div", "scan-revue");
+    bandeau.innerHTML = `<p class="scan-revue-t">📷 ${t("scan.titre_revue")}</p>
+      <p class="scan-revue-d">${t("scan.revue", { n: nettes })}${doutes ? " " + t("scan.revue_doutes", { n: doutes }) : ""}</p>`;
+    const actions = el("div", "scan-revue-actions");
+    const ok = el("button", "gros-bouton planete", t("scan.valider", { n: nettes }));
+    ok.onclick = () => validerScanProposition();
+    const non = el("button", "btn-secondaire", t("scan.annuler"));
+    non.onclick = () => { scanProposition = null; toast(t("scan.annule"), "info"); rendre(); };
+    actions.appendChild(ok); actions.appendChild(non);
+    bandeau.appendChild(actions);
+    sec.appendChild(bandeau);
+  }
+
   const scroll = el("div", "enc-scroll");
   const grille = el("div", "enc-grille");
   // En-tête (jours).
@@ -4389,13 +4514,30 @@ function blocEncoderSemaine() {
     ms.forEach(m => {
       const ligne = el("div", "enc-ligne");
       ligne.appendChild(el("span", "enc-lib", `${m.emoji} ${titreMission(m)}`));
-      jours.forEach(j => {
+      jours.forEach((j, i) => {
         const n = (enf.journal[j] || {})[m.id] || 0;
         const planifie = missionActiveJour(enf, m, j);   // jour prévu pour cette mission ?
-        const b = el("button", "enc-case" + (n ? " on" : "") + (planifie ? "" : " hors"),
-          n ? "✅" : (planifie ? "" : "·"));
+        // Proposition issue d'une photo : ni acquise, ni ignorée — en attente
+        // du regard du parent, et visuellement distincte de ce qui est déjà
+        // enregistré, pour qu'aucune des deux ne se fasse passer pour l'autre.
+        const cle = m.id + ":" + i;
+        const prop = (propActive && !n) ? scanProposition.cases[cle] : null;
+        const b = el("button",
+          "enc-case" + (n ? " on" : "") + (planifie ? "" : " hors")
+          + (prop === "cochee" ? " propose" : "") + (prop === "douteuse" ? " doute" : ""),
+          n ? "✅" : (prop === "cochee" ? "✓" : (prop === "douteuse" ? "?" : (planifie ? "" : "·"))));
         if (!planifie) b.title = t("papier.hors_jour");
-        b.onclick = () => majSansSaut(() => modifierHistorique(enf, j, m, n > 0 ? -1 : +1));
+        if (prop === "douteuse") b.title = t("scan.doute_aide");
+        b.onclick = () => majSansSaut(() => {
+          // Pendant la relecture d'une photo, on ne touche pas au journal : on
+          // ajuste la proposition, et c'est la validation qui écrit.
+          if (propActive && !n) {
+            if (scanProposition.cases[cle] === "cochee") delete scanProposition.cases[cle];
+            else scanProposition.cases[cle] = "cochee";
+            return;
+          }
+          modifierHistorique(enf, j, m, n > 0 ? -1 : +1);
+        });
         ligne.appendChild(b);
       });
       grille.appendChild(ligne);
@@ -4436,6 +4578,36 @@ function libelleSemaine(d1, d2) {
 // une fonction PURE, sans effet de bord, pour servir aussi bien la fenêtre
 // d'impression du web que le rendu hors écran de l'app installée (voir
 // imprimerFeuilleSemaine plus bas) — un seul contenu, deux destinations.
+/* Séquence EXACTE des lignes du tableau d'une feuille, dans l'ordre imprimé.
+ * Une seule source pour l'impression et pour la lecture optique : c'est cette
+ * correspondance ligne par ligne qui permet à une photo de retrouver quelle
+ * case appartient à quelle mission. Deux listes écrites séparément auraient
+ * fini par diverger, et la photo aurait alors coché les mauvaises missions
+ * sans que rien ne le signale.
+ *
+ * `jours[i]` dit seulement si la case EXISTE (mission prévue ce jour-là) —
+ * volontairement sans regarder le journal : une mission déjà faite au moment
+ * de l'impression porte un ✓ dans sa case, que la photo relira comme cochée,
+ * ce qui est exact. Faire dépendre la géométrie de l'état du journal aurait
+ * décalé la lecture dès qu'un parent coche aussi dans l'app pendant la
+ * semaine. */
+function planFeuilleScan(enf, jours) {
+  const lignes = [], missions = [];
+  ["famille", "planete"].forEach(catId => {
+    const ms = missionsFeuille(enf, catId);
+    if (!ms.length) return;
+    lignes.push({ type: "cat", cat: catId });
+    ms.forEach(m => {
+      missions.push(m.id);
+      lignes.push({
+        type: "mission", id: m.id, m, cat: catId,
+        jours: jours.map(j => missionActiveJour(enf, m, j) ? 1 : 0)
+      });
+    });
+  });
+  return { lignes, missions };
+}
+
 function htmlFeuilleSemaine(mode) {
   const jours = joursSemaine(semainePapierDebut);
   const lettres = t("planif.jours_courts").split(",");
@@ -4448,34 +4620,55 @@ function htmlFeuilleSemaine(mode) {
     const coul = enf.couleur || "#f6a623";
     let coeursSem = 0, gouttesSem = 0;   // déjà gagnés cette semaine (jours écoulés)
     let lignes = "";
-    ["famille", "planete"].forEach(catId => {
-      const cat = CATEGORIES[catId];
-      const ms = missionsFeuille(enf, catId);
-      if (!ms.length) return;
-      lignes += `<tr class="cat"><td colspan="${mode === "jours" ? 8 : 2}">${cat.monnaieEmoji} ${trData("cat", catId + ".nom", cat.nom)}</td></tr>`;
-      ms.forEach(m => {
-        const nom = `${m.emoji} ${titreMission(m)} <small>(${cat.monnaieEmoji}${pointsMission(enf, m)})</small>`;
-        // Total déjà fait cette semaine (jours écoulés) pour cette mission.
-        let totMission = 0;
-        jours.forEach(j => { if (j <= auj) totMission += (enf.journal[j] || {})[m.id] || 0; });
-        if (catId === "planete") gouttesSem += totMission * pointsMission(enf, m);
-        else coeursSem += totMission * pointsMission(enf, m);
-        if (mode === "jours") {
-          lignes += `<tr><td class="m">${nom}</td>` + lettres.map((_, i) => {
-            // Week-end teinté (voir plus bas) : un petit repère visuel et coloré
-            // dans une grille par ailleurs assez austère.
-            const we = i >= 5 ? " we" : "";
-            const j = jours[i];
-            if (!missionActiveJour(enf, m, j)) return `<td class="c hors${we}">·</td>`;   // jour non prévu
-            const fait = (enf.journal[j] || {})[m.id] || 0;
-            if (j <= auj && fait) return `<td class="c faite${we}">✓</td>`;               // déjà fait : pré-rempli
-            return `<td class="c${we}">☆</td>`;                                            // à cocher
-          }).join("") + `</tr>`;
-        } else {
-          lignes += `<tr><td class="m">${nom}</td><td class="c large">${totMission || ""}</td></tr>`;
-        }
-      });
+    // Séquence des lignes : une seule source pour l'impression ET pour la
+    // lecture optique (voir planFeuilleScan). C'est cette correspondance,
+    // ligne par ligne, qui permet à une photo de savoir quelle case appartient
+    // à quelle mission — les deux ne doivent donc jamais être écrites deux fois.
+    const plan = planFeuilleScan(enf, jours);
+    const bits = (mode === "jours") ? scanBitsAttendus(plan.lignes.length, plan.missions) : [];
+    plan.lignes.forEach(ligne => {
+      if (ligne.type === "cat") {
+        const cat = CATEGORIES[ligne.cat];
+        lignes += `<tr class="cat"><td colspan="${mode === "jours" ? 8 : 2}">${cat.monnaieEmoji} ${trData("cat", ligne.cat + ".nom", cat.nom)}</td></tr>`;
+        return;
+      }
+      const m = ligne.m, cat = CATEGORIES[ligne.cat];
+      const nom = `${m.emoji} ${titreMission(m)} <small>(${cat.monnaieEmoji}${pointsMission(enf, m)})</small>`;
+      // Total déjà fait cette semaine (jours écoulés) pour cette mission.
+      let totMission = 0;
+      jours.forEach(j => { if (j <= auj) totMission += (enf.journal[j] || {})[m.id] || 0; });
+      if (ligne.cat === "planete") gouttesSem += totMission * pointsMission(enf, m);
+      else coeursSem += totMission * pointsMission(enf, m);
+      if (mode === "jours") {
+        lignes += `<tr><td class="m">${nom}</td>` + lettres.map((_, i) => {
+          // Week-end teinté (voir plus bas) : un petit repère visuel et coloré
+          // dans une grille par ailleurs assez austère.
+          const we = i >= 5 ? " we" : "";
+          const j = jours[i];
+          if (!ligne.jours[i]) return `<td class="c hors${we}">·</td>`;                   // jour non prévu
+          const fait = (enf.journal[j] || {})[m.id] || 0;
+          // Case à cocher : un carré VIDE, jamais un décor. C'est lui que la
+          // photo mesure ; une étoile imprimée aurait mis de l'encre partout
+          // et rendu « cochée » indiscernable de « vide ».
+          const dedans = (j <= auj && fait) ? "✓" : "";
+          return `<td class="c${we}"><span class="omr-case${dedans ? " faite" : ""}">${dedans}</span></td>`;
+        }).join("") + `</tr>`;
+      } else {
+        lignes += `<tr><td class="m">${nom}</td><td class="c large">${totMission || ""}</td></tr>`;
+      }
     });
+    // Rangs de repères : quatre carrés noirs aux coins de la grille des jours,
+    // et vingt marques de contrôle (nombre de lignes + empreinte des missions).
+    // Sans eux, aucune photo n'est lisible ; avec eux, une feuille d'une autre
+    // semaine est reconnue et refusée au lieu d'être encodée à tort.
+    const rangOmr = (bas) => `<tr class="omr-rang"><td class="m"></td>` + lettres.map((_, i) => {
+      if (i === 0 || i === 6) return `<td class="c"><span class="omr-rep"></span></td>`;
+      const j0 = (i - 1) * 2 + (bas ? 10 : 0);
+      return `<td class="c">` +
+        `<span class="omr-bit g${bits[j0] ? " on" : ""}"></span>` +
+        `<span class="omr-bit d${bits[j0 + 1] ? " on" : ""}"></span></td>`;
+    }).join("") + `</tr>`;
+    if (mode === "jours") lignes = rangOmr(false) + lignes + rangOmr(true);
     // Répétée sur chaque page où la carte se poursuit (voir <thead> plus
     // bas) : sans elle, une liste assez longue pour déborder sur une
     // deuxième page y perdait le nom de l'enfant ET l'en-tête des jours —
@@ -4503,7 +4696,7 @@ function htmlFeuilleSemaine(mode) {
     return `<div class="enfant enf-${k}" style="--c:${coul}">
         <h3>${vignetteEnfant(enf, "mini")} ${echapper(enf.prenom)} <span class="stars">★ ★ ★</span></h3>
         <p class="fun-msg">${t("papier.encourage", { prenom: enf.prenom })}</p>
-        <table><thead>${nomRepete}${entete}</thead><tbody>${lignes}</tbody></table>
+        <table class="${mode === "jours" ? "omr" : ""}"><thead>${nomRepete}${entete}</thead><tbody>${lignes}</tbody></table>
         ${humeur}
         <div class="totaux">💛 ${t("money.coeurs")} : ${tC}&nbsp;&nbsp; 💧 ${t("money.gouttes")} : ${tG}</div>
         <div class="bravo">🎉 ${t("papier.bravo")} <span class="sticker-slot" aria-hidden="true"></span></div>
@@ -4601,6 +4794,42 @@ function htmlFeuilleSemaine(mode) {
       td.c{width:23px;height:19px;color:#cfd8e0;font-size:13px;border-radius:6px} td.c.large{width:62px;color:#fff}
       td.c.hors{background:repeating-linear-gradient(45deg,#f4f4f4,#f4f4f4 3px,#eaeaea 3px,#eaeaea 6px);color:#c8c8c8}
       td.c.faite{background:#e7f7ee;color:#1d7a52;font-weight:800}
+
+      /* ---- Géométrie lisible par l'appareil photo (voir js/scan.js) ----
+         Contrat avec le lecteur optique : pas de colonne 13 mm, pas de ligne
+         7 mm, marques de 5 mm. Il ne mesure que des RAPPORTS entre les quatre
+         repères, donc l'échelle exacte lui est égale — mais la RÉGULARITÉ ne
+         l'est pas : si les colonnes s'étirent ou si une ligne grandit parce
+         qu'un nom de mission passe à la ligne, tout se décale d'un cran et la
+         photo coche la mauvaise case. D'où : largeurs fixes plutôt que 100 %,
+         hauteur imposée à chaque ligne, et un nom de mission qui se coupe
+         plutôt que de revenir à la ligne. */
+      table.omr{width:auto; table-layout:fixed}
+      table.omr td.m{width:62mm; max-width:62mm; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+      table.omr td.c, table.omr tr.head th{width:13mm}
+      table.omr tbody tr{height:7mm}
+      table.omr td.c{position:relative; vertical-align:middle}
+      /* La grille ne doit jamais être coupée en deux par un saut de page : ses
+         quatre repères seraient alors sur deux feuilles différentes, et plus
+         rien ne serait lisible. */
+      table.omr{break-inside:avoid; page-break-inside:avoid}
+      /* Case à cocher : un carré vide, franc, centré. C'est la seule chose que
+         la photo mesure — d'où un intérieur réellement blanc. */
+      .omr-case{display:block; width:5mm; height:5mm; margin:0 auto;
+        border:0.35mm solid #9aa7b3; border-radius:0.8mm; background:#fff;
+        font-size:3.2mm; line-height:5mm; color:#1d7a52}
+      .omr-case.faite{border-color:#1d7a52}
+      /* Repères de coin et marques de contrôle : carrés PLEINS de 5 mm, posés
+         au millimètre près par rapport au centre de leur case (c'est cette
+         position que le lecteur recalcule). */
+      .omr-rang{height:7mm}
+      .omr-rep, .omr-bit{position:absolute; top:1mm; width:5mm; height:5mm}
+      .omr-rep{left:calc(50% - 2.5mm); background:#000}
+      .omr-bit{background:transparent}
+      .omr-bit.on{background:#000}
+      .omr-bit.g{left:calc(50% - 5.75mm)}   /* centre à -3,25 mm du milieu */
+      .omr-bit.d{left:calc(50% + 0.75mm)}   /* centre à +3,25 mm du milieu */
+      .omr-rang td{border-color:#fff}
       td.hc.faite{background:#eef6ff;font-size:14px}
       .humeur{margin-top:8px} .humeur-t{font-size:10.5px;font-weight:800;margin-bottom:2px}
       .humeur-tbl td.hc{font-size:11px;letter-spacing:0;white-space:nowrap}
