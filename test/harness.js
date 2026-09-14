@@ -185,9 +185,10 @@ function construireContexte(options) {
       // lecture optique de la feuille papier (tout se calcule hors navigateur)
       scanGrisDepuisRgba, scanReduire, scanBinariser, scanComposantes, scanReperes,
       scanHomographie, scanProjeter, scanEncre, scanFeuille, scanFeuilles,
-      scanXJour, scanYLigne, scanPosBit, scanEmpreinteMissions, scanBitsAttendus,
+      scanXJour, scanYLigne, scanPosBit, scanEmpreinteMissions, scanBitsAttendus, scanHauteurRang, scanTailleCase, scanFenetre,
       scanJpegsDansPdf, scanEstPdf,
       SCAN_BITS, SCAN_BITS_LIGNES, SCAN_BITS_EMPREINTE, SCAN_SEUIL_COCHE, SCAN_SEUIL_VIDE, SCAN_LARGEUR_TRAVAIL,
+      SCAN_RANG_MM, SCAN_RANG_MIN_MM,
     };
   `;
   const source = [lire("js/i18n.js"), lire("js/data.js"), lire("js/croissance.js"), lire("js/qr.js"), lire("js/scan.js"), lire("js/app.js"), lire("js/store.js"), epilogue].join("\n;\n");

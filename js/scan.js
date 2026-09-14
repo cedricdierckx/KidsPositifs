@@ -68,14 +68,45 @@ const SCAN_BITS_LIGNES = 6;
 const SCAN_BITS_EMPREINTE = SCAN_BITS - SCAN_BITS_LIGNES;
 
 /* CONTRAT AVEC L'IMPRESSION (htmlFeuilleSemaine, ui.js).
- * La feuille imprime un pas de colonne de 13 mm et un pas de ligne de 7 mm, et
- * une case à cocher de 5 mm. On mesure l'encre sur une fenêtre de 3,4 mm de
- * côté, centrée : assez large pour voir une croix, assez étroite pour ne
- * jamais mordre sur le trait imprimé de la case ni sur la case voisine.
- * Exprimées en fractions des pas, ces deux constantes valent la même chose en
- * millimètres quel que soit le nombre de lignes de la feuille. */
-const SCAN_FENETRE_COL = 0.13;     // 0,13 × 13 mm × 2 ≈ 3,4 mm
-const SCAN_FENETRE_LIGNE = 0.24;   // 0,24 × 7 mm × 2 ≈ 3,4 mm
+ * La feuille imprime un pas de colonne de 13 mm. On mesure l'encre sur une
+ * fenêtre carrée, centrée sur la case et proportionnelle À LA CASE : assez
+ * large pour voir une croix, assez étroite pour ne jamais mordre sur le trait
+ * imprimé de la case.
+ *
+ * Cette fraction-là est le vrai contrat. Une première version exprimait la
+ * fenêtre en fraction des PAS (colonne et ligne) : tant que la feuille faisait
+ * 7 mm par ligne, cela revenait au même, mais dès que les lignes se resserrent
+ * la case rétrécit plus vite que le pas — et la fenêtre finissait par recouvrir
+ * le trait de la case. Un test sur une feuille de 34 missions l'a montré :
+ * toutes les cases vides étaient lues « cochées ». */
+const SCAN_COL_MM = 13;            // pas de colonne, en millimètres
+const SCAN_FENETRE = 0.32;         // demi-côté de la fenêtre, en fraction de la case
+
+/* HAUTEUR DE LIGNE. Sept millimètres tant que la liste de missions le permet
+ * — mais la carte d'un enfant doit tenir sur UNE page : coupée en deux, elle
+ * mettrait ses quatre repères sur deux feuilles et plus rien ne serait
+ * lisible. Au-delà d'une vingtaine de missions, les lignes se resserrent donc
+ * juste ce qu'il faut. Le lecteur ne mesurant que des rapports, cela lui est
+ * indifférent — à une chose près, et c'est pourquoi la formule vit ICI et non
+ * dans la mise en page : la fenêtre de mesure d'une case doit rétrécir avec
+ * elle, faute de quoi elle finirait par déborder de la case et lire du blanc.
+ * Les deux constantes de page ont été MESURÉES dans un navigateur. */
+const SCAN_RANG_MM = 7, SCAN_RANG_MIN_MM = 4;
+const SCAN_PAGE_MM = 250;   // hauteur laissée à une carte (A4 utile moins l'en-tête)
+const SCAN_CARTE_MM = 86;   // ce que la carte occupe hors lignes du tableau
+function scanHauteurRang(nRangs) {
+  if (!nRangs) return SCAN_RANG_MM;
+  return Math.max(SCAN_RANG_MIN_MM, Math.min(SCAN_RANG_MM, (SCAN_PAGE_MM - SCAN_CARTE_MM) / nRangs));
+}
+// Côté de la case à cocher, en millimètres : elle doit respirer dans sa ligne.
+function scanTailleCase(hRang) { return Math.min(5, hRang - 1.7); }
+// Demi-fenêtre de mesure, dans le repère canonique (où la largeur vaut 1 pour
+// 6 pas de colonne, et la hauteur 1 pour R+1 pas de ligne).
+function scanFenetre(R) {
+  const hRang = scanHauteurRang(R + 2);
+  const cote = scanTailleCase(hRang) * SCAN_FENETRE;
+  return { demiX: cote / (6 * SCAN_COL_MM), demiY: cote / ((R + 1) * hRang) };
+}
 
 /* ---------- 1. Préparation de l'image ---------- */
 
@@ -362,11 +393,10 @@ function scanFeuilles(gris, l, h, plans) {
   // Elle dépend du nombre de lignes, donc les bits se relisent une fois par
   // hauteur de grille distincte — et une seule fois, quel que soit le nombre
   // d'enfants et de semaines proposés.
-  const demiX = (1 / 6) * SCAN_FENETRE_COL;
   const lus = {};
   const bitsPour = (R) => {
     if (!lus[R]) {
-      const demiY = (1 / (R + 1)) * SCAN_FENETRE_LIGNE;
+      const { demiX, demiY } = scanFenetre(R);
       const b = [];
       for (let j = 0; j < SCAN_BITS; j++) {
         const [bx, by] = scanPosBit(j);
@@ -390,7 +420,7 @@ function scanFeuilles(gris, l, h, plans) {
 
   const plan = retenus[0];
   const R = plan.lignes.length;
-  const demiY = (1 / (R + 1)) * SCAN_FENETRE_LIGNE;
+  const { demiX, demiY } = scanFenetre(R);
 
   // Mesure des cases. Une case vide imprimée est un carré fin : même mesurée
   // en son centre, un peu d'encre peut apparaître (trame, ombre), d'où un

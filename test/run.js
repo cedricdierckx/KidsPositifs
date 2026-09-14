@@ -5409,7 +5409,7 @@ test("feuille papier imprimée : la mise en page ne force plus une page presque 
   // partagée par la voie web et la voie native de l'app installée) — pas
   // dans imprimerFeuilleSemaine, qui ne fait plus que choisir entre les deux.
   const bloc = ui.slice(ui.indexOf("function htmlFeuilleSemaine"),
-                        ui.indexOf("function htmlFeuilleSemaine") + 13000);
+                        ui.indexOf("async function imprimerFeuilleSemaine"));
 
   assert.ok(!/\.grille\{display:grid/.test(bloc),
     "CSS Grid ne se pagine pas proprement à l'impression sous Chrome : à éviter ici");
@@ -5417,11 +5417,18 @@ test("feuille papier imprimée : la mise en page ne force plus une page presque 
     "un flottement en deux colonnes désaligne les cartes d'une page à l'autre : à éviter aussi");
   assert.ok(/\.enfant\{width:100%/.test(bloc),
     "chaque enfant doit occuper toute la largeur — une seule colonne, jamais de désalignement possible");
-  assert.ok(!/\.enfant\{[^}]*break-inside:avoid/.test(bloc),
-    "la carte entière ne doit plus être une seule unité insécable");
+  // Renversement assumé de la règle précédente (« la carte doit pouvoir se
+  // couper »). Elle datait d'avant la lecture optique : une carte coupée met
+  // désormais ses quatre repères sur DEUX feuilles, et la photo ne peut plus
+  // rien en lire — constaté sur capture, la ligne « Bravo » seule en page 2.
+  // Ce qui rend la règle tenable, c'est que la hauteur de ligne est maintenant
+  // calculée pour que la carte entre dans sa page (scanHauteurRang).
+  assert.ok(/\.enfant\{break-inside:avoid/.test(bloc),
+    "une carte coupée en deux rend la feuille illisible en photo");
+  assert.ok(/scanHauteurRang\(/.test(bloc),
+    "…ce qui n'est tenable que si la hauteur de ligne fait entrer la carte dans sa page");
   assert.ok(/\.enfant tr\{break-inside:avoid\}/.test(bloc),
-    "la césure doit porter sur les LIGNES du tableau, pas sur la carte entière — "
-    + "une longue liste doit pouvoir se répartir sur plusieurs pages");
+    "et une ligne du tableau ne se coupe jamais en son milieu non plus");
   assert.ok(/\.enfant h3\{[^}]*break-after:avoid/.test(bloc),
     "le nom de l'enfant ne doit jamais se retrouver seul, séparé de son tableau");
 
@@ -5435,7 +5442,7 @@ test("feuille papier imprimée : une page par enfant, pour distribuer une feuill
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
   const bloc = ui.slice(ui.indexOf("function htmlFeuilleSemaine"),
-                        ui.indexOf("function htmlFeuilleSemaine") + 13000);
+                        ui.indexOf("async function imprimerFeuilleSemaine"));
   assert.ok(/\.enfant \+ \.enfant\{[^}]*break-before:page/.test(bloc),
     "chaque enfant à partir du deuxième doit démarrer sur une nouvelle page — "
     + "le premier ne doit pas être concerné, sous peine d'une page blanche en tête");
@@ -5475,7 +5482,7 @@ test("feuille papier imprimée : l'avatar reste à sa taille normale, sans css/s
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
   const bloc = ui.slice(ui.indexOf("function htmlFeuilleSemaine"),
-                        ui.indexOf("function htmlFeuilleSemaine") + 13000);
+                        ui.indexOf("async function imprimerFeuilleSemaine"));
   assert.ok(/\.av-vignette\{[^}]*width:\s*24px[^}]*height:\s*24px/.test(bloc),
     "la vignette doit avoir une taille fixe en pixels, sinon le <svg> sans dimensions propres prend sa taille par défaut");
   assert.ok(/\.av-vignette \.av-svg\{[^}]*width:\s*100%[^}]*height:\s*100%/.test(bloc),
@@ -5883,7 +5890,15 @@ function feuilleDeSynthese(api, opts) {
   const versCanon = api.scanHomographie(coins, [[0, 0], [1, 0], [0, 1], [1, 1]]);
 
   const MM_X = 78;                               // 6 pas de 13 mm entre les repères
-  const MM_Y = 7 * (R + 1);                      // R+1 pas de 7 mm
+  // Hauteur de ligne RÉELLEMENT imprimée : sept millimètres tant que la liste
+  // le permet, resserrée ensuite pour que la carte tienne sur sa page (voir
+  // scanHauteurRang). Les marques et les cases suivent la même échelle, comme
+  // à l'impression — c'est la seule façon d'éprouver une feuille dense.
+  const hR = api.scanHauteurRang(R + 2);
+  const MM_Y = hR * (R + 1);                     // R+1 pas de hR mm
+  const rMarque = Math.min(5, hR - 1.4) / 2;     // rayon d'une planète/marque
+  const rCase = api.scanTailleCase(hR) / 2;      // demi-côté d'une case à cocher
+  const trait = Math.max(0.22, 0.35 * rCase * 2 / 5);   // épaisseur du trait imprimé
   const dansCarre = (dx, dy, demi) => Math.abs(dx) <= demi && Math.abs(dy) <= demi;
   // Repères et marques de contrôle : des DISQUES de 5 mm, comme ils s'impriment
   // désormais (de petites planètes plutôt que des carrés noirs). Le lecteur ne
@@ -5896,28 +5911,28 @@ function feuilleDeSynthese(api, opts) {
   const encreEnMm = (xm, ym) => {
     // Repères des quatre coins : carrés pleins de 5 mm.
     const coinsMm = [[0, 0], [MM_X, 0], [0, MM_Y], [MM_X, MM_Y]];
-    for (const [cx, cy] of coinsMm) if (marque(xm - cx, ym - cy, 2.5)) return true;
+    for (const [cx, cy] of coinsMm) if (marque(xm - cx, ym - cy, rMarque)) return true;
     // Bande de contrôle : une marque pleine par bit à 1.
     const bits = api.scanBitsAttendus(R, (o.missions || []));
     for (let j = 0; j < api.SCAN_BITS; j++) {
       if (!bits[j]) continue;
       const [bx, by] = api.scanPosBit(j);
-      if (marque(xm - bx * MM_X, ym - by * MM_Y, 2.5)) return true;
+      if (marque(xm - bx * MM_X, ym - by * MM_Y, rMarque)) return true;
     }
     // Cases : contour vide de 5 mm, et une croix tracée à la main si cochée.
     for (let k = 0; k < R; k++) {
       const ligne = lignes[k];
       if (ligne.type !== "mission") continue;
-      const cy = (k + 1) * 7;
-      if (Math.abs(ym - cy) > 3) continue;
+      const cy = (k + 1) * hR;
+      if (Math.abs(ym - cy) > rCase + 0.5) continue;
       for (let i = 0; i < 7; i++) {
         if (!ligne.jours[i]) continue;
         const cx = i * 13;
         const dx = xm - cx, dy = ym - cy;
-        if (Math.abs(dx) > 3) continue;
-        const dehors = dansCarre(dx, dy, 2.5), dedans = dansCarre(dx, dy, 2.2);
+        if (Math.abs(dx) > rCase + 0.5) continue;
+        const dehors = dansCarre(dx, dy, rCase), dedans = dansCarre(dx, dy, rCase - trait);
         if (dehors && !dedans) return true;                      // trait de la case
-        if (coches[ligne.id + ":" + i] && dansCarre(dx, dy, 2.0)) {
+        if (coches[ligne.id + ":" + i] && dansCarre(dx, dy, rCase - trait - 0.2)) {
           // Croix : deux diagonales de 0,9 mm d'épaisseur.
           if (Math.abs(dx - dy) < 0.45 || Math.abs(dx + dy) < 0.45) return true;
         }
@@ -5926,7 +5941,7 @@ function feuilleDeSynthese(api, opts) {
     // Quelques barres allongées à gauche, comme les noms de missions : elles
     // doivent être écartées par le filtre de forme, jamais prises pour un repère.
     if (o.texte !== false && xm < -6 && xm > -40) {
-      for (let k = 0; k < R; k++) if (Math.abs(ym - (k + 1) * 7) < 1.2) return true;
+      for (let k = 0; k < R; k++) if (Math.abs(ym - (k + 1) * hR) < Math.min(1.2, hR * 0.17)) return true;
     }
     // Leurre : un carré plein juste à gauche de la grille, comme un émoji de
     // mission — petit, sombre, carré, bien rempli. Placé exprès plus haut ET
@@ -6312,6 +6327,41 @@ test("minuteur : quand le décompte passe à un autre enfant, c'est sa page d'ac
   // feuille ne doit pas renvoyer le parent à l'accueil au milieu de sa saisie.
   assert.ok(/&& !modeParents\)/.test(ui),
     "le renvoi à l'accueil ne vaut que côté enfant");
+});
+
+test("feuille papier : une longue liste de missions tient sur SA page, et se lit quand même", () => {
+  const { api } = construireContexte();
+  // Signalé sur capture : 22 missions, et la carte finissait à 277,9 mm sur
+  // une page utile de 277 — la ligne « Bravo » partait seule sur la page
+  // suivante. Une carte coupée met ses quatre repères sur deux feuilles : la
+  // photo ne peut alors plus rien lire. Les lignes se resserrent donc.
+  assert.strictEqual(api.scanHauteurRang(10), api.SCAN_RANG_MM,
+    "une liste courte garde la hauteur confortable");
+  assert.ok(api.scanHauteurRang(26) < api.SCAN_RANG_MM && api.scanHauteurRang(26) > 6,
+    "une liste de 24 lignes se resserre un peu, pas brutalement");
+  assert.ok(api.scanHauteurRang(26) > api.scanHauteurRang(38),
+    "plus la liste est longue, plus les lignes se resserrent");
+  assert.strictEqual(api.scanHauteurRang(200), api.SCAN_RANG_MIN_MM,
+    "mais jamais au point de rendre une case impossible à cocher au stylo");
+
+  // Et une feuille réellement dense se lit toujours — cases, marques et
+  // fenêtre de mesure ayant toutes suivi la même échelle.
+  const lignes = [{ type: "cat" }], ids = [];
+  for (let i = 0; i < 17; i++) { const id = "m" + i; ids.push(id); lignes.push({ type: "mission", id, jours: [1,1,1,1,1,1,1] }); }
+  lignes.push({ type: "cat" });
+  for (let i = 17; i < 34; i++) { const id = "m" + i; ids.push(id); lignes.push({ type: "mission", id, jours: [1,1,1,1,1,1,1] }); }
+  const plan = { lignes, missions: ids, empreinte: ids };
+  assert.ok(api.scanHauteurRang(lignes.length + 2) < 5, "cette feuille-là est bien resserrée");
+  const coches = { "m0:0": true, "m8:3": true, "m16:6": true, "m20:1": true, "m33:5": true };
+  const img = feuilleDeSynthese(api, {
+    lignes, missions: ids, coches, hauteur: 1500, largeur: 1050,
+    coins: [[150, 90], [900, 130], [120, 1380], [930, 1420]]
+  });
+  const res = api.scanFeuille(img.gris, img.l, img.h, plan);
+  assert.strictEqual(res.ok, true, "une feuille dense doit rester lisible : " + res.raison);
+  const lues = {};
+  res.cases.forEach(c => { if (c.etat === "cochee") lues[c.mission + ":" + c.jour] = true; });
+  assert.deepStrictEqual(lues, coches, "et rendre exactement les cases cochées");
 });
 
 test("feuille papier : une seule feuille à imprimer, et elle donne envie", () => {

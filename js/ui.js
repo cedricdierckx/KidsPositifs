@@ -4792,6 +4792,22 @@ function htmlFeuilleSemaine() {
 
   const auj = aujourdHui();
   const EMO_EVAL = { bien: "😄", moyen: "😐", mauvais: "😠" };
+
+  /* ---- Tenir sur UNE page, quelle que soit la longueur de la liste ----
+   * Signalé sur capture : la carte d'un enfant à 22 missions finissait à
+   * 277,9 mm sur une page utile de 277 mm — un millimètre de trop, et la
+   * ligne « Bravo » partait seule sur la page suivante. Pire qu'inesthétique :
+   * une carte coupée en deux met ses quatre repères sur deux feuilles
+   * différentes, et la photo ne peut plus rien lire.
+   *
+   * Le lecteur optique ne mesure que des RAPPORTS entre les quatre repères
+   * (voir js/scan.js) : la hauteur de ligne exacte lui est donc indifférente,
+   * seule son uniformité compte. Mais la fenêtre de mesure d'une case, elle,
+   * doit rétrécir en même temps que la case — c'est pourquoi la formule vit
+   * dans scanHauteurRang(), partagée par l'impression et par la lecture, et
+   * non ici. On fait ensuite suivre la taille des marques et des cases. */
+  const reglesOmr = [];     // CSS calculé, enfant par enfant
+
   const blocEnfant = (enf, k) => {
     const coul = enf.couleur || "#f6a623";
     let coeursSem = 0, gouttesSem = 0;   // déjà gagnés cette semaine (jours écoulés)
@@ -4802,6 +4818,31 @@ function htmlFeuilleSemaine() {
     // à quelle mission — les deux ne doivent donc jamais être écrites deux fois.
     const plan = planFeuilleScan(enf, jours);
     const bits = scanBitsAttendus(plan.lignes.length, plan.empreinte);
+    // Hauteur de ligne de CETTE carte : les deux rangs de repères comptent
+    // comme des lignes du corps (c'est ce que suppose scanYLigne).
+    const hRang = scanHauteurRang(plan.lignes.length + 2);
+    const marque = Math.min(5, hRang - 1.4);     // la tache doit respirer dans sa ligne
+    const caseC = scanTailleCase(hRang);
+    // Le trait de la case suit l'échelle lui aussi : à 0,35 mm fixe, il devient
+    // épais au point d'entrer dans la fenêtre de mesure d'une feuille dense.
+    const trait = Math.max(0.22, 0.35 * caseC / 5);
+    // Une hauteur de ligne n'est qu'un MINIMUM dans un tableau : si la case à
+    // cocher, la marge intérieure et le texte demandent davantage, la ligne
+    // grandit quand même et le calcul de page ne vaut plus rien. Tout ce que
+    // contient la cellule suit donc la même échelle.
+    const marge = Math.max(0.3, hRang * 0.06);
+    const police = Math.min(2.8, hRang * 0.42);
+    const d3 = (x) => (Math.round(x * 100) / 100) + "mm";
+    reglesOmr.push(
+      `.enf-${k} table.omr tbody tr, .enf-${k} .omr-rang{height:${d3(hRang)}}\n` +
+      `.enf-${k} table.omr td, .enf-${k} table.omr th{padding-top:${d3(marge)}; padding-bottom:${d3(marge)}}\n` +
+      `.enf-${k} table.omr td.c{height:auto}\n` +
+      `.enf-${k} table.omr td.m{font-size:${d3(police)}; line-height:1.1}\n` +
+      `.enf-${k} .omr-rep, .enf-${k} .omr-bit{width:${d3(marque)}; height:${d3(marque)}; top:${d3((hRang - marque) / 2)}}\n` +
+      `.enf-${k} .omr-rep{left:calc(50% - ${d3(marque / 2)})}\n` +
+      `.enf-${k} .omr-bit.g{left:calc(50% - ${d3(3.25 + marque / 2)})}\n` +
+      `.enf-${k} .omr-bit.d{left:calc(50% + ${d3(3.25 - marque / 2)})}\n` +
+      `.enf-${k} .omr-case{width:${d3(caseC)}; height:${d3(caseC)}; line-height:${d3(caseC)}; font-size:${d3(caseC * 0.64)}; border-width:${d3(trait)}}`);
     plan.lignes.forEach(ligne => {
       if (ligne.type === "cat") {
         const cat = CATEGORIES[ligne.cat];
@@ -4872,6 +4913,8 @@ function htmlFeuilleSemaine() {
         ${humeur}
         <div class="totaux">💛 ${t("money.coeurs")} : ${tC}&nbsp;&nbsp; 💧 ${t("money.gouttes")} : ${tG}</div>
         <div class="bravo">🎉 ${t("papier.bravo")} <span class="sticker-slot" aria-hidden="true"></span></div>
+        <p class="pied omr-note">🪐 ${t("papier.omr_note")}</p>
+        <p class="pied">${t("papier.feuille_pied")}</p>
       </div>`;
   };
 
@@ -4908,19 +4951,21 @@ function htmlFeuilleSemaine() {
          pages pour une famille nombreuse — est le prix d'un rendu fiable
          partout, y compris a la maison sur une imprimante quelconque.
 
-         3) "break-inside:avoid" pose sur LA CARTE ENTIERE forcait chaque
-         enfant a rester d'un bloc. Avec une longue liste de missions, une
-         carte a elle seule peut approcher la hauteur d'une page A4
-         imprimable (~277 mm) : des qu'elle ne tient plus a cote de l'entete
-         ou de la carte precedente, tout le bloc bascule sur la page
-         suivante — laissant la page courante quasiment blanche. La regle
-         passe donc du bloc entier aux seules LIGNES du tableau ("tr"), qui
-         ne se coupent jamais en leur milieu de toute facon : une longue
-         liste se repartit desormais sur autant de pages que necessaire, en
-         utilisant le bas de la page courante au lieu de le laisser vide. Le
-         nom de l'enfant reste coince au debut de son tableau ("h3" avec
-         "break-after:avoid"), pour ne jamais se retrouver seul en bas d'une
-         page, separe de son contenu. */
+         3) "break-inside:avoid" pose sur LA CARTE ENTIERE la forcait a rester
+         d'un bloc : avec une longue liste de missions, une carte trop haute
+         basculait tout entiere sur la page suivante, laissant la page
+         courante blanche. La regle avait donc ete ramenee aux seules LIGNES
+         du tableau — ce qui laissait, en retour, une carte se couper en deux
+         (constate : la ligne "Bravo" seule sur la page suivante).
+
+         Depuis que la feuille se relit en photo, cette coupure n'est plus
+         seulement inesthetique : les quatre reperes se retrouvent sur deux
+         feuilles differentes et plus rien n'est lisible. La carte est donc
+         redevenue insecable — mais, cette fois, sa HAUTEUR DE LIGNE est
+         calculee pour qu'elle entre dans sa page (voir PAGE_DISPO plus
+         haut). Le nom de l'enfant reste coince au debut de son tableau ("h3"
+         avec "break-after:avoid"), pour ne jamais se retrouver seul en bas
+         d'une page, separe de son contenu. */
       .enfant{width:100%; margin:0 0 12px;
         border:2px solid var(--c);border-radius:16px;padding:9px 11px;background:#fff}
       /* Une page par enfant, sur demande explicite : chaque carte peut donc
@@ -5020,13 +5065,20 @@ function htmlFeuilleSemaine() {
       .bravo{margin-top:10px;font-size:12px;font-weight:800;color:var(--c);
         display:flex;align-items:center;gap:8px}
       .sticker-slot{width:26px;height:26px;border-radius:50%;border:2px dashed var(--c);flex:0 0 auto}
-      .pied{margin-top:12px;font-size:10px;color:#8a97a3;text-align:center}
+      .pied{margin-top:7px;font-size:9.5px;color:#8a97a3;text-align:center;line-height:1.3}
+      .enfant .omr-note{margin-top:7px}
+      /* Calculé ci-dessus, carte par carte : la hauteur de ligne qui fait
+         entrer CETTE liste de missions dans SA page. Une carte coupée en deux
+         mettrait ses quatre repères sur deux feuilles, et la photo ne pourrait
+         plus rien en lire — d'où aussi le « break-inside » : si un jour le
+         calcul se trompait, on veut une page blanche (visible, corrigeable)
+         plutôt qu'une grille silencieusement illisible. */
+      .enfant{break-inside:avoid; page-break-inside:avoid}
+${reglesOmr.join("\n")}
     </style></head><body>
     <div class="tete"><div class="logo">🌟 ${APP_NOM}${famille ? " · " + echapper(famille) : ""}</div><div class="sem">🗓️ ${titreSem}</div></div>
     <p class="intro">${t("papier.feuille_intro")}</p>
     <div class="grille">${corps}</div>
-    <p class="pied omr-note">🪐 ${t("papier.omr_note")}</p>
-    <p class="pied">${t("papier.feuille_pied")}</p>
     </body></html>`;
   return html;
 }
