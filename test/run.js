@@ -6132,7 +6132,8 @@ test("scan : la feuille imprimée porte ses repères et sa bande de contrôle (m
 
 test("scan : messages traduits dans les 4 langues, sans jamais annoncer d'envoi", () => {
   const { api } = construireContexte();
-  const cles = ["scan.intro", "scan.bouton", "scan.aide", "scan.lecture", "scan.lu", "scan.rien",
+  const cles = ["scan.intro", "scan.bouton", "scan.bouton_fichier", "scan.aide", "scan.lecture",
+    "scan.lu", "scan.rien", "scan.echec_pdf",
     "scan.echec_reperes", "scan.echec_feuille", "scan.echec_image", "scan.titre_revue",
     "scan.revue", "scan.revue_doutes", "scan.doute_aide", "scan.valider", "scan.annuler",
     "scan.annule", "scan.applique"];
@@ -6148,6 +6149,82 @@ test("scan : messages traduits dans les 4 langues, sans jamais annoncer d'envoi"
     assert.ok(/rien n'est envoyé|nothing is sent|er wordt niets verstuurd|wird nichts gesendet/i
       .test(api.I18N[lg]["scan.aide"]), "la promesse doit être dite en " + lg);
   });
+});
+
+/* Un JPEG minimal mais crédible : en-tête FF D8 FF, un corps qui ne contient
+ * jamais 0xFF (donc aucun faux marqueur), et la fin de fichier FF D9. */
+function jpegFactice(n) {
+  const o = [0xFF, 0xD8, 0xFF];
+  for (let i = 0; i < n; i++) o.push((i * 37) % 251);
+  o.push(0xFF, 0xD9);
+  return o;
+}
+const octetsAscii = (s) => Array.from(s, c => c.charCodeAt(0));
+
+test("scan : un PDF de numérisation livre ses pages, la plus lourde d'abord", () => {
+  const { api } = construireContexte();
+  const petite = jpegFactice(40), grande = jpegFactice(400);
+  const pdf = [].concat(
+    octetsAscii("%PDF-1.4\n5 0 obj\n<< /Subtype /Image /Filter /DCTDecode >>\nstream\n"),
+    petite, octetsAscii("\nendstream\nendobj\n"),
+    octetsAscii("6 0 obj\n<< /Subtype /Image /Filter /DCTDecode >>\nstream\n"),
+    grande, octetsAscii("\r\nendstream\nendobj\ntrailer\n%%EOF\n"));
+  const pages = api.scanJpegsDansPdf(new Uint8Array(pdf));
+  assert.strictEqual(pages.length, 2, "les deux images encapsulées doivent être retrouvées");
+  // La page numérisée passe avant sa vignette : on tente la plus lourde d'abord.
+  assert.deepStrictEqual(Array.from(pages[0]), grande,
+    "octet pour octet, sans le saut de ligne que le PDF insère avant `endstream`");
+  assert.deepStrictEqual(Array.from(pages[1]), petite);
+});
+
+test("scan : une coïncidence d'octets dans un PDF n'est pas prise pour une page", () => {
+  const { api } = construireContexte();
+  const vraie = jpegFactice(120);
+  // Un flux compressé quelconque qui commence par FF D8 FF sans jamais finir
+  // par FF D9 : le prendre pour une image ferait échouer la lecture sans
+  // explication, alors qu'il suffit de l'ignorer.
+  const leurre = [0xFF, 0xD8, 0xFF, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  const pdf = [].concat(
+    octetsAscii("%PDF-1.7\nstream\n"), leurre, octetsAscii("\nendstream\n"),
+    octetsAscii("stream\n"), vraie, octetsAscii("\nendstream\n%%EOF\n"));
+  const pages = api.scanJpegsDansPdf(new Uint8Array(pdf));
+  assert.strictEqual(pages.length, 1, "seul le flux terminé par FF D9 est une image");
+  assert.deepStrictEqual(Array.from(pages[0]), vraie);
+
+  // Un PDF sans aucune image (numérisation en fax/CCITT, ou PDF de texte) :
+  // aucune page trouvée, pour que l'appelant puisse le dire franchement.
+  assert.strictEqual(api.scanJpegsDansPdf(new Uint8Array(
+    octetsAscii("%PDF-1.7\nstream\nBT /F1 12 Tf (bonjour) Tj ET\nendstream\n%%EOF\n"))).length, 0);
+});
+
+test("scan : un PDF est reconnu par son type comme par son nom", () => {
+  const { api } = construireContexte();
+  assert.ok(api.scanEstPdf({ type: "application/pdf", name: "scan" }));
+  // Certains appareils ne déclarent aucun type MIME : le nom reste le dernier
+  // indice, sans quoi on tenterait de décoder un PDF comme une image.
+  assert.ok(api.scanEstPdf({ type: "", name: "Semaine-Lou.PDF" }));
+  assert.ok(!api.scanEstPdf({ type: "image/jpeg", name: "photo.jpg" }));
+  assert.ok(!api.scanEstPdf(null), "aucun fichier choisi : rien à décider");
+});
+
+test("scan : deux portes vers la même lecture, et seule la photo force l'objectif", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const choix = ui.slice(ui.indexOf("function choisirFeuilleAScanner"),
+    ui.indexOf("async function lancerScanFeuille"));
+  // Sans `capture`, le téléphone propose la galerie et les fichiers ; avec, il
+  // ouvre l'objectif. Les deux usages existent : un scanner de bureau rend un
+  // PDF que l'on n'obtiendra jamais en photographiant.
+  assert.ok(/accept = appareilPhoto \? "image\/\*" : "image\/\*,application\/pdf,\.pdf"/.test(choix),
+    "le chargement d'un fichier doit accepter les PDF");
+  assert.ok(/if \(appareilPhoto\) inp\.capture = "environment"/.test(choix),
+    "« capture » ne doit s'appliquer qu'au bouton photo, sinon le PDF devient inatteignable");
+  // Les deux boutons sont réellement offerts au parent.
+  assert.ok(/t\("scan\.bouton"\)[\s\S]{0,400}t\("scan\.bouton_fichier"\)/.test(ui),
+    "les deux portes doivent apparaître sur la feuille papier");
+  // Un PDF de texte pur doit être expliqué, pas signalé comme une image illisible.
+  assert.ok(/pdf_sans_image[\s\S]{0,200}scan\.echec_pdf|scan\.echec_pdf[\s\S]{0,200}pdf_sans_image/
+    .test(ui), "un PDF sans image encapsulée doit avoir son propre message");
 });
 
 /* ---------- Exécution ----------

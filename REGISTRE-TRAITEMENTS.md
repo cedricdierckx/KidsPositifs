@@ -142,14 +142,14 @@ jamais l'identité de la famille qu'il a amenée, seulement un compteur.
 Ce dispositif est **délibérément séparé** de l'application : celle-ci ne
 comporte aucun classement, et rien de ce qui précède n'y apparaît.
 
-### T8 — Photographie de la feuille papier (lecture optique)
+### T8 — Photographie ou numérisation de la feuille papier (lecture optique)
 
 | | |
 |---|---|
-| Finalité | Éviter de recopier à la main une semaine entière de cases : le parent photographie la feuille, l'application en déduit les cases cochées |
+| Finalité | Éviter de recopier à la main une semaine entière de cases : le parent photographie la feuille — ou charge le fichier rendu par son scanner — et l'application en déduit les cases cochées |
 | Base légale | **Intérêt légitime — art. 6.1.f.** Geste demandé par le parent, sur sa propre feuille, pour alimenter des données qu'il saisirait sinon au doigt |
 | Personnes concernées | Les enfants de la famille (prénoms et missions figurant sur la feuille) |
-| Catégories de données | L'image, **en mémoire vive uniquement**, le temps du calcul |
+| Catégories de données | L'image — photographie ou fichier numérisé, PDF compris —, **en mémoire vive uniquement**, le temps du calcul |
 | Données **non** traitées | Aucune donnée nouvelle n'est créée : le résultat se limite à des cases du journal que le parent aurait cochées lui-même |
 | Destinataires | **Aucun.** Le calcul est intégralement local (`js/scan.js`) : pas d'appel réseau, pas de service de reconnaissance d'image, aucun sous-traitant |
 | Conservation | **Nulle.** La photo n'est ni enregistrée, ni recopiée, ni mise en cache : elle est lue puis abandonnée. Seules les cases validées par le parent sont écrites |

@@ -4289,9 +4289,18 @@ function blocSemainePapier() {
   // contient qu'un total écrit à la main, et lire un chiffre manuscrit est un
   // tout autre métier que mesurer une case noircie.
   sec.appendChild(el("p", "planif-sous", t("scan.intro")));
-  const bScan = el("button", "gros-bouton planete", t("scan.bouton"));
-  bScan.onclick = () => choisirPhotoFeuille();
-  sec.appendChild(bScan);
+  // Deux portes vers la même lecture : l'appareil photo (le plus souvent, sur
+  // un téléphone) ou un fichier déjà numérisé — un scanner de bureau rend un
+  // PDF, qu'on sait désormais ouvrir. Deux boutons plutôt qu'un seul choix
+  // ambigu : sur mobile, « capture » ouvre directement l'appareil photo, et
+  // rien n'indiquerait sinon qu'on peut aussi aller chercher un fichier.
+  const portes = el("div", "scan-portes");
+  const bPhoto = el("button", "gros-bouton planete", t("scan.bouton"));
+  bPhoto.onclick = () => choisirFeuilleAScanner(true);
+  const bFichier = el("button", "btn-secondaire", t("scan.bouton_fichier"));
+  bFichier.onclick = () => choisirFeuilleAScanner(false);
+  portes.appendChild(bPhoto); portes.appendChild(bFichier);
+  sec.appendChild(portes);
   sec.appendChild(el("p", "note", t("scan.aide")));
   return sec;
 }
@@ -4306,12 +4315,14 @@ function blocSemainePapier() {
  * téléphone. */
 let scanProposition = null;   // { enfantId, semaine, cases: { "mission:jour": "cochee"|"douteuse" } }
 
-function choisirPhotoFeuille() {
+// `appareilPhoto` : ouvrir directement l'objectif (téléphone), ou laisser
+// choisir un fichier déjà numérisé (image ou PDF de scanner).
+function choisirFeuilleAScanner(appareilPhoto) {
   if (typeof document === "undefined") return;
   const inp = el("input");
   inp.type = "file";
-  inp.accept = "image/*";
-  inp.capture = "environment";        // ouvre directement l'appareil photo sur mobile
+  inp.accept = appareilPhoto ? "image/*" : "image/*,application/pdf,.pdf";
+  if (appareilPhoto) inp.capture = "environment";
   inp.style.display = "none";
   inp.onchange = () => {
     const f = inp.files && inp.files[0];
@@ -4335,7 +4346,8 @@ async function lancerScanFeuille(fichier) {
 
   if (!res.ok) {
     const cle = res.raison === "feuille_differente" ? "scan.echec_feuille"
-              : res.raison === "reperes" ? "scan.echec_reperes" : "scan.echec_image";
+              : res.raison === "reperes" ? "scan.echec_reperes"
+              : res.raison === "pdf_sans_image" ? "scan.echec_pdf" : "scan.echec_image";
     toast(t(cle), "info");
     return;
   }

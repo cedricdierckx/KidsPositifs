@@ -2713,7 +2713,9 @@ Object.assign(I18N.de, { "stats.ressenti": "Tägliches Gefühl (14 T) — 🧒 K
  * cadrée doit se reprendre, pas se deviner. */
 Object.assign(I18N.fr, {
   "scan.intro": "Plutôt que de tout recopier : prends la feuille en photo.",
-  "scan.bouton": "📷 Scanner la feuille remplie",
+  "scan.bouton": "📷 Prendre la feuille en photo",
+  "scan.bouton_fichier": "🖼️ Charger un scan (image ou PDF)",
+  "scan.echec_pdf": "Ce PDF ne contient pas d'image exploitable (numérisation en noir et blanc pur, souvent). Relance le scan en couleur ou en niveaux de gris, ou enregistre-le en JPEG.",
   "scan.aide": "Pose la feuille à plat, bien éclairée, et cadre toute la grille avec ses quatre carrés noirs. La photo reste sur ton téléphone : rien n'est envoyé.",
   "scan.lecture": "Lecture de la photo…",
   "scan.lu": "{n} case(s) lue(s) — à vérifier avant d'enregistrer",
@@ -2732,7 +2734,9 @@ Object.assign(I18N.fr, {
 });
 Object.assign(I18N.en, {
   "scan.intro": "Rather than typing it all back in: photograph the sheet.",
-  "scan.bouton": "📷 Scan the filled-in sheet",
+  "scan.bouton": "📷 Photograph the sheet",
+  "scan.bouton_fichier": "🖼️ Load a scan (image or PDF)",
+  "scan.echec_pdf": "This PDF holds no usable image (often a pure black-and-white scan). Scan again in colour or greyscale, or save it as a JPEG.",
   "scan.aide": "Lay the sheet flat in good light, and frame the whole grid with its four black squares. The photo stays on your phone: nothing is sent.",
   "scan.lecture": "Reading the photo…",
   "scan.lu": "{n} box(es) read — check before saving",
@@ -2751,7 +2755,9 @@ Object.assign(I18N.en, {
 });
 Object.assign(I18N.nl, {
   "scan.intro": "In plaats van alles over te typen: neem een foto van het blad.",
-  "scan.bouton": "📷 Ingevuld blad scannen",
+  "scan.bouton": "📷 Foto van het blad nemen",
+  "scan.bouton_fichier": "🖼️ Een scan laden (afbeelding of PDF)",
+  "scan.echec_pdf": "Deze PDF bevat geen bruikbare afbeelding (vaak een scan in puur zwart-wit). Scan opnieuw in kleur of grijswaarden, of bewaar hem als JPEG.",
   "scan.aide": "Leg het blad plat en goed verlicht, en breng het hele raster met zijn vier zwarte vierkanten in beeld. De foto blijft op je telefoon: er wordt niets verstuurd.",
   "scan.lecture": "De foto wordt gelezen…",
   "scan.lu": "{n} vakje(s) gelezen — controleer voor je opslaat",
@@ -2770,7 +2776,9 @@ Object.assign(I18N.nl, {
 });
 Object.assign(I18N.de, {
   "scan.intro": "Statt alles abzutippen: fotografiere das Blatt.",
-  "scan.bouton": "📷 Ausgefülltes Blatt scannen",
+  "scan.bouton": "📷 Das Blatt fotografieren",
+  "scan.bouton_fichier": "🖼️ Einen Scan laden (Bild oder PDF)",
+  "scan.echec_pdf": "Dieses PDF enthält kein verwertbares Bild (oft ein reiner Schwarz-Weiß-Scan). Scanne erneut in Farbe oder Graustufen, oder speichere es als JPEG.",
   "scan.aide": "Lege das Blatt flach und gut beleuchtet hin und bringe das ganze Raster mit seinen vier schwarzen Quadraten ins Bild. Das Foto bleibt auf deinem Telefon: Es wird nichts gesendet.",
   "scan.lecture": "Das Foto wird gelesen…",
   "scan.lu": "{n} Kästchen gelesen — vor dem Speichern prüfen",

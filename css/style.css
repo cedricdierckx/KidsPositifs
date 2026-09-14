@@ -502,6 +502,9 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .scan-revue-d{margin:0 0 10px; font-size:13px; line-height:1.4; color:#5a4a2a}
 .scan-revue-actions{display:flex; gap:8px; flex-wrap:wrap}
 .scan-revue-actions .gros-bouton, .scan-revue-actions .btn-secondaire{flex:1 1 150px; margin:0}
+/* Deux portes d'entrée équivalentes : l'appareil photo et le fichier déjà scanné. */
+.scan-portes{display:flex; gap:8px; flex-wrap:wrap; margin:8px 0}
+.scan-portes .gros-bouton, .scan-portes .btn-secondaire{flex:1 1 160px; margin:0}
 
 /* Tutoriel = visite guidée superposée à l'application */
 .tuto-tour{position:fixed; inset:0; z-index:1100}

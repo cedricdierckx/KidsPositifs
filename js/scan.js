@@ -377,33 +377,110 @@ function scanFeuille(gris, l, h, plan) {
   return { ok: true, cases, douteuses, reperes: rep };
 }
 
+/* ---------- PDF de scanner ----------
+ * Un scanner de bureau rend un PDF, pas une image — et embarquer un moteur de
+ * rendu PDF (un mégaoctet) pour lire une feuille de missions serait
+ * disproportionné, surtout dans une app qui doit rester utilisable hors ligne.
+ *
+ * Or c'est inutile : un PDF de numérisation ne « dessine » rien, il se contente
+ * d'encapsuler la photo de la page. Le JPEG s'y trouve donc tel quel, entre un
+ * `stream` et un `endstream`, et se reconnaît à ses octets d'en-tête (FF D8 FF)
+ * — aucune analyse de la structure du PDF n'est nécessaire.
+ *
+ * Renvoie les pages trouvées, de la plus lourde à la plus légère (la page
+ * scannée avant ses vignettes éventuelles). Un PDF de plusieurs enfants en
+ * contient plusieurs : c'est la bande de contrôle, ensuite, qui reconnaîtra
+ * laquelle correspond à l'enfant et à la semaine choisis.
+ *
+ * Limite assumée : une numérisation en noir et blanc pur est souvent encodée
+ * en CCITT (fax) et non en JPEG. On ne la trouvera pas ici — l'appelant le dit
+ * alors franchement plutôt que d'échouer sans explication.
+ */
+function scanJpegsDansPdf(octets) {
+  const pages = [];
+  const finDe = (i) => {
+    // Le flux se termine au `endstream` qui suit : on prend les octets bruts,
+    // débarrassés du saut de ligne que le PDF insère avant le mot-clé.
+    for (let p = i; p < octets.length - 8; p++) {
+      if (octets[p] === 0x65 && octets[p + 1] === 0x6E && octets[p + 2] === 0x64 &&
+          octets[p + 3] === 0x73 && octets[p + 4] === 0x74 && octets[p + 5] === 0x72 &&
+          octets[p + 6] === 0x65 && octets[p + 7] === 0x61 && octets[p + 8] === 0x6D) {
+        let fin = p;
+        while (fin > i && (octets[fin - 1] === 0x0A || octets[fin - 1] === 0x0D || octets[fin - 1] === 0x20)) fin--;
+        return fin;
+      }
+    }
+    return -1;
+  };
+  for (let i = 0; i < octets.length - 3; i++) {
+    if (octets[i] !== 0xFF || octets[i + 1] !== 0xD8 || octets[i + 2] !== 0xFF) continue;
+    const fin = finDe(i);
+    if (fin <= i + 4) continue;
+    // Un JPEG complet se termine par FF D9 : sans cela, ce n'est pas une image
+    // mais une coïncidence d'octets dans un flux compressé.
+    if (!(octets[fin - 2] === 0xFF && octets[fin - 1] === 0xD9)) continue;
+    pages.push(octets.slice(i, fin));
+    i = fin;
+  }
+  return pages.sort((a, b) => b.length - a.length);
+}
+
+function scanEstPdf(fichier) {
+  return !!fichier && (fichier.type === "application/pdf" ||
+    /\.pdf$/i.test(fichier.name || ""));
+}
+
 /* ---------- Passerelle navigateur ----------
- * Seul endroit qui touche au DOM : décoder le fichier photo en pixels. Le reste
+ * Seul endroit qui touche au DOM : décoder le fichier en pixels. Le reste
  * ci-dessus n'en dépend pas, et tourne tel quel dans les tests.
  */
-function scanDepuisFichier(fichier, plan) {
+function scanPixelsDepuisBlob(blob) {
   return new Promise((resolve) => {
-    if (typeof document === "undefined" || typeof FileReader === "undefined") {
-      resolve({ ok: false, raison: "indisponible" }); return;
-    }
-    const url = URL.createObjectURL(fichier);
+    const url = URL.createObjectURL(blob);
     const img = new Image();
     img.onload = () => {
       try {
         const c = document.createElement("canvas");
         c.width = img.naturalWidth; c.height = img.naturalHeight;
         const ctx = c.getContext("2d");
-        if (!ctx) { resolve({ ok: false, raison: "indisponible" }); return; }
+        if (!ctx) { resolve(null); return; }
         ctx.drawImage(img, 0, 0);
         const d = ctx.getImageData(0, 0, c.width, c.height);
         const g0 = scanGrisDepuisRgba(d.data, c.width, c.height);
-        const { gris, l, h } = scanReduire(g0, c.width, c.height, SCAN_LARGEUR_TRAVAIL);
-        resolve(scanFeuille(gris, l, h, plan));
-      } catch (e) {
-        resolve({ ok: false, raison: "indisponible" });
-      } finally { URL.revokeObjectURL(url); }
+        resolve(scanReduire(g0, c.width, c.height, SCAN_LARGEUR_TRAVAIL));
+      } catch (e) { resolve(null); }
+      finally { URL.revokeObjectURL(url); }
     };
-    img.onerror = () => { URL.revokeObjectURL(url); resolve({ ok: false, raison: "image" }); };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
     img.src = url;
   });
+}
+
+async function scanDepuisFichier(fichier, plan) {
+  if (typeof document === "undefined" || typeof URL === "undefined") {
+    return { ok: false, raison: "indisponible" };
+  }
+  // Un PDF de plusieurs pages (toute la fratrie numérisée d'un coup) : on
+  // essaie chaque page, et c'est la bande de contrôle qui désigne la bonne.
+  // Aucune page ne peut être lue « à peu près » : soit elle correspond à
+  // l'enfant et à la semaine choisis, soit on passe à la suivante.
+  if (scanEstPdf(fichier)) {
+    let octets;
+    try { octets = new Uint8Array(await fichier.arrayBuffer()); }
+    catch (e) { return { ok: false, raison: "image" }; }
+    const pages = scanJpegsDansPdf(octets);
+    if (!pages.length) return { ok: false, raison: "pdf_sans_image" };
+    let dernier = { ok: false, raison: "reperes" };
+    for (const page of pages) {
+      const px = await scanPixelsDepuisBlob(new Blob([page], { type: "image/jpeg" }));
+      if (!px) continue;
+      const r = scanFeuille(px.gris, px.l, px.h, plan);
+      if (r.ok) return r;
+      dernier = r;
+    }
+    return dernier;
+  }
+  const px = await scanPixelsDepuisBlob(fichier);
+  if (!px) return { ok: false, raison: "image" };
+  return scanFeuille(px.gris, px.l, px.h, plan);
 }

@@ -186,6 +186,7 @@ function construireContexte(options) {
       scanGrisDepuisRgba, scanReduire, scanBinariser, scanComposantes, scanReperes,
       scanHomographie, scanProjeter, scanEncre, scanFeuille,
       scanXJour, scanYLigne, scanPosBit, scanEmpreinteMissions, scanBitsAttendus,
+      scanJpegsDansPdf, scanEstPdf,
       SCAN_BITS, SCAN_BITS_LIGNES, SCAN_BITS_EMPREINTE, SCAN_SEUIL_COCHE, SCAN_SEUIL_VIDE, SCAN_LARGEUR_TRAVAIL,
     };
   `;
