@@ -5848,7 +5848,9 @@ test("PDF (app installée) : la carte d'ami/dépliant se capture à largeur fixe
 test("navigation : changer d'onglet dans l'espace parents remonte aussi en haut de page", () => {
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
-  assert.ok(/function changerOngletParent\(id\)\s*\{[\s\S]{0,200}window\.scrollTo\(0, 0\)[\s\S]{0,100}rendre\(\)/.test(ui),
+  assert.ok(/function remonterEnHaut\(\)\s*\{[\s\S]{0,200}window\.scrollTo\(0, 0\)/.test(ui),
+    "remonterEnHaut() est le geste commun : c'est là que le défilement se remet à zéro");
+  assert.ok(/function changerOngletParent\(id\)\s*\{[\s\S]{0,200}remonterEnHaut\(\)[\s\S]{0,100}rendre\(\)/.test(ui),
     "changerOngletParent() doit remonter la page avant de re-rendre le contenu du nouvel onglet");
   // Regression : les points d'entrée du sous-menu parents (barre d'onglets,
   // bouton « Mes enfants », étapes de Premiers pas) doivent tous passer par
@@ -5883,18 +5885,24 @@ function feuilleDeSynthese(api, opts) {
   const MM_X = 78;                               // 6 pas de 13 mm entre les repères
   const MM_Y = 7 * (R + 1);                      // R+1 pas de 7 mm
   const dansCarre = (dx, dy, demi) => Math.abs(dx) <= demi && Math.abs(dy) <= demi;
+  // Repères et marques de contrôle : des DISQUES de 5 mm, comme ils s'impriment
+  // désormais (de petites planètes plutôt que des carrés noirs). Le lecteur ne
+  // mesure que des centres, la forme lui est indifférente — ces tests le
+  // vérifient plutôt que de le supposer.
+  const dansDisque = (dx, dy, r) => dx * dx + dy * dy <= r * r;
+  const marque = o.carre ? dansCarre : dansDisque;
 
   // Noir (0) ou blanc (255) en un point de la feuille, exprimé en millimètres.
   const encreEnMm = (xm, ym) => {
     // Repères des quatre coins : carrés pleins de 5 mm.
     const coinsMm = [[0, 0], [MM_X, 0], [0, MM_Y], [MM_X, MM_Y]];
-    for (const [cx, cy] of coinsMm) if (dansCarre(xm - cx, ym - cy, 2.5)) return true;
+    for (const [cx, cy] of coinsMm) if (marque(xm - cx, ym - cy, 2.5)) return true;
     // Bande de contrôle : une marque pleine par bit à 1.
     const bits = api.scanBitsAttendus(R, (o.missions || []));
     for (let j = 0; j < api.SCAN_BITS; j++) {
       if (!bits[j]) continue;
       const [bx, by] = api.scanPosBit(j);
-      if (dansCarre(xm - bx * MM_X, ym - by * MM_Y, 2.5)) return true;
+      if (marque(xm - bx * MM_X, ym - by * MM_Y, 2.5)) return true;
     }
     // Cases : contour vide de 5 mm, et une croix tracée à la main si cochée.
     for (let k = 0; k < R; k++) {
@@ -6083,12 +6091,16 @@ test("scan : une seule source décrit les lignes, pour l'impression comme pour l
   const feuille = ui.slice(ui.indexOf("function htmlFeuilleSemaine"), ui.indexOf("function imprimerFeuilleSemaine"));
   assert.ok(/const plan = planFeuilleScan\(enf, jours\)/.test(feuille),
     "htmlFeuilleSemaine doit imprimer À PARTIR de ce plan");
-  assert.ok(/scanBitsAttendus\(plan\.lignes\.length, plan\.missions\)/.test(feuille),
+  assert.ok(/scanBitsAttendus\(plan\.lignes\.length, plan\.empreinte\)/.test(feuille),
     "la bande de contrôle imprimée doit décrire ce même plan");
-  // Et la lecture aussi, sur l'enfant et la semaine choisis.
+  // Et la lecture aussi : les feuilles qu'on propose au lecteur sont bâties
+  // par cette même fonction, pour chaque enfant et chaque semaine récente.
+  const candidats = ui.slice(ui.indexOf("function plansFeuillesPossibles"), ui.indexOf("async function lancerScanFeuille"));
+  assert.ok(/planFeuilleScan\(e, joursSemaine\(sem\)\)/.test(candidats),
+    "les feuilles candidates doivent être décrites par le plan d'impression, pas par une seconde liste");
   const lancement = ui.slice(ui.indexOf("async function lancerScanFeuille"), ui.indexOf("function scanPropositionActive"));
-  assert.ok(/planFeuilleScan\(enf, jours\)/.test(lancement) && /scanDepuisFichier\(fichier, plan\)/.test(lancement),
-    "la lecture doit interroger le même plan que l'impression");
+  assert.ok(/scanDepuisFichier\(fichier, plansFeuillesPossibles\(semaineAffichee\)\)/.test(lancement),
+    "la lecture doit interroger ces mêmes plans");
 });
 
 test("scan : la photo ne propose jamais, elle n'écrit pas — seule la validation touche au journal", () => {
@@ -6134,7 +6146,9 @@ test("scan : messages traduits dans les 4 langues, sans jamais annoncer d'envoi"
   const { api } = construireContexte();
   const cles = ["scan.intro", "scan.bouton", "scan.bouton_fichier", "scan.aide", "scan.lecture",
     "scan.lu", "scan.rien", "scan.echec_pdf",
-    "scan.echec_reperes", "scan.echec_feuille", "scan.echec_image", "scan.titre_revue",
+    "scan.echec_reperes", "scan.echec_feuille", "scan.echec_image", "scan.echec_ambigu",
+    "scan.lu_de", "scan.rien_de", "scan.revue_qui", "scan.revue_aide", "scan.case_aide",
+    "scan.doutes_tous", "scan.doutes_aucun",
     "scan.revue", "scan.revue_doutes", "scan.doute_aide", "scan.valider", "scan.annuler",
     "scan.annule", "scan.applique"];
   const manquantes = [];
@@ -6149,6 +6163,147 @@ test("scan : messages traduits dans les 4 langues, sans jamais annoncer d'envoi"
     assert.ok(/rien n'est envoyé|nothing is sent|er wordt niets verstuurd|wird nichts gesendet/i
       .test(api.I18N[lg]["scan.aide"]), "la promesse doit être dite en " + lg);
   });
+});
+
+/* ---------- Reconnaître la feuille, plutôt que de la faire désigner ----------
+ * La bande de contrôle ne dit pas seulement « quelle grille attendre » : elle
+ * dit DE QUI et DE QUAND est la feuille. Le parent n'a donc plus à choisir
+ * l'enfant avant de photographier — et, surtout, ne peut plus se tromper en le
+ * choisissant, ce qui écrirait la semaine de l'un dans le dossier de l'autre. */
+function plansFratrie(semaine, enfants) {
+  const base = planDeSynthese();
+  return enfants.map(id => Object.assign({}, base, {
+    enfantId: id, semaine, empreinte: [id, semaine].concat(base.missions)
+  }));
+}
+
+test("scan : la feuille dit de quel enfant elle est, même si la fratrie a les mêmes missions", () => {
+  const { api } = construireContexte();
+  const [lou, noe] = plansFratrie("2026-09-07", ["enf-lou", "enf-noe"]);
+  const coches = { "ranger:0": true, "compost:6": true };
+  // La feuille sous l'objectif est celle de Noé…
+  const img = feuilleDeSynthese(api, { lignes: noe.lignes, missions: noe.empreinte, coches });
+  // …alors que l'enfant affiché à l'écran est Lou. Leurs missions sont
+  // identiques : seule l'empreinte les distingue.
+  const res = api.scanFeuilles(img.gris, img.l, img.h, [lou, noe]);
+  assert.strictEqual(res.ok, true, "la lecture doit aboutir : " + res.raison);
+  assert.strictEqual(res.plan.enfantId, "enf-noe",
+    "c'est la feuille qui désigne l'enfant, pas le dernier onglet ouvert");
+  const lues = {};
+  res.cases.forEach(c => { if (c.etat === "cochee") lues[c.mission + ":" + c.jour] = true; });
+  assert.deepStrictEqual(lues, coches);
+});
+
+test("scan : la feuille dit aussi de quelle semaine elle est", () => {
+  const { api } = construireContexte();
+  const [avant] = plansFratrie("2026-08-31", ["enf-lou"]);
+  const [maintenant] = plansFratrie("2026-09-07", ["enf-lou"]);
+  // Une feuille imprimée la semaine passée, retrouvée et encodée aujourd'hui :
+  // elle doit aller dans SA semaine, pas dans celle qui se trouve affichée.
+  const img = feuilleDeSynthese(api, { lignes: avant.lignes, missions: avant.empreinte, coches: { "dents:1": true } });
+  const res = api.scanFeuilles(img.gris, img.l, img.h, [maintenant, avant]);
+  assert.strictEqual(res.ok, true, res.raison);
+  assert.strictEqual(res.plan.semaine, "2026-08-31");
+});
+
+test("scan : deux feuilles candidates impossibles à départager — on refuse, on ne tire pas au sort", () => {
+  const { api } = construireContexte();
+  const [a, b] = plansFratrie("2026-09-07", ["enf-lou", "enf-lou"]);   // empreintes identiques
+  const img = feuilleDeSynthese(api, { lignes: a.lignes, missions: a.empreinte, coches: { "ranger:2": true } });
+  const res = api.scanFeuilles(img.gris, img.l, img.h, [a, b]);
+  assert.strictEqual(res.ok, false, "deux dossiers possibles : aucun ne doit être choisi au hasard");
+  assert.strictEqual(res.raison, "ambigu");
+});
+
+test("scan : une feuille qui ne correspond à aucun enfant proposé est refusée, pas rattachée au plus proche", () => {
+  const { api } = construireContexte();
+  const [lou, noe] = plansFratrie("2026-09-07", ["enf-lou", "enf-noe"]);
+  const [inconnu] = plansFratrie("2026-09-07", ["enf-parti"]);         // enfant supprimé depuis
+  const img = feuilleDeSynthese(api, { lignes: inconnu.lignes, missions: inconnu.empreinte, coches: {} });
+  const res = api.scanFeuilles(img.gris, img.l, img.h, [lou, noe]);
+  assert.strictEqual(res.ok, false);
+  assert.strictEqual(res.raison, "feuille_differente");
+});
+
+test("scan : l'empreinte imprimée porte l'enfant et la semaine, et la lecture les rend à l'écran", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const plan = ui.slice(ui.indexOf("function planFeuilleScan"), ui.indexOf("function htmlFeuilleSemaine"));
+  assert.ok(/empreinte: \[enf\.id, jours\[0\]\]\.concat\(missions\)/.test(plan),
+    "sans l'enfant NI la semaine dans l'empreinte, deux feuilles de la fratrie seraient indiscernables");
+  // Et l'écran suit la feuille : enfant reconnu, semaine reconnue, avant de rendre.
+  const lancement = ui.slice(ui.indexOf("async function lancerScanFeuille"), ui.indexOf("function scanPropositionActive"));
+  assert.ok(/etat\.enfants\[res\.plan\.enfantId\]/.test(lancement) && /semainePapierDebut = semaine/.test(lancement),
+    "la proposition doit s'afficher là où la feuille dit qu'elle va");
+  assert.ok(/etat\.enfantActif = enf\.id[\s\S]{0,200}ecrireCache\(\)/.test(lancement),
+    "l'onglet de l'enfant reconnu doit s'ouvrir, sinon la proposition reste invisible");
+  // Le prénom reconnu est écrit en toutes lettres : c'est ce qui permet au
+  // parent de rattraper une reconnaissance erronée avant d'enregistrer.
+  const bloc = ui.slice(ui.indexOf("function blocEncoderSemaine"), ui.indexOf("function decalerSemaine"));
+  assert.ok(/scan\.revue_qui[\s\S]{0,200}enf\.prenom/.test(bloc));
+});
+
+test("scan : pendant la relecture, chaque case se corrige d'un doigt — sans jamais toucher au journal", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const bloc = ui.slice(ui.indexOf("function blocEncoderSemaine"), ui.indexOf("function decalerSemaine"));
+  // Une case corrigible doit SE VOIR : sans cela le parent ne devine pas
+  // qu'elle est cliquable, les « ? » restent tels quels, et la relecture ne
+  // sert à rien.
+  assert.ok(/const enRevue = propActive && !n;/.test(bloc) && /enRevue \? " revue" : ""/.test(bloc),
+    "toute case relue doit porter sa marque de case corrigible");
+  assert.ok(/if \(enRevue\) b\.title = prop === "douteuse" \? t\("scan\.doute_aide"\) : t\("scan\.case_aide"\)/.test(bloc),
+    "et dire ce qu'un doigt y fera");
+  // Les raccourcis « douteuses » ne font qu'ajuster la proposition.
+  const rapide = bloc.slice(bloc.indexOf("scan-revue-doutes"), bloc.indexOf("scan-revue-actions"));
+  assert.ok(/scanProposition\.cases\[c\] = "cochee"/.test(rapide) && /delete scanProposition\.cases\[c\]/.test(rapide),
+    "accepter ou écarter les douteuses d'un coup doit rester possible");
+  assert.ok(!/modifierHistorique|ajusterMonnaie|crediterMission/.test(rapide),
+    "aucun raccourci ne doit écrire dans le journal : seule la validation le fait");
+});
+
+test("feuille papier : les repères sont devenus des planètes sans bouger d'un millimètre", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const feuille = ui.slice(ui.indexOf("function htmlFeuilleSemaine"), ui.indexOf("function imprimerFeuilleSemaine"));
+  assert.ok(/\.omr-rep, \.omr-bit\{position:absolute; top:1mm; width:5mm; height:5mm; border-radius:50%\}/.test(feuille),
+    "rondes, mais toujours 5 mm et toujours centrées à 1 mm du haut d'une ligne de 7 mm");
+  assert.ok(/\.omr-rep\{left:calc\(50% - 2\.5mm\)/.test(feuille)
+    && /\.omr-bit\.g\{left:calc\(50% - 5\.75mm\)\}/.test(feuille)
+    && /\.omr-bit\.d\{left:calc\(50% \+ 0\.75mm\)\}/.test(feuille),
+    "les centres sont le contrat passé avec le lecteur : les embellir ne doit pas les déplacer");
+  // Le halo des coins doit rester CLAIR. Sombre, il ferait corps avec le
+  // repère : la tache grossirait, et son centre se déplacerait avec elle.
+  const halo = /box-shadow:[^;}]*#([0-9a-fA-F]{6})/.exec(feuille);
+  assert.ok(halo, "les repères de coin portent un halo");
+  const [r, v, b] = [0, 2, 4].map(i => parseInt(halo[1].slice(i, i + 2), 16));
+  assert.ok(0.299 * r + 0.587 * v + 0.114 * b > 200,
+    "un halo sombre déplacerait le centre du repère, donc toute la lecture");
+});
+
+test("minuteur : quand le décompte passe à un autre enfant, c'est sa page d'accueil qui s'ouvre, en haut", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  const e = api.etatVierge();
+  const ids = Object.keys(e.enfants);
+  api.lierEtat(e);
+  api.definirReglageTimer(10, "parEnfant");
+  api.demarrerTimerPourEnfant(ids[0]);
+  api.etat.enfantActif = ids[1];
+  assert.strictEqual(api.timerSurChangementEnfant(), true,
+    "le décompte vient de changer de mains : l'écran doit le savoir");
+  assert.strictEqual(api.timerEtat.enfant, ids[1]);
+  assert.strictEqual(api.timerSurChangementEnfant(), false,
+    "et ne le dire qu'une fois, sinon chaque rendu renverrait à l'accueil");
+  // rendre() en tire la conséquence.
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  assert.ok(/if \(timerSurChangementEnfant\(\) && !modeParents\) \{[\s\S]{0,320}remonterEnHaut\(\)[\s\S]{0,320}etat\.vue = "accueil"/.test(ui),
+    "l'enfant dont le temps démarre doit retrouver SA page d'accueil, et depuis le haut");
+  // Mais pas dans l'espace parents : y changer d'enfant pour encoder une
+  // feuille ne doit pas renvoyer le parent à l'accueil au milieu de sa saisie.
+  assert.ok(/&& !modeParents\)/.test(ui),
+    "le renvoi à l'accueil ne vaut que côté enfant");
 });
 
 /* Un JPEG minimal mais crédible : en-tête FF D8 FF, un corps qui ne contient

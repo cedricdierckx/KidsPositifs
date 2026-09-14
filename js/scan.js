@@ -12,18 +12,22 @@
  * nous-mêmes : plutôt que de « comprendre » une image quelconque, on y place
  * d'abord des repères, puis on ne fait que redresser et mesurer.
  *
- *   1. REPÈRES. Quatre carrés noirs pleins, aux quatre coins de la grille des
- *      jours (centres des cases extrêmes). Ils donnent les quatre points qui
- *      suffisent à annuler la perspective d'une photo prise de travers.
+ *   1. REPÈRES. Quatre taches sombres pleines, aux quatre coins de la grille
+ *      des jours (centres des cases extrêmes). Ils donnent les quatre points
+ *      qui suffisent à annuler la perspective d'une photo prise de travers.
+ *      Leur forme est libre — ce sont de petites planètes à l'impression —,
+ *      seuls leurs CENTRES font foi.
  *   2. REPÈRE CANONIQUE. On ramène ces quatre centres sur (0,0) (1,0) (0,1)
  *      (1,1). Dans ce carré, toute case a une position calculable : les sept
  *      colonnes de jours sont régulières (x = i/6), et les lignes le sont
  *      aussi car l'impression leur impose une hauteur unique (y = (k+1)/(R+1)).
- *   3. BANDE DE CONTRÔLE. Dix marques noires ou blanches, sur la ligne des
- *      repères du haut, encodent le nombre de lignes et une empreinte de la
- *      liste des missions. Sans elles, une feuille imprimée la semaine passée
- *      — ou avant un changement de missions — serait lue en silence sur les
- *      mauvaises lignes. Avec elles, on refuse et on le dit.
+ *   3. BANDE DE CONTRÔLE. Vingt marques noires ou blanches, sur les deux
+ *      lignes de repères, encodent le nombre de lignes et une empreinte de ce
+ *      qui identifie la feuille : l'enfant, la semaine, la liste des missions.
+ *      Elle sert deux fois — à RECONNAÎTRE la feuille parmi celles de la
+ *      fratrie (inutile alors de demander au parent de quel enfant il s'agit :
+ *      la feuille le dit), et à REFUSER celle qui ne correspond à aucune,
+ *      plutôt que de la lire en silence sur les mauvaises lignes.
  *   4. MESURE. Chaque case à cocher est un carré vide à l'impression : il
  *      suffit d'y mesurer la proportion d'encre. Au-dessus d'un seuil, cochée ;
  *      en dessous d'un autre, vide ; entre les deux, DOUTEUSE — et c'est le
@@ -326,12 +330,23 @@ function scanBitsAttendus(nbLignes, ids) {
 
 /* ---------- 6. Lecture complète ---------- */
 
-/* `plan` décrit ce que l'application S'ATTEND à trouver, pour l'enfant et la
- * semaine choisis par le parent :
- *   { lignes: [ { type:"cat" } | { type:"mission", id, jours:[bool×7] } ], missions:[ids] }
- * `jours[i]` dit si la case existe (mission prévue ce jour-là et pas déjà faite
- * à l'impression) : une case non imprimée n'est jamais mesurée. */
-function scanFeuille(gris, l, h, plan) {
+/* Un « plan » décrit une feuille TELLE QU'ELLE A ÉTÉ IMPRIMÉE, pour un enfant
+ * et une semaine :
+ *   { lignes: [ { type:"cat" } | { type:"mission", id, jours:[bool×7] } ],
+ *     missions:[ids], empreinte:[ce qui identifie la feuille] }
+ * `jours[i]` dit si la case existe (mission prévue ce jour-là) : une case non
+ * imprimée n'est jamais mesurée.
+ *
+ * On ne lit pas UNE feuille supposée, mais on présente PLUSIEURS feuilles
+ * possibles — chaque enfant, chaque semaine récente — et c'est la bande de
+ * contrôle qui désigne laquelle on a réellement sous les yeux. Demander au
+ * parent de choisir l'enfant avant de photographier était une question dont
+ * la feuille elle-même porte la réponse ; et se tromper d'enfant, c'était
+ * écrire la semaine de l'un dans le dossier de l'autre. */
+function scanFeuilles(gris, l, h, plans) {
+  const liste = (Array.isArray(plans) ? plans : [plans]).filter(p => p && p.lignes && p.lignes.length);
+  if (!liste.length) return { ok: false, raison: "feuille_differente" };
+
   const bin = scanBinariser(gris, l, h);
   const rep = scanReperes(bin, l, h);
   if (!rep) return { ok: false, raison: "reperes" };
@@ -344,20 +359,38 @@ function scanFeuille(gris, l, h, plan) {
 
   // Fenêtre de mesure, identique pour les marques de contrôle et pour les
   // cases : même taille en millimètres sur le papier (voir SCAN_FENETRE_*).
-  const R = plan.lignes.length;
+  // Elle dépend du nombre de lignes, donc les bits se relisent une fois par
+  // hauteur de grille distincte — et une seule fois, quel que soit le nombre
+  // d'enfants et de semaines proposés.
   const demiX = (1 / 6) * SCAN_FENETRE_COL;
-  const demiY = (1 / (R + 1)) * SCAN_FENETRE_LIGNE;
+  const lus = {};
+  const bitsPour = (R) => {
+    if (!lus[R]) {
+      const demiY = (1 / (R + 1)) * SCAN_FENETRE_LIGNE;
+      const b = [];
+      for (let j = 0; j < SCAN_BITS; j++) {
+        const [bx, by] = scanPosBit(j);
+        b.push(scanEncre(bin, l, h, H, bx, by, demiX, demiY) > 0.45 ? 1 : 0);
+      }
+      lus[R] = b;
+    }
+    return lus[R];
+  };
+  const attendusDe = (p) => scanBitsAttendus(p.lignes.length, p.empreinte || p.missions);
 
-  // Bande de contrôle : la feuille correspond-elle bien à ce qu'on croit lire ?
-  const bits = [];
-  for (let j = 0; j < SCAN_BITS; j++) {
-    const [bx, by] = scanPosBit(j);
-    bits.push(scanEncre(bin, l, h, H, bx, by, demiX, demiY) > 0.45 ? 1 : 0);
+  const retenus = liste.filter(p => bitsPour(p.lignes.length).join("") === attendusDe(p).join(""));
+  if (!retenus.length) {
+    const p = liste[0];
+    return { ok: false, raison: "feuille_differente", bits: bitsPour(p.lignes.length), attendus: attendusDe(p) };
   }
-  const attendus = scanBitsAttendus(plan.lignes.length, plan.missions);
-  if (bits.join("") !== attendus.join("")) {
-    return { ok: false, raison: "feuille_differente", bits, attendus };
-  }
+  // Deux feuilles candidates ne peuvent pas porter la même bande de contrôle.
+  // Si cela arrivait tout de même (collision d'empreinte), mieux vaut refuser
+  // que tirer au sort l'enfant dans le dossier duquel on va écrire.
+  if (retenus.length > 1) return { ok: false, raison: "ambigu" };
+
+  const plan = retenus[0];
+  const R = plan.lignes.length;
+  const demiY = (1 / (R + 1)) * SCAN_FENETRE_LIGNE;
 
   // Mesure des cases. Une case vide imprimée est un carré fin : même mesurée
   // en son centre, un peu d'encre peut apparaître (trame, ombre), d'où un
@@ -374,8 +407,11 @@ function scanFeuille(gris, l, h, plan) {
       cases.push({ mission: ligne.id, jour: i, etat, encre: r });
     });
   });
-  return { ok: true, cases, douteuses, reperes: rep };
+  return { ok: true, plan, cases, douteuses, reperes: rep };
 }
+
+// Une seule feuille possible : le cas d'usage d'origine, et celui des tests.
+function scanFeuille(gris, l, h, plan) { return scanFeuilles(gris, l, h, [plan]); }
 
 /* ---------- PDF de scanner ----------
  * Un scanner de bureau rend un PDF, pas une image — et embarquer un moteur de
@@ -390,7 +426,7 @@ function scanFeuille(gris, l, h, plan) {
  * Renvoie les pages trouvées, de la plus lourde à la plus légère (la page
  * scannée avant ses vignettes éventuelles). Un PDF de plusieurs enfants en
  * contient plusieurs : c'est la bande de contrôle, ensuite, qui reconnaîtra
- * laquelle correspond à l'enfant et à la semaine choisis.
+ * de quel enfant et de quelle semaine chaque page est la feuille.
  *
  * Limite assumée : une numérisation en noir et blanc pur est souvent encodée
  * en CCITT (fax) et non en JPEG. On ne la trouvera pas ici — l'appelant le dit
@@ -456,7 +492,7 @@ function scanPixelsDepuisBlob(blob) {
   });
 }
 
-async function scanDepuisFichier(fichier, plan) {
+async function scanDepuisFichier(fichier, plans) {
   if (typeof document === "undefined" || typeof URL === "undefined") {
     return { ok: false, raison: "indisponible" };
   }
@@ -474,7 +510,7 @@ async function scanDepuisFichier(fichier, plan) {
     for (const page of pages) {
       const px = await scanPixelsDepuisBlob(new Blob([page], { type: "image/jpeg" }));
       if (!px) continue;
-      const r = scanFeuille(px.gris, px.l, px.h, plan);
+      const r = scanFeuilles(px.gris, px.l, px.h, plans);
       if (r.ok) return r;
       dernier = r;
     }
@@ -482,5 +518,5 @@ async function scanDepuisFichier(fichier, plan) {
   }
   const px = await scanPixelsDepuisBlob(fichier);
   if (!px) return { ok: false, raison: "image" };
-  return scanFeuille(px.gris, px.l, px.h, plan);
+  return scanFeuilles(px.gris, px.l, px.h, plans);
 }

@@ -180,11 +180,11 @@ function construireContexte(options) {
       // mode « verrouillage permanent » : cycle glissant de 6 h, sans PIN
       TIMER_CYCLE_MS, timerFinCycle, assurerCyclePermanent, assurerTimerPermanent,
       verrouillerAppPermanent, contournerVerrouPermanent, restesDisponibles, finDeTempsEnfant,
-      demarrerTimerPourEnfant,
+      demarrerTimerPourEnfant, timerSurChangementEnfant,
       get modeParents() { return modeParents; }, set modeParents(v) { modeParents = v; },
       // lecture optique de la feuille papier (tout se calcule hors navigateur)
       scanGrisDepuisRgba, scanReduire, scanBinariser, scanComposantes, scanReperes,
-      scanHomographie, scanProjeter, scanEncre, scanFeuille,
+      scanHomographie, scanProjeter, scanEncre, scanFeuille, scanFeuilles,
       scanXJour, scanYLigne, scanPosBit, scanEmpreinteMissions, scanBitsAttendus,
       scanJpegsDansPdf, scanEstPdf,
       SCAN_BITS, SCAN_BITS_LIGNES, SCAN_BITS_EMPREINTE, SCAN_SEUIL_COCHE, SCAN_SEUIL_VIDE, SCAN_LARGEUR_TRAVAIL,

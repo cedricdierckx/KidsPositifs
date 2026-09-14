@@ -396,10 +396,12 @@ function continuerAvecEnfant(id) {
 // Mode « par enfant » : budgets PERSISTANTS. Quand on change d'enfant actif,
 // on mémorise le temps restant de l'enfant qui sort, et on reprend (sans
 // réinitialiser) le temps restant de l'enfant qui entre.
+// Renvoie true quand le décompte vient de PASSER à un autre enfant : c'est à
+// ce moment-là, et à ce moment-là seulement, que l'écran doit devenir le sien.
 function timerSurChangementEnfant() {
-  if (!timerEtat.actif || timerEtat.choix) return;
+  if (!timerEtat.actif || timerEtat.choix) return false;
   const mode = timerMode();
-  if (mode !== "parEnfant" && mode !== "permanent") return;
+  if (mode !== "parEnfant" && mode !== "permanent") return false;
   const enf = enfantActif();
   const id = enf ? enf.id : null;
   if (id && id !== timerEtat.enfant) {
@@ -414,7 +416,9 @@ function timerSurChangementEnfant() {
     timerEtat.prep = Date.now() + PREP_MS;
     timerEtat.fin = 0;
     ecrireTimer();
+    return true;
   }
+  return false;
 }
 function verrouillerApp() {
   timerEtat.verrouille = true;

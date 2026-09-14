@@ -500,6 +500,17 @@ main{max-width:680px; margin:0 auto; padding:14px}
   border-radius:14px; padding:12px; margin:10px 0}
 .scan-revue-t{margin:0 0 4px; font-weight:800; font-size:15px}
 .scan-revue-d{margin:0 0 10px; font-size:13px; line-height:1.4; color:#5a4a2a}
+.scan-revue-aide{margin:0 0 10px; font-size:12.5px; line-height:1.4; color:#6b5a38;
+  background:rgba(255,255,255,.6); border-radius:10px; padding:7px 9px}
+.scan-revue-doutes{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 8px}
+.scan-revue-doutes .btn-secondaire{flex:1 1 150px; margin:0; font-size:13px}
+/* Une case relue est une case qu'on peut corriger d'un doigt : elle doit en
+   avoir l'air, sinon les « ? » restent tels quels et la relecture ne sert à
+   rien. Le doute, lui, respire doucement pour appeler le regard. */
+.enc-case.revue:not(.propose):not(.doute){border-style:dashed; border-color:#c9b78a}
+.enc-case.doute{animation:doutePouls 1.6s ease-in-out infinite}
+@keyframes doutePouls{0%,100%{transform:scale(1)} 50%{transform:scale(1.12)}}
+@media (prefers-reduced-motion: reduce){ .enc-case.doute{animation:none} }
 .scan-revue-actions{display:flex; gap:8px; flex-wrap:wrap}
 .scan-revue-actions .gros-bouton, .scan-revue-actions .btn-secondaire{flex:1 1 150px; margin:0}
 /* Deux portes d'entrée équivalentes : l'appareil photo et le fichier déjà scanné. */

@@ -3986,7 +3986,18 @@ function rendre() {
     case "reglages": vueReglages(c); break;
   }
   majPastilleAttente();
-  timerSurChangementEnfant();
+  // Le décompte vient de passer à un autre enfant : c'est SA page d'accueil
+  // qui doit s'ouvrir, et en haut. Sans cela, il reprend la main sur l'écran
+  // où le précédent s'était arrêté — au milieu de l'avatar d'un autre, ou à
+  // mi-hauteur d'une liste de missions qui n'est pas la sienne.
+  // Sauf dans l'espace parents : le parent y change d'enfant pour encoder une
+  // feuille ou régler une mission, et se faire renvoyer à l'accueil au milieu
+  // de son travail serait insupportable. Le transfert de budget, lui, a bien
+  // lieu dans les deux cas — c'est l'ÉCRAN qui reste où il est.
+  if (timerSurChangementEnfant() && !modeParents) {
+    remonterEnHaut();
+    if (etat.vue !== "accueil") { etat.vue = "accueil"; ecrireCache(); rendre(); return; }
+  }
   synchroniserTimerUI();
   if (typeof observerRoues === "function") observerRoues();
 }
@@ -4333,24 +4344,53 @@ function choisirFeuilleAScanner(appareilPhoto) {
   inp.click();
 }
 
+/* Toutes les feuilles que le parent PEUT avoir sous la main : chaque enfant,
+ * et les semaines autour de celle qui est affichée. On ne lui demande donc ni
+ * de quel enfant ni de quelle semaine est la feuille — la bande de contrôle
+ * imprimée dessus porte la réponse (voir planFeuilleScan). Une feuille
+ * imprimée il y a plus de deux mois, ou pour un enfant supprimé depuis, ne
+ * sera reconnue par aucun candidat : elle sera refusée, pas devinée. */
+const SCAN_SEMAINES_AVANT = 8, SCAN_SEMAINES_APRES = 1;
+function plansFeuillesPossibles(semaineAffichee) {
+  const plans = [];
+  const enfants = Object.values(etat.enfants);
+  // L'enfant et la semaine affichés d'abord : à égalité impossible près, cela
+  // ne change rien au résultat, mais rend la lecture la plus fréquente la plus
+  // rapide et l'ordre des candidats prévisible.
+  const ordre = enfants.slice().sort((a, b) =>
+    (a.id === etat.enfantActif ? -1 : 0) - (b.id === etat.enfantActif ? -1 : 0));
+  const decalages = [0];
+  for (let i = 1; i <= SCAN_SEMAINES_APRES; i++) decalages.push(i);
+  for (let i = 1; i <= SCAN_SEMAINES_AVANT; i++) decalages.push(-i);
+  decalages.forEach(k => {
+    const sem = decalerSemaine(semaineAffichee, k * 7);
+    ordre.forEach(e => plans.push(planFeuilleScan(e, joursSemaine(sem))));
+  });
+  return plans;
+}
+
 async function lancerScanFeuille(fichier) {
-  const enf = enfantActif();
-  if (!enf) return;
-  const semaine = semainePapierDebut || debutSemaine(aujourdHui());
-  const jours = joursSemaine(semaine);
-  const plan = planFeuilleScan(enf, jours);
+  const semaineAffichee = semainePapierDebut || debutSemaine(aujourdHui());
   toast(t("scan.lecture"), "info");
   let res;
-  try { res = await scanDepuisFichier(fichier, plan); }
+  try { res = await scanDepuisFichier(fichier, plansFeuillesPossibles(semaineAffichee)); }
   catch (e) { res = { ok: false, raison: "image" }; }
 
   if (!res.ok) {
     const cle = res.raison === "feuille_differente" ? "scan.echec_feuille"
+              : res.raison === "ambigu" ? "scan.echec_ambigu"
               : res.raison === "reperes" ? "scan.echec_reperes"
               : res.raison === "pdf_sans_image" ? "scan.echec_pdf" : "scan.echec_image";
     toast(t(cle), "info");
     return;
   }
+
+  // La feuille s'est fait reconnaître : c'est elle qui dit de quel enfant et
+  // de quelle semaine elle est, pas le dernier onglet ouvert.
+  const enf = etat.enfants[res.plan.enfantId];
+  if (!enf) { toast(t("scan.echec_feuille"), "info"); return; }
+  const semaine = res.plan.semaine;
+  const jours = joursSemaine(semaine);
 
   // On ne propose que du NOUVEAU : une case déjà consignée dans le journal
   // (cochée dans l'app pendant la semaine, ou déjà imprimée avec son ✓) n'a
@@ -4364,10 +4404,17 @@ async function lancerScanFeuille(fichier) {
     if (c.etat === "cochee") nettes++; else aConfirmer++;
   });
 
-  if (!nettes && !aConfirmer) { toast(t("scan.rien"), "info"); return; }
+  // Se placer sur l'enfant et la semaine reconnus AVANT de rendre : sans cela,
+  // la proposition resterait invisible, rattachée à un onglet que le parent
+  // n'a pas ouvert.
+  etat.enfantActif = enf.id;
+  semainePapierDebut = semaine;
+  ecrireCache();
+
+  if (!nettes && !aConfirmer) { toast(t("scan.rien_de", { prenom: enf.prenom }), "info"); rendre(); return; }
   scanProposition = { enfantId: enf.id, semaine, cases };
   encodeMode = "detaille";            // la relecture se fait dans la grille, pas ailleurs
-  toast(t("scan.lu", { n: nettes }), "succes");
+  toast(t("scan.lu_de", { prenom: enf.prenom, n: nettes }), "succes");
   rendre();
 }
 
@@ -4497,8 +4544,34 @@ function blocEncoderSemaine() {
     const nettes = vals.filter(v => v === "cochee").length;
     const doutes = vals.filter(v => v === "douteuse").length;
     const bandeau = el("div", "scan-revue");
-    bandeau.innerHTML = `<p class="scan-revue-t">📷 ${t("scan.titre_revue")}</p>
-      <p class="scan-revue-d">${t("scan.revue", { n: nettes })}${doutes ? " " + t("scan.revue_doutes", { n: doutes }) : ""}</p>`;
+    // Le prénom et la semaine RECONNUS sont écrits en toutes lettres : c'est
+    // la feuille qui les a désignés, pas le parent — il doit donc pouvoir
+    // vérifier d'un coup d'œil qu'on ne s'apprête pas à écrire chez l'autre.
+    bandeau.innerHTML = `<p class="scan-revue-t">📷 ${t("scan.revue_qui", {
+        prenom: echapper(enf.prenom), semaine: libelleSemaine(jours[0], jours[6]) })}</p>
+      <p class="scan-revue-d">${t("scan.revue", { n: nettes })}${doutes ? " " + t("scan.revue_doutes", { n: doutes }) : ""}</p>
+      <p class="scan-revue-aide">👆 ${t("scan.revue_aide")}</p>`;
+    // Corriger case par case reste la règle ; mais relire dix « ? » un à un
+    // quand la photo est simplement un peu pâle (ou un peu trop nette) est une
+    // corvée dont on peut faire l'économie — en la rendant explicite, jamais
+    // automatique.
+    if (doutes) {
+      const rapide = el("div", "scan-revue-doutes");
+      const tous = el("button", "btn-secondaire", t("scan.doutes_tous", { n: doutes }));
+      tous.onclick = () => majSansSaut(() => {
+        Object.keys(scanProposition.cases).forEach(c => {
+          if (scanProposition.cases[c] === "douteuse") scanProposition.cases[c] = "cochee";
+        });
+      });
+      const aucun = el("button", "btn-secondaire", t("scan.doutes_aucun"));
+      aucun.onclick = () => majSansSaut(() => {
+        Object.keys(scanProposition.cases).forEach(c => {
+          if (scanProposition.cases[c] === "douteuse") delete scanProposition.cases[c];
+        });
+      });
+      rapide.appendChild(tous); rapide.appendChild(aucun);
+      bandeau.appendChild(rapide);
+    }
     const actions = el("div", "scan-revue-actions");
     const ok = el("button", "gros-bouton planete", t("scan.valider", { n: nettes }));
     ok.onclick = () => validerScanProposition();
@@ -4534,16 +4607,23 @@ function blocEncoderSemaine() {
         // enregistré, pour qu'aucune des deux ne se fasse passer pour l'autre.
         const cle = m.id + ":" + i;
         const prop = (propActive && !n) ? scanProposition.cases[cle] : null;
+        // Pendant la relecture, TOUTE case se corrige d'un doigt — y compris
+        // celle que la photo a cru vide. On le montre (la case se distingue)
+        // plutôt que de compter sur le parent pour deviner qu'elle est
+        // cliquable : sinon les « ? » restent tels quels et l'outil ne sert à
+        // rien.
+        const enRevue = propActive && !n;
         const b = el("button",
           "enc-case" + (n ? " on" : "") + (planifie ? "" : " hors")
+          + (enRevue ? " revue" : "")
           + (prop === "cochee" ? " propose" : "") + (prop === "douteuse" ? " doute" : ""),
           n ? "✅" : (prop === "cochee" ? "✓" : (prop === "douteuse" ? "?" : (planifie ? "" : "·"))));
         if (!planifie) b.title = t("papier.hors_jour");
-        if (prop === "douteuse") b.title = t("scan.doute_aide");
+        if (enRevue) b.title = prop === "douteuse" ? t("scan.doute_aide") : t("scan.case_aide");
         b.onclick = () => majSansSaut(() => {
           // Pendant la relecture d'une photo, on ne touche pas au journal : on
           // ajuste la proposition, et c'est la validation qui écrit.
-          if (propActive && !n) {
+          if (enRevue) {
             if (scanProposition.cases[cle] === "cochee") delete scanProposition.cases[cle];
             else scanProposition.cases[cle] = "cochee";
             return;
@@ -4617,7 +4697,14 @@ function planFeuilleScan(enf, jours) {
       });
     });
   });
-  return { lignes, missions };
+  // L'empreinte imprimée dans la bande de contrôle ne dit pas seulement QUELLE
+  // grille attendre, mais DE QUI et DE QUAND est la feuille. C'est ce qui
+  // permet, à la lecture, de reconnaître l'enfant sans le demander — et
+  // surtout d'éviter la seule erreur vraiment grave ici : écrire la semaine
+  // d'un enfant dans le dossier de son frère, deux feuilles de la fratrie se
+  // ressemblant à s'y méprendre quand les missions sont les mêmes.
+  return { lignes, missions, enfantId: enf.id, semaine: jours[0],
+    empreinte: [enf.id, jours[0]].concat(missions) };
 }
 
 function htmlFeuilleSemaine(mode) {
@@ -4637,7 +4724,7 @@ function htmlFeuilleSemaine(mode) {
     // ligne par ligne, qui permet à une photo de savoir quelle case appartient
     // à quelle mission — les deux ne doivent donc jamais être écrites deux fois.
     const plan = planFeuilleScan(enf, jours);
-    const bits = (mode === "jours") ? scanBitsAttendus(plan.lignes.length, plan.missions) : [];
+    const bits = (mode === "jours") ? scanBitsAttendus(plan.lignes.length, plan.empreinte) : [];
     plan.lignes.forEach(ligne => {
       if (ligne.type === "cat") {
         const cat = CATEGORIES[ligne.cat];
@@ -4669,10 +4756,12 @@ function htmlFeuilleSemaine(mode) {
         lignes += `<tr><td class="m">${nom}</td><td class="c large">${totMission || ""}</td></tr>`;
       }
     });
-    // Rangs de repères : quatre carrés noirs aux coins de la grille des jours,
-    // et vingt marques de contrôle (nombre de lignes + empreinte des missions).
-    // Sans eux, aucune photo n'est lisible ; avec eux, une feuille d'une autre
-    // semaine est reconnue et refusée au lieu d'être encodée à tort.
+    // Rangs de repères : quatre taches pleines aux coins de la grille des jours
+    // (de petites planètes, à l'impression), et vingt marques de contrôle
+    // (nombre de lignes + empreinte de l'enfant, de la semaine et des missions).
+    // Sans eux, aucune photo n'est lisible ; avec eux, la feuille dit d'elle-même
+    // de qui et de quand elle est — et celle qu'on ne reconnaît pas est refusée
+    // au lieu d'être encodée à tort.
     const rangOmr = (bas) => `<tr class="omr-rang"><td class="m"></td>` + lettres.map((_, i) => {
       if (i === 0 || i === 6) return `<td class="c"><span class="omr-rep"></span></td>`;
       const j0 = (i - 1) * 2 + (bas ? 10 : 0);
@@ -4831,17 +4920,24 @@ function htmlFeuilleSemaine(mode) {
         border:0.35mm solid #9aa7b3; border-radius:0.8mm; background:#fff;
         font-size:3.2mm; line-height:5mm; color:#1d7a52}
       .omr-case.faite{border-color:#1d7a52}
-      /* Repères de coin et marques de contrôle : carrés PLEINS de 5 mm, posés
-         au millimètre près par rapport au centre de leur case (c'est cette
-         position que le lecteur recalcule). */
-      .omr-rang{height:7mm}
-      .omr-rep, .omr-bit{position:absolute; top:1mm; width:5mm; height:5mm}
-      .omr-rep{left:calc(50% - 2.5mm); background:#000}
+      /* Repères de coin et marques de contrôle : taches PLEINES de 5 mm,
+         posées au millimètre près par rapport au centre de leur case (c'est
+         cette position, et elle seule, que le lecteur recalcule).
+         Leur FORME, en revanche, lui est indifférente : une feuille faite pour
+         un enfant n'a aucune raison d'afficher une rangée de carrés noirs. Ce
+         sont donc de petites planètes rondes, posées sur une bande claire, et
+         les repères de coin portent un halo. Ce halo est volontairement CLAIR :
+         sombre, il serait lu comme faisant partie de la tache et en
+         déplacerait le centre. */
+      .omr-rang{height:7mm; background:#fdf5e6}
+      .omr-rang td{border-color:#fdf5e6}
+      .omr-rep, .omr-bit{position:absolute; top:1mm; width:5mm; height:5mm; border-radius:50%}
+      .omr-rep{left:calc(50% - 2.5mm); background:#111a24; box-shadow:0 0 0 0.9mm #ffe0a8}
       .omr-bit{background:transparent}
-      .omr-bit.on{background:#000}
+      .omr-bit.on{background:#111a24}
       .omr-bit.g{left:calc(50% - 5.75mm)}   /* centre à -3,25 mm du milieu */
       .omr-bit.d{left:calc(50% + 0.75mm)}   /* centre à +3,25 mm du milieu */
-      .omr-rang td{border-color:#fff}
+      .omr-note{margin-top:6px; color:#a38a5c; font-weight:700}
       td.hc.faite{background:#eef6ff;font-size:14px}
       .humeur{margin-top:8px} .humeur-t{font-size:10.5px;font-weight:800;margin-bottom:2px}
       .humeur-tbl td.hc{font-size:11px;letter-spacing:0;white-space:nowrap}
@@ -4858,6 +4954,7 @@ function htmlFeuilleSemaine(mode) {
     <div class="tete"><div class="logo">🌟 ${APP_NOM}${famille ? " · " + echapper(famille) : ""}</div><div class="sem">🗓️ ${titreSem}</div></div>
     <p class="intro">${t("papier.feuille_intro")}</p>
     <div class="grille">${corps}</div>
+    ${mode === "jours" ? `<p class="pied omr-note">🪐 ${t("papier.omr_note")}</p>` : ""}
     <p class="pied">${t("papier.feuille_pied")}</p>
     </body></html>`;
   return html;
@@ -7147,12 +7244,18 @@ function sectionVisible(section) {
   }
 }
 
+// Remonte en haut de page. Un écran qui change de contenu sans remonter laisse
+// l'utilisateur au milieu de quelque chose qu'il n'a pas demandé.
+function remonterEnHaut() {
+  if (typeof window !== "undefined" && typeof window.scrollTo === "function") window.scrollTo(0, 0);
+}
+
 // Change l'onglet parent affiché ET remonte en haut de page : rester scrollé
 // plus bas qu'où on était sur le précédent onglet serait déroutant, chaque
 // section démarrant son propre contenu depuis le haut.
 function changerOngletParent(id) {
   ongletParent = id;
-  if (typeof window !== "undefined" && typeof window.scrollTo === "function") window.scrollTo(0, 0);
+  remonterEnHaut();
   rendre();
 }
 // Change d'onglet parent d'un cran (dir = +1 suivant, -1 précédent), en boucle.
