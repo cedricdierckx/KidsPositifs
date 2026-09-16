@@ -13,12 +13,27 @@
   <meta property="og:title" content="FamiTeam — Une ambiance positive en famille">
   <meta property="og:description" content="Deux minutes par jour, en famille : valoriser les comportements positifs des 3-12 ans, sans jamais retirer de points. Gratuit, sans publicité.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://famiteam.com/">
-  <meta property="og:image" content="https://famiteam.com/images/apercu-enfant.png">
+  <meta property="og:url" content="https://fami.team/">
+  <meta property="og:image" content="https://fami.team/images/apercu-enfant.png">
   <meta property="og:locale" content="fr_BE">
   <meta property="og:site_name" content="FamiTeam">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="canonical" href="https://famiteam.com/">
+  <meta name="twitter:title" content="FamiTeam — Une ambiance positive en famille">
+  <meta name="twitter:description" content="Deux minutes par jour, en famille : valoriser les comportements positifs des 3-12 ans, sans jamais retirer de points. Gratuit, sans publicité.">
+  <meta name="twitter:image" content="https://fami.team/images/apercu-enfant.png">
+  <meta property="og:image:alt" content="L'écran enfant de FamiTeam : les missions du jour et les Cœurs gagnés.">
+  <link rel="canonical" href="https://fami.team/">
+  <!-- Versions linguistiques. L'application choisit la langue toute seule, mais un
+       moteur de recherche ne le sait pas : sans ces lignes, seule la version
+       française existe pour lui. Chaque page de langue renvoie vers toutes les
+       autres, y compris vers elle-même — Google exige cette réciprocité, sinon il
+       ignore l'ensemble du groupe. `x-default` désigne la page servie à un
+       visiteur dont la langue ne figure pas dans la liste. -->
+  <link rel="alternate" hreflang="fr" href="https://fami.team/">
+  <link rel="alternate" hreflang="en" href="https://fami.team/en">
+  <link rel="alternate" hreflang="nl" href="https://fami.team/nl">
+  <link rel="alternate" hreflang="de" href="https://fami.team/de">
+  <link rel="alternate" hreflang="x-default" href="https://fami.team/">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -26,12 +41,32 @@
     "name": "FamiTeam",
     "applicationCategory": "LifestyleApplication",
     "operatingSystem": "Tout navigateur web",
-    "url": "https://famiteam.com/",
+    "url": "https://fami.team/",
     "inLanguage": ["fr", "en", "nl", "de"],
     "audience": { "@type": "PeopleAudience", "suggestedMinAge": 3, "suggestedMaxAge": 12 },
     "description": "Application familiale gratuite pour les enfants de 3 à 12 ans : deux minutes par jour pour valoriser les comportements positifs, sans jamais retirer de points. Quand quelque chose se passe mal, l'enfant répare — et c'est la réparation qui est récompensée.",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+    "author": { "@type": "Person", "name": "Cédric Dierckx" },
+    "publisher": { "@type": "Person", "name": "Cédric Dierckx" },
+    "screenshot": [
+      "https://fami.team/images/apercu-enfant.png",
+      "https://fami.team/images/apercu-avatar.png",
+      "https://fami.team/images/apercu-parents.png"
+    ],
     "isAccessibleForFree": true
+  }
+  </script>
+  <!-- Identité du site, distincte de celle de l'application : c'est ce bloc qui
+       permet à Google d'associer le nom « FamiTeam » au domaine, et d'afficher ce
+       nom plutôt que « fami.team » sous le titre dans les résultats. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "FamiTeam",
+    "url": "https://fami.team/",
+    "inLanguage": "fr",
+    "publisher": { "@type": "Person", "name": "Cédric Dierckx" }
   }
   </script>
   <link rel="stylesheet" href="css/style.css?v=192">

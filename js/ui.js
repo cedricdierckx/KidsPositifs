@@ -3143,9 +3143,9 @@ const REPONSES_TYPES = [
   { id: "idee", titre: "Idée reçue, mais pas pour tout de suite",
     texte: `Bonjour,\n\nMerci pour l'idée. Je la note dans la liste.\n\nLes idées sont passées en revue par lots, à chaque mise à jour : quand plusieurs familles demandent\nla même chose, elle remonte naturellement en tête de liste.\n\nFamiTeam` },
   { id: "donnees", titre: "Question sur les données",
-    texte: `Bonjour,\n\nVos données sont hébergées en Europe, ne sont jamais revendues et ne servent à aucune publicité.\nNous demandons le strict minimum : prénom et date de naissance de l'enfant, rien d'autre.\n\nVous pouvez tout exporter ou tout supprimer en deux clics : Réglages → Mon compte.\nLe détail est ici : https://famiteam.com/confidentialite.html\n\nFamiTeam` },
+    texte: `Bonjour,\n\nVos données sont hébergées en Europe, ne sont jamais revendues et ne servent à aucune publicité.\nNous demandons le strict minimum : prénom et date de naissance de l'enfant, rien d'autre.\n\nVous pouvez tout exporter ou tout supprimer en deux clics : Réglages → Mon compte.\nLe détail est ici : https://fami.team/confidentialite\n\nFamiTeam` },
   { id: "faq", titre: "Renvoi vers la FAQ",
-    texte: `Bonjour,\n\nLa réponse se trouve ici : https://famiteam.com/faq.html\n\nSi la page ne répond pas à votre question, elle sera complétée lors d'une prochaine mise à jour.\n\nFamiTeam` }
+    texte: `Bonjour,\n\nLa réponse se trouve ici : https://fami.team/faq\n\nSi la page ne répond pas à votre question, elle sera complétée lors d'une prochaine mise à jour.\n\nFamiTeam` }
 ];
 
 /* Coefficient viral k : filleuls arrivés sur 30 jours ÷ familles actives sur
@@ -3577,7 +3577,7 @@ function blocAdminCroissance(c) {
   } else {
     tete.appendChild(el("p", "note", t("croiss.tout_fait")));
   }
-  tete.appendChild(el("p", "note croiss-url", t("croiss.url", { url: "famiteam.com/croissance" })));
+  tete.appendChild(el("p", "note croiss-url", t("croiss.url", { url: "fami.team/croissance" })));
   const lienPlan = el("a", "btn-secondaire", "📄 " + t("croiss.doc"));
   lienPlan.href = "https://github.com/cedricdierckx/kidspositifs/blob/main/PLAN-COMMERCIAL.md";
   lienPlan.target = "_blank"; lienPlan.rel = "noopener";

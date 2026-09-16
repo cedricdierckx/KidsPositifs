@@ -11,4 +11,4 @@ Disallow: /defi.html
 Disallow: /challenge
 Disallow: /challenge.html
 
-Sitemap: https://famiteam.com/sitemap.xml
+Sitemap: https://fami.team/sitemap.xml

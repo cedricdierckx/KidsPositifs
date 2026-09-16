@@ -11,7 +11,8 @@ const cible = path.join(racine, "www");
 
 // Ce qui compose l'app : les pages, leurs styles, leur code, leurs images.
 const A_COPIER = [
-  "index.html", "croissance.html", "defi.html", "challenge.html",
+  "index.html", "en.html", "nl.html", "de.html",
+  "croissance.html", "defi.html", "challenge.html",
   "confidentialite.html", "mentions-legales.html", "faq.html",
   "punir-ou-reparer.html", "css", "js", "images", "robots.txt", "sitemap.xml"
 ];

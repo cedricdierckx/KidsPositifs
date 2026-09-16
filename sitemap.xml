@@ -1,35 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Plan du site : uniquement les pages publiques. L'application elle-même
      (index.html) est une page unique ; les écrans internes sont derrière la
-     connexion et n'ont pas d'URL propre. -->
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+     connexion et n'ont pas d'URL propre.
+
+     Adresses : le site est servi sur fami.team — famiteam.com y renvoie. Un
+     plan du site qui pointerait vers l'adresse de renvoi ferait explorer à
+     Google des redirections plutôt que des pages, et contredirait les balises
+     canoniques. Les extensions .html sont absentes pour la même raison
+     (cleanUrls dans vercel.json les renvoie vers l'adresse sans extension).
+
+     Les quatre versions linguistiques de la page d'accueil se déclarent
+     mutuellement : chaque <url> liste le groupe entier, y compris elle-même.
+     Google ignore un groupe dont les renvois ne sont pas réciproques. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://famiteam.com/</loc>
-    <lastmod>2026-08-27</lastmod>
+    <loc>https://fami.team/</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://fami.team/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fami.team/en"/>
+    <xhtml:link rel="alternate" hreflang="nl" href="https://fami.team/nl"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fami.team/de"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fami.team/"/>
+    <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://famiteam.com/faq.html</loc>
-    <lastmod>2026-08-27</lastmod>
+    <loc>https://fami.team/en</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://fami.team/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fami.team/en"/>
+    <xhtml:link rel="alternate" hreflang="nl" href="https://fami.team/nl"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fami.team/de"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fami.team/"/>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fami.team/nl</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://fami.team/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fami.team/en"/>
+    <xhtml:link rel="alternate" hreflang="nl" href="https://fami.team/nl"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fami.team/de"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fami.team/"/>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fami.team/de</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://fami.team/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fami.team/en"/>
+    <xhtml:link rel="alternate" hreflang="nl" href="https://fami.team/nl"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fami.team/de"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fami.team/"/>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fami.team/faq</loc>
+    <lastmod>2026-09-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://famiteam.com/punir-ou-reparer.html</loc>
-    <lastmod>2026-08-27</lastmod>
+    <loc>https://fami.team/punir-ou-reparer</loc>
+    <lastmod>2026-08-28</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://famiteam.com/confidentialite.html</loc>
-    <lastmod>2026-08-25</lastmod>
+    <loc>https://fami.team/confidentialite</loc>
+    <lastmod>2026-09-16</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://famiteam.com/mentions-legales.html</loc>
-    <lastmod>2026-08-25</lastmod>
+    <loc>https://fami.team/mentions-legales</loc>
+    <lastmod>2026-09-16</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>

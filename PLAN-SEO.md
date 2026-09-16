@@ -166,6 +166,68 @@ rentables à l'heure investie.
 
 ---
 
+## 3 bis. Deuxième passe technique — 16 septembre 2026
+
+### a) L'adresse du site se contredisait elle-même *(le défaut principal)*
+
+Mesure directe du 16 septembre 2026 : `https://famiteam.com/faq.html` aboutit,
+après deux renvois, à `https://fami.team/faq`. Or cette même page déclarait
+`<link rel="canonical" href="https://famiteam.com/faq.html">`, et le plan du
+site ainsi que `robots.txt` reprenaient tous la forme `famiteam.com/…html`.
+
+Autrement dit, chaque page disait à Google : « mon adresse officielle est une
+adresse qui me renvoie ailleurs ». Google tranche alors lui-même, sans
+prévenir, et l'autorité acquise se répartit entre deux adresses au lieu de
+s'additionner sur une seule. **Certitude que c'était le défaut technique le
+plus coûteux : 85 %.**
+
+Corrigé : `canonical`, `og:url`, les données structurées, `sitemap.xml` et
+`robots.txt` désignent désormais **`fami.team`**, sans extension `.html`
+(`cleanUrls` dans `vercel.json` renvoie déjà `/faq.html` vers `/faq`).
+
+⚠️ **Les liens internes des pages n'ont volontairement pas été touchés** : ils
+restent en `faq.html`, `confidentialite.html`, etc. Dans l'app installée
+(Capacitor), les pages sont des fichiers locaux — il n'y a aucun serveur pour
+réécrire `/faq` en `/faq.html`, et des liens « propres » y casseraient.
+
+Reste à faire **hors du dépôt** : passer le renvoi `famiteam.com → fami.team`
+de temporaire (302) à **permanent (301/308)**, dans les réglages de domaine
+Vercel. Un renvoi temporaire demande explicitement à Google de continuer à
+indexer l'ancienne adresse.
+
+### b) Le site n'existait qu'en français
+
+L'application se traduit en quatre langues, mais à une seule adresse, par du
+JavaScript. Un moteur de recherche n'en voyait donc qu'une seule version, en
+français : aucun parent néerlandophone ou germanophone ne pouvait tomber sur
+FamiTeam en cherchant dans sa langue. **Certitude que c'était le plus gros
+gisement inexploité : 75 %.**
+
+Ajouté : trois pages d'atterrissage réelles — `/en`, `/nl`, `/de` — avec du
+vrai texte lisible sans JavaScript, et un groupe `hreflang` réciproque entre
+les quatre langues (Google ignore un groupe non réciproque).
+
+Le texte n'y est **pas recopié à la main** : `scripts/generer-langues.mjs` le
+relit dans `js/i18n.*.js`. Une traduction corrigée là-bas se répercute avec
+`npm run langues:generer`. Rien à maintenir en double — condition posée par le
+budget d'une heure par semaine du `PLAN-COMMERCIAL.md`.
+
+### c) Complément de balisage
+
+`og:image` sur les pages qui n'en avaient pas, fiche Twitter complète sur la
+page d'accueil, dates et auteur sur l'article, identité `WebSite` du domaine,
+et `lastmod` du plan du site remis à jour.
+
+### d) Ce qui n'a pas été touché, et pourquoi
+
+`index.html` porte `maximum-scale=1, user-scalable=no` : le zoom à deux doigts
+est bloqué. C'est un point d'accessibilité relevé par les outils de mesure, et
+le retirer améliorerait la note — mais ce réglage sert vraisemblablement à
+éviter le zoom parasite au clavier sur iPhone. **C'est un arbitrage d'usage,
+pas une correction technique : à décider, pas à appliquer d'office.**
+
+---
+
 ## 4. Ce qui reste à décider (pas à faire seul)
 
 - **Le `<h1>` de la page d'accueil** (`js/auth.js`, ligne 1378) affiche

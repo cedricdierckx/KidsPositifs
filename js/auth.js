@@ -731,7 +731,7 @@ function notifsAdminActives() {
   return String((configApp && configApp.notifs_admin) || "on").trim() !== "off";
 }
 function lienCroissance() {
-  return (location.origin || "https://famiteam.com") + "/croissance";
+  return (location.origin || HOTE_PUBLIC) + "/croissance";
 }
 async function notifierAdmin(type, cle, resume, decisions) {
   if (!estAdmin || !notifsAdminActives()) return false;
@@ -873,7 +873,7 @@ async function envoyerRapportMensuel() {
     `Parrainages acceptés : ${v(s, "referrals_acceptes")}\n` +
     `Liste d'attente : ${v(s, "waitlist_total")}\n` +
     `Retours non lus : ${v(s, "feedback_non_lus")}\n\n` +
-    `Une décision à noter ce mois-ci ? ${location.origin || "https://famiteam.com"}/croissance\n`;
+    `Une décision à noter ce mois-ci ? ${location.origin || HOTE_PUBLIC}/croissance\n`;
   const res = await envoyerMailFn({ to: emailSupport(), subject: `FamiTeam — rapport ${periode}`, text: corps });
   if (res && res.ok) { await mailAutoMarquer("rapport", periode); return true; }
   return false;

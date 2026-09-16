@@ -436,7 +436,7 @@ Vous vous étiez inscrit·e sur la liste d'attente de FamiTeam. Votre place est 
 
 FamiTeam aide les enfants de 3 à 12 ans à adopter des comportements positifs, dans l'esprit de la parentalité bienveillante : on encourage, on répare, on ne punit pas. C'est gratuit, sans publicité, et vos données restent en Europe.
 
-Les accès s'ouvrent par petites vagues, pour que chaque famille démarre dans de bonnes conditions. Tout se règle depuis l'app, et les questions fréquentes sont rassemblées sur famiteam.com/faq.html
+Les accès s'ouvrent par petites vagues, pour que chaque famille démarre dans de bonnes conditions. Tout se règle depuis l'app, et les questions fréquentes sont rassemblées sur fami.team/faq
 
 FamiTeam`
   },
