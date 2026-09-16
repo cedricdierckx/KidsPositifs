@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const racine = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const VERSION = "192"; // doit suivre le ?v= des autres pages
+const VERSION = "193"; // doit suivre le ?v= des autres pages
 
 // Lit une clé dans un fichier de traduction. On ne parse pas le JavaScript :
 // on lit la chaîne caractère par caractère en respectant les échappements,

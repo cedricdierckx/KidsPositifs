@@ -4839,6 +4839,7 @@ function htmlFeuilleSemaine() {
       `.enf-${k} table.omr td.c{height:auto}\n` +
       `.enf-${k} table.omr td.m{font-size:${d3(police)}; line-height:1.1}\n` +
       `.enf-${k} .omr-rep, .enf-${k} .omr-bit{width:${d3(marque)}; height:${d3(marque)}; top:${d3((hRang - marque) / 2)}}\n` +
+      `.enf-${k} .omr-bit{border-width:${d3(Math.max(0.2, 0.35 * marque / 5))}}\n` +
       `.enf-${k} .omr-rep{left:calc(50% - ${d3(marque / 2)})}\n` +
       `.enf-${k} .omr-bit.g{left:calc(50% - ${d3(3.25 + marque / 2)})}\n` +
       `.enf-${k} .omr-bit.d{left:calc(50% + ${d3(3.25 - marque / 2)})}\n` +
@@ -4967,7 +4968,8 @@ function htmlFeuilleSemaine() {
          avec "break-after:avoid"), pour ne jamais se retrouver seul en bas
          d'une page, separe de son contenu. */
       .enfant{width:100%; margin:0 0 12px;
-        border:2px solid var(--c);border-radius:16px;padding:9px 11px;background:#fff}
+        border:2px solid var(--c);border-radius:16px;padding:9px 11px;
+        background:linear-gradient(180deg,#fff,#fdfaf4)}
       /* Une page par enfant, sur demande explicite : chaque carte peut donc
          laisser du blanc en bas de sa page plutôt que de partager la
          suivante — c'est voulu, pour distribuer une feuille par enfant. */
@@ -4999,7 +5001,8 @@ function htmlFeuilleSemaine() {
       table{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
       th,td{border:1px solid #e0e6ec;padding:3px 4px;text-align:center}
       td.m{text-align:left;font-size:10.5px;line-height:1.2} td.m small{color:#9aa7b3}
-      tr.cat td,tr.cat th{background:var(--c);color:#fff;text-align:left;font-weight:800;font-size:10.5px;border-color:var(--c)}
+      tr.cat td,tr.cat th{background:var(--c);color:#fff;text-align:left;font-weight:800;font-size:10.5px;border-color:var(--c);
+        background-image:linear-gradient(180deg,rgba(255,255,255,.28),rgba(0,0,0,.07))}
       tr.nom-repete th{font-size:12px}
       tr.head th{background:#f3f6fa;font-size:10px;width:23px;font-weight:800}
       /* Week-end teinté : un petit repère de couleur dans une grille par
@@ -5033,8 +5036,12 @@ function htmlFeuilleSemaine() {
       /* Case à cocher : un carré vide, franc, centré. C'est la seule chose que
          la photo mesure — d'où un intérieur réellement blanc. */
       .omr-case{display:block; width:5mm; height:5mm; margin:0 auto;
-        border:0.35mm solid #9aa7b3; border-radius:0.8mm; background:#fff;
+        border:0.35mm solid #a7b6c4; border-radius:1.2mm; background:#fff;
         font-size:3.2mm; line-height:5mm; color:#1d7a52}
+      /* Une ligne sur deux très légèrement teintée, du côté des noms : sur une
+         liste de vingt missions, c'est ce qui permet à l'œil de suivre sa
+         ligne jusqu'au bon jour. Rien de tout cela ne change une hauteur. */
+      table.omr tbody tr:nth-child(even):not(.omr-rang):not(.cat) td.m{background:#f8fbfe}
       .omr-case.faite{border-color:#1d7a52}
       /* Repères de coin et marques de contrôle : taches PLEINES de 5 mm,
          posées au millimètre près par rapport au centre de leur case (c'est
@@ -5045,12 +5052,24 @@ function htmlFeuilleSemaine() {
          les repères de coin portent un halo. Ce halo est volontairement CLAIR :
          sombre, il serait lu comme faisant partie de la tache et en
          déplacerait le centre. */
-      .omr-rang{height:7mm; background:#fdf5e6}
+      .omr-rang{height:7mm; background:linear-gradient(90deg,#fdf5e6,#fffaf0 50%,#fdf5e6)}
       .omr-rang td{border-color:#fdf5e6}
       .omr-rep, .omr-bit{position:absolute; top:1mm; width:5mm; height:5mm; border-radius:50%}
-      .omr-rep{left:calc(50% - 2.5mm); background:#111a24; box-shadow:0 0 0 0.9mm #ffe0a8}
-      .omr-bit{background:transparent}
-      .omr-bit.on{background:#111a24}
+      /* Quatre planètes aux coins : disque sombre, un liseré clair pour le
+         détacher de la bande, puis un anneau ambré — une planète et son orbite.
+         Les deux anneaux sont CLAIRS et l'intérieur du disque n'est jamais
+         touché : c'est la condition pour que le centre reste le centre. */
+      .omr-rep{left:calc(50% - 2.5mm); background:#16233a;
+        box-shadow:0 0 0 0.4mm #fffaf0, 0 0 0 1.25mm #f6d9a6}
+      /* Marques de contrôle : un chapelet de perles. Celles qui valent zéro ne
+         disparaissent plus — elles deviennent des perles VIDES, d'un trait
+         clair. La rangée cesse ainsi de ressembler à des taches semées au
+         hasard : on y lit une suite régulière, dont certaines sont pleines.
+         Le trait est clair à dessein (il ne doit jamais passer pour de l'encre)
+         et se trouve de toute façon hors de la fenêtre de mesure, qui ne
+         regarde que le cœur de la marque. */
+      .omr-bit{background:transparent; border:0.35mm solid #d9c49a}
+      .omr-bit.on{background:#16233a; border-color:#16233a}
       .omr-bit.g{left:calc(50% - 5.75mm)}   /* centre à -3,25 mm du milieu */
       .omr-bit.d{left:calc(50% + 0.75mm)}   /* centre à +3,25 mm du milieu */
       .omr-note{margin-top:6px; color:#a38a5c; font-weight:700}

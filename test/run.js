@@ -6297,11 +6297,33 @@ test("feuille papier : les repères sont devenus des planètes sans bouger d'un 
     "les centres sont le contrat passé avec le lecteur : les embellir ne doit pas les déplacer");
   // Le halo des coins doit rester CLAIR. Sombre, il ferait corps avec le
   // repère : la tache grossirait, et son centre se déplacerait avec elle.
-  const halo = /box-shadow:[^;}]*#([0-9a-fA-F]{6})/.exec(feuille);
-  assert.ok(halo, "les repères de coin portent un halo");
-  const [r, v, b] = [0, 2, 4].map(i => parseInt(halo[1].slice(i, i + 2), 16));
-  assert.ok(0.299 * r + 0.587 * v + 0.114 * b > 200,
-    "un halo sombre déplacerait le centre du repère, donc toute la lecture");
+  const gris = (hex) => {
+    const [r, v, b] = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16));
+    return 0.299 * r + 0.587 * v + 0.114 * b;
+  };
+  // Celle du repère, pas celle de l'avatar : la première box-shadow du
+  // document appartient à la vignette, et n'a rien à voir ici.
+  const halos = /\.omr-rep\{[^}]*box-shadow:([^;}]*)/.exec(feuille);
+  assert.ok(halos, "les repères de coin portent un halo");
+  const tons = halos[1].match(/#([0-9a-fA-F]{6})/g) || [];
+  assert.ok(tons.length >= 1, "ce halo doit être décrit par des couleurs lisibles ici");
+  tons.forEach(h => assert.ok(gris(h.slice(1)) > 200,
+    "un halo sombre déplacerait le centre du repère, donc toute la lecture : " + h));
+
+  // Les marques de contrôle à zéro sont dessinées en perles VIDES, pour que la
+  // rangée se lise comme un décor régulier et non comme des taches semées au
+  // hasard. Leur trait ne doit jamais pouvoir passer pour de l'encre.
+  const perle = /\.omr-bit\{background:transparent; border:[\d.]+mm solid #([0-9a-fA-F]{6})\}/.exec(feuille);
+  assert.ok(perle, "une marque à zéro doit se voir, en perle vide");
+  assert.ok(gris(perle[1]) > 180,
+    "le trait d'une perle vide serait lu comme un 1 s'il était sombre : " + perle[1]);
+  const pleine = /\.omr-bit\.on\{background:#([0-9a-fA-F]{6})/.exec(feuille);
+  assert.ok(pleine && gris(pleine[1]) < 80,
+    "une marque à un doit rester franchement sombre");
+  // Et le trait ajouté aux perles ne doit pas agrandir leur boîte : sans
+  // border-box, chaque perle grandirait de son trait et son CENTRE glisserait.
+  assert.ok(/\*\{box-sizing:border-box\}/.test(feuille),
+    "sans border-box, le trait des perles déplacerait leur centre");
 });
 
 test("minuteur : quand le décompte passe à un autre enfant, c'est sa page d'accueil qui s'ouvre, en haut", () => {
