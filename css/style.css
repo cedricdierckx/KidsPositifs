@@ -1,26 +1,61 @@
 /* =====================================================================
  * FamiTeam — Styles (interface tactile, lisible par de jeunes enfants)
  * ===================================================================== */
+/* Police : Nunito (SIL OFL 1.1, voir fonts/OFL-Nunito.txt), embarquée et non
+   tirée de Google Fonts — l'app doit s'afficher pareil hors-ligne et dans
+   l'app native, et aucune requête ne part vers un tiers. Ronde et chaleureuse
+   comme l'ancienne Comic Sans, mais nette à petite taille, identique sur tous
+   les systèmes (Comic Sans n'existe ni sur Android ni sur Linux : chacun
+   voyait une police différente) et dotée de toute la gamme de graisses.
+   Fichier variable : une seule police couvre du 200 au 1000. */
+@font-face{font-family:"Nunito"; font-style:normal; font-weight:200 1000; font-display:swap;
+  src:url("fonts/nunito-latin.woff2") format("woff2");
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Nunito"; font-style:normal; font-weight:200 1000; font-display:swap;
+  src:url("fonts/nunito-latin-ext.woff2") format("woff2");
+  unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+
 :root{
   /* --doux : gris de texte secondaire. Assombri pour atteindre 4.5:1 (WCAG AA)
      sur le fond de page --bg, et non seulement sur le blanc des cartes. */
-  --bg:#f3f7fb; --carte:#ffffff; --texte:#2b3445; --doux:#626c7e;
-  --famille:#f6a623; --planete:#39c0a0; --ombre:0 6px 18px rgba(40,60,90,.10);
+  --bg:#f3f6fb; --carte:#ffffff; --texte:#27324a; --doux:#5f697c;
+  --famille:#f6a623; --planete:#39c0a0;
+  /* Ombres à deux couches : un liseré net au contact + un halo large et
+     diffus. Une seule ombre moyenne (l'ancienne) faisait « flotter » les
+     cartes de façon floue ; ici elles reposent sur la page. */
+  --ombre:0 1px 2px rgba(30,45,75,.06), 0 6px 20px rgba(30,45,75,.07);
+  --ombre-haute:0 2px 4px rgba(30,45,75,.06), 0 14px 34px rgba(30,45,75,.13);
+  --bord:#e6ecf4;            /* filets et contours neutres */
+  --focus:#3a7bd5;           /* anneau de focus clavier */
   --rayon:20px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
 body{
-  font-family:"Comic Sans MS","Baloo 2","Segoe UI",system-ui,sans-serif;
+  font-family:"Nunito","Baloo 2","Segoe UI",system-ui,sans-serif;
   background:var(--bg); color:var(--texte);
   padding-bottom:88px; -webkit-user-select:none; user-select:none;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
 }
+/* Les contrôles de formulaire n'héritent pas de la police par défaut : sans
+   cette ligne, un bouton sans `font-family:inherit` retombait sur Arial. */
+button,input,select,textarea{font-family:inherit}
+/* Focus clavier visible partout (et seulement au clavier : un doigt ou une
+   souris ne déclenchent pas :focus-visible sur un bouton). */
+:focus-visible{outline:3px solid var(--focus); outline-offset:2px}
 
 /* ---- Barre du haut ---- */
 /* En-tête + barre de minuteur : bloc collant (toujours visible au scroll) */
 .haut-fixe{position:sticky; top:0; z-index:20; background:#fff}
+/* Verre dépoli : le contenu qui défile sous l'en-tête se devine, flouté, au
+   lieu d'être coupé net par un bloc blanc. Là où backdrop-filter manque, le
+   fond reste blanc opaque (déclaré en premier) : jamais de texte illisible. */
+@supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+  .haut-fixe{background:rgba(255,255,255,.82);
+    -webkit-backdrop-filter:saturate(1.6) blur(14px); backdrop-filter:saturate(1.6) blur(14px)}
+}
 .topbar{
-  position:relative; background:#fff; box-shadow:var(--ombre);
+  position:relative; background:transparent; border-bottom:1px solid rgba(30,45,75,.07);
   padding:10px 14px; display:flex; flex-direction:column; gap:10px;
 }
 /* Le logo est centré en absolu entre des pastilles positionnées, elles, en
@@ -31,7 +66,7 @@ body{
    retrait, non la taille de police, qui garantit l'absence de recouvrement.
    Le clamp() ne sert qu'au confort de lecture sur les écrans très étroits
    (320 px), où 22 px auraient été tronqués. */
-.logo{font-size:clamp(16px, 5.4vw, 22px); font-weight:800; text-align:center;
+.logo{font-size:clamp(16px, 5.4vw, 22px); font-weight:900; letter-spacing:-.01em; text-align:center;
   padding-left:96px; padding-right:56px;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .pastille-inviter{position:absolute; top:9px; left:12px; width:36px; height:36px;
@@ -223,9 +258,10 @@ body{
    rognée. D'où le padding haut/bas. */
 .selecteur{display:flex; gap:8px; overflow-x:auto; padding:5px 0 6px}
 .pastille{
-  flex:0 0 auto; border:3px solid transparent; background:#f0f3f8;
+  flex:0 0 auto; border:3px solid transparent; background:#eef2f8;
   border-radius:16px; padding:6px 10px; display:flex; flex-direction:column;
   align-items:center; min-width:64px; cursor:pointer; transition:.15s;
+  color:var(--texte);
 }
 .pastille .pastille-emoji{font-size:26px}
 /* Vignette avatar : identifie un enfant partout dans l'app (l'emoji d'enfant
@@ -245,7 +281,12 @@ body{
 .av-vignette.grand.initiale{font-size:42px}
 .pastille .pastille-nom{font-size:12px; font-weight:700; max-width:64px;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-.pastille.actif{border-color:var(--c); background:#fff; transform:translateY(-2px)}
+.pastille.actif{border-color:var(--c); background:#fff; transform:translateY(-2px);
+  box-shadow:0 6px 14px -6px var(--c)}
+/* Teinte de l'enfant en fond, là où color-mix existe (sinon : blanc, ci-dessus). */
+@supports (background:color-mix(in srgb, red 10%, white)){
+  .pastille.actif{background:color-mix(in srgb, var(--c) 12%, #fff)}
+}
 
 /* ---- Contenu ---- */
 main{max-width:680px; margin:0 auto; padding:14px}
@@ -257,8 +298,8 @@ main{max-width:680px; margin:0 auto; padding:14px}
   box-shadow:var(--ombre); margin-bottom:14px;
   border-left:6px solid var(--c, #ccd3e0);
 }
-.carte h1{margin:.1em 0 .3em; font-size:24px}
-.carte h2{margin:.1em 0 .5em; font-size:19px}
+.carte h1{margin:.1em 0 .3em; font-size:24px; font-weight:900; letter-spacing:-.015em; line-height:1.15}
+.carte h2{margin:.1em 0 .5em; font-size:19px; font-weight:850; letter-spacing:-.01em; line-height:1.2}
 .carte p{margin:.3em 0; color:var(--doux); line-height:1.4}
 .note{font-size:13px; background:#f3f7fb; padding:10px; border-radius:12px}
 /* Bandeau « mode tous petits » (écosystème) : distinct d'une simple note,
@@ -285,18 +326,28 @@ main{max-width:680px; margin:0 auto; padding:14px}
   font-size:12px; line-height:1.5; white-space:pre-wrap; word-break:break-word; overflow-x:auto}
 
 /* ---- Accueil ---- */
+/* Carte d'accueil de l'enfant : sa couleur, deux bulles de lumière en fond
+   (pur décor, derrière le contenu) et un léger relief — c'est SON écran. */
 .carte-accueil{
-  background:linear-gradient(135deg,var(--c),#ffffff 140%);
-  border-radius:var(--rayon); padding:18px; box-shadow:var(--ombre);
+  position:relative; overflow:hidden; isolation:isolate;
+  background:linear-gradient(145deg,var(--c),#ffffff 150%);
+  border-radius:calc(var(--rayon) + 4px); padding:20px 18px 18px;
+  box-shadow:0 10px 26px -12px var(--c), var(--ombre);
   margin-bottom:14px; text-align:center; color:#fff;
 }
-.carte-accueil h1{color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.15)}
-.carte-accueil small{font-weight:400; opacity:.9}
+.carte-accueil::before,.carte-accueil::after{content:""; position:absolute; z-index:-1;
+  border-radius:50%; background:rgba(255,255,255,.16); pointer-events:none}
+.carte-accueil::before{width:220px; height:220px; top:-90px; right:-70px}
+.carte-accueil::after{width:150px; height:150px; bottom:-70px; left:-50px; background:rgba(255,255,255,.12)}
+.carte-accueil h1{color:#fff; font-weight:900; letter-spacing:-.015em; text-shadow:0 1px 6px rgba(0,0,0,.16)}
+.carte-accueil small{font-weight:600; opacity:.9}
 .accueil-avatar{margin:0 auto 6px}
-.compteurs{display:flex; gap:12px; justify-content:center; margin-top:8px}
-.compteur{background:rgba(255,255,255,.9); color:var(--texte);
-  border-radius:16px; padding:10px 14px; min-width:120px}
-.compteur .big{display:block; font-size:24px; font-weight:800}
+.accueil-avatar .avatar-scene{filter:drop-shadow(0 8px 14px rgba(0,0,0,.14))}
+.compteurs{display:flex; gap:10px; justify-content:center; margin-top:10px}
+.compteur{background:rgba(255,255,255,.94); color:var(--texte);
+  border-radius:16px; padding:10px 14px; min-width:120px;
+  box-shadow:0 4px 12px -4px rgba(0,0,0,.15)}
+.compteur .big{display:block; font-size:24px; font-weight:900; letter-spacing:-.01em}
 /* Compteur visuel (≤ 5 ans) : suite d'emojis au lieu d'un chiffre */
 .compteur .pips{display:flex; flex-wrap:wrap; justify-content:center; gap:1px; max-width:150px; line-height:1.1}
 .compteur .pip{font-size:18px}
@@ -630,10 +681,20 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .badge-fun.bloque .badge-nom{font-weight:700; color:var(--doux)}
 
 .raccourcis{display:grid; gap:12px}
+/* Gros bouton : un dégradé discret de haut en bas et une « marche » sombre
+   au pied (ombre dure) qui s'enfonce à l'appui — le bouton se lit comme
+   pressable avant même d'être touché. `text-shadow` garde le blanc lisible
+   sur l'orange et le vert clairs. */
 .gros-bouton{border:none; border-radius:var(--rayon); padding:20px; font-size:18px;
-  font-weight:800; color:#fff; cursor:pointer; box-shadow:var(--ombre)}
-.gros-bouton.famille{background:var(--famille)}
-.gros-bouton.planete{background:var(--planete)}
+  font-weight:900; color:#fff; cursor:pointer; letter-spacing:.005em;
+  text-shadow:0 1px 2px rgba(0,0,0,.18);
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,.12), 0 6px 16px -6px rgba(30,45,75,.35);
+  transition:transform .1s, box-shadow .1s, filter .15s}
+.gros-bouton:active{transform:translateY(2px);
+  box-shadow:inset 0 -1px 0 rgba(0,0,0,.12), 0 2px 6px -3px rgba(30,45,75,.35)}
+.gros-bouton:disabled{filter:grayscale(.4); opacity:.7; cursor:default}
+.gros-bouton.famille{background:linear-gradient(180deg,#f9b440,var(--famille))}
+.gros-bouton.planete{background:linear-gradient(180deg,#46cfae,var(--planete))}
 
 /* ---- En-tête catégorie ---- */
 .entete-cat{border-top:6px solid var(--c)}
@@ -644,19 +705,27 @@ main{max-width:680px; margin:0 auto; padding:14px}
 
 /* ---- Grille de missions ---- */
 .missions{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px}
+/* Tuile de mission : un « bouton-jouet » — fond blanc, filet fin et une
+   ombre au pied qui s'écrase quand on appuie, pour que le geste se sente. */
 .mission{
   display:flex; flex-direction:column; align-items:center; gap:6px;
-  background:#fff; border:3px solid #eef2f7; border-radius:18px;
-  padding:14px 10px; cursor:pointer; transition:.12s; text-align:center;
-  font-family:inherit;
+  background:#fff; border:2px solid var(--bord); border-radius:18px;
+  padding:14px 10px; cursor:pointer; transition:transform .12s, box-shadow .12s, border-color .15s;
+  text-align:center; font-family:inherit; color:var(--texte);
+  box-shadow:0 3px 0 #e3e9f2, 0 6px 14px -8px rgba(30,45,75,.18);
 }
-.mission:active{transform:scale(.96)}
-.mission .m-emoji{font-size:38px}
-.mission .m-titre{font-size:14px; font-weight:700; line-height:1.2}
-.mission .m-points{font-size:13px; font-weight:800; color:var(--famille)}
+.mission:active{transform:translateY(2px) scale(.97); box-shadow:0 1px 0 #e3e9f2}
+.mission .m-emoji{font-size:38px; filter:drop-shadow(0 3px 4px rgba(30,45,75,.14))}
+.mission .m-titre{font-size:14px; font-weight:800; line-height:1.2}
+/* Les points dans une petite pastille teintée : ils se repèrent d'un coup
+   d'œil, même par un enfant qui ne lit pas encore. */
+.mission .m-points{font-size:13px; font-weight:900; color:#945700;
+  background:#fff4de; border-radius:999px; padding:2px 9px}
+.missions.cat-planete .mission .m-points{color:#1a7a5e; background:#e2f6ef}
+.mission.fait .m-points,.mission.attente .m-points{background:none}
 .mission .m-points-img{font-size:15px; letter-spacing:1px}
-.mission.fait{opacity:.55; background:#f1faf6; border-color:#bfe9da}
-.mission.attente{background:#fff7e6; border-color:#ffe2a8}
+.mission.fait{opacity:.6; background:#f1faf6; border-color:#bfe9da; box-shadow:none}
+.mission.attente{background:#fff7e6; border-color:#ffe2a8; box-shadow:0 3px 0 #ffe2a8}
 .mission.attente .m-points{color:#a86b00}
 
 /* Bandeau dodo (ambiance selon l'heure) */
@@ -993,6 +1062,11 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .champ input{display:block; width:100%; margin-top:4px; padding:10px;
   border:2px solid #e3edf5; border-radius:12px; font-size:16px; font-family:inherit}
 .champ input[type=color]{height:44px; padding:4px}
+/* Champ actif : le contour prend la couleur d'accent et un halo doux
+   l'entoure — on voit où l'on écrit sans l'anneau bleu brut du navigateur. */
+.champ input:focus,.champ select:focus,.code-carte input:focus,.landing-form input:focus{
+  outline:none; border-color:#8fbfea; box-shadow:0 0 0 4px rgba(58,123,213,.14)}
+.champ input,.champ select,.code-carte input{transition:border-color .15s, box-shadow .15s}
 /* `.champ input` existait, `.champ select` non : le premier menu déroulant
    déposé dans un `.champ` restait donc collé à son libellé, sur la même
    ligne, alors que le champ voisin passait à la ligne. Même traitement. */
@@ -1001,8 +1075,9 @@ main{max-width:680px; margin:0 auto; padding:14px}
   font-family:inherit; background:#fff}
 .btn-secondaire,.btn-danger{border:none; border-radius:14px; padding:14px;
   font-size:15px; font-weight:800; cursor:pointer; width:100%; margin-top:8px; font-family:inherit}
-.btn-secondaire{background:#e8f0fb; color:#2b3445}
-.btn-danger{background:#ffe3e3; color:#c0392b}
+.btn-secondaire{background:#e9f0fa; color:#27324a; transition:background .15s, transform .1s}
+.btn-secondaire:active,.btn-danger:active{transform:scale(.98)}
+.btn-danger{background:#ffe3e3; color:#b83227; transition:background .15s, transform .1s}
 
 /* ---- Cartes surprises (objectif d'équipe) ---- */
 .cartes-surprises{background:linear-gradient(180deg,#fff6e9,#ffeef4)}
@@ -1134,7 +1209,9 @@ main{max-width:680px; margin:0 auto; padding:14px}
 
 /* ---- Écosystème : scène vivante « façon Pixar » ---- */
 .eco-monde-carte{background:linear-gradient(180deg,#eaf7ff,#f4fff6)}
-.ecomonde-niveau{font-size:13px; font-weight:800; background:#fff; border:2px solid #e3edf5;
+/* inline-block + nowrap : l'étiquette (« 🌳 Prairie ») se reporte d'un bloc
+   à la ligne ; en simple inline, elle se coupait entre l'emoji et le mot. */
+.ecomonde-niveau{display:inline-block; white-space:nowrap; vertical-align:middle; font-size:13px; font-weight:800; background:#fff; border:2px solid #e3edf5;
   border-radius:12px; padding:2px 10px; margin-left:6px; vertical-align:middle}
 .ecomonde{position:relative; border-radius:20px; overflow:hidden; border:3px solid #d4ecff;
   margin:6px 0 4px; box-shadow:inset 0 -10px 24px rgba(0,0,0,.06)}
@@ -1354,16 +1431,29 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .pi-dot.on{background:var(--famille); transform:scale(1.3)}
 
 /* ---- Barre de navigation ---- */
+/* Barre d'onglets : l'onglet actif porte une pastille dorée derrière son
+   icône (repère visible sans lire) ; les autres sont légèrement éteints.
+   Verre dépoli comme l'en-tête, avec repli blanc opaque. */
 .navbar{position:fixed; bottom:0; left:0; right:0; background:#fff;
-  box-shadow:0 -4px 16px rgba(40,60,90,.10); display:flex; z-index:30}
+  box-shadow:0 -1px 0 rgba(30,45,75,.07), 0 -6px 20px rgba(30,45,75,.06); display:flex; z-index:30}
+@supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+  .navbar{background:rgba(255,255,255,.86);
+    -webkit-backdrop-filter:saturate(1.6) blur(14px); backdrop-filter:saturate(1.6) blur(14px)}
+}
 .nav-btn{flex:1; border:none; background:none; padding:8px 2px 10px; cursor:pointer;
   font-size:24px; display:flex; flex-direction:column; align-items:center; gap:2px;
-  color:var(--doux); font-family:inherit}
-.nav-btn span{font-size:11px; font-weight:700}
+  color:var(--doux); font-family:inherit; position:relative; isolation:isolate}
+.nav-btn span{font-size:11px; font-weight:800}
+/* Les emojis n'ont pas de « couleur de texte » : pour éteindre les onglets
+   inactifs, on désature l'icône — le libellé, lui, garde son contraste. */
+.nav-ico{font-style:normal; line-height:1.1; transition:transform .2s cubic-bezier(.2,1.4,.4,1), filter .2s}
+.nav-btn:not(.actif) .nav-ico{filter:saturate(.5) opacity(.85)}
+.nav-btn.actif .nav-ico{transform:translateY(-1px) scale(1.06)}
 .nav-btn.actif{color:var(--texte)}
-.nav-btn.actif{position:relative}
-.nav-btn.actif::after{content:""; position:absolute; top:0; width:34px; height:4px;
-  border-radius:0 0 6px 6px; background:var(--famille)}
+.nav-btn.actif::after{content:""; position:absolute; z-index:-1; top:4px; left:50%;
+  width:54px; height:38px; transform:translateX(-50%); border-radius:14px;
+  background:linear-gradient(180deg,#fff1d2,#ffe3a6)}
+.nav-btn:active{transform:scale(.94)}
 
 /* ---- Toast & confettis ---- */
 .toast{position:fixed; left:50%; bottom:100px; transform:translateX(-50%) translateY(40px);
@@ -1435,17 +1525,23 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .lang-opt .lang-coche{color:#37b985; font-weight:900}
 /* Liens légaux : jamais coupés en plein milieu d'un intitulé. */
 .landing-liens{display:flex; flex-wrap:wrap; justify-content:center; gap:4px 14px; margin-top:14px}
-.landing-liens a{white-space:nowrap}
-.hero-logo{font-size:54px; text-align:center}
-.hero-nom{font-size:34px; margin:.1em 0; text-align:center}
-.hero-titre{font-size:22px; font-weight:800; color:var(--texte); margin:.2em 0; text-align:center}
+.landing-liens a{white-space:nowrap; color:#3567b0; font-weight:700; text-decoration:none}
+.landing-liens a:hover{text-decoration:underline}
+.hero-logo{font-size:54px; text-align:center; filter:drop-shadow(0 8px 14px rgba(246,166,35,.35))}
+.hero-nom{font-size:34px; font-weight:900; letter-spacing:-.02em; margin:.1em 0; text-align:center}
+.hero-titre{font-size:22px; font-weight:900; letter-spacing:-.01em; color:var(--texte); margin:.2em 0; text-align:center}
 .hero-sous{font-size:15px; color:var(--doux); line-height:1.5; margin:.4em 0 1em; text-align:center}
 .hero-features{display:grid; grid-template-columns:1fr; gap:10px}
-.feat{display:flex; align-items:flex-start; gap:12px; background:#fff; border:2px solid #eef2f7;
-  border-radius:16px; padding:12px 14px; box-shadow:var(--ombre)}
-.feat-emoji{font-size:30px; flex:0 0 auto; line-height:1}
-.feat strong{display:block; font-size:15px}
-.feat span{font-size:13px; color:var(--doux); line-height:1.4}
+.feat{display:flex; align-items:flex-start; gap:12px; background:#fff; border:1px solid var(--bord);
+  border-radius:18px; padding:14px; box-shadow:var(--ombre)}
+.feat strong{display:block; font-size:15px; font-weight:850}
+.feat span{font-size:13px; color:var(--doux); line-height:1.45}
+/* `.feat .feat-emoji` et non `.feat-emoji` : `.feat span` (plus spécifique)
+   ramenait l'emoji à 13 px — la taille de 30 px n'était jamais appliquée.
+   Il repose sur une tuile dorée, comme une icône d'application. */
+.feat .feat-emoji{font-size:24px; flex:0 0 44px; width:44px; height:44px; line-height:1;
+  display:flex; align-items:center; justify-content:center; border-radius:14px;
+  background:linear-gradient(145deg,#fff6e0,#ffe8c2); color:inherit}
 .hero-steps{background:linear-gradient(135deg,#fff6e9,#eef9f3); border:2px solid #ffe6c2;
   border-radius:16px; padding:14px 16px 14px; margin-top:14px}
 .hero-steps h2{font-size:17px; margin:0 0 6px}
@@ -1578,8 +1674,14 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .seg-mode .seg-hint{font-size:12px; font-weight:600; color:var(--doux); line-height:1.2}
 .seg-mode.actif .seg-titre{color:#1d7a52}
 
+/* Petit téléphone : les deux compteurs restent côte à côte (Cœurs | Gouttes
+   se lisent comme une paire) mais se partagent la largeur au lieu d'exiger
+   120 px chacun. Empilés, ils poussaient les missions — le cœur de l'écran —
+   bien sous la ligne de flottaison. Les pastilles des tout-petits (jusqu'à
+   dix emojis) passent simplement sur deux lignes. */
 @media(max-width:420px){
-  .compteurs{flex-direction:column; align-items:center}
+  .compteurs{gap:8px}
+  .compteurs .compteur{flex:1 1 0; min-width:0; max-width:170px; padding:10px 8px}
 }
 
 /* =====================================================================
@@ -1653,6 +1755,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
   .navbar{padding-bottom:env(safe-area-inset-bottom, 0px)}
   .nav-btn{padding:12px 2px 14px; font-size:30px; min-height:62px}
   .nav-btn span{font-size:12px}
+  .nav-btn.actif::after{top:6px; width:60px; height:44px; border-radius:16px}
 
   /* Boutons secondaires / mini-boutons : hauteur de tap confortable */
   .btn-secondaire,.btn-danger{padding:16px; font-size:16px}
@@ -1712,7 +1815,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
     box-shadow:0 8px 26px rgba(40,60,90,.18);
   }
   .nav-btn{padding:10px 18px}
-  .nav-btn.actif::after{top:auto; bottom:-4px}
+  .nav-btn.actif::after{top:5px; width:64px; height:40px}
 
   /* Survol souris : petit relief sur les éléments cliquables */
   .mission:hover, .eco-carte-sp:hover, .pastille:hover,

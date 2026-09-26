@@ -78,6 +78,7 @@ de choix.
 | 12 | Phase C — découpage `ui.js` en modules ES | P3 | Opus 5 | à faire |
 | 13 | Phase F — build/lint/CI | P3 | Sonnet 5 | à faire |
 | 14 | Découper `schema.sql` en migrations numérotées (si le fichier continue de grossir) | P3 | Sonnet 5 | à faire |
+| 15 | Refonte visuelle, 1re passe : police Nunito embarquée, ombres/jetons, en-tête et barre d'onglets en verre dépoli, carte d'accueil, tuiles de mission, boutons, page publique | P2 | Sonnet 5 | ✅ fait (ce commit) |
 
 *\* Chantier 7 : certitude ≈ 60 % seulement sur le caractère réellement
 « libre de droits » de toute liste compilée par un agent — aucun modèle ne

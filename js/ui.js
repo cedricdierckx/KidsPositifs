@@ -1222,11 +1222,11 @@ function initSquelette() {
     <main id="contenu"></main>
 
     <nav class="navbar">
-      <button data-vue="accueil"  class="nav-btn">🏠<span>${t("nav.accueil")}</span></button>
-      <button data-vue="famille"  class="nav-btn">🏡<span>${t("nav.famille")}</span></button>
-      <button data-vue="planete"  class="nav-btn">🌍<span>${t("nav.planete")}</span></button>
-      <button data-vue="avatar"   class="nav-btn">🎨<span>${t("nav.avatar")}</span></button>
-      <button data-vue="reglages" class="nav-btn">⚙️<span>${t("nav.parents")}</span></button>
+      <button data-vue="accueil"  class="nav-btn"><i class="nav-ico" aria-hidden="true">🏠</i><span>${t("nav.accueil")}</span></button>
+      <button data-vue="famille"  class="nav-btn"><i class="nav-ico" aria-hidden="true">🏡</i><span>${t("nav.famille")}</span></button>
+      <button data-vue="planete"  class="nav-btn"><i class="nav-ico" aria-hidden="true">🌍</i><span>${t("nav.planete")}</span></button>
+      <button data-vue="avatar"   class="nav-btn"><i class="nav-ico" aria-hidden="true">🎨</i><span>${t("nav.avatar")}</span></button>
+      <button data-vue="reglages" class="nav-btn"><i class="nav-ico" aria-hidden="true">⚙️</i><span>${t("nav.parents")}</span></button>
     </nav>`;
 
   // Navigation : choix d'affichage local (non synchronisé entre appareils).
@@ -5358,7 +5358,8 @@ function grilleMissions(catId) {
   const cat = CATEGORIES[catId];
   const jour = jourAffiche();           // jour en révision (parent) ou aujourd'hui
   const journalJour = enf.journal[jour] || {};
-  const liste = el("section", "missions");
+  // `cat-<id>` : la pastille de points prend la teinte de sa monnaie (CSS).
+  const liste = el("section", "missions cat-" + catId);
   // La mission spéciale "coucher" est affichée à part (bandeau dodo).
   const actives = missionsActives(enf, catId, jour).filter(m => m.speciale !== "coucher");
   if (actives.length === 0) {
