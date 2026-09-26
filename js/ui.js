@@ -777,6 +777,7 @@ async function pdfDepuisElement(element) {
     // un A4 à 96 dpi), où ce duo tient toujours côte à côte.
     const large = document.createElement("div");
     large.style.cssText = "position:fixed; left:-9999px; top:0; width:794px";
+    large.dataset.emo = "non";   // capturé aussitôt : pas d'emoji 3D (js/emoji3d.js)
     large.appendChild(element.cloneNode(true));
     document.body.appendChild(large);
     try {
@@ -824,6 +825,7 @@ function elementDepuisHtml(html) {
   // Largeur d'un A4 à 96 dpi (210 mm) : la mise en page (grille, tableaux)
   // se calcule alors comme sur l'aperçu d'impression du navigateur.
   conteneur.style.cssText = "position:fixed; left:-9999px; top:0; width:794px";
+  conteneur.dataset.emo = "non";   // capturé aussitôt par html2canvas (voir js/emoji3d.js)
   const style = /<style>([\s\S]*?)<\/style>/.exec(html);
   const corps = /<body>([\s\S]*?)<\/body>/.exec(html);
   if (style) {
@@ -4137,15 +4139,20 @@ function vueAccueil(c) {
   c.appendChild(layout);
 
   const jeune = estJeune(enf);   // affichage imagé (seuil réglable par les parents)
+  // Compteur Cœurs / Gouttes. Lecteur : l'icône à gauche, le nombre et son
+  // libellé empilés à droite — le nombre se lit d'un coup d'œil, et les deux
+  // compteurs tiennent côte à côte sur un petit téléphone. Tout-petit : la
+  // rangée d'icônes (compteurVisuel) garde sa disposition en colonne.
+  const compteurAccueil = (emoji, n, libelle) => jeune
+    ? `<div class="compteur">${compteurVisuel(emoji, n, true)}<span>${libelle}</span></div>`
+    : `<div class="compteur compteur-ligne"><i class="c-ico" aria-hidden="true">${emoji}</i>`
+      + `<div class="c-txt"><span class="big">${n}</span><span>${libelle}</span></div></div>`;
   const carte = el("section", "carte-accueil");
   carte.style.setProperty("--c", enf.couleur);
   carte.innerHTML = `
     <div class="accueil-avatar">${renduAvatar(enf)}</div>
     <h1>${t("home.salut", { prenom: enf.prenom })} <small>(${t("home.ans", { age: age(enf) })})</small></h1>
-    <div class="compteurs">
-      <div class="compteur">${compteurVisuel("💛", enf.coeurs, jeune)}<span>${t("home.coeurs_label")}</span></div>
-      <div class="compteur">${compteurVisuel("💧", enf.gouttes, jeune)}<span>${t("home.gouttes_label")}</span></div>
-    </div>`;
+    <div class="compteurs">${compteurAccueil("💛", enf.coeurs, t("home.coeurs_label"))}${compteurAccueil("💧", enf.gouttes, t("home.gouttes_label"))}</div>`;
   colA.appendChild(carte);
 
   // Auto-évaluation de la journée (mise en avant, juste sous le profil)
@@ -4160,16 +4167,16 @@ function vueAccueil(c) {
   if (tr) colB.appendChild(tr);
 
   // Missions Famille (directement sur la page d'accueil de l'enfant)
-  const titreFam = el("section", "carte titre-cat");
+  const titreFam = el("section", "carte titre-cat cat-famille");
   titreFam.style.setProperty("--c", CATEGORIES.famille.couleur);
-  titreFam.innerHTML = `<h2>${t("home.missions_famille")} <span class="solde-inline">💛${jeune ? "" : " " + enf.coeurs}</span></h2>`;
+  titreFam.innerHTML = `<h2>${t("home.missions_famille")} <span class="solde-inline">${jeune ? "" : enf.coeurs + " "}💛</span></h2>`;
   colB.appendChild(titreFam);
   colB.appendChild(grilleMissions("famille"));
 
   // Missions Planète (directement sur la page d'accueil de l'enfant)
-  const titrePla = el("section", "carte titre-cat");
+  const titrePla = el("section", "carte titre-cat cat-planete");
   titrePla.style.setProperty("--c", CATEGORIES.planete.couleur);
-  titrePla.innerHTML = `<h2>${t("home.missions_planete")} <span class="solde-inline">💧${jeune ? "" : " " + enf.gouttes}</span></h2>`;
+  titrePla.innerHTML = `<h2>${t("home.missions_planete")} <span class="solde-inline">${jeune ? "" : enf.gouttes + " "}💧</span></h2>`;
   colB.appendChild(titrePla);
   colB.appendChild(grilleMissions("planete"));
 

@@ -18,14 +18,20 @@
 :root{
   /* --doux : gris de texte secondaire. Assombri pour atteindre 4.5:1 (WCAG AA)
      sur le fond de page --bg, et non seulement sur le blanc des cartes. */
-  --bg:#f3f6fb; --carte:#ffffff; --texte:#27324a; --doux:#5f697c;
+  /* Fond ivoire chaud (maquettes Claude Design, sept. 2026) : l'ancien
+     gris-bleu faisait « logiciel de bureau » ; l'ivoire met les images 3D
+     et les couleurs des enfants en valeur. --doux reste à 5:1 dessus. */
+  --bg:#fbf7f0; --carte:#ffffff; --texte:#27324a; --doux:#5f697c;
   --famille:#f6a623; --planete:#39c0a0;
   /* Ombres à deux couches : un liseré net au contact + un halo large et
      diffus. Une seule ombre moyenne (l'ancienne) faisait « flotter » les
      cartes de façon floue ; ici elles reposent sur la page. */
-  --ombre:0 1px 2px rgba(30,45,75,.06), 0 6px 20px rgba(30,45,75,.07);
-  --ombre-haute:0 2px 4px rgba(30,45,75,.06), 0 14px 34px rgba(30,45,75,.13);
-  --bord:#e6ecf4;            /* filets et contours neutres */
+  --ombre:0 1px 2px rgba(60,40,10,.05), 0 8px 22px rgba(60,40,10,.06);
+  --ombre-haute:0 2px 4px rgba(60,40,10,.06), 0 14px 34px rgba(60,40,10,.12);
+  --bord:#f0e8da;            /* filets et contours neutres, teinte chaude */
+  --pastille:#f4efe6;        /* fond des éléments inactifs (enfants, onglets) */
+  --or-clair:#fff1d6; --or-texte:#8f5400;       /* pastilles Cœurs (5,3:1) */
+  --vert-clair:#ddf5ec; --vert-texte:#1a6e55;   /* pastilles Gouttes (5,6:1) */
   --focus:#3a7bd5;           /* anneau de focus clavier */
   --rayon:20px;
 }
@@ -40,6 +46,13 @@ body{
 /* Les contrôles de formulaire n'héritent pas de la police par défaut : sans
    cette ligne, un bouton sans `font-family:inherit` retombait sur Arial. */
 button,input,select,textarea{font-family:inherit}
+/* Emoji 3D (js/emoji3d.js) : l'image prend la place exacte du caractère —
+   même taille (1em, plus la légère chasse d'un glyphe emoji), même ligne de
+   base. Elle ne capte pas les clics : le bouton qui la contient les reçoit,
+   comme avant. */
+img.emo{display:inline-block; width:1.15em; height:1.15em; vertical-align:-.2em;
+  margin:0 .03em; object-fit:contain; pointer-events:none;
+  -webkit-user-drag:none; user-select:none}
 /* Focus clavier visible partout (et seulement au clavier : un doigt ou une
    souris ne déclenchent pas :focus-visible sur un bouton). */
 :focus-visible{outline:3px solid var(--focus); outline-offset:2px}
@@ -55,7 +68,7 @@ button,input,select,textarea{font-family:inherit}
     -webkit-backdrop-filter:saturate(1.6) blur(14px); backdrop-filter:saturate(1.6) blur(14px)}
 }
 .topbar{
-  position:relative; background:transparent; border-bottom:1px solid rgba(30,45,75,.07);
+  position:relative; background:transparent; border-bottom:1px solid var(--bord);
   padding:10px 14px; display:flex; flex-direction:column; gap:10px;
 }
 /* Le logo est centré en absolu entre des pastilles positionnées, elles, en
@@ -101,6 +114,11 @@ button,input,select,textarea{font-family:inherit}
    a moitie vide — l'effet de brouillon a corriger. Le <h1> ne rapetit qu'ICI
    — sur les ecrans enfants (« Salut Maria », « Ma planete ») il reste un
    vrai titre. */
+/* Bandeau parents en encre sombre : on sait d'un regard qu'on a quitté
+   l'espace des enfants (maquette « Espace parents »). */
+.carte.par-banniere{background:#27324a; border-color:#27324a; color:#fff}
+.carte.par-banniere h1{color:#fff}
+.par-banniere .langue-titre{color:#c9d2e3}
 .par-banniere .par-entete{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
 /* Le selecteur porte `.par-banniere` non par gout mais par necessite :
    `.par-entete h1` et `.carte h1` ont la meme specificite, et `.carte h1`
@@ -113,7 +131,7 @@ button,input,select,textarea{font-family:inherit}
    droite, et `min-width:0` lui permet de rendre du terrain avant de replier. */
 .par-banniere .par-entete h1{margin:0; font-size:18px; flex:0 1 auto; min-width:0}
 .par-banniere .par-entete .btn-secondaire{width:auto; flex:0 0 auto; margin:0 0 0 auto;
-  padding:9px 13px; font-size:13px}
+  padding:9px 13px; font-size:13px; background:rgba(255,255,255,.14); color:#fff}
 
 .mode-bloc{margin-top:10px}
 .mode-bloc .mode-toggle-mini{width:fit-content}
@@ -258,7 +276,7 @@ button,input,select,textarea{font-family:inherit}
    rognée. D'où le padding haut/bas. */
 .selecteur{display:flex; gap:8px; overflow-x:auto; padding:5px 0 6px}
 .pastille{
-  flex:0 0 auto; border:3px solid transparent; background:#eef2f8;
+  flex:0 0 auto; border:3px solid transparent; background:var(--pastille);
   border-radius:16px; padding:6px 10px; display:flex; flex-direction:column;
   align-items:center; min-width:64px; cursor:pointer; transition:.15s;
   color:var(--texte);
@@ -290,18 +308,20 @@ button,input,select,textarea{font-family:inherit}
 
 /* ---- Contenu ---- */
 main{max-width:680px; margin:0 auto; padding:14px}
-/* Toute carte porte désormais la même signature visuelle qu'avait
-   « Missions proposées » : une ligne de couleur à gauche (la couleur de
-   l'enfant quand la carte lui est propre, une teinte par défaut sinon). */
+/* Carte : un filet chaud et une ombre douce, sans le liseré de couleur à
+   gauche d'autrefois (maquettes sept. 2026) — ce liseré, répété sur chaque
+   carte, alourdissait la page et ne distinguait plus rien. Les cartes qui
+   appartiennent à un enfant gardent sa couleur par d'autres repères
+   (avatar, pastilles) ; la variable --c reste posée pour ceux-ci. */
 .carte{
-  background:var(--carte); border-radius:var(--rayon); padding:16px;
+  background:var(--carte); border-radius:calc(var(--rayon) + 2px); padding:16px;
   box-shadow:var(--ombre); margin-bottom:14px;
-  border-left:6px solid var(--c, #ccd3e0);
+  border:1px solid var(--bord);
 }
 .carte h1{margin:.1em 0 .3em; font-size:24px; font-weight:900; letter-spacing:-.015em; line-height:1.15}
 .carte h2{margin:.1em 0 .5em; font-size:19px; font-weight:850; letter-spacing:-.01em; line-height:1.2}
 .carte p{margin:.3em 0; color:var(--doux); line-height:1.4}
-.note{font-size:13px; background:#f3f7fb; padding:10px; border-radius:12px}
+.note{font-size:13px; background:#f7f2ea; padding:10px; border-radius:12px}
 /* Bandeau « mode tous petits » (écosystème) : distinct d'une simple note,
    pour qu'un tiroir vide se lise comme un état normal, pas une panne. */
 .eco-mode-simplifie{background:#fff6e6; color:#8a6a2c; margin-bottom:10px}
@@ -330,7 +350,8 @@ main{max-width:680px; margin:0 auto; padding:14px}
    (pur décor, derrière le contenu) et un léger relief — c'est SON écran. */
 .carte-accueil{
   position:relative; overflow:hidden; isolation:isolate;
-  background:linear-gradient(145deg,var(--c),#ffffff 150%);
+  background:var(--c);
+  background:linear-gradient(160deg, color-mix(in srgb, var(--c) 88%, #fff), var(--c) 60%);
   border-radius:calc(var(--rayon) + 4px); padding:20px 18px 18px;
   box-shadow:0 10px 26px -12px var(--c), var(--ombre);
   margin-bottom:14px; text-align:center; color:#fff;
@@ -347,7 +368,15 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .compteur{background:rgba(255,255,255,.94); color:var(--texte);
   border-radius:16px; padding:10px 14px; min-width:120px;
   box-shadow:0 4px 12px -4px rgba(0,0,0,.15)}
-.compteur .big{display:block; font-size:24px; font-weight:900; letter-spacing:-.01em}
+.compteur .big{display:block; font-size:24px; font-weight:900; letter-spacing:-.01em; color:var(--texte)}
+/* Compteur « lecteur » : icône à gauche, nombre + libellé empilés (ui.js,
+   compteurAccueil). `.compteur.compteur-ligne` et non `.compteur-ligne` : la
+   règle `.compteur span:not(.big)` plus haut est plus spécifique. */
+.compteur.compteur-ligne{display:flex; align-items:center; gap:10px; text-align:left; padding:10px 12px}
+.compteur.compteur-ligne .c-ico{font-style:normal; font-size:34px; line-height:1; flex:0 0 auto}
+.compteur.compteur-ligne .c-txt{display:flex; flex-direction:column; min-width:0}
+.compteur.compteur-ligne .big{line-height:1.05}
+.compteur.compteur-ligne .c-txt span:not(.big){line-height:1.2}
 /* Compteur visuel (≤ 5 ans) : suite d'emojis au lieu d'un chiffre */
 .compteur .pips{display:flex; flex-wrap:wrap; justify-content:center; gap:1px; max-width:150px; line-height:1.1}
 .compteur .pip{font-size:18px}
@@ -697,7 +726,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .gros-bouton.planete{background:linear-gradient(180deg,#46cfae,var(--planete))}
 
 /* ---- En-tête catégorie ---- */
-.entete-cat{border-top:6px solid var(--c)}
+.entete-cat{border-top:1px solid var(--bord)}
 .solde{font-size:18px; color:var(--texte)!important}
 .solde-pips{font-size:22px; letter-spacing:1px}
 .t-compte.imgs{background:transparent; color:inherit; padding:0; min-width:auto; font-size:15px}
@@ -709,19 +738,20 @@ main{max-width:680px; margin:0 auto; padding:14px}
    ombre au pied qui s'écrase quand on appuie, pour que le geste se sente. */
 .mission{
   display:flex; flex-direction:column; align-items:center; gap:6px;
-  background:#fff; border:2px solid var(--bord); border-radius:18px;
+  background:#fff; border:2px solid var(--bord); border-radius:20px;
   padding:14px 10px; cursor:pointer; transition:transform .12s, box-shadow .12s, border-color .15s;
   text-align:center; font-family:inherit; color:var(--texte);
-  box-shadow:0 3px 0 #e3e9f2, 0 6px 14px -8px rgba(30,45,75,.18);
+  box-shadow:0 3px 0 #ede3d1;
 }
-.mission:active{transform:translateY(2px) scale(.97); box-shadow:0 1px 0 #e3e9f2}
+.mission:active{transform:translateY(2px) scale(.97); box-shadow:0 1px 0 #ede3d1}
+.missions.cat-planete .mission{border-color:#e3efe9; box-shadow:0 3px 0 #d9eae2}
 .mission .m-emoji{font-size:38px; filter:drop-shadow(0 3px 4px rgba(30,45,75,.14))}
 .mission .m-titre{font-size:14px; font-weight:800; line-height:1.2}
 /* Les points dans une petite pastille teintée : ils se repèrent d'un coup
    d'œil, même par un enfant qui ne lit pas encore. */
-.mission .m-points{font-size:13px; font-weight:900; color:#945700;
-  background:#fff4de; border-radius:999px; padding:2px 9px}
-.missions.cat-planete .mission .m-points{color:#1a7a5e; background:#e2f6ef}
+.mission .m-points{font-size:13px; font-weight:900; color:var(--or-texte);
+  background:var(--or-clair); border-radius:999px; padding:2px 9px}
+.missions.cat-planete .mission .m-points{color:var(--vert-texte); background:var(--vert-clair)}
 .mission.fait .m-points,.mission.attente .m-points{background:none}
 .mission .m-points-img{font-size:15px; letter-spacing:1px}
 .mission.fait{opacity:.6; background:#f1faf6; border-color:#bfe9da; box-shadow:none}
@@ -757,9 +787,18 @@ main{max-width:680px; margin:0 auto; padding:14px}
 @keyframes scintille{0%,100%{opacity:.3}50%{opacity:1}}
 
 /* Titres de catégorie sur l'accueil */
-.titre-cat{border-left:6px solid var(--c); padding:10px 16px; margin-bottom:8px}
-.titre-cat h2{display:flex; align-items:center; gap:8px; margin:0; font-size:18px}
-.solde-inline{font-size:15px; font-weight:800; color:var(--c)}
+/* Titre de section (Missions Famille / Planète) : plus une carte, un simple
+   en-tête posé sur le fond — l'icône 3D sur une tuile teintée, le titre, le
+   solde en pastille. Les tuiles de missions juste dessous portent déjà le
+   relief ; un cadre de plus les écrasait. */
+.carte.titre-cat{background:none; border:none; box-shadow:none; padding:4px 2px; margin-bottom:8px}
+.titre-cat h2{display:flex; align-items:center; gap:10px; margin:0; font-size:20px; font-weight:900}
+.titre-cat h2 > img.emo:first-child{width:40px; height:40px; padding:7px; margin:0;
+  box-sizing:border-box; border-radius:14px; background:var(--or-clair); vertical-align:middle}
+.titre-cat.cat-planete h2 > img.emo:first-child{background:var(--vert-clair)}
+.solde-inline{display:inline-flex; align-items:center; gap:3px; font-size:15px; font-weight:900;
+  color:var(--or-texte); background:var(--or-clair); border-radius:999px; padding:3px 10px}
+.titre-cat.cat-planete .solde-inline{color:var(--vert-texte); background:var(--vert-clair)}
 .lien-cat{margin-left:auto; border:none; background:#f0f3f8; color:var(--doux);
   border-radius:10px; padding:6px 10px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit}
 .mission.fait .m-points{color:var(--planete)}
@@ -843,7 +882,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .eco-carte-sp.verrou-cout{opacity:.92}
 .eco-carte-sp.verrou-cout .ec-etat{background:#fff4e6; color:#a86b00}
 .eco-carte-sp.verrou-prereq{opacity:.6; background:#f6f8fb}
-.eco-carte-sp.verrou-prereq .ec-emoji{filter:grayscale(.7)}
+.eco-carte-sp.verrou-prereq .ec-emoji{filter:grayscale(1) opacity(.6)}
 .eco-carte-sp.verrou-prereq .ec-etat{background:#eef2f7; color:var(--doux)}
 
 /* Référence des prérequis (espace parents) */
@@ -1335,12 +1374,16 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .eval-btn.actif.eval-mauvais{border-color:#f2b8c6; background:#fdeef2}
 
 /* Version enfant : mise en avant, gros choix expressifs */
-.eval-enfant{background:linear-gradient(160deg,#fff7e0,#ffe9f2); border:3px solid #ffe0b0}
+.eval-enfant{background:#fff; border:1px solid var(--bord)}
 .eval-enfant h2{font-size:20px; text-align:center}
 .eval-choix-grand{display:flex; gap:10px}
 .eval-gros{flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;
   border:3px solid #e3edf5; background:#fff; border-radius:20px; padding:16px 6px 12px;
-  cursor:pointer; font-family:inherit; transition:.15s}
+  cursor:pointer; font-family:inherit; transition:.15s; color:var(--texte)}
+/* Chaque réponse porte sa teinte même non choisie : vert, ambre, lavande. */
+.eval-gros.eval-bien{border-color:#cdefe2; background:#f0fbf6}
+.eval-gros.eval-moyen{border-color:#fce7be; background:#fff8ea}
+.eval-gros.eval-mauvais{border-color:#e6e0f7; background:#f7f4ff}
 .eval-gros:active{transform:scale(.95)}
 .eval-gros-emoji{font-size:52px; line-height:1}
 .eval-gros-lbl{font-size:15px; font-weight:800}
@@ -1377,19 +1420,23 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .stat-top-n{font-weight:800; color:var(--planete)}
 
 /* ---- Espace parents : sous-menu (onglets) ---- */
-.sous-nav{display:flex; gap:8px; overflow-x:auto; padding:4px 2px 8px; margin-bottom:6px;
-  -webkit-overflow-scrolling:touch}
-.sous-nav-btn{position:relative; flex:0 0 auto; border:2px solid #e3edf5; background:#fff;
-  border-radius:14px; padding:10px 14px; font-size:14px; font-weight:800; cursor:pointer;
-  font-family:inherit; color:var(--doux); white-space:nowrap; transition:.12s}
-.sous-nav-btn.actif{background:var(--famille); border-color:var(--famille); color:#fff;
-  box-shadow:0 3px 8px rgba(246,166,35,.3)}
+/* Sous-menu : une commande segmentée (un rail teinté, l'onglet actif posé
+   dessus en blanc), comme les réglages d'un téléphone — l'orange plein de
+   l'onglet actif criait plus fort que le contenu de la page. */
+.sous-nav{display:flex; gap:4px; overflow-x:auto; padding:4px; margin-bottom:12px;
+  background:#ede6da; border-radius:16px; -webkit-overflow-scrolling:touch}
+.sous-nav-btn{position:relative; flex:0 0 auto; border:none; background:transparent;
+  border-radius:12px; padding:10px 14px; font-size:14px; font-weight:800; cursor:pointer;
+  font-family:inherit; color:#4d5668; white-space:nowrap; transition:.12s}
+.sous-nav-btn.actif{background:#fff; color:var(--texte);
+  box-shadow:0 1px 2px rgba(60,40,10,.08), 0 3px 8px rgba(60,40,10,.08)}
 .sous-nav-btn:active{transform:scale(.96)}
 .sous-nav-pin{position:absolute; top:-6px; right:-6px; background:#e26d9b; color:#fff;
   font-size:11px; font-weight:800; min-width:18px; height:18px; line-height:18px;
   border-radius:9px; text-align:center; padding:0 4px}
-/* Onglet actif bien marqué (anneau + relief) */
-.sous-nav-btn.actif{box-shadow:0 0 0 3px rgba(246,166,35,.25), 0 3px 8px rgba(246,166,35,.35)}
+/* `overflow-x:auto` rogne la pastille d'attente qui déborde du rail : on la
+   rentre dans le bouton. */
+.sous-nav .sous-nav-pin{top:2px; right:2px}
 
 /* Sous-section Admin « bientôt disponible » (lots en construction) */
 .admin-bientot{text-align:center}
@@ -1435,7 +1482,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
    icône (repère visible sans lire) ; les autres sont légèrement éteints.
    Verre dépoli comme l'en-tête, avec repli blanc opaque. */
 .navbar{position:fixed; bottom:0; left:0; right:0; background:#fff;
-  box-shadow:0 -1px 0 rgba(30,45,75,.07), 0 -6px 20px rgba(30,45,75,.06); display:flex; z-index:30}
+  box-shadow:0 -1px 0 var(--bord), 0 -6px 20px rgba(60,40,10,.05); display:flex; z-index:30}
 @supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
   .navbar{background:rgba(255,255,255,.86);
     -webkit-backdrop-filter:saturate(1.6) blur(14px); backdrop-filter:saturate(1.6) blur(14px)}
@@ -1447,12 +1494,13 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* Les emojis n'ont pas de « couleur de texte » : pour éteindre les onglets
    inactifs, on désature l'icône — le libellé, lui, garde son contraste. */
 .nav-ico{font-style:normal; line-height:1.1; transition:transform .2s cubic-bezier(.2,1.4,.4,1), filter .2s}
-.nav-btn:not(.actif) .nav-ico{filter:saturate(.5) opacity(.85)}
+/* Images 3D : on les laisse en couleur (éteintes, elles paraissaient sales) ;
+   c'est la pastille de l'onglet actif qui porte le repère. */
+.nav-btn:not(.actif) .nav-ico{filter:saturate(.85)}
 .nav-btn.actif .nav-ico{transform:translateY(-1px) scale(1.06)}
 .nav-btn.actif{color:var(--texte)}
-.nav-btn.actif::after{content:""; position:absolute; z-index:-1; top:4px; left:50%;
-  width:54px; height:38px; transform:translateX(-50%); border-radius:14px;
-  background:linear-gradient(180deg,#fff1d2,#ffe3a6)}
+.nav-btn.actif::after{content:""; position:absolute; z-index:-1; inset:4px 4px 6px;
+  border-radius:16px; background:var(--or-clair)}
 .nav-btn:active{transform:scale(.94)}
 
 /* ---- Toast & confettis ---- */
@@ -1755,7 +1803,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
   .navbar{padding-bottom:env(safe-area-inset-bottom, 0px)}
   .nav-btn{padding:12px 2px 14px; font-size:30px; min-height:62px}
   .nav-btn span{font-size:12px}
-  .nav-btn.actif::after{top:6px; width:60px; height:44px; border-radius:16px}
+  .nav-btn.actif::after{inset:5px 5px 7px}
 
   /* Boutons secondaires / mini-boutons : hauteur de tap confortable */
   .btn-secondaire,.btn-danger{padding:16px; font-size:16px}
@@ -1815,7 +1863,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
     box-shadow:0 8px 26px rgba(40,60,90,.18);
   }
   .nav-btn{padding:10px 18px}
-  .nav-btn.actif::after{top:5px; width:64px; height:40px}
+  .nav-btn.actif::after{inset:3px 6px}
 
   /* Survol souris : petit relief sur les éléments cliquables */
   .mission:hover, .eco-carte-sp:hover, .pastille:hover,

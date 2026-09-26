@@ -79,6 +79,7 @@ de choix.
 | 13 | Phase F — build/lint/CI | P3 | Sonnet 5 | à faire |
 | 14 | Découper `schema.sql` en migrations numérotées (si le fichier continue de grossir) | P3 | Sonnet 5 | à faire |
 | 15 | Refonte visuelle, 1re passe : police Nunito embarquée, ombres/jetons, en-tête et barre d'onglets en verre dépoli, carte d'accueil, tuiles de mission, boutons, page publique | P2 | Sonnet 5 | ✅ fait (ce commit) |
+| 16 | Refonte visuelle, 2e passe (maquettes Claude Design validées) : emojis 3D Fluent embarqués (`js/emoji3d.js`, `npm run vendor:emojis`), fond ivoire, cartes sans liseré, en-têtes de section à tuile, compteurs, sous-menu segmenté, bandeau parents sombre | P2 | Sonnet 5 | ✅ fait (ce commit) |
 
 *\* Chantier 7 : certitude ≈ 60 % seulement sur le caractère réellement
 « libre de droits » de toute liste compilée par un agent — aucun modèle ne

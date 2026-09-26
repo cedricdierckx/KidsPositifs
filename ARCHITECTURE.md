@@ -16,6 +16,7 @@ Application **web vanilla** (sans framework), chargée par `index.html` :
 |---|---|
 | `js/demarrage.js` | Écran de démarrage animé (le temps que la session arrive) |
 | `js/config.js` | Clés Supabase (publiques, sécurité par RLS) |
+| `js/emoji3d.js` + `js/emoji3d.liste.js` | Emojis affichés remplacés par les images 3D Fluent (MIT) embarquées dans `images/emoji/` — mêmes images sur tous les appareils. Table régénérée par `npm run vendor:emojis` |
 | `js/vendor/supabase.js` | Bibliothèque Supabase embarquée (MIT) — recopiée par `npm run vendor:supabase`, jamais éditée |
 | `js/i18n.js` | Traductions FR/EN/NL/DE + helper `t("clé")` |
 | `js/data.js` | Données statiques : `APP_NOM`, enfants, missions, avatar, écosystème |

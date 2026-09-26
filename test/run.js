@@ -5457,7 +5457,7 @@ test("feuille papier imprimée (app installée) : le PDF respecte aussi la page 
   const fs = require("fs"), path = require("path"), r = path.join(__dirname, "..");
   const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
   const pd = ui.slice(ui.indexOf("async function pdfDepuisElement"),
-                      ui.indexOf("async function pdfDepuisElement") + 3000);
+                      ui.indexOf("async function pdfDepuisElement") + 3500);
   assert.ok(/querySelectorAll\(["']\.enfant["']\)/.test(pd),
     "le PDF doit repérer les enfants pour les répartir un par un, pas les traiter comme un seul bloc");
   assert.ok(/enfants\.length < 2/.test(pd),
@@ -6538,6 +6538,69 @@ test("scan : deux portes vers la même lecture, et seule la photo force l'object
   // Un PDF de texte pur doit être expliqué, pas signalé comme une image illisible.
   assert.ok(/pdf_sans_image[\s\S]{0,200}scan\.echec_pdf|scan\.echec_pdf[\s\S]{0,200}pdf_sans_image/
     .test(ui), "un PDF sans image encapsulée doit avoir son propre message");
+});
+
+/* ---------- Emojis 3D (js/emoji3d.js) ---------- */
+function chargerEmoji3d() {
+  const fs = require("fs"), path = require("path"), vm = require("vm");
+  const r = path.join(__dirname, "..");
+  const mod = {};
+  vm.runInNewContext(fs.readFileSync(path.join(r, "js/emoji3d.js"), "utf8"), mod);
+  const liste = { window: {} };
+  vm.runInNewContext(fs.readFileSync(path.join(r, "js/emoji3d.liste.js"), "utf8"), liste);
+  return { r, mod, table: liste.window.EMOJI_3D };
+}
+
+test("emojis 3D : chaque emoji du code est recensé et son image embarquée (npm run vendor:emojis)", () => {
+  const fs = require("fs"), path = require("path");
+  const { r, mod, table } = chargerEmoji3d();
+  const RE = new RegExp(mod.EMOJI_3D_MOTIF, "gu");
+  const sources = [
+    ...fs.readdirSync(path.join(r, "js")).filter(f => f.endsWith(".js") && f !== "emoji3d.liste.js").map(f => "js/" + f),
+    ...fs.readdirSync(r).filter(f => f.endsWith(".html")),
+  ];
+  const oublies = new Set();
+  for (const f of sources) {
+    for (const m of fs.readFileSync(path.join(r, f), "utf8").matchAll(RE)) {
+      if (!Object.prototype.hasOwnProperty.call(table, mod.cleEmoji3d(m[0]))) oublies.add(m[0] + " (" + f + ")");
+    }
+  }
+  // Un emoji ajouté sans relancer le script resterait un caractère, dessiné
+  // à la façon de chaque appareil : exactement ce que le module corrige.
+  assert.strictEqual(oublies.size, 0,
+    "emojis absents de js/emoji3d.liste.js — relancer npm run vendor:emojis : " + [...oublies].slice(0, 10).join(", "));
+  const manquants = Object.values(table).filter(v => v && !fs.existsSync(path.join(r, "images/emoji", v + ".webp")));
+  assert.deepStrictEqual(manquants, [], "images annoncées par la table mais absentes de images/emoji/");
+  assert.ok(fs.existsSync(path.join(r, "images/emoji/LICENCE.txt")), "la licence MIT des images doit les accompagner");
+});
+
+test("emojis 3D : seuls les vrais emojis sont convertis — les flèches ◀ ▶ du sous-menu restent du texte", () => {
+  const { mod, table } = chargerEmoji3d();
+  const trouves = (s) => [...s.matchAll(new RegExp(mod.EMOJI_3D_MOTIF, "gu"))].map(m => m[0]);
+  // Présentation « texte » par défaut, sans U+FE0F : pas un emoji.
+  assert.deepStrictEqual(trouves("◀ Précédent · Suivant ▶ · 3 × 2 · © 2026"), []);
+  // Emoji natif, et pictogramme texte rendu emoji par U+FE0F.
+  assert.deepStrictEqual(trouves("🪥 brosse · ⚙️ réglages"), ["🪥", "⚙️"]);
+  // Écrit avec ou sans sélecteur, ⚙ trouve le même fichier.
+  assert.strictEqual(mod.cleEmoji3d("⚙️"), mod.cleEmoji3d("⚙️"));
+  assert.ok(table[mod.cleEmoji3d("⚙️")], "⚙️ doit avoir son image");
+  // Séquence ZWJ : une seule image, pas trois.
+  assert.deepStrictEqual(trouves("👨‍👩‍👧"), ["👨‍👩‍👧"]);
+});
+
+test("emojis 3D : chargés dans l'app avant l'interface, et jamais dans ce que html2canvas capture", () => {
+  const fs = require("fs"), path = require("path");
+  const r = path.join(__dirname, "..");
+  const html = fs.readFileSync(path.join(r, "index.html"), "utf8");
+  const iListe = html.indexOf('src="js/emoji3d.liste.js'), iMod = html.indexOf('src="js/emoji3d.js'),
+        iUi = html.indexOf('src="js/ui.js');
+  assert.ok(iListe > 0 && iListe < iMod && iMod < iUi, "ordre attendu : table, module, puis ui.js");
+  const ui = fs.readFileSync(path.join(r, "js/ui.js"), "utf8");
+  // Conteneurs hors écran capturés dans la foulée pour les PDF : une image
+  // pas encore chargée y ferait un trou. Ils gardent donc leurs caractères.
+  assert.ok(/large\.dataset\.emo = "non"/.test(ui), "le clone élargi du PDF doit refuser la conversion");
+  assert.ok(/function elementDepuisHtml[\s\S]{0,700}conteneur\.dataset\.emo = "non"/.test(ui),
+    "le conteneur de elementDepuisHtml doit refuser la conversion");
 });
 
 /* ---------- Exécution ----------
