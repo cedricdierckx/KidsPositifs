@@ -307,7 +307,11 @@ img.emo{display:inline-block; width:1.15em; height:1.15em; vertical-align:-.2em;
 }
 
 /* ---- Contenu ---- */
-main{max-width:680px; margin:0 auto; padding:14px}
+/* overflow-wrap : un mot sans espace (lien, adresse e-mail) passe à la ligne
+   au lieu de pousser sa carte hors de l'écran. `break-word` et non
+   `anywhere` : il ne change pas la largeur minimale des grilles, donc ne
+   coupe jamais « Champignon » dans une tuile qui aurait pu s'élargir. */
+main{max-width:680px; margin:0 auto; padding:14px; overflow-wrap:break-word}
 /* Carte : un filet chaud et une ombre douce, sans le liseré de couleur à
    gauche d'autrefois (maquettes sept. 2026) — ce liseré, répété sur chaque
    carte, alourdissait la page et ne distinguait plus rien. Les cartes qui
@@ -1121,7 +1125,14 @@ main{max-width:680px; margin:0 auto; padding:14px}
 /* ---- Cartes surprises (objectif d'équipe) ---- */
 .cartes-surprises{background:linear-gradient(180deg,#fff6e9,#ffeef4)}
 .cs-sous{font-size:14px; margin:.2em 0 .8em!important}
-.cs-liste{display:grid; gap:18px}
+/* `minmax(0,1fr)` et non la colonne implicite : une colonne de grille ne
+   descend pas sous la largeur minimale de son contenu, et UN mot sans espace
+   (un lien collé dans une activité, par exemple) élargissait alors TOUTES
+   les cartes au-delà de l'écran — signalé sur Android, capture à l'appui.
+   La colonne reste à la largeur de l'écran, et le mot trop long passe à la
+   ligne dans sa carte (`overflow-wrap`). */
+.cs-liste{display:grid; grid-template-columns:minmax(0,1fr); gap:18px}
+.cs-carte{min-width:0; overflow-wrap:break-word}
 
 /* Grande carte attirante */
 .cs-carte{background:#fff; border:3px solid var(--cs-c,#ffd98a); border-radius:24px; padding:18px;
@@ -1163,7 +1174,9 @@ main{max-width:680px; margin:0 auto; padding:14px}
 .cs-afaire{font-weight:800; color:var(--planete)!important; margin:2px 0!important; font-size:16px}
 .cs-faite-tag{font-weight:800; color:var(--doux)!important}
 .cs-dons{display:flex; gap:8px; flex-wrap:wrap}
-.cs-don{flex:1; min-width:96px; border:none; border-radius:16px; padding:16px 10px;
+/* nowrap : « Geef 10 💛 » se coupait sur deux lignes dans un bouton trop
+   étroit ; insécable, le troisième bouton passe plutôt à la ligne entier. */
+.cs-don{flex:1; min-width:96px; border:none; border-radius:16px; padding:16px 10px; white-space:nowrap;
   font-size:16px; font-weight:800; cursor:pointer; font-family:inherit;
   background:var(--cs-c,#f6a623); color:#fff; box-shadow:0 3px 8px rgba(40,60,90,.2)}
 .cs-don:active{transform:scale(.95)}
@@ -1183,7 +1196,7 @@ main{max-width:680px; margin:0 auto; padding:14px}
    une bordure qui se voit vraiment, et un numéro — utile tel quel : c'est ce
    qu'un parent nomme quand il en parle (« la carte 2 »), et il suit l'ordre
    réel même après un tri (▲▼) ou une suppression, sans une ligne de JS. */
-.csp-liste{display:grid; gap:16px; margin-top:6px; counter-reset:csp}
+.csp-liste{display:grid; grid-template-columns:minmax(0,1fr); gap:16px; margin-top:6px; counter-reset:csp}
 .csp-carte{counter-increment:csp; position:relative; border:2px solid #dde6f0;
   border-radius:14px; padding:16px 10px 10px; display:grid; gap:8px; background:var(--bg)}
 .csp-carte::before{content:"Carte " counter(csp); position:absolute; top:-9px; left:12px;

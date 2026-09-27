@@ -6603,6 +6603,16 @@ test("emojis 3D : chargés dans l'app avant l'interface, et jamais dans ce que h
     "le conteneur de elementDepuisHtml doit refuser la conversion");
 });
 
+test("cartes FamiTeam : un mot sans espace n'élargit pas toutes les cartes hors de l'écran", () => {
+  const fs = require("fs"), path = require("path");
+  const css = fs.readFileSync(path.join(__dirname, "..", "css/style.css"), "utf8");
+  // Signalé sur Android : un lien collé dans une activité fixait la largeur
+  // minimale de la colonne implicite, donc de toutes les cartes de la liste.
+  assert.ok(/\.cs-liste\{[^}]*grid-template-columns:minmax\(0,1fr\)/.test(css),
+    "la colonne des cartes doit pouvoir descendre sous la largeur de son contenu");
+  assert.ok(/\.cs-carte\{[^}]*overflow-wrap:break-word/.test(css), "le mot trop long doit passer à la ligne");
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async
