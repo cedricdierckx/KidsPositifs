@@ -1413,6 +1413,7 @@ Object.assign(I18N.en, {
   "rituel.heure": "At what time?",
   "rituel.conseil": "Suggested: {h}",
   "rituel.agenda_label": "Which calendar?",
+  "rituel.agenda_choisir": "Choose the calendar",
   "rituel.agenda_auto": "Automatic (chosen by the phone)",
   "rituel.ajouter": "📅 Add to my calendar",
   "rituel.ok": "Appointment ready. Open the file to add it to your calendar 📅",

@@ -3609,10 +3609,14 @@ test("agenda natif : le parent peut choisir l'agenda, sur un téléphone à plus
   // Le sélecteur ne s'affiche pas quand un seul agenda existe (cas courant),
   // et ne présume jamais un choix que le parent n'a pas fait lui-même : une
   // option « automatique » neutre doit rester sélectionnée par défaut.
-  const br = ui.slice(ui.indexOf("function blocRituelSoir("),
-                      ui.indexOf("function blocRituelSoir(") + 4000);
+  const br = ui.slice(ui.indexOf("async function selecteurAgenda("),
+                      ui.indexOf("async function selecteurAgenda(") + 2000);
   assert.ok(/cals\.length < 2\) return/.test(br),
     "un seul agenda : rien à choisir, le sélecteur ne doit pas s'afficher");
+  // Le choix doit aussi être offert là où le parent ajoute un rendez-vous.
+  const md = ui.slice(ui.indexOf("function modaleRendezVousCarte("),
+                      ui.indexOf("function modaleRendezVousCarte(") + 3000);
+  assert.ok(/selecteurAgenda\(/.test(md), "la modale de date d'une carte doit proposer le choix de l'agenda");
   assert.ok(/rituel\.agenda_auto/.test(br) && /oAuto\.selected = true/.test(br),
     "tant que le parent n'a rien choisi, l'option neutre doit rester affichée, jamais un agenda précis présumé");
 

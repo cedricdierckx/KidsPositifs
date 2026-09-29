@@ -1095,6 +1095,7 @@ const I18N = {
     "rituel.heure": "À quelle heure ?",
     "rituel.conseil": "Conseillé : {h}",
     "rituel.agenda_label": "Dans quel agenda ?",
+    "rituel.agenda_choisir": "Choisir l'agenda",
     "rituel.agenda_auto": "Automatique (choisi par le téléphone)",
     "rituel.ajouter": "📅 Déposer dans mon agenda",
     "rituel.ok": "Rendez-vous déposé. Ouvrez le fichier pour l'ajouter à votre agenda 📅",

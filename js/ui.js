@@ -5597,6 +5597,7 @@ function modaleRendezVousCarte(id) {
         <input class="csp-rdv-heure" id="rdv-heure" type="time" value="${c.prevueHeure || ""}">
       </div>
       <p id="rdv-decompte" class="csp-rdv-decompte"></p>
+      <div id="rdv-agenda"></div>
       <button id="rdv-ics" class="btn-secondaire">📅 ${t("cs.rdv_agenda")}</button>
       <p class="note">${t("cs.rdv_note")}</p>
     </div>`;
@@ -5621,6 +5622,7 @@ function modaleRendezVousCarte(id) {
   iDate.onchange = enregistrer;
   iHeure.onchange = enregistrer;
   bIcs.onclick = () => exporterCarteAgenda(id);
+  selecteurAgenda(ov.querySelector("#rdv-agenda"), true);
   rafraichir();
 }
 
@@ -7568,6 +7570,41 @@ function rituelReglage() {
   return r;
 }
 
+// Sélecteur d'agenda, partagé par le rituel du soir et la date d'une carte.
+// Invisible tant qu'un seul agenda existe (rien à choisir). Tant que la
+// permission n'est pas acquise, la liste est vide : `demander` propose alors un
+// bouton qui la réclame (geste explicite du parent) puis affiche la liste.
+async function selecteurAgenda(zone, demander) {
+  zone.innerHTML = "";
+  if (!greffonNatif("CapacitorCalendar")) return;
+  const cals = await calendriersDisponibles();
+  if (!cals.length && demander) {
+    const b = el("button", "btn-secondaire", "📆 " + t("rituel.agenda_choisir"));
+    b.onclick = async () => {
+      if (await permissionCalendrierEcriture()) selecteurAgenda(zone, false);
+    };
+    zone.appendChild(b);
+    return;
+  }
+  if (cals.length < 2) return;
+  const lA = el("label", "champ", t("rituel.agenda_label"));
+  const selA = el("select");
+  const actuel = calendrierChoisi();
+  const oAuto = el("option", "", t("rituel.agenda_auto"));
+  oAuto.value = "";
+  if (!actuel) oAuto.selected = true;
+  selA.appendChild(oAuto);
+  cals.forEach(c => {
+    const o = el("option", "", c.accountName ? (c.title + " — " + c.accountName) : c.title);
+    o.value = c.id;
+    if (String(c.id) === String(actuel)) o.selected = true;
+    selA.appendChild(o);
+  });
+  selA.onchange = () => choisirCalendrier(selA.value || null);
+  lA.appendChild(selA);
+  zone.appendChild(lA);
+}
+
 function blocRituelSoir() {
   const regle = rituelReglage();
   const sec = el("section", "carte rituel");
@@ -7613,26 +7650,7 @@ function blocRituelSoir() {
   // rien à choisir, le sélecteur n'ajouterait qu'une ligne inutile.
   const zoneAgenda = el("div");
   sec.appendChild(zoneAgenda);
-  (async () => {
-    const cals = await calendriersDisponibles();
-    if (cals.length < 2) return;
-    const lA = el("label", "champ", t("rituel.agenda_label"));
-    const selA = el("select");
-    const actuel = calendrierChoisi();
-    const oAuto = el("option", "", t("rituel.agenda_auto"));
-    oAuto.value = "";
-    if (!actuel) oAuto.selected = true;
-    selA.appendChild(oAuto);
-    cals.forEach(c => {
-      const o = el("option", "", c.accountName ? (c.title + " — " + c.accountName) : c.title);
-      o.value = c.id;
-      if (c.id === actuel) o.selected = true;
-      selA.appendChild(o);
-    });
-    selA.onchange = () => choisirCalendrier(selA.value || null);
-    lA.appendChild(selA);
-    zoneAgenda.appendChild(lA);
-  })();
+  selecteurAgenda(zoneAgenda);
 
   const b = el("button", "gros-bouton planete", t("rituel.ajouter"));
   b.onclick = async () => {
