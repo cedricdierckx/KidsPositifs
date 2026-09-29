@@ -3523,7 +3523,7 @@ test("agenda natif : le calendrier est tenté avant le fichier, avec permission 
     "Android doit pouvoir demander l'accès complet (lecture + écriture)");
 
   const ec = ui.slice(ui.indexOf("async function ecrireEvenementCalendrier"),
-                      ui.indexOf("async function ecrireEvenementCalendrier") + 1400);
+                      ui.indexOf("async function ecrireEvenementCalendrier") + 2600);
   assert.ok(/permissionCalendrierEcriture\(\)/.test(ec),
     "l'écriture ne doit jamais être tentée sans vérifier l'autorisation d'abord");
   assert.ok(/modifyEvent/.test(ec) && /createEvent/.test(ec),
@@ -3593,9 +3593,18 @@ test("agenda natif : le parent peut choisir l'agenda, sur un téléphone à plus
 
   // L'écriture doit utiliser le choix du parent quand il existe.
   const ec = ui.slice(ui.indexOf("async function ecrireEvenementCalendrier"),
-                      ui.indexOf("async function ecrireEvenementCalendrier") + 1400);
-  assert.ok(/calendrierChoisi\(\)/.test(ec) && /champs\.calendarId/.test(ec),
+                      ui.indexOf("async function ecrireEvenementCalendrier") + 2600);
+  const ct = ui.slice(ui.indexOf("async function calendrierCible"),
+                      ui.indexOf("async function calendrierCible") + 1200);
+  assert.ok(/calendrierChoisi\(\)/.test(ct) && /champs\.calendarId/.test(ec),
     "l'agenda choisi par le parent doit être transmis à la création de l'événement");
+  // Constaté sur Android : confirmation à l'écran mais aucun rendez-vous. Le
+  // greffon prend « le premier agenda » sans regarder s'il est modifiable ou
+  // affiché ; on choisit nous-mêmes, puis on vérifie que l'événement existe.
+  assert.ok(/allowsContentModifications/.test(ct) && /visible/.test(ct),
+    "l'agenda cible doit être modifiable et affiché");
+  assert.ok(/evenementVisible\(/.test(ec) && /deleteEvent/.test(ec),
+    "un succès non confirmé par le calendrier doit retomber sur le fichier .ics");
 
   // Le sélecteur ne s'affiche pas quand un seul agenda existe (cas courant),
   // et ne présume jamais un choix que le parent n'a pas fait lui-même : une

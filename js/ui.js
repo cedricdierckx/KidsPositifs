@@ -939,6 +939,40 @@ async function calendriersDisponibles() {
   } catch (e) { return []; }
 }
 
+// Choisit l'agenda où écrire. Sans `calendarId`, le greffon Android prend le
+// « principal » du système, ou à défaut le PREMIER de la liste — qui peut être
+// un agenda en lecture seule (jours fériés, anniversaires) ou masqué : le
+// système accepte alors l'insertion, rend un identifiant, et l'événement
+// n'apparaît jamais nulle part (constaté : confirmation à l'écran, agenda
+// vide). On choisit donc nous-mêmes un agenda modifiable ET affiché.
+async function calendrierCible(cal) {
+  let liste = [];
+  try { const r = await cal.listCalendars(); liste = (r && Array.isArray(r.result)) ? r.result : []; }
+  catch (e) { return null; }
+  const utilisable = (c) => c && c.allowsContentModifications !== false && c.visible !== false;
+  const choisi = calendrierChoisi();
+  const voulu = choisi && liste.find(c => String(c.id) === String(choisi));
+  if (utilisable(voulu)) return String(voulu.id);
+  const candidats = liste.filter(utilisable);
+  // Un vrai compte (l'agenda appartient à son propriétaire) plutôt qu'un
+  // agenda système ou abonné.
+  const compte = candidats.find(c => c.accountName && c.accountName === c.ownerAccount);
+  const retenu = compte || candidats[0];
+  return retenu ? String(retenu.id) : null;
+}
+
+// Vrai si l'événement est réellement visible dans le calendrier du système.
+// En cas d'impossibilité de lire (erreur), on ne peut pas conclure : on
+// laisse le bénéfice du doute plutôt que de doubler l'envoi.
+async function evenementVisible(cal, id, debutMs, finMs) {
+  try {
+    const r = await cal.listEventsInRange({ from: debutMs - 60000, to: finMs + 60000 });
+    const liste = (r && Array.isArray(r.result)) ? r.result : null;
+    if (!liste) return true;
+    return liste.some(e => String(e.id) === String(id));
+  } catch (e) { return true; }
+}
+
 /* options : { titre, texte, debutMs, finMs, alarmes?, recurrence?, idExistant? }
  * Renvoie l'identifiant de l'événement (à conserver pour une future mise à
  * jour), ou null si cette voie n'a pas abouti — jamais une erreur bruyante :
@@ -953,22 +987,30 @@ async function ecrireEvenementCalendrier(options) {
     endDate: options.finMs,
     availability: 1   // EventAvailability.FREE : ne rend pas le parent indisponible
   };
-  const idCal = calendrierChoisi();
+  const idCal = await calendrierCible(cal);
   if (idCal) champs.calendarId = idCal;   // sinon : choix automatique du système
   if (Array.isArray(options.alarmes)) champs.alerts = options.alarmes;
   if (options.recurrence) champs.recurrence = options.recurrence;
+  let id = null;
   try {
-    if (options.idExistant) { await cal.modifyEvent({ id: options.idExistant, ...champs }); return options.idExistant; }
-    const cree = await cal.createEvent(champs);
-    return (cree && cree.id) || null;
+    if (options.idExistant) { await cal.modifyEvent({ id: options.idExistant, ...champs }); id = options.idExistant; }
+    else { const cree = await cal.createEvent(champs); id = (cree && cree.id) || null; }
   } catch (e) {
     // L'identifiant mémorisé ne correspond peut-être plus à rien (événement
     // supprimé à la main dans le calendrier) : une création neuve avant
     // d'abandonner cette voie, plutôt que de renoncer sur un id périmé.
     if (!options.idExistant) return null;
-    try { const cree = await cal.createEvent(champs); return (cree && cree.id) || null; }
+    try { const cree = await cal.createEvent(champs); id = (cree && cree.id) || null; }
     catch (e2) { return null; }
   }
+  if (!id) return null;
+  // Ne jamais annoncer un succès que le calendrier ne confirme pas : sinon on
+  // retombe sur le fichier .ics, qui ouvre l'agenda pour de bon.
+  if (!options.recurrence && !(await evenementVisible(cal, id, options.debutMs, options.finMs))) {
+    try { await cal.deleteEvent({ id }); } catch (e) { /* pas grave */ }
+    return null;
+  }
+  return id;
 }
 
 /* Point d'entrée unique des deux boutons « agenda ». `champsCalendrier` (ou
