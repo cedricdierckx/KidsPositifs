@@ -6626,6 +6626,17 @@ test("cartes FamiTeam : un mot sans espace n'élargit pas toutes les cartes hors
   assert.ok(/\.cs-carte\{[^}]*overflow-wrap:break-word/.test(css), "le mot trop long doit passer à la ligne");
 });
 
+test("agenda Android : ouvre l'écran « Nouvel événement » de l'agenda, pré-rempli", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const f = ui.slice(ui.indexOf("async function ouvrirNouvelEvenement"), ui.indexOf("async function envoyerVersAgenda"));
+  assert.ok(/createEventWithPrompt\(/.test(f), "l'agenda du téléphone doit s'ouvrir, pas une écriture silencieuse");
+  assert.ok(/=== "android"/.test(f), "réservé à Android");
+  const e = ui.slice(ui.indexOf("async function envoyerVersAgenda"), ui.indexOf("async function envoyerVersAgenda") + 400);
+  assert.ok(e.indexOf("ouvrirNouvelEvenement") > -1 && e.indexOf("ouvrirNouvelEvenement") < e.indexOf("ecrireEvenementCalendrier"),
+    "l'ouverture de l'agenda doit être tentée avant l'écriture directe");
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async

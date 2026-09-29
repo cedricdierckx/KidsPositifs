@@ -1023,8 +1023,26 @@ async function ecrireEvenementCalendrier(options) {
  *   null                        — rien n'est parti, et il faut le dire
  * Dans l'app, on ne retombe PAS sur le téléchargement en cas d'échec total :
  * il ne ferait rien de visible, et un faux succès est pire qu'une erreur. */
+// Android : ouvre l'écran « Nouvel événement » de l'agenda du téléphone,
+// pré-rempli (Intent ACTION_INSERT). Aucune autorisation à demander, et c'est
+// l'agenda lui-même qui enregistre, dans le compte que le parent voit et peut
+// changer à l'écran. Remplace l'écriture silencieuse dans le magasin système,
+// qui confirmait côté FamiTeam sans que rien n'apparaisse dans l'agenda
+// (signalé deux fois, même après choix d'un agenda modifiable).
+async function ouvrirNouvelEvenement(champs) {
+  const cal = greffonNatif("CapacitorCalendar");
+  const android = window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === "android";
+  if (!cal || !android || !champs || typeof cal.createEventWithPrompt !== "function") return false;
+  const options = { title: champs.titre, description: champs.texte || "", startDate: champs.debutMs, endDate: champs.finMs };
+  if (champs.journee) options.isAllDay = true;
+  if (champs.recurrence) options.recurrence = champs.recurrence;
+  try { await cal.createEventWithPrompt(options); return true; }
+  catch (e) { return false; }
+}
+
 async function envoyerVersAgenda(champsCalendrier, ics, nomFichier, titre) {
-  if (champsCalendrier) {
+  if (await ouvrirNouvelEvenement(champsCalendrier)) return { voie: "natif" };
+  if (champsCalendrier && !champsCalendrier.journee) {
     const id = await ecrireEvenementCalendrier(champsCalendrier);
     if (id) return { voie: "calendrier", id };
   }
@@ -5674,7 +5692,13 @@ async function exporterCarteAgenda(id) {
   const activite = trData("carteAct", c.id, c.activite);
   const ics = icsCarteSurprise(c, titre, activite);
   if (!ics) { toast(t("cs.rdv_sans_date"), "info"); return; }
-  const champs = champsCarteSurprise(c, titre, activite);
+  // Sans heure : journée entière. Accepté par l'écran « Nouvel événement »
+  // d'Android ; ignoré par l'écriture directe (voir champsCarteSurprise).
+  const champs = champsCarteSurprise(c, titre, activite) || (c.prevueLe ? {
+    titre: (c.emoji || "🎁") + " " + titre, texte: activite || "",
+    debutMs: new Date(c.prevueLe + "T00:00:00").getTime(),
+    finMs: new Date(c.prevueLe + "T00:00:00").getTime() + 86400000, journee: true
+  } : null);
   const resultat = await envoyerVersAgenda(champs, ics, "famiteam-" + c.id + ".ics", (c.emoji || "🎁") + " " + titre);
   // Le parent doit savoir ce qui vient de se passer : sans retour, un
   // téléphone qui ouvre l'agenda derrière l'app ressemble à un bouton mort.
