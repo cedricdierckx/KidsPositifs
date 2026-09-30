@@ -3611,8 +3611,13 @@ test("agenda natif : le parent peut choisir l'agenda, sur un téléphone à plus
   // option « automatique » neutre doit rester sélectionnée par défaut.
   const br = ui.slice(ui.indexOf("async function selecteurAgenda("),
                       ui.indexOf("async function selecteurAgenda(") + 2000);
-  assert.ok(/cals\.length < 2\) return/.test(br),
+  assert.ok(/cals\.length < 2\) \{[\s\S]{0,200}agenda_unique[\s\S]{0,80}return;/.test(br),
     "un seul agenda : rien à choisir, le sélecteur ne doit pas s'afficher");
+  // Signalé : « Choisir l'agenda » disparaissait sans rien afficher. Chaque
+  // issue doit désormais se voir (refus, aucun agenda, un seul agenda), et
+  // Android renvoie vers le choix du compte dans l'agenda lui-même.
+  assert.ok(/agenda_refus/.test(br) && /agenda_aucun/.test(br) && /agenda_android/.test(br),
+    "le sélecteur ne doit jamais disparaître sans explication");
   // Le choix doit aussi être offert là où le parent ajoute un rendez-vous.
   const md = ui.slice(ui.indexOf("function modaleRendezVousCarte("),
                       ui.indexOf("function modaleRendezVousCarte(") + 3000);

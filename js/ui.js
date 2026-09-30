@@ -7601,16 +7601,27 @@ function rituelReglage() {
 async function selecteurAgenda(zone, demander) {
   zone.innerHTML = "";
   if (!greffonNatif("CapacitorCalendar")) return;
+  // Android : « Ajouter à mon agenda » ouvre l'écran de création de l'agenda
+  // lui-même (voir ouvrirNouvelEvenement), où le compte se choisit en haut de
+  // l'écran. Un sélecteur ici n'aurait aucun effet : on dit où choisir.
+  const android = window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === "android";
+  if (android) { zone.appendChild(el("p", "note", "📆 " + t("rituel.agenda_android"))); return; }
   const cals = await calendriersDisponibles();
   if (!cals.length && demander) {
     const b = el("button", "btn-secondaire", "📆 " + t("rituel.agenda_choisir"));
     b.onclick = async () => {
       if (await permissionCalendrierEcriture()) selecteurAgenda(zone, false);
+      else toast(t("rituel.agenda_refus"), "info");
     };
     zone.appendChild(b);
     return;
   }
-  if (cals.length < 2) return;
+  // Jamais de disparition muette : dire ce qui a été trouvé.
+  if (!cals.length) { if (demander === false) zone.appendChild(el("p", "note", t("rituel.agenda_aucun"))); return; }
+  if (cals.length < 2) {
+    if (demander === false) zone.appendChild(el("p", "note", t("rituel.agenda_unique", { nom: cals[0].title || "" })));
+    return;
+  }
   const lA = el("label", "champ", t("rituel.agenda_label"));
   const selA = el("select");
   const actuel = calendrierChoisi();
