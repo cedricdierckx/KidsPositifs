@@ -2084,6 +2084,17 @@ body.impression .carte-ami-actions{display:none}
   display:flex; flex-direction:column; gap:1px}
 .cs-rdv small{font-weight:600; font-size:12px; color:#6b7c8d}
 .cs-rdv.proche{color:#d2691e}
+/* Chemin visuel jusqu'à l'activité (voir cheminRdvCarte) */
+.cs-chemin{margin:8px 0 4px}
+.cs-chemin-piste{position:relative; height:14px; border-radius:999px; background:#eef2f6;
+  margin:14px 26px 6px 4px}
+.cs-chemin-rempli{position:absolute; left:0; top:0; bottom:0; border-radius:999px;
+  background:linear-gradient(90deg, var(--cs-c,#f6a623), #ffd166)}
+.cs-chemin-moi{position:absolute; top:50%; transform:translate(-50%,-55%) scaleX(-1); font-size:20px; line-height:1}
+.cs-chemin-but{position:absolute; right:-26px; top:50%; transform:translateY(-55%); font-size:22px; line-height:1}
+.cs-chemin-nuits{font-size:16px; letter-spacing:2px; line-height:1.5; word-break:break-all}
+.cs-chemin-plus{font-size:12px; font-weight:800; color:#6b7c8d; letter-spacing:0; margin-left:4px}
+.cs-chemin-jourj{font-size:24px}
 
 /* Explication de l'Arbre côté enfant : une phrase, sous celle du compte. */
 .arbre-enfant-expli{margin:6px 0 0; font-size:13.5px; line-height:1.45; color:#6b7c8d}

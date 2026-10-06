@@ -6642,6 +6642,61 @@ test("agenda Android : ouvre l'écran « Nouvel événement » de l'agenda, pré
     "l'ouverture de l'agenda doit être tentée avant l'écriture directe");
 });
 
+test("cartes : à débloquer d'abord, puis débloquées par date du rendez-vous, puis faites", () => {
+  const { api } = construireContexte();
+  const cartes = [
+    { id: "a", debloquee: true, prevueLe: "2026-11-20" },
+    { id: "b", debloquee: false },
+    { id: "c", faite: true, debloquee: true, faiteLe: "2026-09-01" },
+    { id: "d", debloquee: true },                                   // sans date
+    { id: "e", debloquee: true, prevueLe: "2026-10-10", prevueHeure: "17:30" },
+    { id: "f", debloquee: false },
+    { id: "g", debloquee: true, prevueLe: "2026-10-10", prevueHeure: "09:00" },
+    { id: "h", faite: true, debloquee: true, faiteLe: "2026-10-01" }
+  ];
+  const ordre = api.ordreCartesAffichage(cartes).map(x => x.c.id).join(",");
+  assert.strictEqual(ordre, "b,f,g,e,a,d,h,c");
+  // L'index d'origine suit la carte (sa couleur ne change pas en changeant de place).
+  assert.strictEqual(api.ordreCartesAffichage(cartes)[0].idx, 1);
+  assert.strictEqual(cartes[0].id, "a", "le tableau des parents (ordre ▲▼) ne doit pas être réordonné");
+});
+
+test("cartes : le chemin visuel avance de la date fixée vers l'activité", () => {
+  const { api } = construireContexte();
+  const c = { debloquee: true, prevueLe: "2026-10-11", prevueFixeeLe: "2026-10-01" };
+  const p = api.progressionRdvCarte(c, "2026-10-06");
+  assert.strictEqual(p.jours, 5);
+  assert.strictEqual(p.pct, 50, "5 jours écoulés sur 10");
+  assert.strictEqual(p.nuits, 5);
+  assert.strictEqual(api.progressionRdvCarte(c, "2026-10-11").pct, 100, "le jour J : piste pleine");
+  assert.strictEqual(api.progressionRdvCarte(c, "2026-10-12"), null, "date passée : plus de chemin");
+  assert.strictEqual(api.progressionRdvCarte({ debloquee: true }, "2026-10-06"), null, "sans date : rien");
+  // Sans date de fixation connue (cartes d'avant), on part du déblocage.
+  const ancienne = { debloquee: true, prevueLe: "2026-10-16", debloqueeLe: "2026-10-01" };
+  assert.strictEqual(api.progressionRdvCarte(ancienne, "2026-10-06").pct, 33);
+  // Au-delà de NUITS_MAX, les lunes s'arrêtent et le reste s'affiche en « +N ».
+  const loin = api.progressionRdvCarte({ debloquee: true, prevueLe: "2026-12-01", prevueFixeeLe: "2026-10-06" }, "2026-10-06");
+  assert.strictEqual(loin.nuits, api.NUITS_MAX);
+  assert.strictEqual(loin.surplus, 56 - api.NUITS_MAX);
+  assert.strictEqual(loin.pct, 0);
+});
+
+test("cartes : fixer une date retient le jour de départ du chemin, pas en la ré-enregistrant", () => {
+  const { api } = construireContexte();
+  api.familleId = "f1";
+  api.lierEtat(api.etatVierge());
+  const c = api.etat.cartesSurprises[0];
+  c.debloquee = true;
+  api.definirDateCarte(c.id, "2099-01-10", "10:00");
+  const depart = c.prevueFixeeLe;
+  assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(depart || ""), "le jour de fixation doit être mémorisé");
+  c.prevueFixeeLe = "2020-01-01";
+  api.definirDateCarte(c.id, "2099-01-10", "11:00");
+  assert.strictEqual(c.prevueFixeeLe, "2020-01-01", "changer l'heure seule ne doit pas remettre le chemin à zéro");
+  api.definirDateCarte(c.id, "", "");
+  assert.strictEqual(c.prevueFixeeLe, null);
+});
+
 /* ---------- Exécution ----------
  * `await fn()` : ne change rien pour un test synchrone (attendre une valeur
  * qui n'est pas une promesse est un no-op), et permet aux tests async

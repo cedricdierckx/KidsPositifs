@@ -681,6 +681,7 @@ function normaliser(e) {
       // Rendez-vous : ajouté après coup, donc absent des familles existantes.
       if (!DATE_ISO.test(c.prevueLe || "")) c.prevueLe = null;
       if (!HEURE_ISO.test(c.prevueHeure || "")) c.prevueHeure = null;
+      if (!DATE_ISO.test(c.prevueFixeeLe || "")) c.prevueFixeeLe = null;
       if (!c.emoji) c.emoji = "🎁";
       // Migration douce : si une carte par défaut a encore son ancien prix et
       // n'a jamais été utilisée, on applique le nouveau calcul (× nb d'enfants).
@@ -1509,6 +1510,9 @@ function definirDateCarte(id, date, heure) {
   if (d && !DATE_ISO.test(d)) return false;
   if (h && !HEURE_ISO.test(h)) return false;
   // Une date effacée efface aussi l'heure : une heure sans jour ne veut rien dire.
+  // Le jour où la date est fixée sert de point de départ au chemin visuel du
+  // décompte (voir progressionRdvCarte) — remis à zéro seulement si la date change.
+  if ((d || null) !== (c.prevueLe || null)) c.prevueFixeeLe = d ? aujourdHui() : null;
   c.prevueLe = d || null;
   c.prevueHeure = c.prevueLe ? (h || null) : null;
   sauver();
@@ -1524,6 +1528,40 @@ function joursAvantCarte(carte, jourRef) {
   const cible = new Date(carte.prevueLe + "T00:00:00");
   if (isNaN(cible.getTime())) return null;
   return Math.round((cible - ref) / 86400000);
+}
+
+// Chemin visuel jusqu'au rendez-vous d'une carte : où en est-on entre le jour
+// de départ (date fixée, sinon carte débloquée) et le jour J. `nuits` = les
+// dodos restants à dessiner (plafonnés à NUITS_MAX, le reste en « +N »).
+// null sans date, ou une fois le jour passé (la carte attend d'être faite).
+const NUITS_MAX = 14;
+function progressionRdvCarte(carte, jourRef) {
+  const jours = joursAvantCarte(carte, jourRef);
+  if (jours === null || jours < 0) return null;
+  const depart = [carte.prevueFixeeLe, carte.debloqueeLe].find(x => DATE_ISO.test(x || ""));
+  let pct = 100;
+  if (jours > 0) {
+    const total = depart ? joursAvantCarte(carte, depart) : jours;
+    pct = total > 0 ? Math.max(0, Math.min(100, Math.round(((total - jours) / total) * 100))) : 0;
+  }
+  return { jours, pct, nuits: Math.min(jours, NUITS_MAX), surplus: Math.max(0, jours - NUITS_MAX) };
+}
+
+// Ordre d'affichage des cartes côté famille : d'abord celles à débloquer
+// (dans l'ordre choisi par les parents), puis les débloquées par date du
+// rendez-vous — la plus proche en premier, celles sans date ensuite — et enfin
+// les activités faites, la plus récente en premier. Ne touche pas au tableau
+// lui-même : l'ordre réglé par les parents (▲▼) reste celui de la gestion.
+function ordreCartesAffichage(cartes) {
+  const rang = c => c.faite ? 2 : (c.debloquee ? 1 : 0);
+  const quand = c => DATE_ISO.test(c.prevueLe || "") ? c.prevueLe + "T" + (c.prevueHeure || "00:00") : "9999";
+  return (cartes || []).map((c, idx) => ({ c, idx })).sort((a, b) => {
+    const r = rang(a.c) - rang(b.c);
+    if (r) return r;
+    if (rang(a.c) === 1 && quand(a.c) !== quand(b.c)) return quand(a.c) < quand(b.c) ? -1 : 1;
+    if (rang(a.c) === 2 && (a.c.faiteLe || "") !== (b.c.faiteLe || "")) return (a.c.faiteLe || "") > (b.c.faiteLe || "") ? -1 : 1;
+    return a.idx - b.idx;
+  });
 }
 
 // Échappement iCalendar (RFC 5545 § 3.3.11) : la virgule, le point-virgule et

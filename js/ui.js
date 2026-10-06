@@ -5482,9 +5482,9 @@ function blocCartesSurprises(enf) {
   // peuvent la réinitialiser, et l'enfant aime revoir ce qui a été fait.
   const faites = [];
   html += `<div class="cs-liste">`;
-  cartes.forEach((c, idx) => {
+  ordreCartesAffichage(cartes).forEach(({ c, idx }) => {
     if (c.faite) { faites.push({ c, idx }); return; }
-    const couleur = CS_COULEURS[idx % CS_COULEURS.length];   // couleur propre à chaque carte
+    const couleur = CS_COULEURS[idx % CS_COULEURS.length];   // couleur propre à chaque carte (suit la carte, pas sa place)
     const titre = trData("carte", c.id, c.titre);
     const activite = trData("carteAct", c.id, c.activite);
     const pct = Math.max(0, Math.min(100, Math.round((c.recolte / c.cout) * 100)));
@@ -5522,7 +5522,8 @@ function blocCartesSurprises(enf) {
       if (jRdv !== null) {
         html += `<p class="cs-rdv${jRdv <= 1 && jRdv >= 0 ? " proche" : ""}">
           ${jRdv < 0 ? "🎈" : "📅"} ${texteDecompteCarte(jRdv, estJeune(enf))}
-          <small>${jourLisible(c.prevueLe, true)}${c.prevueHeure ? " · " + echapper(c.prevueHeure) : ""}</small></p>`;
+          <small>${jourLisible(c.prevueLe, true)}${c.prevueHeure ? " · " + echapper(c.prevueHeure) : ""}</small></p>
+          ${cheminRdvCarte(c)}`;
       } else {
         html += `<p class="cs-afaire">${t("cs.a_faire")}</p>`;
       }
@@ -5586,6 +5587,24 @@ function blocCartesSurprises(enf) {
   sec.querySelectorAll(".cs-plan-btn").forEach(b =>
     b.onclick = () => planifierCarteSurprise(b.dataset.plan));
   return sec;
+}
+
+// Aperçu visuel du temps restant : une piste où l'on avance de la date fixée
+// vers l'activité, et une rangée de lunes — une par dodo restant — que l'on
+// peut compter du doigt avant de savoir lire « dans 5 jours ».
+function cheminRdvCarte(c) {
+  const p = progressionRdvCarte(c);
+  if (!p) return "";
+  const nuits = p.jours === 0 ? `<span class="cs-chemin-jourj">🎉</span>`
+    : "🌙".repeat(p.nuits) + (p.surplus ? `<span class="cs-chemin-plus">+${p.surplus}</span>` : "");
+  return `<div class="cs-chemin" aria-hidden="true">
+      <div class="cs-chemin-piste">
+        <div class="cs-chemin-rempli" style="width:${p.pct}%"></div>
+        <span class="cs-chemin-moi" style="left:${p.pct}%">🏃</span>
+        <span class="cs-chemin-but">${c.emoji || "🎁"}</span>
+      </div>
+      <div class="cs-chemin-nuits">${nuits}</div>
+    </div>`;
 }
 
 // Fixer la date d'une carte gagnée : réservé aux parents. Même porte que le
