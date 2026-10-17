@@ -184,7 +184,7 @@ function construireContexte(options) {
       get modeParents() { return modeParents; }, set modeParents(v) { modeParents = v; },
       // lecture optique de la feuille papier (tout se calcule hors navigateur)
       scanGrisDepuisRgba, scanReduire, scanBinariser, scanComposantes, scanReperes,
-      scanHomographie, scanProjeter, scanEncre, scanFeuille, scanFeuilles,
+      scanHomographie, scanProjeter, scanEncre, scanFeuille, scanFeuilles, scanHypothesesReperes,
       scanXJour, scanYLigne, scanPosBit, scanEmpreinteMissions, scanBitsAttendus, scanHauteurRang, scanTailleCase, scanFenetre,
       scanJpegsDansPdf, scanEstPdf,
       SCAN_BITS, SCAN_BITS_LIGNES, SCAN_BITS_EMPREINTE, SCAN_SEUIL_COCHE, SCAN_SEUIL_VIDE, SCAN_LARGEUR_TRAVAIL,

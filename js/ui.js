@@ -4695,12 +4695,14 @@ function blocEncoderSemaine() {
         Object.keys(feuilleLue.cases).forEach(c => {
           if (feuilleLue.cases[c] === "douteuse") feuilleLue.cases[c] = "cochee";
         });
+        rendre();
       });
       const aucun = el("button", "btn-secondaire", t("scan.doutes_aucun"));
       aucun.onclick = () => majSansSaut(() => {
         Object.keys(feuilleLue.cases).forEach(c => {
           if (feuilleLue.cases[c] === "douteuse") delete feuilleLue.cases[c];
         });
+        rendre();
       });
       rapide.appendChild(tous); rapide.appendChild(aucun);
       bandeau.appendChild(rapide);
@@ -4767,9 +4769,14 @@ function blocEncoderSemaine() {
         b.onclick = () => majSansSaut(() => {
           // Pendant la relecture d'une photo, on ne touche pas au journal : on
           // ajuste la proposition, et c'est la validation qui écrit.
+          // Ajuster la proposition ne passe par aucune fonction qui redessine
+          // (contrairement à modifierHistorique) : sans rendre() explicite, la
+          // case changeait bien en mémoire mais pas à l'écran, et le parent
+          // croyait que les « ? » ne répondaient pas.
           if (enRevue) {
             if (feuilleLue.cases[cle] === "cochee") delete feuilleLue.cases[cle];
             else feuilleLue.cases[cle] = "cochee";
+            rendre();
             return;
           }
           modifierHistorique(enf, j, m, n > 0 ? -1 : +1);

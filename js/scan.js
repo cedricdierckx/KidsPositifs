@@ -49,8 +49,12 @@ const SCAN_LARGEUR_TRAVAIL = 1100;
 
 /* Seuils de décision sur la proportion d'encre d'une case. Entre les deux, on
  * ne tranche pas : la case part en « douteuse » et le parent décide. Mieux
- * vaut trois cases à confirmer qu'une seule écrite à tort. */
-const SCAN_SEUIL_COCHE = 0.20;
+ * vaut trois cases à confirmer qu'une seule écrite à tort.
+ * Calibré sur quatre vraies feuilles photographiées : une case vide y mesure
+ * 0 à 7 %, un point d'enfant jusqu'à 11 %, une coche au crayon fin 16 à 20 %
+ * — d'où un seuil « cochée » à 16 % et non plus 20 %, qui laissait en doute
+ * la moitié des coches légères. */
+const SCAN_SEUIL_COCHE = 0.16;
 const SCAN_SEUIL_VIDE = 0.07;
 
 /* Bande de contrôle : 6 bits pour le nombre de lignes (jusqu'à 63), le reste
@@ -216,11 +220,21 @@ function scanComposantes(bin, l, h, aireMin, aireMax) {
 // Parmi les composantes, retrouve les quatre repères : des carrés PLEINS, de
 // taille plausible. Le reste de la feuille (lettres, cadres, écriture) est soit
 // trop petit, soit trop allongé, soit creux.
-function scanReperes(bin, l, h) {
+function scanTachesPleines(bin, l, h) {
   const aireMin = Math.round((l * 0.012) * (l * 0.012));
   const aireMax = Math.round((l * 0.06) * (l * 0.06));
-  const comps = scanComposantes(bin, l, h, aireMin, aireMax)
+  return scanComposantes(bin, l, h, aireMin, aireMax)
     .filter(c => c.carre > 0.65 && c.carre < 1.55 && c.plein > 0.72);
+}
+
+function scanReperes(bin, l, h) {
+  return scanReperesParmi(scanTachesPleines(bin, l, h), l);
+}
+
+// La première idée — les quatre taches les plus extrêmes — suffit sur une
+// image propre. Elle est gardée comme premier essai, parce qu'elle est
+// immédiate et que c'est le cas le plus fréquent.
+function scanReperesParmi(comps, l) {
   if (comps.length < 4) return null;
   const choisir = (score) => comps.reduce((a, b) => (score(b) < score(a) ? b : a));
   const hg = choisir(c => c.cx + c.cy);
@@ -250,6 +264,106 @@ function scanReperes(bin, l, h) {
   // Une grille aplatie au point d'être illisible ne se redresse pas non plus.
   if (Math.min(haut, bas, gauche, droite) < l * 0.05) return null;
   return { hg, hd, bg, bd };
+}
+
+/* HYPOTHÈSES DE REPÈRES. Les vraies photos ont montré la limite des quatre
+ * extrêmes : sur une feuille de vingt missions, les émojis de la colonne des
+ * noms et ceux de la ligne « Ai-je fait de mon mieux ? » sont eux aussi de
+ * petites taches pleines, et l'un d'eux finit presque toujours par être plus
+ * « dans le coin » que le vrai repère. Trois feuilles sur quatre étaient
+ * refusées pour cette seule raison.
+ *
+ * Plutôt que de deviner, on énumère : tout triplet de taches de même taille
+ * (haut-gauche, haut-droit, bas-gauche) prédit où doit se trouver la
+ * quatrième, puisqu'une feuille photographiée reste à peu près un
+ * parallélogramme. Les quadrilatères ainsi trouvés sont classés du plus grand
+ * au plus petit — les repères encadrent toute la grille — et c'est la BANDE
+ * DE CONTRÔLE qui tranche : un faux quadrilatère n'y lit jamais exactement les
+ * vingt marques d'une feuille connue (voir scanFeuilles).
+ *
+ * Les quatre sens de lecture sont essayés du même coup (on ne contraint que
+ * l'orientation, pas le sens) : une feuille posée tête-bêche ou de côté se lit
+ * comme les autres. Un miroir, lui, est écarté — aucune photo n'en produit. */
+const SCAN_HYPOTHESES_MAX = 200;
+function scanHypothesesReperes(bin, l, h) {
+  // Les repères et les marques de contrôle sont parmi les plus grosses taches
+  // pleines de la feuille ; garder les soixante plus grosses borne la
+  // recherche (un triplet par combinaison) sans jamais écarter un repère.
+  const comps = scanTachesPleines(bin, l, h)
+    .sort((a, b) => b.n - a.n).slice(0, 60);
+  const out = [];
+  const vus = new Set();
+  const cle = (q) => [q.hg, q.hd, q.bg, q.bd].map(c => c.x0 + ":" + c.y0).join("|");
+  const ajouter = (q, score) => {
+    const k = cle(q);
+    if (vus.has(k)) return;
+    vus.add(k);
+    out.push({ q, score });
+  };
+  const rapide = scanReperesParmi(comps, l);
+  if (rapide) ajouter(rapide, Infinity);
+  const n = comps.length;
+  if (n < 4) return out.map(o => o.q);
+  const cote = comps.map(c => (c.larg + c.haut) / 2);
+  const semblables = (...i) => {
+    const v = i.map(k => cote[k]);
+    return Math.max(...v) <= Math.min(...v) * 1.35;
+  };
+  const trouves = [];
+  for (let a = 0; a < n; a++) {
+    for (let b = 0; b < n; b++) {
+      if (b === a || !semblables(a, b)) continue;
+      const ux = comps[b].cx - comps[a].cx, uy = comps[b].cy - comps[a].cy;
+      const lu = Math.hypot(ux, uy);
+      if (lu < l * 0.05) continue;
+      for (let c = 0; c < n; c++) {
+        if (c === a || c === b || !semblables(a, b, c)) continue;
+        const vx = comps[c].cx - comps[a].cx, vy = comps[c].cy - comps[a].cy;
+        const lv = Math.hypot(vx, vy);
+        if (lv < l * 0.05) continue;
+        // Sens direct uniquement (y vers le bas) : écarte les miroirs, et
+        // les triplets presque alignés qui ne redressent rien.
+        const croix = (ux * vy - uy * vx) / (lu * lv);
+        if (croix < 0.5) continue;
+        const px = comps[b].cx + vx, py = comps[b].cy + vy;
+        const tol = 0.15 * Math.max(lu, lv);
+        // Le sens de lecture normal passe avant les trois autres : une feuille
+        // est presque toujours photographiée à l'endroit, et une lecture
+        // tête-bêche qui tomberait par hasard sur une bande valide ne doit
+        // jamais passer devant la bonne.
+        const endroit = ux > Math.abs(uy) ? 1 : 0;
+        // Toute tache assez proche du quatrième coin prédit est candidate, pas
+        // seulement la plus proche : la perspective éloigne le vrai repère de
+        // la prédiction, et une marque de contrôle voisine peut s'en trouver
+        // plus près que lui.
+        for (let d = 0; d < n; d++) {
+          if (d === a || d === b || d === c || !semblables(a, b, c, d)) continue;
+          if (Math.hypot(comps[d].cx - px, comps[d].cy - py) > tol) continue;
+          // Plus grand d'abord (surface du quadrilatère), mais à taille
+          // égale : quatre repères imprimés ensemble ont le même diamètre,
+          // alors qu'un quadrilatère qui emprunte un émoji (plus petit) gagne
+          // souvent en surface ce qu'il perd en cohérence. La pénalité de
+          // taille le fait passer derrière.
+          const P = [comps[a], comps[b], comps[d], comps[c]];
+          let aire = 0;
+          for (let k = 0; k < 4; k++) {
+            const s = P[k], t = P[(k + 1) % 4];
+            aire += s.cx * t.cy - t.cx * s.cy;
+          }
+          const v4 = [a, b, c, d].map(k => cote[k]);
+          const ecart = Math.max(...v4) / Math.min(...v4);
+          trouves.push({ q: { hg: comps[a], hd: comps[b], bg: comps[c], bd: comps[d] },
+                         endroit, score: Math.abs(aire) / Math.pow(ecart, 6) });
+        }
+      }
+    }
+  }
+  trouves.sort((x, y) => (y.endroit - x.endroit) || (y.score - x.score));
+  for (const t of trouves) {
+    if (out.length >= SCAN_HYPOTHESES_MAX) break;
+    ajouter(t.q, t.score);
+  }
+  return out.map(o => o.q);
 }
 
 /* ---------- 3. Redressement (homographie) ---------- */
@@ -379,40 +493,59 @@ function scanFeuilles(gris, l, h, plans) {
   if (!liste.length) return { ok: false, raison: "feuille_differente" };
 
   const bin = scanBinariser(gris, l, h);
-  const rep = scanReperes(bin, l, h);
-  if (!rep) return { ok: false, raison: "reperes" };
+  const hypotheses = scanHypothesesReperes(bin, l, h);
+  if (!hypotheses.length) return { ok: false, raison: "reperes" };
 
-  const H = scanHomographie(
-    [[0, 0], [1, 0], [0, 1], [1, 1]],
-    [[rep.hg.cx, rep.hg.cy], [rep.hd.cx, rep.hd.cy], [rep.bg.cx, rep.bg.cy], [rep.bd.cx, rep.bd.cy]]
-  );
-  if (!H) return { ok: false, raison: "reperes" };
-
-  // Fenêtre de mesure, identique pour les marques de contrôle et pour les
-  // cases : même taille en millimètres sur le papier (voir SCAN_FENETRE_*).
-  // Elle dépend du nombre de lignes, donc les bits se relisent une fois par
-  // hauteur de grille distincte — et une seule fois, quel que soit le nombre
-  // d'enfants et de semaines proposés.
-  const lus = {};
-  const bitsPour = (R) => {
-    if (!lus[R]) {
-      const { demiX, demiY } = scanFenetre(R);
-      const b = [];
-      for (let j = 0; j < SCAN_BITS; j++) {
-        const [bx, by] = scanPosBit(j);
-        b.push(scanEncre(bin, l, h, H, bx, by, demiX, demiY) > 0.45 ? 1 : 0);
+  const attendusDe = (p) => scanBitsAttendus(p.lignes.length, p.empreinte || p.missions).join("");
+  let echec = null;
+  let rep = null, H = null, retenus = [];
+  for (const q of hypotheses) {
+    const Hq = scanHomographie(
+      [[0, 0], [1, 0], [0, 1], [1, 1]],
+      [[q.hg.cx, q.hg.cy], [q.hd.cx, q.hd.cy], [q.bg.cx, q.bg.cy], [q.bd.cx, q.bd.cy]]
+    );
+    if (!Hq) continue;
+    // Fenêtre de mesure, identique pour les marques de contrôle et pour les
+    // cases : même taille en millimètres sur le papier. Elle dépend du nombre
+    // de lignes, donc les bits se relisent une fois par hauteur de grille
+    // distincte — et une seule fois, quel que soit le nombre d'enfants et de
+    // semaines proposés.
+    const lus = {};
+    const bitsPour = (R) => {
+      if (!(R in lus)) {
+        const { demiX, demiY } = scanFenetre(R);
+        const b = [];
+        let net = true;
+        for (let j = 0; j < SCAN_BITS; j++) {
+          const [bx, by] = scanPosBit(j);
+          const r = scanEncre(bin, l, h, Hq, bx, by, demiX, demiY);
+          // Une vraie marque est franchement pleine ou franchement vide. Une
+          // valeur intermédiaire, c'est qu'on mesure à côté — un faux
+          // quadrilatère qui tombe sur du texte : on ne lui fait pas
+          // confiance, même si le hasard lui donnait les bons bits.
+          if (r > 0.25 && r < 0.6) net = false;
+          b.push(r > 0.45 ? 1 : 0);
+        }
+        lus[R] = net ? b.join("") : null;
       }
-      lus[R] = b;
+      return lus[R];
+    };
+    const ok = liste.filter(p => bitsPour(p.lignes.length) === attendusDe(p));
+    if (ok.length) { rep = q; H = Hq; retenus = ok; break; }
+    // Aucune feuille connue. Mais si la bande lue est NETTE et annonce un
+    // nombre de lignes crédible, c'est bien une de nos feuilles qu'on a sous
+    // les yeux — simplement pas une qu'on attend (autre semaine, missions
+    // changées depuis l'impression). Le dire ainsi est plus utile au parent
+    // que « reprends la photo ».
+    if (!echec) {
+      const p = liste[0];
+      const b = bitsPour(p.lignes.length);
+      if (b && parseInt(b.slice(0, SCAN_BITS_LIGNES), 2) >= 3) {
+        echec = { ok: false, raison: "feuille_differente", bits: b, attendus: attendusDe(p) };
+      }
     }
-    return lus[R];
-  };
-  const attendusDe = (p) => scanBitsAttendus(p.lignes.length, p.empreinte || p.missions);
-
-  const retenus = liste.filter(p => bitsPour(p.lignes.length).join("") === attendusDe(p).join(""));
-  if (!retenus.length) {
-    const p = liste[0];
-    return { ok: false, raison: "feuille_differente", bits: bitsPour(p.lignes.length), attendus: attendusDe(p) };
   }
+  if (!retenus.length) return echec || { ok: false, raison: "reperes" };
   // Deux feuilles candidates ne peuvent pas porter la même bande de contrôle.
   // Si cela arrivait tout de même (collision d'empreinte), mieux vaut refuser
   // que tirer au sort l'enfant dans le dossier duquel on va écrire.

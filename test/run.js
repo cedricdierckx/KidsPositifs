@@ -5966,6 +5966,17 @@ function feuilleDeSynthese(api, opts) {
     // plus à gauche que le repère du coin, de façon à REMPORTER le coin si
     // rien ne l'en empêche.
     if (o.leurre && dansCarre(xm + 11, ym - 5, 2.0)) return true;
+    // Émojis, comme sur une VRAIE feuille photographiée : un devant chaque
+    // mission dans la colonne des noms, et toute une rangée sous la grille
+    // (« Ai-je fait de mon mieux ? »). Plus petits que les repères, mais
+    // nombreux et plus « dans les coins » qu'eux — c'est ce qui faisait
+    // refuser trois feuilles réelles sur quatre.
+    if (o.emojis) {
+      for (let k = 0; k < R; k++) {
+        if (lignes[k].type === "mission" && dansCarre(xm + 30, ym - (k + 1) * hR, 1.7)) return true;
+      }
+      for (let x = -30; x <= 100; x += 7) if (dansCarre(xm - x, ym - MM_Y - 6, 1.7)) return true;
+    }
     return false;
   };
 
@@ -6112,6 +6123,57 @@ test("scan : un émoji dense dans la colonne des noms ne peut pas voler un coin 
     assert.ok(res.raison === "reperes" || res.raison === "feuille_differente",
       "sinon, il faut le dire clairement plutôt que d'encoder de travers : " + res.raison);
   }
+});
+
+test("scan : les émojis de la feuille, plus « dans les coins » que les repères, ne la font plus refuser", () => {
+  const { api } = construireContexte();
+  const plan = planDeSynthese();
+  const coches = { "ranger:2": true, "merci:4": true, "lumiere:0": true, "compost:5": true };
+  const img = feuilleDeSynthese(api, {
+    lignes: plan.lignes, missions: plan.missions, coches, texte: false, emojis: true,
+    coins: [[200, 80], [700, 110], [180, 520], [720, 540]]
+  });
+  // Le premier essai — les quatre taches extrêmes — tombe bien sur des émojis :
+  // c'est exactement la situation des photos réelles qui échouaient.
+  const rapide = api.scanReperes(api.scanBinariser(img.gris, img.l, img.h), img.l, img.h);
+  assert.ok(!rapide || Math.min(rapide.hg.cx, rapide.bg.cx) < 170,
+    "le test doit reproduire le piège (un émoji plus à gauche que le repère)");
+  const res = api.scanFeuille(img.gris, img.l, img.h, plan);
+  assert.ok(res.ok, "la feuille doit être lue : " + res.raison);
+  const lues = {};
+  res.cases.forEach(c => { if (c.etat === "cochee") lues[c.mission + ":" + c.jour] = true; });
+  assert.deepStrictEqual(lues, coches);
+  assert.strictEqual(res.douteuses, 0);
+});
+
+test("scan : une feuille photographiée tête-bêche se lit comme à l'endroit", () => {
+  const { api } = construireContexte();
+  const plan = planDeSynthese();
+  const coches = { "ranger:0": true, "dents:3": true, "compost:6": true };
+  // Le coin haut-gauche de la grille se retrouve en bas à droite de l'image.
+  const img = feuilleDeSynthese(api, {
+    lignes: plan.lignes, missions: plan.missions, coches,
+    coins: [[790, 600], [120, 560], [760, 130], [150, 90]]
+  });
+  const res = api.scanFeuille(img.gris, img.l, img.h, plan);
+  assert.ok(res.ok, "la feuille doit être lue : " + res.raison);
+  const lues = {};
+  res.cases.forEach(c => { if (c.etat === "cochee") lues[c.mission + ":" + c.jour] = true; });
+  assert.deepStrictEqual(lues, coches);
+});
+
+test("scan : en relecture, toucher une case la redessine aussitôt (les « ? » répondaient sans se voir)", () => {
+  const fs = require("fs"), path = require("path");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "js/ui.js"), "utf8");
+  const debut = ui.indexOf("function blocEncoderSemaine");
+  const corps = ui.slice(debut, ui.indexOf("function decalerSemaine", debut));
+  // La branche de relecture ne passe pas par modifierHistorique (qui redessine
+  // de lui-même) : elle doit appeler rendre() elle-même.
+  assert.ok(/if \(enRevue\) \{[\s\S]*?feuilleLue\.cases\[cle\] = "cochee";\s*rendre\(\);\s*return;/.test(corps),
+    "une case touchée en relecture doit être redessinée");
+  // Idem pour « tout cocher » / « tout écarter » des cases douteuses.
+  const n = (corps.match(/=== "douteuse"\)[^\n]*\n\s*\}\);\s*rendre\(\);/g) || []).length;
+  assert.strictEqual(n, 2, "les deux boutons de doutes doivent redessiner");
 });
 
 test("scan : une seule source décrit les lignes, pour l'impression comme pour la lecture", () => {
